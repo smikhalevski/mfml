@@ -1,0 +1,61 @@
+{
+  "name": "typed-i18n",
+  "version": "1.0.0",
+  "description": "Code generator and runtime for type-safe i18n with ICU and XML support.",
+  "main": "./lib/index-cjs.js",
+  "module": "./lib/index.js",
+  "types": "./lib/index.d.ts",
+  "files": [
+    "lib",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "set -ex; tsc; npm run rollup; npm run terser",
+    "rollup": "rollup --input ./lib/index.js --file ./lib/index-cjs.js --format cjs --plugin @rollup/plugin-node-resolve --plugin @rollup/plugin-commonjs",
+    "terser": "terser --compress --mangle toplevel --output ./lib/index-cjs.js -- ./lib/index-cjs.js",
+    "clean": "rm -rf ./lib",
+    "test": "jest --detectOpenHandles"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/smikhalevski/typed-i18n.git"
+  },
+  "keywords": [
+    "url",
+    "path",
+    "route",
+    "router",
+    "lazy",
+    "tiny",
+    "import"
+  ],
+  "author": "Savva Mikhalevski <smikhalevski@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/smikhalevski/typed-i18n/issues"
+  },
+  "homepage": "https://github.com/smikhalevski/typed-i18n#readme",
+  "jest": {
+    "preset": "ts-jest"
+  },
+  "devDependencies": {
+    "@rollup/plugin-commonjs": "^19.0.0",
+    "@rollup/plugin-node-resolve": "^13.0.0",
+    "@types/jest": "^26.0.23",
+    "@types/moo": "^0.5.4",
+    "@types/react": "^17.0.11",
+    "@types/uuid": "^8.3.0",
+    "jest": "^27.0.2",
+    "rollup": "^2.50.5",
+    "terser": "^5.7.0",
+    "ts-jest": "^27.0.2",
+    "typescript": "^4.3.2"
+  },
+  "peerDependencies": {
+    "react": ">=16.8.0"
+  },
+  "dependencies": {
+    "@messageformat/parser": "^5.0.0",
+    "uuid": "^8.3.2"
+  }
+}
