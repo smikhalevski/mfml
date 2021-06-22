@@ -41,7 +41,7 @@ export function splitTextNode(arr: Array<Node>, index: number, start: number, en
       nodeType: NodeType.TEXT,
       value: text.substring(offset),
       parent: textNode.parent,
-      start: start + offset,
+      start: textStart + offset,
       end: textEnd,
     };
     arr.splice(index + 1, 0, nextTextNode);

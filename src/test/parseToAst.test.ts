@@ -238,7 +238,7 @@ describe('parseMarkup', () => {
       start: 5,
       end: 16,
     };
-    rootNode.children.push(elementNode)
+    rootNode.children.push(elementNode);
 
     expect(parseToAst('<foo><bar></bar></foo>')).toEqual(rootNode);
   });
@@ -322,7 +322,7 @@ describe('parseMarkup', () => {
       children: [],
       parent: null,
       start: 0,
-      end: 18,
+      end: 24,
     };
 
     rootNode.children.push({
@@ -340,30 +340,44 @@ describe('parseMarkup', () => {
       children: [],
       parent: rootNode,
       start: 3,
-      end: 15,
+      end: 21,
     };
 
-    elementNode.children.push({
-      nodeType: NodeType.ARGUMENT,
-      arg: 'bbb',
-      parent: elementNode,
-      start: 6,
-      end: 11,
-    });
+    elementNode.children.push(
+        {
+          nodeType: NodeType.TEXT,
+          value: 'bbb',
+          parent: elementNode,
+          start: 6,
+          end: 9,
+        },
+        {
+          nodeType: NodeType.ARGUMENT,
+          arg: 'ccc',
+          parent: elementNode,
+          start: 9,
+          end: 14,
+        },
+        {
+          nodeType: NodeType.TEXT,
+          value: 'ddd',
+          parent: elementNode,
+          start: 14,
+          end: 17,
+        },
+    );
 
     rootNode.children.push(
         elementNode,
         {
           nodeType: NodeType.TEXT,
-          value: 'ccc',
+          value: 'eee',
           parent: rootNode,
-          start: 15,
-          end: 18,
+          start: 21,
+          end: 24,
         },
     );
 
-    const nnn = parseToAst('aaa<b>{bbb}</b>ccc');
-
-    expect(nnn).toEqual(rootNode);
+    expect(parseToAst('aaa<b>bbb{ccc}ddd</b>eee')).toEqual(rootNode);
   });
 });
