@@ -1,4 +1,4 @@
-import {ISelectCaseNode, Node, NodeType} from '../main/ast-types';
+import {IElementNode, ISelectCaseNode, Node, NodeType} from '../main/ast-types';
 import {parseToAst} from '../main/parseToAst';
 
 describe('parseMarkup', () => {
@@ -243,7 +243,80 @@ describe('parseMarkup', () => {
     expect(parseToAst('<foo><bar></bar></foo>')).toEqual(rootNode);
   });
 
-  test('parses argument in tag', () => {
+  test('parses an element that is nested in a select', () => {
+
+    const rootNode: Node = {
+      nodeType: NodeType.SELECT,
+      arg: 'answer',
+      pluralOffset: undefined,
+      children: [],
+      parent: null,
+      start: 0,
+      end: 17,
+    };
+
+    const yesNode: ISelectCaseNode = {
+      nodeType: NodeType.SELECT_CASE,
+      key: 'yes',
+      children: [],
+      parent: rootNode,
+      start: 17,
+      end: 34,
+    };
+    rootNode.children.push(yesNode);
+
+    const fooNode: IElementNode = {
+      nodeType: NodeType.ELEMENT,
+      tagName: 'foo',
+      attrs: [],
+      children: [],
+      parent: yesNode,
+      start: 22,
+      end: 36,
+    };
+    yesNode.children.push(fooNode);
+
+    fooNode.children.push({
+      nodeType: NodeType.TEXT,
+      value: 'Yep',
+      parent: fooNode,
+      start: 27,
+      end: 30,
+    });
+
+    const noNode: ISelectCaseNode = {
+      nodeType: NodeType.SELECT_CASE,
+      key: 'no',
+      children: [],
+      parent: rootNode,
+      start: 37,
+      end: 54,
+    };
+    rootNode.children.push(noNode);
+
+    const barNode: IElementNode = {
+      nodeType: NodeType.ELEMENT,
+      tagName: 'bar',
+      attrs: [],
+      children: [],
+      parent: noNode,
+      start: 42,
+      end: 57,
+    };
+    noNode.children.push(barNode);
+
+    barNode.children.push({
+      nodeType: NodeType.TEXT,
+      value: 'Nope',
+      parent: barNode,
+      start: 47,
+      end: 51,
+    });
+
+    expect(parseToAst('{answer, select, yes {<foo>Yep</foo>} no {<bar>Nope</bar>} }')).toEqual(rootNode);
+  });
+
+  test('parses an argument that is nested in an element', () => {
     const rootNode: Node = {
       nodeType: NodeType.FRAGMENT,
       children: [],
