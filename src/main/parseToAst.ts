@@ -73,9 +73,28 @@ export function parseToAst(str: string, options?: IParserOptions): Node {
         throw new Error();
       }
 
-      const parentChildren = startNode.parent.children;
-      const j = splitTextNode(parentChildren, startNode, tagToken.start, tagToken.end);
-      parentChildren.splice(j, 0, elementNode);
+      for (let k = 0; k < tagToken.attrs.length; k++) {
+        const attrToken = tagToken.attrs[k];
+        const attrNode: Node = {
+          nodeType: NodeType.ATTRIBUTE,
+          name: attrToken.name,
+          children: [],
+          parent: elementNode,
+          start: attrToken.start,
+          end: attrToken.end,
+        };
+        attrNode.children.push({
+          nodeType: NodeType.TEXT,
+          value: attrToken.value || '',
+          parent: attrNode,
+          start: attrToken.valueStart,
+          end: attrToken.valueEnd,
+        });
+        elementNode.attrs.push(attrNode);
+      }
+
+      i = arr.indexOf(startNode);
+      splitTextNode(arr, i, tagToken.start, tagToken.end, elementNode);
 
     },
 
@@ -100,21 +119,18 @@ export function parseToAst(str: string, options?: IParserOptions): Node {
         throw new Error();
       }
 
-      const parentChildren = textNode.parent.children;
-      const j = splitTextNode(parentChildren, textNode, tagToken.start, tagToken.end);
+      const childIndex = splitTextNode(arr, arr.indexOf(textNode), tagToken.start, tagToken.end);
 
-      for (let k = j; k >= 0; k--) {
+      const parentChildren = textNode.parent.children;
+
+      for (let k = childIndex; k >= 0; k--) {
         const node = parentChildren[k];
 
-        if (node.nodeType !== NodeType.ELEMENT) {
+        if (!node || node.nodeType !== NodeType.ELEMENT || node.tagName !== tagToken.name) {
           continue;
         }
 
-        if (node.tagName !== tagToken.name) {
-          throw new Error();
-        }
-
-        const children = parentChildren.splice(k + 1, j - k - 1);
+        const children = parentChildren.splice(k + 1, childIndex - k - 1);
         for (let k = 0; k < children.length; k++) {
           children[k].parent = node;
         }

@@ -172,8 +172,75 @@ describe('parseMarkup', () => {
       children: [],
       parent: null,
       start: 0,
+      end: 11,
+    });
+  });
+
+  test('parses a self-closing element', () => {
+    expect(parseToAst('<foo/>', {selfClosingEnabled: true})).toEqual<Node>({
+      nodeType: NodeType.ELEMENT,
+      tagName: 'foo',
+      attrs: [],
+      children: [],
+      parent: null,
+      start: 0,
       end: 6,
     });
+  });
+
+  test('parses an element with an attribute', () => {
+    const rootNode: Node = {
+      nodeType: NodeType.ELEMENT,
+      tagName: 'foo',
+      attrs: [],
+      children: [],
+      parent: null,
+      start: 0,
+      end: 21,
+    };
+
+    const attrNode: Node = {
+      nodeType: NodeType.ATTRIBUTE,
+      name: 'bar',
+      children: [],
+      parent: rootNode,
+      start: 5,
+      end: 14,
+    };
+    rootNode.attrs.push(attrNode);
+    attrNode.children.push({
+      nodeType: NodeType.TEXT,
+      value: 'baz',
+      parent: attrNode,
+      start: 10,
+      end: 13,
+    });
+
+    expect(parseToAst('<foo bar="baz"></foo>')).toEqual(rootNode);
+  });
+
+  test('parses nested elements', () => {
+    const rootNode: Node = {
+      nodeType: NodeType.ELEMENT,
+      tagName: 'foo',
+      attrs: [],
+      children: [],
+      parent: null,
+      start: 0,
+      end: 22,
+    };
+    const elementNode: Node = {
+      nodeType: NodeType.ELEMENT,
+      tagName: 'bar',
+      attrs: [],
+      children: [],
+      parent: rootNode,
+      start: 5,
+      end: 16,
+    };
+    rootNode.children.push(elementNode)
+
+    expect(parseToAst('<foo><bar></bar></foo>')).toEqual(rootNode);
   });
 
   test('parses argument in tag', () => {
