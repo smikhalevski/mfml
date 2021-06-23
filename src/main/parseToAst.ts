@@ -93,7 +93,9 @@ export function parseToAst(str: string, options?: IParserOptions): Node {
       }
 
       i = arr.indexOf(startNode);
-      splitTextNode(arr, i, tagToken.start, tagToken.end, elementNode);
+      const j = startNode.parent.children.indexOf(startNode);
+
+      splitTextNode(arr, i, startNode.parent.children, j, startNode, tagToken.start, tagToken.end, elementNode);
 
     },
 
@@ -117,10 +119,12 @@ export function parseToAst(str: string, options?: IParserOptions): Node {
       if (!textNode?.parent) {
         throw new Error();
       }
-
-      const childIndex = splitTextNode(arr, arr.indexOf(textNode), tagToken.start, tagToken.end);
-
       const parentChildren = textNode.parent.children;
+
+      let childIndex = parentChildren.indexOf(textNode);
+
+      childIndex += splitTextNode(arr, arr.indexOf(textNode), parentChildren, childIndex, textNode, tagToken.start, tagToken.end);
+
 
       for (let k = childIndex; k >= 0; k--) {
         const node = parentChildren[k];
