@@ -73,7 +73,7 @@ describe('parseMarkup', () => {
       children: [],
       parent: rootNode,
       start: 14,
-      end: 28,
+      end: 19,
     };
     rootNode.children.push(yesNode);
 
@@ -91,7 +91,7 @@ describe('parseMarkup', () => {
       children: [],
       parent: rootNode,
       start: 23,
-      end: 37,
+      end: 28,
     };
     rootNode.children.push(noNode);
 
@@ -123,7 +123,7 @@ describe('parseMarkup', () => {
       children: [],
       parent: rootNode,
       start: 22,
-      end: 44,
+      end: 27,
     };
     rootNode.children.push(oneNode);
 
@@ -141,7 +141,7 @@ describe('parseMarkup', () => {
       children: [],
       parent: rootNode,
       start: 38,
-      end: 60,
+      end: 45,
     };
     rootNode.children.push(manyNode);
 
@@ -261,7 +261,7 @@ describe('parseMarkup', () => {
       children: [],
       parent: rootNode,
       start: 17,
-      end: 34,
+      end: 22,
     };
     rootNode.children.push(yesNode);
 
@@ -290,7 +290,7 @@ describe('parseMarkup', () => {
       children: [],
       parent: rootNode,
       start: 37,
-      end: 54,
+      end: 42,
     };
     rootNode.children.push(noNode);
 

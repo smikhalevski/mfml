@@ -1,7 +1,7 @@
 import {Node, NodeType} from './ast-types';
 
 /**
- * Collects nodes from the tree described by `nodes` to an array `arr`.
+ * Collects all nodes from an AST to an array in the order of occurrence.
  */
 export function collectNodes(nodes: Array<Node>, arr: Array<Node>): Array<Node> {
   for (let i = 0; i < nodes.length; i++) {
