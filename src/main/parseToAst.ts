@@ -2,7 +2,7 @@ import {ContainerNode, IElementNode, ITextNode, Node, NodeType} from './ast-type
 import {parseIcu} from './parseIcu';
 import {createForgivingSaxParser, IForgivingSaxParserDialectOptions} from 'tag-soup';
 import {splitTextNode} from './splitTextNode';
-import {collectNodes} from './collectNodes';
+import {collectIcuNodes} from './collectIcuNodes';
 
 export interface IParserOptions extends IForgivingSaxParserDialectOptions {
 }
@@ -10,7 +10,7 @@ export interface IParserOptions extends IForgivingSaxParserDialectOptions {
 export function parseToAst(str: string, options?: IParserOptions): Node {
 
   const nodes = parseIcu(str);
-  const arr = collectNodes(nodes, []);
+  const arr = collectIcuNodes(nodes, []);
 
   const rootNode: ContainerNode = {
     nodeType: NodeType.FRAGMENT,
