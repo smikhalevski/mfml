@@ -380,4 +380,39 @@ describe('parseMarkup', () => {
 
     expect(parseToAst('aaa<b>bbb{ccc}ddd</b>eee')).toEqual(rootNode);
   });
+
+  test('parses an attribute with nested argument', () => {
+    const rootNode: Node = {
+      nodeType: NodeType.ELEMENT,
+      tagName: 'foo',
+      attrs: [],
+      children: [],
+      parent: null,
+      start: 0,
+      end: 21,
+    };
+
+    const attrNode: Node = {
+      nodeType: NodeType.ATTRIBUTE,
+      name: 'bar',
+      children: [],
+      parent: rootNode,
+      start: 5,
+      end: 16,
+    };
+    rootNode.attrs.push(attrNode);
+    attrNode.children.push({
+      nodeType: NodeType.ARGUMENT,
+      arg: 'baz',
+      parent: attrNode,
+      start: 10,
+      end: 15,
+    });
+
+
+    const sss = parseToAst('<foo bar="{baz}"></foo>');
+
+    expect(sss).toEqual(rootNode);
+  });
+
 });

@@ -1,6 +1,6 @@
 import {ITextNode, Node, NodeType} from './ast-types';
 
-export function splitTextNode(arr: Array<Node>, i: number, children: Array<Node>, j: number, textNode: ITextNode, start: number, end: number, node?: Node): number {
+export function spliceTextNode(arr: Array<Node>, i: number, siblings: Array<Node>, j: number, textNode: ITextNode, start: number, end: number, node?: Node): number {
   const textStart = textNode.start;
   const textEnd = textNode.end;
   const text = textNode.value;
@@ -8,10 +8,10 @@ export function splitTextNode(arr: Array<Node>, i: number, children: Array<Node>
   // Node replaces text
   if (textStart === start && textEnd === end) {
     if (node != null) {
-      arr[i] = children[j] = node;
+      arr[i] = siblings[j] = node;
     } else {
       arr.splice(i, 1);
-      children.splice(j, 1);
+      siblings.splice(j, 1);
     }
     return 0;
   }
@@ -20,7 +20,7 @@ export function splitTextNode(arr: Array<Node>, i: number, children: Array<Node>
   if (textStart === start) {
     if (node != null) {
       arr.splice(i, 0, node);
-      children.splice(j, 0, node);
+      siblings.splice(j, 0, node);
     }
     textNode.value = text.substring(end - textStart);
     textNode.start = end;
@@ -34,7 +34,7 @@ export function splitTextNode(arr: Array<Node>, i: number, children: Array<Node>
   if (textEnd === end) {
     if (node != null) {
       arr.splice(i + 1, 0, node);
-      children.splice(j + 1, 0, node);
+      siblings.splice(j + 1, 0, node);
     }
     return 1;
   }
@@ -49,10 +49,10 @@ export function splitTextNode(arr: Array<Node>, i: number, children: Array<Node>
   };
   if (node != null) {
     arr.splice(i + 1, 0, node, textNode);
-    children.splice(j + 1, 0, node, textNode);
+    siblings.splice(j + 1, 0, node, textNode);
   } else {
     arr.splice(i + 1, 0, textNode);
-    children.splice(j + 1, 0, textNode);
+    siblings.splice(j + 1, 0, textNode);
   }
   return 1;
 }

@@ -1,7 +1,7 @@
-import {ContainerNode, IElementNode, ITextNode, Node, NodeType} from './ast-types';
+import {IAttributeNode, IElementNode, IFragmentNode, ITextNode, Node, NodeType} from './ast-types';
 import {parseIcu} from './parseIcu';
 import {createForgivingSaxParser, IForgivingSaxParserDialectOptions} from 'tag-soup';
-import {splitTextNode} from './splitTextNode';
+import {spliceTextNode} from './spliceTextNode';
 import {collectIcuNodes} from './collectIcuNodes';
 
 export interface IParserOptions extends IForgivingSaxParserDialectOptions {
@@ -9,19 +9,19 @@ export interface IParserOptions extends IForgivingSaxParserDialectOptions {
 
 export function parseToAst(str: string, options?: IParserOptions): Node {
 
-  const nodes = parseIcu(str);
-  const arr = collectIcuNodes(nodes, []);
+  const children = parseIcu(str);
+  const arr = collectIcuNodes(children, []);
 
-  const rootNode: ContainerNode = {
+  const rootNode: IFragmentNode = {
     nodeType: NodeType.FRAGMENT,
-    children: nodes,
+    children,
     parent: null,
     start: 0,
     end: str.length,
   };
 
-  for (let i = 0; i < nodes.length; i++) {
-    nodes[i].parent = rootNode;
+  for (let i = 0; i < children.length; i++) {
+    children[i].parent = rootNode;
   }
 
   let i = 0;
@@ -31,31 +31,22 @@ export function parseToAst(str: string, options?: IParserOptions): Node {
 
     onStartTag(tagToken) {
 
-      let startNode: ITextNode | undefined;
-      let endNode: ITextNode | undefined;
-
+      let startNode;
       while (i < arr.length) {
         const node = arr[i++];
 
         if (tagToken.end <= node.start) {
-          // No more applicable nodes
+          // No more matching nodes
           break;
         }
-        if (node.nodeType === NodeType.TEXT) {
-          if (node.start <= tagToken.start && tagToken.nameEnd <= node.end) {
-            // Start of tag, contains "<foo"
-            startNode = node;
-          }
-          if (node.start < tagToken.end && tagToken.end <= node.end) {
-            // End of tag, contains ">"
-            endNode = node;
-            break;
-          }
+        if (node.nodeType === NodeType.TEXT && node.start <= tagToken.start && tagToken.nameEnd <= node.end) {
+          startNode = node;
+          break;
         }
       }
 
-      if (!startNode?.parent || !endNode) {
-        throw new Error();
+      if (!startNode) {
+        throwSyntaxError(tagToken.start);
       }
 
       const elementNode: IElementNode = {
@@ -68,13 +59,15 @@ export function parseToAst(str: string, options?: IParserOptions): Node {
         end: tagToken.end,
       };
 
-      if (startNode !== endNode) {
-        throw new Error();
-      }
+      const siblings = startNode.parent!.children;
+      const startNodeEnd = startNode.end;
+      spliceTextNode(arr, i - 1, siblings, siblings.indexOf(startNode), startNode, tagToken.start, Math.min(startNodeEnd, tagToken.end), elementNode);
 
-      for (let k = 0; k < tagToken.attrs.length; k++) {
-        const attrToken = tagToken.attrs[k];
-        const attrNode: Node = {
+      let j = 0;
+      while (j < tagToken.attrs.length) {
+
+        const attrToken = tagToken.attrs[j++];
+        const attrNode: IAttributeNode = {
           nodeType: NodeType.ATTRIBUTE,
           name: attrToken.name,
           children: [],
@@ -82,21 +75,64 @@ export function parseToAst(str: string, options?: IParserOptions): Node {
           start: attrToken.start,
           end: attrToken.end,
         };
-        attrNode.children.push({
-          nodeType: NodeType.TEXT,
-          value: attrToken.value || '',
-          parent: attrNode,
-          start: attrToken.valueStart,
-          end: attrToken.valueEnd,
-        });
+
         elementNode.attrs.push(attrNode);
+
+        // No value
+        if (attrToken.value == null) {
+          continue;
+        }
+
+        // Plain text value
+        if (attrToken.valueEnd <= arr[i].start) {
+          attrNode.children.push({
+            nodeType: NodeType.TEXT,
+            value: attrToken.value,
+            parent: attrNode,
+            start: attrToken.valueStart,
+            end: attrToken.valueEnd,
+          });
+          break;
+        }
+
+        let k = i;
+        while (k < arr.length) {
+          const node = arr[k];
+
+          if (attrToken.valueEnd <= node.start) {
+            // Too far ahead
+            break;
+          }
+          if (startNode.parent !== node.parent) {
+            // Skip nested nodes
+            continue;
+          }
+          if (attrToken.valueStart <= node.start && node.end <= attrToken.valueEnd) {
+            attrNode.children.push(node);
+            node.parent = attrNode;
+            k++;
+            continue;
+          }
+
+          throwSyntaxError(attrToken.start);
+        }
+
+        // Remove nodes used by the attr
+        arr.splice(i, k - i);
       }
 
-      i = arr.indexOf(startNode);
-      const j = startNode.parent.children.indexOf(startNode);
+      if (tagToken.end <= startNodeEnd) {
+        return;
+      }
 
-      splitTextNode(arr, i, startNode.parent.children, j, startNode, tagToken.start, tagToken.end, elementNode);
+      const endNode = arr[i];
+      if (endNode?.nodeType === NodeType.TEXT && endNode.start < tagToken.end && endNode.end >= tagToken.end) {
+        endNode.value = endNode.value.substring(tagToken.end - endNode.start);
+        endNode.start = tagToken.end;
+        return;
+      }
 
+      throwSyntaxError(tagToken.start);
     },
 
     onEndTag(tagToken) {
@@ -123,8 +159,7 @@ export function parseToAst(str: string, options?: IParserOptions): Node {
 
       let childIndex = parentChildren.indexOf(textNode);
 
-      childIndex += splitTextNode(arr, arr.indexOf(textNode), parentChildren, childIndex, textNode, tagToken.start, tagToken.end);
-
+      childIndex += spliceTextNode(arr, arr.indexOf(textNode), parentChildren, childIndex, textNode, tagToken.start, tagToken.end);
 
       for (let k = childIndex; k >= 0; k--) {
         const node = parentChildren[k];
@@ -156,4 +191,8 @@ export function parseToAst(str: string, options?: IParserOptions): Node {
   }
 
   return rootNode;
+}
+
+function throwSyntaxError(start: number): never {
+  throw new SyntaxError('Unexpected syntax at ' + start);
 }
