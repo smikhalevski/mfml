@@ -1,51 +1,42 @@
-import {IAttributeNode, IElementNode, IFragmentNode, ITextNode, Node, NodeType} from './ast-types';
+import {IAttributeNode, IElementNode, IFragmentNode, Node, NodeType} from './ast-types';
 import {parseIcu} from './parseIcu';
 import {createForgivingSaxParser, IForgivingSaxParserDialectOptions} from 'tag-soup';
 import {spliceTextNode} from './spliceTextNode';
 import {collectIcuNodes} from './collectIcuNodes';
+import {findTextNodeIndex} from './findTextNodeIndex';
 
 export interface IParserOptions extends IForgivingSaxParserDialectOptions {
 }
 
 export function parseToAst(str: string, options?: IParserOptions): Node {
 
-  const children = parseIcu(str);
-  const arr = collectIcuNodes(children, []);
+  const rootChildren = parseIcu(str);
+
+  const arr = collectIcuNodes(rootChildren, []);
+  let index = 0;
 
   const rootNode: IFragmentNode = {
     nodeType: NodeType.FRAGMENT,
-    children,
+    children: rootChildren,
     parent: null,
     start: 0,
     end: str.length,
   };
 
-  for (let i = 0; i < children.length; i++) {
-    children[i].parent = rootNode;
+  for (let i = 0; i < rootChildren.length; i++) {
+    rootChildren[i].parent = rootNode;
   }
-
-  let i = 0;
 
   const saxParser = createForgivingSaxParser({
     ...options,
 
     onStartTag(tagToken) {
 
-      let startNode;
-      while (i < arr.length) {
-        const node = arr[i++];
+      index = findTextNodeIndex(arr, index, tagToken.start, tagToken.nameEnd);
 
-        if (tagToken.end <= node.start) {
-          // No more matching nodes
-          break;
-        }
-        if (node.nodeType === NodeType.TEXT && node.start <= tagToken.start && tagToken.nameEnd <= node.end) {
-          startNode = node;
-          break;
-        }
-      }
+      const startNode = arr[index];
 
-      if (!startNode) {
+      if (startNode?.nodeType !== NodeType.TEXT) {
         throwSyntaxError(tagToken.start);
       }
 
@@ -59,14 +50,21 @@ export function parseToAst(str: string, options?: IParserOptions): Node {
         end: tagToken.end,
       };
 
-      const siblings = startNode.parent!.children;
       const startNodeEnd = startNode.end;
-      spliceTextNode(arr, i - 1, siblings, siblings.indexOf(startNode), startNode, tagToken.start, Math.min(startNodeEnd, tagToken.end), elementNode);
+      const parentChildren = startNode.parent!.children;
 
-      let j = 0;
-      while (j < tagToken.attrs.length) {
+      let startNodeIndex = parentChildren.indexOf(startNode);
 
-        const attrToken = tagToken.attrs[j++];
+      const offset = spliceTextNode(arr, index, parentChildren, startNodeIndex, startNode, tagToken.start, Math.min(startNodeEnd, tagToken.end), elementNode);
+
+      index += offset + 1;
+      startNodeIndex += offset;
+
+      const attrIndex = index;
+
+      for (let i = 0; i < tagToken.attrs.length; i++) {
+        const attrToken = tagToken.attrs[i];
+
         const attrNode: IAttributeNode = {
           nodeType: NodeType.ATTRIBUTE,
           name: attrToken.name,
@@ -84,7 +82,7 @@ export function parseToAst(str: string, options?: IParserOptions): Node {
         }
 
         // Plain text value
-        if (attrToken.valueEnd <= arr[i].start) {
+        if (attrToken.valueEnd <= arr[index].start) {
           attrNode.children.push({
             nodeType: NodeType.TEXT,
             value: attrToken.value,
@@ -92,12 +90,11 @@ export function parseToAst(str: string, options?: IParserOptions): Node {
             start: attrToken.valueStart,
             end: attrToken.valueEnd,
           });
-          break;
+          continue;
         }
 
-        let k = i;
-        while (k < arr.length) {
-          const node = arr[k];
+        while (index < arr.length) {
+          const node = arr[index];
 
           if (attrToken.valueEnd <= node.start) {
             // Too far ahead
@@ -107,25 +104,50 @@ export function parseToAst(str: string, options?: IParserOptions): Node {
             // Skip nested nodes
             continue;
           }
+
           if (attrToken.valueStart <= node.start && node.end <= attrToken.valueEnd) {
+
+            // Leading text
+            if (attrNode.children.length === 0 && node.start !== attrToken.valueStart) {
+              attrNode.children.push({
+                nodeType: NodeType.TEXT,
+                value: attrToken.value.substr(0, node.start - attrToken.valueStart),
+                parent: attrNode,
+                start: attrToken.valueStart,
+                end: node.start,
+              });
+            }
+
             attrNode.children.push(node);
             node.parent = attrNode;
-            k++;
+            index++;
             continue;
+          }
+
+          // Trailing text
+          if (node.nodeType === NodeType.TEXT && attrToken.valueStart < node.start && attrToken.valueEnd < node.end) {
+            attrNode.children.push({
+              nodeType: NodeType.TEXT,
+              value: attrToken.value.substr(node.start - attrToken.valueStart),
+              parent: attrNode,
+              start: node.start,
+              end: attrToken.valueEnd,
+            });
+            break;
           }
 
           throwSyntaxError(attrToken.start);
         }
-
-        // Remove nodes used by the attr
-        arr.splice(i, k - i);
       }
+
+      parentChildren.splice(startNodeIndex + 1, index - attrIndex);
+
+      const endNode = arr[index];
 
       if (tagToken.end <= startNodeEnd) {
         return;
       }
 
-      const endNode = arr[i];
       if (endNode?.nodeType === NodeType.TEXT && endNode.start < tagToken.end && endNode.end >= tagToken.end) {
         endNode.value = endNode.value.substring(tagToken.end - endNode.start);
         endNode.start = tagToken.end;
@@ -136,48 +158,45 @@ export function parseToAst(str: string, options?: IParserOptions): Node {
     },
 
     onEndTag(tagToken) {
-      let textNode: ITextNode | undefined;
 
-      while (i < arr.length) {
-        const node = arr[i];
+      index = findTextNodeIndex(arr, index, tagToken.start, tagToken.end);
 
-        if (tagToken.end <= node.start) {
-          // No more applicable nodes
+      const textNode = arr[index];
+
+      if (textNode?.nodeType !== NodeType.TEXT) {
+        throwSyntaxError(tagToken.start);
+      }
+
+      const parentChildren = textNode.parent!.children;
+
+      let textNodeIndex = parentChildren.indexOf(textNode);
+
+      const offset = spliceTextNode(arr, index, parentChildren, textNodeIndex, textNode, tagToken.start, tagToken.end, null);
+
+      textNodeIndex += offset;
+      index += offset;
+
+      let elementIndex = textNodeIndex - 1;
+      while (elementIndex >= 0) {
+        const node = parentChildren[elementIndex];
+        if (node.nodeType === NodeType.ELEMENT && node.tagName === tagToken.name) {
           break;
         }
-        if (node.nodeType === NodeType.TEXT && node.start <= tagToken.start && tagToken.end <= node.end) {
-          textNode = node;
-          break;
-        }
-        i++;
+        elementIndex--;
       }
 
-      if (!textNode?.parent) {
-        throw new Error();
+      const elementNode = parentChildren[elementIndex];
+
+      if (elementNode?.nodeType !== NodeType.ELEMENT) {
+        throwSyntaxError(tagToken.start);
       }
-      const parentChildren = textNode.parent.children;
 
-      let childIndex = parentChildren.indexOf(textNode);
+      elementNode.end = tagToken.end;
+      elementNode.children = parentChildren.splice(elementIndex + 1, textNodeIndex - elementIndex - 1);
 
-      childIndex += spliceTextNode(arr, arr.indexOf(textNode), parentChildren, childIndex, textNode, tagToken.start, tagToken.end);
-
-      for (let k = childIndex; k >= 0; k--) {
-        const node = parentChildren[k];
-
-        if (!node || node.nodeType !== NodeType.ELEMENT || node.tagName !== tagToken.name) {
-          continue;
-        }
-
-        const children = parentChildren.splice(k + 1, childIndex - k - 1);
-        for (let k = 0; k < children.length; k++) {
-          children[k].parent = node;
-        }
-
-        node.end = tagToken.end;
-        node.children = children;
-        return;
+      for (let i = 0; i < elementNode.children.length; i++) {
+        elementNode.children[i].parent = elementNode;
       }
-      throw new Error();
     },
 
   });
