@@ -1,23 +1,34 @@
 import {Node, NodeType} from './ast-types';
-import {parseIcuAst} from './parseIcuAst';
-import {createForgivingSaxParser, IForgivingSaxParserDialectOptions} from 'tag-soup';
-import {splitTextNode} from './splitTextNode';
-import {collectIcuNodes} from './collectIcuNodes';
-import {findTextNodeIndex} from './findTextNodeIndex';
+import {parseIcu} from './parseIcu';
+import {createForgivingSaxParser, ISaxParser, ISaxParserCallbacks} from 'tag-soup';
 import {ParseOptions} from '@messageformat/parser';
+import {collectOrdinalNodes} from './collectOrdinalNodes';
+import {findTextNodeIndex} from './findTextNodeIndex';
+import {splitTextNode} from './splitTextNode';
 
-export interface IParserOptions extends ParseOptions, IForgivingSaxParserDialectOptions {
+export interface IIcuDomParserOptions extends ParseOptions {
+
+  /**
+   * The factory that creates an instance of a XML/HTML SAX parser that would be used for actual parsing of the input
+   * strings.
+   *
+   * **Note:** Underlying SAX parser must emit tags in the correct order. No additional checks are made while
+   * constructing a tree of elements.
+   *
+   * @default {@link https://smikhalevski.github.io/tag-soup/globals.html#createforgivingsaxparser createForgivingSaxParser}
+   */
+  saxParserFactory?: (options: ISaxParserCallbacks) => ISaxParser;
 }
 
-export function parseIcuTagSoup(str: string, options?: IParserOptions): Node {
+export function createIcuDomParser(options: IIcuDomParserOptions = {}): (str: string) => Node {
 
-  const rootChildren = parseIcuAst(str, options);
+  const {saxParserFactory = createForgivingSaxParser} = options;
 
-  const ordinalNodes = collectIcuNodes(rootChildren, []);
+  let rootChildren: Array<Node>;
+  let ordinalNodes: Array<Node>;
   let ordinalIndex = 0;
 
-  const saxParser = createForgivingSaxParser({
-    ...options,
+  const saxParser = saxParserFactory({
 
     onStartTag(tagToken) {
 
@@ -157,10 +168,10 @@ export function parseIcuTagSoup(str: string, options?: IParserOptions): Node {
         return;
       }
 
+      // Remove remaining chars of the start tag from the consequent text node
       const lastNode = ordinalNodes[ordinalIndex];
       const lastNodeStart = lastNode.start;
 
-      // Remove remaining chars of the start tag from the consequent text node
       if (lastNode?.nodeType === NodeType.TEXT && lastNodeStart < tagEnd && lastNode.end >= tagEnd) {
         lastNode.value = lastNode.value.substring(tagEnd - lastNodeStart);
         lastNode.start = tagEnd;
@@ -223,23 +234,30 @@ export function parseIcuTagSoup(str: string, options?: IParserOptions): Node {
 
   });
 
-  saxParser.parse(str);
+  return (str) => {
 
-  if (rootChildren.length === 1) {
-    return rootChildren[0];
-  }
+    rootChildren = parseIcu(str, options);
+    ordinalNodes = collectOrdinalNodes(rootChildren, []);
+    ordinalIndex = 0;
 
-  const rootNode: Node = {
-    nodeType: NodeType.FRAGMENT,
-    children: rootChildren,
-    parent: null,
-    start: 0,
-    end: str.length,
+    saxParser.parse(str);
+
+    if (rootChildren.length === 1) {
+      return rootChildren[0];
+    }
+
+    const rootNode: Node = {
+      nodeType: NodeType.FRAGMENT,
+      children: rootChildren,
+      parent: null,
+      start: 0,
+      end: str.length,
+    };
+
+    for (let i = 0; i < rootChildren.length; i++) {
+      rootChildren[i].parent = rootNode;
+    }
+
+    return rootNode;
   };
-
-  for (let i = 0; i < rootChildren.length; i++) {
-    rootChildren[i].parent = rootNode;
-  }
-
-  return rootNode;
 }

@@ -1,6 +1,6 @@
-import {Node, NodeType} from './ast-types';
+import {Node, NodeType} from '../parser/ast-types';
 import {visitAst} from './visitAst';
-import {RuntimeFields} from './RuntimeFields';
+import {RuntimeFields} from '../runtime/RuntimeFields';
 
 export interface ICompileAstOptions {
   renameArgument: (arg: string) => string;

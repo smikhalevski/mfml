@@ -8,7 +8,7 @@ import {
   ITextNode,
   Node,
   NodeType,
-} from './ast-types';
+} from '../parser/ast-types';
 
 export interface IVisitor {
   onFragment?: (node: IFragmentNode, next: () => void) => void;

@@ -8,7 +8,7 @@ import {ContainerNode, IFunctionNode, ISelectCaseNode, ISelectNode, Node, NodeTy
  * @param options The ICU parsing options.
  * @returns An array of AST nodes.
  */
-export function parseIcuAst(str: string, options?: ParseOptions): Array<Node> {
+export function parseIcu(str: string, options?: ParseOptions): Array<Node> {
   return pushIcuTokensAsNodes(parse(str, options), [], null);
 }
 

@@ -1,4 +1,4 @@
-import {Node} from './ast-types';
+import {Node} from '../parser/ast-types';
 import {compileAst, ICompileAstOptions} from './compileAst';
 
 export interface ICompileCallbackOptions extends ICompileAstOptions {
