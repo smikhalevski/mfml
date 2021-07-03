@@ -41,7 +41,7 @@ export function createIcuDomParser(options: IIcuDomParserOptions = {}): (str: st
       const textNode = ordinalNodes[ordinalIndex];
 
       if (textNode?.nodeType !== NodeType.TEXT) {
-        throw new SyntaxError('Incorrect start tag syntax at ' + tagStart);
+        throwSyntaxError(tagStart);
       }
 
       const elementNode: Node = {
@@ -154,7 +154,7 @@ export function createIcuDomParser(options: IIcuDomParserOptions = {}): (str: st
             break;
           }
 
-          throw new SyntaxError('Incorrect attribute syntax at ' + nodeStart);
+          throwSyntaxError(nodeStart);
         }
       }
 
@@ -178,7 +178,7 @@ export function createIcuDomParser(options: IIcuDomParserOptions = {}): (str: st
         return;
       }
 
-      throw new SyntaxError('Unexpected token at ' + lastNodeStart);
+      throwSyntaxError(lastNodeStart);
     },
 
     onEndTag(tagToken) {
@@ -209,7 +209,7 @@ export function createIcuDomParser(options: IIcuDomParserOptions = {}): (str: st
       } else {
 
         if (textNode?.nodeType !== NodeType.TEXT) {
-          throw new SyntaxError('Incorrect end tag syntax at ' + tagStart);
+          throwSyntaxError(tagStart);
         }
 
         siblingNodes = textNode.parent?.children || rootChildren;
@@ -237,7 +237,7 @@ export function createIcuDomParser(options: IIcuDomParserOptions = {}): (str: st
       }
 
       if (!elementNode) {
-        throw new SyntaxError('Unexpected end tag at ' + tagStart);
+        throwSyntaxError(tagStart);
       }
 
       const elementChildren = siblingNodes.splice(elementIndex + 1, siblingIndex - elementIndex - 1);
@@ -278,4 +278,8 @@ export function createIcuDomParser(options: IIcuDomParserOptions = {}): (str: st
 
     return rootNode;
   };
+}
+
+function throwSyntaxError(offset: number): never {
+  throw new SyntaxError('Unexpected token at ' + offset);
 }

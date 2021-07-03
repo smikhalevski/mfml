@@ -669,4 +669,20 @@ describe('createIcuDomParser', () => {
 
     expect(parse('<foo bar="{baz}"></foo>')).toEqual(rootNode);
   });
+
+  test('throws on unexpected argument in start tag', () => {
+    expect(() => parse('<foo {baz}></foo>')).toThrow(new SyntaxError('Unexpected token at 5'));
+  });
+
+  test('throws on unexpected argument in end tag', () => {
+    expect(() => parse('<foo></foo {baz}>')).toThrow(new SyntaxError('Unexpected token at 11'));
+  });
+
+  test('throws on element in select in argument', () => {
+    expect(() => parse('<foo bar="{www,select,aaa{<bar></bar>}}"></foo>')).toThrow(new SyntaxError('Unexpected token at 10'));
+  });
+
+  test('throws on unclosed argument', () => {
+    expect(() => parse('{bar')).toThrow();
+  });
 });
