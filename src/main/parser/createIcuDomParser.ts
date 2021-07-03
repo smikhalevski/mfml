@@ -3,7 +3,7 @@ import {parseIcu} from './parseIcu';
 import {createForgivingSaxParser, ISaxParser, ISaxParserCallbacks} from 'tag-soup';
 import {ParseOptions} from '@messageformat/parser';
 import {collectOrdinalNodes} from './collectOrdinalNodes';
-import {findTextNodeIndex} from './findTextNodeIndex';
+import {findNodeIndex} from './findNodeIndex';
 import {splitTextNode} from './splitTextNode';
 
 export interface IIcuDomParserOptions extends ParseOptions {
@@ -35,7 +35,7 @@ export function createIcuDomParser(options: IIcuDomParserOptions = {}): (str: st
       const tagStart = tagToken.start;
       const tagEnd = tagToken.end;
 
-      ordinalIndex = findTextNodeIndex(ordinalNodes, ordinalIndex, tagStart, tagToken.nameEnd);
+      ordinalIndex = findNodeIndex(ordinalNodes, ordinalIndex, tagStart, tagToken.nameEnd);
 
       // The text node that contains the start tag name
       const textNode = ordinalNodes[ordinalIndex];
@@ -186,24 +186,42 @@ export function createIcuDomParser(options: IIcuDomParserOptions = {}): (str: st
       const tagStart = tagToken.start;
       const tagEnd = tagToken.end;
 
-      ordinalIndex = findTextNodeIndex(ordinalNodes, ordinalIndex, tagStart, tagEnd);
+      ordinalIndex = findNodeIndex(ordinalNodes, ordinalIndex, tagStart, tagEnd);
+
+      let siblingNodes;
+      let siblingIndex;
 
       // The text node that fully contains the end tag
       const textNode = ordinalNodes[ordinalIndex];
 
-      if (textNode?.nodeType !== NodeType.TEXT) {
-        throw new SyntaxError('Incorrect end tag syntax at ' + tagStart);
+      // The end tag was doesn't exist in the markup but was inserted by forgiving SAX parser
+      if (tagStart === tagEnd && textNode?.nodeType !== NodeType.TEXT) {
+
+        if (ordinalIndex === -1)  {
+          ordinalIndex = ordinalNodes.length;
+        }
+
+        const node = ordinalNodes[ordinalIndex - 1];
+
+        siblingNodes = node.parent?.children || rootChildren;
+        siblingIndex = siblingNodes.indexOf(node) + 1;
+
+      } else {
+
+        if (textNode?.nodeType !== NodeType.TEXT) {
+          throw new SyntaxError('Incorrect end tag syntax at ' + tagStart);
+        }
+
+        siblingNodes = textNode.parent?.children || rootChildren;
+
+        siblingIndex = siblingNodes.indexOf(textNode);
+
+        // Remove end tag markup from the text node
+        const offset = splitTextNode(ordinalNodes, ordinalIndex, siblingNodes, siblingIndex, textNode, tagStart, tagEnd, null);
+
+        siblingIndex += offset;
+        ordinalIndex += offset;
       }
-
-      const siblingNodes = textNode.parent?.children || rootChildren;
-
-      let siblingIndex = siblingNodes.indexOf(textNode);
-
-      // Remove end tag markup from the text node
-      const offset = splitTextNode(ordinalNodes, ordinalIndex, siblingNodes, siblingIndex, textNode, tagStart, tagEnd, null);
-
-      siblingIndex += offset;
-      ordinalIndex += offset;
 
       // Lookup an element node that is terminated by the end tag
       let elementNode;
