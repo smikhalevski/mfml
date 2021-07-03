@@ -7,10 +7,10 @@ export function isTextNode(node: Node | null | undefined): node is ITextNode {
 export function isContainerNode(node: Node | null | undefined): node is ContainerNode {
   const nodeType = node?.nodeType;
 
-  return nodeType === NodeType.FRAGMENT ||
-      nodeType === NodeType.ELEMENT ||
-      nodeType === NodeType.ATTRIBUTE ||
-      nodeType === NodeType.FUNCTION ||
-      nodeType === NodeType.SELECT ||
-      nodeType === NodeType.SELECT_CASE;
+  return nodeType === NodeType.FRAGMENT
+      || nodeType === NodeType.ELEMENT
+      || nodeType === NodeType.ATTRIBUTE
+      || nodeType === NodeType.FUNCTION
+      || nodeType === NodeType.SELECT
+      || nodeType === NodeType.SELECT_CASE;
 }

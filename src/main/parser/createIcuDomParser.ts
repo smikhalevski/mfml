@@ -2,7 +2,7 @@ import {Node, NodeType} from './node-types';
 import {parseIcu} from './parseIcu';
 import {createEntitiesDecoder, createForgivingSaxParser, ISaxParser, ISaxParserCallbacks, Rewriter} from 'tag-soup';
 import {ParseOptions} from '@messageformat/parser';
-import {collectOrdinalNodes} from './collectOrdinalNodes';
+import {collectNodes} from './collectNodes';
 import {findNodeIndex} from './findNodeIndex';
 import {splitTextNode} from './splitTextNode';
 import {isTextNode} from './node-utils';
@@ -279,7 +279,7 @@ export function createIcuDomParser(options: IIcuDomParserOptions = {}): (str: st
     ordinalNodes = [];
     ordinalIndex = 0;
 
-    collectOrdinalNodes(rootChildren, ordinalNodes);
+    collectNodes(rootChildren, ordinalNodes);
     saxParser.parse(str);
 
     decodeTextNodes(rootChildren, decodeText);
