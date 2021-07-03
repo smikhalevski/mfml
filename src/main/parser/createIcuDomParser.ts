@@ -1,10 +1,11 @@
 import {Node, NodeType} from './ast-types';
 import {parseIcu} from './parseIcu';
-import {createForgivingSaxParser, ISaxParser, ISaxParserCallbacks} from 'tag-soup';
+import {createForgivingSaxParser, ISaxParser, ISaxParserOptions} from 'tag-soup';
 import {ParseOptions} from '@messageformat/parser';
 import {collectOrdinalNodes} from './collectOrdinalNodes';
 import {findNodeIndex} from './findNodeIndex';
 import {splitTextNode} from './splitTextNode';
+import {isTextNode} from './isTextNode';
 
 export interface IIcuDomParserOptions extends ParseOptions {
 
@@ -17,9 +18,12 @@ export interface IIcuDomParserOptions extends ParseOptions {
    *
    * @default {@link https://smikhalevski.github.io/tag-soup/globals.html#createforgivingsaxparser createForgivingSaxParser}
    */
-  saxParserFactory?: (options: ISaxParserCallbacks) => ISaxParser;
+  saxParserFactory?: (options: ISaxParserOptions) => ISaxParser;
 }
 
+/**
+ * Creates an ICU + XML/HTML DOM parser.
+ */
 export function createIcuDomParser(options: IIcuDomParserOptions = {}): (str: string) => Node {
 
   const {saxParserFactory = createForgivingSaxParser} = options;
@@ -40,7 +44,7 @@ export function createIcuDomParser(options: IIcuDomParserOptions = {}): (str: st
       // The text node that contains the start tag name
       const textNode = ordinalNodes[ordinalIndex];
 
-      if (textNode?.nodeType !== NodeType.TEXT) {
+      if (!isTextNode(textNode)) {
         throwSyntaxError(tagStart);
       }
 
@@ -143,7 +147,7 @@ export function createIcuDomParser(options: IIcuDomParserOptions = {}): (str: st
           }
 
           // Trailing text
-          if (node.nodeType === NodeType.TEXT && attrValueStart < nodeStart && attrValueEnd < nodeEnd) {
+          if (isTextNode(node) && attrValueStart < nodeStart && attrValueEnd < nodeEnd) {
             attrChildren.push({
               nodeType: NodeType.TEXT,
               value: attrValue.substr(nodeStart - attrValueStart),
@@ -172,7 +176,7 @@ export function createIcuDomParser(options: IIcuDomParserOptions = {}): (str: st
       const lastNode = ordinalNodes[ordinalIndex];
       const lastNodeStart = lastNode.start;
 
-      if (lastNode?.nodeType === NodeType.TEXT && lastNodeStart < tagEnd && lastNode.end >= tagEnd) {
+      if (isTextNode(lastNode) && lastNodeStart < tagEnd && lastNode.end >= tagEnd) {
         lastNode.value = lastNode.value.substring(tagEnd - lastNodeStart);
         lastNode.start = tagEnd;
         return;
@@ -195,9 +199,9 @@ export function createIcuDomParser(options: IIcuDomParserOptions = {}): (str: st
       const textNode = ordinalNodes[ordinalIndex];
 
       // The end tag was doesn't exist in the markup but was inserted by forgiving SAX parser
-      if (tagStart === tagEnd && textNode?.nodeType !== NodeType.TEXT) {
+      if (tagStart === tagEnd && !isTextNode(textNode)) {
 
-        if (ordinalIndex === -1)  {
+        if (ordinalIndex === -1) {
           ordinalIndex = ordinalNodes.length;
         }
 
@@ -208,7 +212,7 @@ export function createIcuDomParser(options: IIcuDomParserOptions = {}): (str: st
 
       } else {
 
-        if (textNode?.nodeType !== NodeType.TEXT) {
+        if (!isTextNode(textNode)) {
           throwSyntaxError(tagStart);
         }
 
