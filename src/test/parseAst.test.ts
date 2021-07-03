@@ -1,10 +1,10 @@
 import {IElementNode, ISelectCaseNode, Node, NodeType} from '../main/ast-types';
-import {parseToAst} from '../main/parseToAst';
+import {parseIcuTagSoup} from '../main/parseAst';
 
 describe('parseMarkup', () => {
 
   test('parses text', () => {
-    expect(parseToAst('aaa')).toEqual<Node>({
+    expect(parseIcuTagSoup('aaa')).toEqual<Node>({
       nodeType: NodeType.TEXT,
       value: 'aaa',
       parent: null,
@@ -14,7 +14,7 @@ describe('parseMarkup', () => {
   });
 
   test('parses an argument', () => {
-    expect(parseToAst('{foo}')).toEqual<Node>({
+    expect(parseIcuTagSoup('{foo}')).toEqual<Node>({
       nodeType: NodeType.ARGUMENT,
       arg: 'foo',
       parent: null,
@@ -24,7 +24,7 @@ describe('parseMarkup', () => {
   });
 
   test('parses a function', () => {
-    expect(parseToAst('{foo,number}')).toEqual<Node>({
+    expect(parseIcuTagSoup('{foo,number}')).toEqual<Node>({
       nodeType: NodeType.FUNCTION,
       name: 'number',
       arg: 'foo',
@@ -53,7 +53,7 @@ describe('parseMarkup', () => {
       start: 10,
       end: 20,
     });
-    expect(parseToAst('{foo,date,YYYY-MM-DD}')).toEqual(rootNode);
+    expect(parseIcuTagSoup('{foo,date,YYYY-MM-DD}')).toEqual(rootNode);
   });
 
   test('parses a select node', () => {
@@ -103,7 +103,7 @@ describe('parseMarkup', () => {
       end: 32,
     });
 
-    expect(parseToAst('{foo, select, yes {Yep} no {Nope} }')).toEqual(rootNode);
+    expect(parseIcuTagSoup('{foo, select, yes {Yep} no {Nope} }')).toEqual(rootNode);
   });
 
   test('parses a plural node', () => {
@@ -161,11 +161,11 @@ describe('parseMarkup', () => {
         },
     );
 
-    expect(parseToAst('{flowerCount, plural, one {One flower} many {# flowers} }')).toEqual(rootNode);
+    expect(parseIcuTagSoup('{flowerCount, plural, one {One flower} many {# flowers} }')).toEqual(rootNode);
   });
 
   test('parses an element', () => {
-    expect(parseToAst('<foo></foo>')).toEqual<Node>({
+    expect(parseIcuTagSoup('<foo></foo>')).toEqual<Node>({
       nodeType: NodeType.ELEMENT,
       tagName: 'foo',
       attrs: [],
@@ -177,7 +177,7 @@ describe('parseMarkup', () => {
   });
 
   test('parses a self-closing element', () => {
-    expect(parseToAst('<foo/>', {selfClosingEnabled: true})).toEqual<Node>({
+    expect(parseIcuTagSoup('<foo/>', {selfClosingEnabled: true})).toEqual<Node>({
       nodeType: NodeType.ELEMENT,
       tagName: 'foo',
       attrs: [],
@@ -216,7 +216,7 @@ describe('parseMarkup', () => {
       end: 13,
     });
 
-    expect(parseToAst('<foo bar="baz"></foo>')).toEqual(rootNode);
+    expect(parseIcuTagSoup('<foo bar="baz"></foo>')).toEqual(rootNode);
   });
 
   test('parses nested elements', () => {
@@ -240,7 +240,7 @@ describe('parseMarkup', () => {
     };
     rootNode.children.push(elementNode);
 
-    expect(parseToAst('<foo><bar></bar></foo>')).toEqual(rootNode);
+    expect(parseIcuTagSoup('<foo><bar></bar></foo>')).toEqual(rootNode);
   });
 
   test('parses an element that is nested in a select', () => {
@@ -313,7 +313,7 @@ describe('parseMarkup', () => {
       end: 51,
     });
 
-    expect(parseToAst('{answer, select, yes {<foo>Yep</foo>} no {<bar>Nope</bar>} }')).toEqual(rootNode);
+    expect(parseIcuTagSoup('{answer, select, yes {<foo>Yep</foo>} no {<bar>Nope</bar>} }')).toEqual(rootNode);
   });
 
   test('parses an argument surrounded by text and nested in an element', () => {
@@ -378,7 +378,7 @@ describe('parseMarkup', () => {
         },
     );
 
-    expect(parseToAst('aaa<b>bbb{foo}ddd</b>eee')).toEqual(rootNode);
+    expect(parseIcuTagSoup('aaa<b>bbb{foo}ddd</b>eee')).toEqual(rootNode);
   });
 
   test('parses an argument nested in an element', () => {
@@ -429,7 +429,7 @@ describe('parseMarkup', () => {
         },
     );
 
-    expect(parseToAst('aaa<b>{foo}</b>bbb')).toEqual(rootNode);
+    expect(parseIcuTagSoup('aaa<b>{foo}</b>bbb')).toEqual(rootNode);
   });
 
   test('parses an argument surrounded by text nested in an attribute', () => {
@@ -476,7 +476,7 @@ describe('parseMarkup', () => {
         },
     );
 
-    expect(parseToAst('<foo bar="aaa{baz}bbb"></foo>')).toEqual(rootNode);
+    expect(parseIcuTagSoup('<foo bar="aaa{baz}bbb"></foo>')).toEqual(rootNode);
   });
 
   test('parses multiple arguments nested in an attribute', () => {
@@ -530,7 +530,7 @@ describe('parseMarkup', () => {
         },
     );
 
-    expect(parseToAst('<foo bar="aaa{baz}bbb{qux}"></foo>')).toEqual(rootNode);
+    expect(parseIcuTagSoup('<foo bar="aaa{baz}bbb{qux}"></foo>')).toEqual(rootNode);
   });
 
   test('parses an argument nested in an attribute', () => {
@@ -561,7 +561,7 @@ describe('parseMarkup', () => {
       end: 15,
     });
 
-    expect(parseToAst('<foo bar="{baz}"></foo>')).toEqual(rootNode);
+    expect(parseIcuTagSoup('<foo bar="{baz}"></foo>')).toEqual(rootNode);
   });
 
 });

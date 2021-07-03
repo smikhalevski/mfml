@@ -1,6 +1,6 @@
 import {ITextNode, Node, NodeType} from './ast-types';
 
-export function spliceTextNode(arr: Array<Node>, index: number, children: Array<Node>, childIndex: number, textNode: ITextNode, start: number, end: number, node: Node | null): number {
+export function splitTextNode(arr: Array<Node>, index: number, children: Array<Node>, childIndex: number, textNode: ITextNode, start: number, end: number, node: Node | null): number {
   const textStart = textNode.start;
   const textEnd = textNode.end;
   const text = textNode.value;

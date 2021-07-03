@@ -1,20 +1,20 @@
-# typed-i18n
+# icuc
 
-Code generator and runtime for type-safe i18n with ICU and XML support.
+The ICU + HTML compiler and runtime.
 
-Prepare your translations in a `translations.json` file:
+Prepare your translations in a `./translations.json` file:
 ```json
 {
   "greeting": {
-    "en": "Hello, {name}!",
-    "ru": "Привет, {name}!"
+    "en": "Hello, <strong>{name}</strong>!",
+    "ru": "Привет, <strong>{name}</strong>!"
   }
 }
 ```
 
-Compile translations module source and write it to file:
+Compile translations module source and write it to `./messages.ts` file:
 ```ts
-import {compileModule} from '@smikhalevski/typed-i18n/lib/compiler';
+import {compileModule} from '@smikhalevski/icuc/lib/compiler';
 import fs from 'fs';
 import translations from './translations.json';
 
@@ -23,10 +23,10 @@ const source = compileModule({translations});
 fs.writeFileSync('./messages.ts', source);
 ```
 
-Use compiled module in the application source:
+Use messages in the application source:
 ```ts
 import {greeting} from './mesasges';
-import {createRuntime} from '@smikhalevski/typed-i18n/lib/runtime';
+import {createRuntime} from '@smikhalevski/icuc';
 
 const runtime = createRuntime();
 

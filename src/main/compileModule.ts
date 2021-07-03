@@ -1,5 +1,5 @@
 import {compileCallback} from './compileCallback';
-import {parseToAst} from './parseToAst';
+import {parseIcuTagSoup} from './parseAst';
 import {ICompileAstOptions} from './compileAst';
 
 export interface ICompileModuleOptions extends ICompileAstOptions {
@@ -16,10 +16,10 @@ export function compileModule(options: ICompileModuleOptions): string {
     translations,
   } = options;
 
-  let source = 'import {IRuntime} from "@smikhalevski/typed-i18n/lib/runtime";';
+  let source = 'import {IRuntime} from "@smikhalevski/icuc/lib/runtime";';
 
   for (const key in translations) {
-    source += compileCallback(parseToAst(translations[key]), {
+    source += compileCallback(parseIcuTagSoup(translations[key]), {
       interfaceName: renameInterface(key),
       functionName: renameFunction(key),
       renameArgument,

@@ -1,11 +1,15 @@
-import {parse, Token} from '@messageformat/parser';
+import {parse, ParseOptions, Token} from '@messageformat/parser';
 import {ContainerNode, IFunctionNode, ISelectCaseNode, ISelectNode, Node, NodeType} from './ast-types';
 
 /**
- * Converts a string with ICU tags to a list of AST nodes.
+ * Parses only ICU tags.
+ *
+ * @param str The string to parse.
+ * @param options The ICU parsing options.
+ * @returns An array of AST nodes.
  */
-export function parseIcu(str: string): Array<Node> {
-  return pushIcuTokensAsNodes(parse(str), [], null);
+export function parseIcuAst(str: string, options?: ParseOptions): Array<Node> {
+  return pushIcuTokensAsNodes(parse(str, options), [], null);
 }
 
 function pushIcuTokensAsNodes(tokens: Array<Token>, arr: Array<Node>, parent: ContainerNode | null): Array<Node> {

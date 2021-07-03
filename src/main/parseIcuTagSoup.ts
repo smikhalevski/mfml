@@ -1,21 +1,22 @@
-import {IAttributeNode, IElementNode, IFragmentNode, Node, NodeType} from './ast-types';
-import {parseIcu} from './parseIcu';
+import {IAttributeNode, IElementNode, IFragmentNode, ITextNode, Node, NodeType} from './ast-types';
+import {parseIcuAst} from './parseIcuAst';
 import {createForgivingSaxParser, IForgivingSaxParserDialectOptions} from 'tag-soup';
-import {spliceTextNode} from './spliceTextNode';
+import {splitTextNode} from './splitTextNode';
 import {collectIcuNodes} from './collectIcuNodes';
 import {findTextNodeIndex} from './findTextNodeIndex';
+import {ParseOptions} from '@messageformat/parser';
 
-export interface IParserOptions extends IForgivingSaxParserDialectOptions {
+export interface IParserOptions extends ParseOptions, IForgivingSaxParserDialectOptions {
 }
 
-export function parseToAst(str: string, options?: IParserOptions): Node {
+export function parseIcuTagSoup(str: string, options?: IParserOptions): Node {
 
-  const rootChildren = parseIcu(str);
+  const rootChildren = parseIcuAst(str, options);
 
-  const arr = collectIcuNodes(rootChildren, []);
-  let index = 0;
+  const ordinalNodes = collectIcuNodes(rootChildren, []);
+  let ordinalIndex = 0;
 
-  const rootNode: IFragmentNode = {
+  const rootNode: Node = {
     nodeType: NodeType.FRAGMENT,
     children: rootChildren,
     parent: null,
@@ -32,12 +33,12 @@ export function parseToAst(str: string, options?: IParserOptions): Node {
 
     onStartTag(tagToken) {
 
-      index = findTextNodeIndex(arr, index, tagToken.start, tagToken.nameEnd);
+      ordinalIndex = findTextNodeIndex(ordinalNodes, ordinalIndex, tagToken.start, tagToken.nameEnd);
 
-      const startNode = arr[index];
+      const startNode = ordinalNodes[ordinalIndex];
 
       if (startNode?.nodeType !== NodeType.TEXT) {
-        throwSyntaxError(tagToken.start);
+        fatal(tagToken.start);
       }
 
       const elementNode: IElementNode = {
@@ -55,12 +56,12 @@ export function parseToAst(str: string, options?: IParserOptions): Node {
 
       let startNodeIndex = parentChildren.indexOf(startNode);
 
-      const offset = spliceTextNode(arr, index, parentChildren, startNodeIndex, startNode, tagToken.start, Math.min(startNodeEnd, tagToken.end), elementNode);
+      const offset = splitTextNode(ordinalNodes, ordinalIndex, parentChildren, startNodeIndex, startNode, tagToken.start, Math.min(startNodeEnd, tagToken.end), elementNode);
 
-      index += offset + 1;
+      ordinalIndex += offset + 1;
       startNodeIndex += offset;
 
-      const attrIndex = index;
+      const attrIndex = ordinalIndex;
 
       for (let i = 0; i < tagToken.attrs.length; i++) {
         const attrToken = tagToken.attrs[i];
@@ -82,7 +83,7 @@ export function parseToAst(str: string, options?: IParserOptions): Node {
         }
 
         // Plain text value
-        if (attrToken.valueEnd <= arr[index].start) {
+        if (attrToken.valueEnd <= ordinalNodes[ordinalIndex].start) {
           attrNode.children.push({
             nodeType: NodeType.TEXT,
             value: attrToken.value,
@@ -93,8 +94,8 @@ export function parseToAst(str: string, options?: IParserOptions): Node {
           continue;
         }
 
-        while (index < arr.length) {
-          const node = arr[index];
+        while (ordinalIndex < ordinalNodes.length) {
+          const node = ordinalNodes[ordinalIndex];
 
           if (attrToken.valueEnd <= node.start) {
             // Too far ahead
@@ -120,7 +121,7 @@ export function parseToAst(str: string, options?: IParserOptions): Node {
 
             attrNode.children.push(node);
             node.parent = attrNode;
-            index++;
+            ordinalIndex++;
             continue;
           }
 
@@ -136,13 +137,13 @@ export function parseToAst(str: string, options?: IParserOptions): Node {
             break;
           }
 
-          throwSyntaxError(attrToken.start);
+          fatal(attrToken.start);
         }
       }
 
-      parentChildren.splice(startNodeIndex + 1, index - attrIndex);
+      parentChildren.splice(startNodeIndex + 1, ordinalIndex - attrIndex);
 
-      const endNode = arr[index];
+      const endNode = ordinalNodes[ordinalIndex];
 
       if (tagToken.end <= startNodeEnd) {
         return;
@@ -154,50 +155,88 @@ export function parseToAst(str: string, options?: IParserOptions): Node {
         return;
       }
 
-      throwSyntaxError(tagToken.start);
+      fatal(tagToken.start);
     },
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     onEndTag(tagToken) {
+      const tagStart = tagToken.start;
+      const tagEnd = tagToken.end;
 
-      index = findTextNodeIndex(arr, index, tagToken.start, tagToken.end);
+      ordinalIndex = findTextNodeIndex(ordinalNodes, ordinalIndex, tagStart, tagEnd);
 
-      const textNode = arr[index];
-
-      if (textNode?.nodeType !== NodeType.TEXT) {
-        throwSyntaxError(tagToken.start);
+      if (ordinalIndex === -1) {
+        throw new SyntaxError('Incorrect end tag syntax at ' + tagStart);
       }
 
-      const parentChildren = textNode.parent!.children;
+      // The ICU text node that fully contains the end tag.
+      const textNode = ordinalNodes[ordinalIndex] as ITextNode;
 
-      let textNodeIndex = parentChildren.indexOf(textNode);
+      const siblingNodes = textNode.parent?.children || rootChildren;
 
-      const offset = spliceTextNode(arr, index, parentChildren, textNodeIndex, textNode, tagToken.start, tagToken.end, null);
+      let siblingIndex = siblingNodes.indexOf(textNode);
 
-      textNodeIndex += offset;
-      index += offset;
+      const offset = splitTextNode(ordinalNodes, ordinalIndex, siblingNodes, siblingIndex, textNode, tagStart, tagEnd, null);
 
-      let elementIndex = textNodeIndex - 1;
-      while (elementIndex >= 0) {
-        const node = parentChildren[elementIndex];
+      siblingIndex += offset;
+      ordinalIndex += offset;
+
+      // Lookup the element node that is terminated by the end tag.
+      let elementNode;
+      let elementIndex = siblingIndex;
+
+      while (elementIndex > 0) {
+        const node = siblingNodes[--elementIndex];
+
         if (node.nodeType === NodeType.ELEMENT && node.tagName === tagToken.name) {
+          elementNode = node;
           break;
         }
-        elementIndex--;
       }
 
-      const elementNode = parentChildren[elementIndex];
-
-      if (elementNode?.nodeType !== NodeType.ELEMENT) {
-        throwSyntaxError(tagToken.start);
+      if (!elementNode) {
+        throw new SyntaxError('Unexpected end tag at ' + tagStart);
       }
 
-      elementNode.end = tagToken.end;
-      elementNode.children = parentChildren.splice(elementIndex + 1, textNodeIndex - elementIndex - 1);
+      const elementChildren = siblingNodes.splice(elementIndex + 1, siblingIndex - elementIndex - 1);
 
-      for (let i = 0; i < elementNode.children.length; i++) {
-        elementNode.children[i].parent = elementNode;
+      elementNode.end = tagEnd;
+      elementNode.children = elementChildren;
+
+      for (let i = 0; i < elementChildren.length; i++) {
+        elementChildren[i].parent = elementNode;
       }
     },
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
   });
 
@@ -212,6 +251,6 @@ export function parseToAst(str: string, options?: IParserOptions): Node {
   return rootNode;
 }
 
-function throwSyntaxError(start: number): never {
+function fatal(start: number): never {
   throw new SyntaxError('Unexpected syntax at ' + start);
 }
