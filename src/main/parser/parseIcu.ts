@@ -1,5 +1,5 @@
 import {parse, ParseOptions, Token} from '@messageformat/parser';
-import {ContainerNode, IFunctionNode, ISelectCaseNode, ISelectNode, Node, NodeType} from './ast-types';
+import {ContainerNode, IFunctionNode, ISelectCaseNode, ISelectNode, Node, NodeType} from './node-types';
 
 /**
  * Parses only ICU tags.

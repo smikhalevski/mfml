@@ -2,16 +2,23 @@ import {RuntimeFields} from './RuntimeFields';
 
 export interface IRuntime<Result> {
   [RuntimeFields.FRAGMENT](...children: Array<Result>): Result;
+
   [RuntimeFields.ELEMENT](tagName: string, attrs: Record<string, Result> | null, ...children: Array<Result>): Result;
+
   [RuntimeFields.FUNCTION](name: string, arg: Result, ...children: Array<Result>): Result;
+
   [RuntimeFields.PLURAL](pluralMap: Record<string, Result>): Result;
+
   [RuntimeFields.SELECT](selectMap: Record<string, Result>): Result;
+
   [RuntimeFields.SELECT_ORDINAL](selectMap: Record<string, Result>): Result;
 }
 
 export interface IRuntimeOptions<Result> {
   createFragment(...children: Array<Result>): Result;
+
   createElement(tagName: string, attrs: Record<string, Result> | null, ...children: Array<Result>): Result;
+
   callFunction(name: string, arg: Result, ...children: Array<Result>): Result;
 }
 
@@ -41,5 +48,5 @@ export function createRuntime<Result>(options: IRuntimeOptions<Result>): IRuntim
     [RuntimeFields.SELECT_ORDINAL](selectMap) {
       return selectMap.FOOO;
     },
-  }
+  };
 }

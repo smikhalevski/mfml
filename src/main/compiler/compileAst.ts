@@ -1,4 +1,4 @@
-import {Node, NodeType} from '../parser/ast-types';
+import {Node, NodeType} from '../parser/node-types';
 import {visitAst} from './visitAst';
 import {RuntimeFields} from '../runtime/RuntimeFields';
 

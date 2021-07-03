@@ -1,15 +1,15 @@
 export const enum NodeType {
-  FRAGMENT = 'FRAGMENT',
-  ELEMENT = 'ELEMENT',
-  ATTRIBUTE = 'ATTRIBUTE',
-  TEXT = 'TEXT',
-  ARGUMENT = 'ARGUMENT',
-  FUNCTION = 'FUNCTION',
-  PLURAL = 'PLURAL',
-  SELECT = 'SELECT',
-  SELECT_CASE = 'SELECT_CASE',
-  SELECT_ORDINAL = 'SELECT_ORDINAL',
-  OCTOTHORPE = 'OCTOTHORPE',
+  FRAGMENT,
+  ELEMENT,
+  ATTRIBUTE,
+  TEXT,
+  ARGUMENT,
+  FUNCTION,
+  PLURAL,
+  SELECT,
+  SELECT_CASE,
+  SELECT_ORDINAL,
+  OCTOTHORPE,
 }
 
 export type ContainerNode =
@@ -27,7 +27,7 @@ export type Node =
     | ITextNode;
 
 export interface INode {
-  nodeType: string;
+  nodeType: number;
   parent: ContainerNode | null;
   start: number;
   end: number;

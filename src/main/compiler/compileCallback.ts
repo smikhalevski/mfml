@@ -1,4 +1,4 @@
-import {Node} from '../parser/ast-types';
+import {Node} from '../parser/node-types';
 import {compileAst, ICompileAstOptions} from './compileAst';
 
 export interface ICompileCallbackOptions extends ICompileAstOptions {
@@ -12,7 +12,7 @@ export function compileCallback(node: Node, options: ICompileCallbackOptions): s
   if (args.length) {
     source += `export interface ${options.interfaceName}<Result>{`;
     for (let i = 0; i < args.length; i++) {
-      source += args[i][0] + ':Result;'
+      source += args[i][0] + ':Result;';
     }
     source += '}';
   }

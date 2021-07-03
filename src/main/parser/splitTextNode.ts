@@ -1,4 +1,4 @@
-import {ITextNode, Node, NodeType} from './ast-types';
+import {ITextNode, Node, NodeType} from './node-types';
 
 /**
  * Splits text node in two by char range and inserts a `node` between these new parts.
@@ -45,7 +45,7 @@ export function splitTextNode(ordinalNodes: Array<Node>, ordinalIndex: number, s
   }
 
   // Node splits the text node in two
-  const lastTextNode: ITextNode = {
+  const tailNode: ITextNode = {
     nodeType: NodeType.TEXT,
     value: textValue.substring(end - textStart),
     parent: textNode.parent,
@@ -53,11 +53,11 @@ export function splitTextNode(ordinalNodes: Array<Node>, ordinalIndex: number, s
     end: textEnd,
   };
   if (node) {
-    ordinalNodes.splice(ordinalIndex + 1, 0, node, lastTextNode);
-    siblingNodes.splice(siblingIndex + 1, 0, node, lastTextNode);
+    ordinalNodes.splice(ordinalIndex + 1, 0, node, tailNode);
+    siblingNodes.splice(siblingIndex + 1, 0, node, tailNode);
   } else {
-    ordinalNodes.splice(ordinalIndex + 1, 0, lastTextNode);
-    siblingNodes.splice(siblingIndex + 1, 0, lastTextNode);
+    ordinalNodes.splice(ordinalIndex + 1, 0, tailNode);
+    siblingNodes.splice(siblingIndex + 1, 0, tailNode);
   }
   return 1;
 }

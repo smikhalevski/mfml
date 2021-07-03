@@ -1,5 +1,5 @@
 import {createForgivingSaxParser} from 'tag-soup';
-import {IElementNode, ISelectCaseNode, Node, NodeType} from '../../main/parser/ast-types';
+import {IElementNode, ISelectCaseNode, Node, NodeType} from '../../main/parser/node-types';
 import {createIcuDomParser} from '../../main/parser/createIcuDomParser';
 
 describe('createIcuDomParser', () => {
@@ -684,5 +684,36 @@ describe('createIcuDomParser', () => {
 
   test('throws on unclosed argument', () => {
     expect(() => parse('{bar')).toThrow();
+  });
+
+  test('decodes text', () => {
+    const parse = createIcuDomParser({
+      decodeText: (str) => str.replace('aaa', 'bbb'),
+    });
+
+    const node: any = parse('aaa');
+
+    expect(node.value).toEqual('bbb');
+  });
+
+  test('decodes a literal attribute', () => {
+    const parse = createIcuDomParser({
+      decodeAttr: (str) => str.replace('aaa', 'bbb'),
+    });
+
+    const node: any = parse('<foo bar="aaa"></foo>');
+
+    expect(node.attrs[0].children[0].value).toEqual('bbb');
+  });
+
+  test('decodes an attribute with argument', () => {
+    const parse = createIcuDomParser({
+      decodeAttr: (str) => str.replace('aaa', 'bbb'),
+    });
+
+    const node: any = parse('<foo bar="aaa{bar}aaa"></foo>');
+
+    expect(node.attrs[0].children[0].value).toEqual('bbb');
+    expect(node.attrs[0].children[2].value).toEqual('bbb');
   });
 });

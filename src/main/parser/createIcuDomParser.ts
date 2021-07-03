@@ -1,24 +1,38 @@
-import {Node, NodeType} from './ast-types';
+import {Node, NodeType} from './node-types';
 import {parseIcu} from './parseIcu';
-import {createForgivingSaxParser, ISaxParser, ISaxParserOptions} from 'tag-soup';
+import {createEntitiesDecoder, createForgivingSaxParser, ISaxParser, ISaxParserCallbacks, Rewriter} from 'tag-soup';
 import {ParseOptions} from '@messageformat/parser';
 import {collectOrdinalNodes} from './collectOrdinalNodes';
 import {findNodeIndex} from './findNodeIndex';
 import {splitTextNode} from './splitTextNode';
-import {isTextNode} from './isTextNode';
+import {isTextNode} from './node-utils';
+import {decodeTextNodes} from './decodeTextNodes';
+
+const xmlDecoder = createEntitiesDecoder();
 
 export interface IIcuDomParserOptions extends ParseOptions {
+
+  /**
+   * Decodes XML entities in an attribute value. By default, only XML entities are decoded.
+   */
+  decodeAttr?: Rewriter;
+
+  /**
+   * Decodes XML entities in plain text value. By default, only XML entities are decoded.
+   */
+  decodeText?: Rewriter;
 
   /**
    * The factory that creates an instance of a XML/HTML SAX parser that would be used for actual parsing of the input
    * strings.
    *
-   * **Note:** Underlying SAX parser must emit tags in the correct order. No additional checks are made while
-   * constructing a tree of elements.
+   * Implementation considerations:
+   * - SAX parser must emit tags in the correct order;
+   * - SAX parser doesn't have to decode text and attributes, use {@link decodeAttr} and {@link decodeText} instead;
    *
    * @default {@link https://smikhalevski.github.io/tag-soup/globals.html#createforgivingsaxparser createForgivingSaxParser}
    */
-  saxParserFactory?: (options: ISaxParserOptions) => ISaxParser;
+  saxParserFactory?: (options: ISaxParserCallbacks) => ISaxParser;
 }
 
 /**
@@ -26,7 +40,11 @@ export interface IIcuDomParserOptions extends ParseOptions {
  */
 export function createIcuDomParser(options: IIcuDomParserOptions = {}): (str: string) => Node {
 
-  const {saxParserFactory = createForgivingSaxParser} = options;
+  const {
+    decodeAttr = xmlDecoder,
+    decodeText = xmlDecoder,
+    saxParserFactory = createForgivingSaxParser,
+  } = options;
 
   let rootChildren: Array<Node>;
   let ordinalNodes: Array<Node>;
@@ -76,7 +94,7 @@ export function createIcuDomParser(options: IIcuDomParserOptions = {}): (str: st
       for (let i = 0; i < tagToken.attrs.length; i++) {
         const attrToken = tagToken.attrs[i];
 
-        const attrValue = attrToken.value;
+        const attrValue = attrToken.rawValue;
         const attrValueStart = attrToken.valueStart;
         const attrValueEnd = attrToken.valueEnd;
         const attrChildren: Array<Node> = [];
@@ -101,7 +119,7 @@ export function createIcuDomParser(options: IIcuDomParserOptions = {}): (str: st
         if (attrValueEnd <= ordinalNodes[ordinalIndex].start) {
           attrChildren.push({
             nodeType: NodeType.TEXT,
-            value: attrValue,
+            value: decodeAttr(attrValue),
             parent: attrNode,
             start: attrValueStart,
             end: attrValueEnd,
@@ -160,6 +178,8 @@ export function createIcuDomParser(options: IIcuDomParserOptions = {}): (str: st
 
           throwSyntaxError(nodeStart);
         }
+
+        decodeTextNodes(attrChildren, decodeAttr);
       }
 
       // Remove ICU nodes that are now part of an attr children
@@ -173,16 +193,15 @@ export function createIcuDomParser(options: IIcuDomParserOptions = {}): (str: st
       }
 
       // Remove remaining chars of the start tag from the consequent text node
-      const lastNode = ordinalNodes[ordinalIndex];
-      const lastNodeStart = lastNode.start;
+      const tailNode = ordinalNodes[ordinalIndex];
 
-      if (isTextNode(lastNode) && lastNodeStart < tagEnd && lastNode.end >= tagEnd) {
-        lastNode.value = lastNode.value.substring(tagEnd - lastNodeStart);
-        lastNode.start = tagEnd;
+      if (isTextNode(tailNode) && tailNode.start < tagEnd && tailNode.end >= tagEnd) {
+        tailNode.value = tailNode.value.substring(tagEnd - tailNode.start);
+        tailNode.start = tagEnd;
         return;
       }
 
-      throwSyntaxError(lastNodeStart);
+      throwSyntaxError(tailNode.start);
     },
 
     onEndTag(tagToken) {
@@ -198,26 +217,9 @@ export function createIcuDomParser(options: IIcuDomParserOptions = {}): (str: st
       // The text node that fully contains the end tag
       const textNode = ordinalNodes[ordinalIndex];
 
-      // The end tag was doesn't exist in the markup but was inserted by forgiving SAX parser
-      if (tagStart === tagEnd && !isTextNode(textNode)) {
-
-        if (ordinalIndex === -1) {
-          ordinalIndex = ordinalNodes.length;
-        }
-
-        const node = ordinalNodes[ordinalIndex - 1];
-
-        siblingNodes = node.parent?.children || rootChildren;
-        siblingIndex = siblingNodes.indexOf(node) + 1;
-
-      } else {
-
-        if (!isTextNode(textNode)) {
-          throwSyntaxError(tagStart);
-        }
+      if (isTextNode(textNode)) {
 
         siblingNodes = textNode.parent?.children || rootChildren;
-
         siblingIndex = siblingNodes.indexOf(textNode);
 
         // Remove end tag markup from the text node
@@ -225,6 +227,21 @@ export function createIcuDomParser(options: IIcuDomParserOptions = {}): (str: st
 
         siblingIndex += offset;
         ordinalIndex += offset;
+
+      } else if (tagStart === tagEnd) {
+
+        if (ordinalIndex === -1) {
+          ordinalIndex = ordinalNodes.length;
+        }
+
+        // The end tag doesn't exist in the markup and was injected by forgiving SAX parser
+        const siblingNode = ordinalNodes[ordinalIndex - 1];
+
+        siblingNodes = siblingNode.parent?.children || rootChildren;
+        siblingIndex = siblingNodes.indexOf(siblingNode) + 1;
+
+      } else {
+        throwSyntaxError(tagStart);
       }
 
       // Lookup an element node that is terminated by the end tag
@@ -259,10 +276,13 @@ export function createIcuDomParser(options: IIcuDomParserOptions = {}): (str: st
   return (str) => {
 
     rootChildren = parseIcu(str, options);
-    ordinalNodes = collectOrdinalNodes(rootChildren, []);
+    ordinalNodes = [];
     ordinalIndex = 0;
 
+    collectOrdinalNodes(rootChildren, ordinalNodes);
     saxParser.parse(str);
+
+    decodeTextNodes(rootChildren, decodeText);
 
     if (rootChildren.length === 1) {
       return rootChildren[0];
