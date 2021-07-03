@@ -1,4 +1,4 @@
-import {IAttributeNode, IElementNode, IFragmentNode, ITextNode, Node, NodeType} from './ast-types';
+import {Node, NodeType} from './ast-types';
 import {parseIcuAst} from './parseIcuAst';
 import {createForgivingSaxParser, IForgivingSaxParserDialectOptions} from 'tag-soup';
 import {splitTextNode} from './splitTextNode';
@@ -16,60 +16,60 @@ export function parseIcuTagSoup(str: string, options?: IParserOptions): Node {
   const ordinalNodes = collectIcuNodes(rootChildren, []);
   let ordinalIndex = 0;
 
-  const rootNode: Node = {
-    nodeType: NodeType.FRAGMENT,
-    children: rootChildren,
-    parent: null,
-    start: 0,
-    end: str.length,
-  };
-
-  for (let i = 0; i < rootChildren.length; i++) {
-    rootChildren[i].parent = rootNode;
-  }
-
   const saxParser = createForgivingSaxParser({
     ...options,
 
     onStartTag(tagToken) {
 
-      ordinalIndex = findTextNodeIndex(ordinalNodes, ordinalIndex, tagToken.start, tagToken.nameEnd);
+      const tagStart = tagToken.start;
+      const tagEnd = tagToken.end;
 
-      const startNode = ordinalNodes[ordinalIndex];
+      ordinalIndex = findTextNodeIndex(ordinalNodes, ordinalIndex, tagStart, tagToken.nameEnd);
 
-      if (startNode?.nodeType !== NodeType.TEXT) {
-        fatal(tagToken.start);
+      // The text node that contains the start tag name
+      const textNode = ordinalNodes[ordinalIndex];
+
+      if (textNode?.nodeType !== NodeType.TEXT) {
+        throw new SyntaxError('Incorrect start tag syntax at ' + tagStart);
       }
 
-      const elementNode: IElementNode = {
+      const elementNode: Node = {
         nodeType: NodeType.ELEMENT,
         tagName: tagToken.name,
-        parent: startNode.parent,
+        parent: textNode.parent,
         children: [],
         attrs: [],
-        start: tagToken.start,
-        end: tagToken.end,
+        start: tagStart,
+        end: tagEnd,
       };
 
-      const startNodeEnd = startNode.end;
-      const parentChildren = startNode.parent!.children;
+      const splitEnd = Math.min(textNode.end, tagEnd);
 
-      let startNodeIndex = parentChildren.indexOf(startNode);
+      const siblingNodes = textNode.parent?.children || rootChildren;
 
-      const offset = splitTextNode(ordinalNodes, ordinalIndex, parentChildren, startNodeIndex, startNode, tagToken.start, Math.min(startNodeEnd, tagToken.end), elementNode);
+      let siblingIndex = siblingNodes.indexOf(textNode);
+
+      const offset = splitTextNode(ordinalNodes, ordinalIndex, siblingNodes, siblingIndex, textNode, tagStart, splitEnd, elementNode);
 
       ordinalIndex += offset + 1;
-      startNodeIndex += offset;
+      siblingIndex += offset;
 
-      const attrIndex = ordinalIndex;
+      // An index at which attr declarations start
+      const attrsIndex = ordinalIndex;
 
+      // Collect attributes
       for (let i = 0; i < tagToken.attrs.length; i++) {
         const attrToken = tagToken.attrs[i];
 
-        const attrNode: IAttributeNode = {
+        const attrValue = attrToken.value;
+        const attrValueStart = attrToken.valueStart;
+        const attrValueEnd = attrToken.valueEnd;
+        const attrChildren: Array<Node> = [];
+
+        const attrNode: Node = {
           nodeType: NodeType.ATTRIBUTE,
           name: attrToken.name,
-          children: [],
+          children: attrChildren,
           parent: elementNode,
           start: attrToken.start,
           end: attrToken.end,
@@ -77,19 +77,19 @@ export function parseIcuTagSoup(str: string, options?: IParserOptions): Node {
 
         elementNode.attrs.push(attrNode);
 
-        // No value
-        if (attrToken.value == null) {
+        // Attr has no value
+        if (attrValue == null) {
           continue;
         }
 
-        // Plain text value
-        if (attrToken.valueEnd <= ordinalNodes[ordinalIndex].start) {
-          attrNode.children.push({
+        // Attr has a plain text value
+        if (attrValueEnd <= ordinalNodes[ordinalIndex].start) {
+          attrChildren.push({
             nodeType: NodeType.TEXT,
-            value: attrToken.value,
+            value: attrValue,
             parent: attrNode,
-            start: attrToken.valueStart,
-            end: attrToken.valueEnd,
+            start: attrValueStart,
+            end: attrValueEnd,
           });
           continue;
         }
@@ -97,105 +97,104 @@ export function parseIcuTagSoup(str: string, options?: IParserOptions): Node {
         while (ordinalIndex < ordinalNodes.length) {
           const node = ordinalNodes[ordinalIndex];
 
-          if (attrToken.valueEnd <= node.start) {
-            // Too far ahead
+          const nodeStart = node.start;
+          const nodeEnd = node.end;
+
+          // ICU node is too far ahead
+          if (attrValueEnd <= nodeStart) {
             break;
           }
-          if (startNode.parent !== node.parent) {
-            // Skip nested nodes
+
+          // Skip nested ICU nodes
+          if (textNode.parent !== node.parent) {
             continue;
           }
 
-          if (attrToken.valueStart <= node.start && node.end <= attrToken.valueEnd) {
+          // ICU node is contained by the attr value
+          if (attrValueStart <= nodeStart && nodeEnd <= attrValueEnd) {
 
-            // Leading text
-            if (attrNode.children.length === 0 && node.start !== attrToken.valueStart) {
-              attrNode.children.push({
+            // Leading text in attr value
+            if (attrChildren.length === 0 && nodeStart !== attrValueStart) {
+              attrChildren.push({
                 nodeType: NodeType.TEXT,
-                value: attrToken.value.substr(0, node.start - attrToken.valueStart),
+                value: attrValue.substr(0, nodeStart - attrValueStart),
                 parent: attrNode,
-                start: attrToken.valueStart,
-                end: node.start,
+                start: attrValueStart,
+                end: nodeStart,
               });
             }
 
-            attrNode.children.push(node);
+            attrChildren.push(node);
             node.parent = attrNode;
+
             ordinalIndex++;
             continue;
           }
 
           // Trailing text
-          if (node.nodeType === NodeType.TEXT && attrToken.valueStart < node.start && attrToken.valueEnd < node.end) {
-            attrNode.children.push({
+          if (node.nodeType === NodeType.TEXT && attrValueStart < nodeStart && attrValueEnd < nodeEnd) {
+            attrChildren.push({
               nodeType: NodeType.TEXT,
-              value: attrToken.value.substr(node.start - attrToken.valueStart),
+              value: attrValue.substr(nodeStart - attrValueStart),
               parent: attrNode,
-              start: node.start,
-              end: attrToken.valueEnd,
+              start: nodeStart,
+              end: attrValueEnd,
             });
             break;
           }
 
-          fatal(attrToken.start);
+          throw new SyntaxError('Incorrect attribute syntax at ' + nodeStart);
         }
       }
 
-      parentChildren.splice(startNodeIndex + 1, ordinalIndex - attrIndex);
+      // Remove ICU nodes that are now part of an attr children
+      if (ordinalIndex !== attrsIndex) {
+        siblingNodes.splice(siblingIndex + 1, ordinalIndex - attrsIndex);
+      }
 
-      const endNode = ordinalNodes[ordinalIndex];
-
-      if (tagToken.end <= startNodeEnd) {
+      // Exit if the text node fully contained the start tag
+      if (tagEnd === splitEnd) {
         return;
       }
 
-      if (endNode?.nodeType === NodeType.TEXT && endNode.start < tagToken.end && endNode.end >= tagToken.end) {
-        endNode.value = endNode.value.substring(tagToken.end - endNode.start);
-        endNode.start = tagToken.end;
+      const lastNode = ordinalNodes[ordinalIndex];
+      const lastNodeStart = lastNode.start;
+
+      // Remove remaining chars of the start tag from the consequent text node
+      if (lastNode?.nodeType === NodeType.TEXT && lastNodeStart < tagEnd && lastNode.end >= tagEnd) {
+        lastNode.value = lastNode.value.substring(tagEnd - lastNodeStart);
+        lastNode.start = tagEnd;
         return;
       }
 
-      fatal(tagToken.start);
+      throw new SyntaxError('Unexpected token at ' + lastNodeStart);
     },
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     onEndTag(tagToken) {
+
       const tagStart = tagToken.start;
       const tagEnd = tagToken.end;
 
       ordinalIndex = findTextNodeIndex(ordinalNodes, ordinalIndex, tagStart, tagEnd);
 
-      if (ordinalIndex === -1) {
+      // The text node that fully contains the end tag
+      const textNode = ordinalNodes[ordinalIndex];
+
+      if (textNode?.nodeType !== NodeType.TEXT) {
         throw new SyntaxError('Incorrect end tag syntax at ' + tagStart);
       }
-
-      // The ICU text node that fully contains the end tag.
-      const textNode = ordinalNodes[ordinalIndex] as ITextNode;
 
       const siblingNodes = textNode.parent?.children || rootChildren;
 
       let siblingIndex = siblingNodes.indexOf(textNode);
 
+      // Remove end tag markup from the text node
       const offset = splitTextNode(ordinalNodes, ordinalIndex, siblingNodes, siblingIndex, textNode, tagStart, tagEnd, null);
 
       siblingIndex += offset;
       ordinalIndex += offset;
 
-      // Lookup the element node that is terminated by the end tag.
+      // Lookup an element node that is terminated by the end tag
       let elementNode;
       let elementIndex = siblingIndex;
 
@@ -222,35 +221,25 @@ export function parseIcuTagSoup(str: string, options?: IParserOptions): Node {
       }
     },
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
   });
 
   saxParser.parse(str);
 
-  if (rootNode.children.length === 1) {
-    const node = rootNode.children[0];
-    node.parent = null;
-    return node;
+  if (rootChildren.length === 1) {
+    return rootChildren[0];
+  }
+
+  const rootNode: Node = {
+    nodeType: NodeType.FRAGMENT,
+    children: rootChildren,
+    parent: null,
+    start: 0,
+    end: str.length,
+  };
+
+  for (let i = 0; i < rootChildren.length; i++) {
+    rootChildren[i].parent = rootNode;
   }
 
   return rootNode;
-}
-
-function fatal(start: number): never {
-  throw new SyntaxError('Unexpected syntax at ' + start);
 }

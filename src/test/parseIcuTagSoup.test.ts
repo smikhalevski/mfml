@@ -1,5 +1,5 @@
 import {IElementNode, ISelectCaseNode, Node, NodeType} from '../main/ast-types';
-import {parseIcuTagSoup} from '../main/parseAst';
+import {parseIcuTagSoup} from '../main/parseIcuTagSoup';
 
 describe('parseMarkup', () => {
 
