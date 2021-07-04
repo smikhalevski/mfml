@@ -3,7 +3,7 @@ import {ITextNode, Node, NodeType} from './node-types';
 /**
  * Splits text node in two by char range and inserts a `node` between these new parts.
  */
-export function splitTextNode(ordinalNodes: Array<Node>, ordinalIndex: number, siblingNodes: Array<Node>, siblingIndex: number, textNode: ITextNode, start: number, end: number, node: Node | null): number {
+export function splitTextNode(linearNodes: Array<Node>, linearIndex: number, siblingNodes: Array<Node>, siblingIndex: number, textNode: ITextNode, start: number, end: number, node: Node | null): number {
 
   const textStart = textNode.start;
   const textEnd = textNode.end;
@@ -12,10 +12,10 @@ export function splitTextNode(ordinalNodes: Array<Node>, ordinalIndex: number, s
   // Replace the text node with node
   if (textStart === start && textEnd === end) {
     if (node) {
-      ordinalNodes[ordinalIndex] = node;
+      linearNodes[linearIndex] = node;
       siblingNodes[siblingIndex] = node;
     } else {
-      ordinalNodes.splice(ordinalIndex, 1);
+      linearNodes.splice(linearIndex, 1);
       siblingNodes.splice(siblingIndex, 1);
     }
     return 0;
@@ -24,7 +24,7 @@ export function splitTextNode(ordinalNodes: Array<Node>, ordinalIndex: number, s
   // Node goes before the text node
   if (textStart === start) {
     if (node) {
-      ordinalNodes.splice(ordinalIndex, 0, node);
+      linearNodes.splice(linearIndex, 0, node);
       siblingNodes.splice(siblingIndex, 0, node);
     }
     textNode.value = textValue.substring(end - textStart);
@@ -38,7 +38,7 @@ export function splitTextNode(ordinalNodes: Array<Node>, ordinalIndex: number, s
   // Node goes after the text node
   if (textEnd === end) {
     if (node) {
-      ordinalNodes.splice(ordinalIndex + 1, 0, node);
+      linearNodes.splice(linearIndex + 1, 0, node);
       siblingNodes.splice(siblingIndex + 1, 0, node);
     }
     return 1;
@@ -53,10 +53,10 @@ export function splitTextNode(ordinalNodes: Array<Node>, ordinalIndex: number, s
     end: textEnd,
   };
   if (node) {
-    ordinalNodes.splice(ordinalIndex + 1, 0, node, tailNode);
+    linearNodes.splice(linearIndex + 1, 0, node, tailNode);
     siblingNodes.splice(siblingIndex + 1, 0, node, tailNode);
   } else {
-    ordinalNodes.splice(ordinalIndex + 1, 0, tailNode);
+    linearNodes.splice(linearIndex + 1, 0, tailNode);
     siblingNodes.splice(siblingIndex + 1, 0, tailNode);
   }
   return 1;

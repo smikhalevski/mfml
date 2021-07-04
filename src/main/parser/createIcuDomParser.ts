@@ -2,7 +2,7 @@ import {Node, NodeType} from './node-types';
 import {parseIcu} from './parseIcu';
 import {createEntitiesDecoder, createForgivingSaxParser, ISaxParser, ISaxParserCallbacks, Rewriter} from 'tag-soup';
 import {ParseOptions} from '@messageformat/parser';
-import {collectNodes} from './collectNodes';
+import {linearizeNodes} from './linearizeNodes';
 import {findNodeIndex} from './findNodeIndex';
 import {splitTextNode} from './splitTextNode';
 import {isTextNode} from './node-utils';
@@ -28,7 +28,7 @@ export interface IIcuDomParserOptions extends ParseOptions {
    *
    * Implementation considerations:
    * - SAX parser must emit tags in the correct order;
-   * - SAX parser doesn't have to decode text and attributes, use {@link decodeAttr} and {@link decodeText} instead;
+   * - SAX parser mustn't decode text and attributes, use {@link decodeAttr} and {@link decodeText} instead;
    *
    * @default {@link https://smikhalevski.github.io/tag-soup/globals.html#createforgivingsaxparser createForgivingSaxParser}
    */
@@ -47,8 +47,8 @@ export function createIcuDomParser(options: IIcuDomParserOptions = {}): (str: st
   } = options;
 
   let rootChildren: Array<Node>;
-  let ordinalNodes: Array<Node>;
-  let ordinalIndex = 0;
+  let linearNodes: Array<Node>;
+  let linearIndex = 0;
 
   const saxParser = saxParserFactory({
 
@@ -57,10 +57,10 @@ export function createIcuDomParser(options: IIcuDomParserOptions = {}): (str: st
       const tagStart = tagToken.start;
       const tagEnd = tagToken.end;
 
-      ordinalIndex = findNodeIndex(ordinalNodes, ordinalIndex, tagStart, tagToken.nameEnd);
+      linearIndex = findNodeIndex(linearNodes, linearIndex, tagStart, tagToken.nameEnd);
 
       // The text node that contains the start tag name
-      const textNode = ordinalNodes[ordinalIndex];
+      const textNode = linearNodes[linearIndex];
 
       if (!isTextNode(textNode)) {
         throwSyntaxError(tagStart);
@@ -82,13 +82,13 @@ export function createIcuDomParser(options: IIcuDomParserOptions = {}): (str: st
 
       let siblingIndex = siblingNodes.indexOf(textNode);
 
-      const offset = splitTextNode(ordinalNodes, ordinalIndex, siblingNodes, siblingIndex, textNode, tagStart, splitEnd, elementNode);
+      const offset = splitTextNode(linearNodes, linearIndex, siblingNodes, siblingIndex, textNode, tagStart, splitEnd, elementNode);
 
-      ordinalIndex += offset + 1;
+      linearIndex += offset + 1;
       siblingIndex += offset;
 
       // An index at which attr declarations start
-      const attrsIndex = ordinalIndex;
+      const attrsIndex = linearIndex;
 
       // Collect attributes
       for (let i = 0; i < tagToken.attrs.length; i++) {
@@ -116,7 +116,7 @@ export function createIcuDomParser(options: IIcuDomParserOptions = {}): (str: st
         }
 
         // Attr has a plain text value
-        if (attrValueEnd <= ordinalNodes[ordinalIndex].start) {
+        if (attrValueEnd <= linearNodes[linearIndex].start) {
           attrChildren.push({
             nodeType: NodeType.TEXT,
             value: decodeAttr(attrValue),
@@ -127,8 +127,8 @@ export function createIcuDomParser(options: IIcuDomParserOptions = {}): (str: st
           continue;
         }
 
-        while (ordinalIndex < ordinalNodes.length) {
-          const node = ordinalNodes[ordinalIndex];
+        while (linearIndex < linearNodes.length) {
+          const node = linearNodes[linearIndex];
 
           const nodeStart = node.start;
           const nodeEnd = node.end;
@@ -160,7 +160,7 @@ export function createIcuDomParser(options: IIcuDomParserOptions = {}): (str: st
             attrChildren.push(node);
             node.parent = attrNode;
 
-            ordinalIndex++;
+            linearIndex++;
             continue;
           }
 
@@ -183,8 +183,8 @@ export function createIcuDomParser(options: IIcuDomParserOptions = {}): (str: st
       }
 
       // Remove ICU nodes that are now part of an attr children
-      if (ordinalIndex !== attrsIndex) {
-        siblingNodes.splice(siblingIndex + 1, ordinalIndex - attrsIndex);
+      if (linearIndex !== attrsIndex) {
+        siblingNodes.splice(siblingIndex + 1, linearIndex - attrsIndex);
       }
 
       // Exit if the text node fully contained the start tag
@@ -193,7 +193,7 @@ export function createIcuDomParser(options: IIcuDomParserOptions = {}): (str: st
       }
 
       // Remove remaining chars of the start tag from the consequent text node
-      const tailNode = ordinalNodes[ordinalIndex];
+      const tailNode = linearNodes[linearIndex];
 
       if (isTextNode(tailNode) && tailNode.start < tagEnd && tailNode.end >= tagEnd) {
         tailNode.value = tailNode.value.substring(tagEnd - tailNode.start);
@@ -209,13 +209,13 @@ export function createIcuDomParser(options: IIcuDomParserOptions = {}): (str: st
       const tagStart = tagToken.start;
       const tagEnd = tagToken.end;
 
-      ordinalIndex = findNodeIndex(ordinalNodes, ordinalIndex, tagStart, tagEnd);
+      linearIndex = findNodeIndex(linearNodes, linearIndex, tagStart, tagEnd);
 
       let siblingNodes;
       let siblingIndex;
 
       // The text node that fully contains the end tag
-      const textNode = ordinalNodes[ordinalIndex];
+      const textNode = linearNodes[linearIndex];
 
       if (isTextNode(textNode)) {
 
@@ -223,19 +223,19 @@ export function createIcuDomParser(options: IIcuDomParserOptions = {}): (str: st
         siblingIndex = siblingNodes.indexOf(textNode);
 
         // Remove end tag markup from the text node
-        const offset = splitTextNode(ordinalNodes, ordinalIndex, siblingNodes, siblingIndex, textNode, tagStart, tagEnd, null);
+        const offset = splitTextNode(linearNodes, linearIndex, siblingNodes, siblingIndex, textNode, tagStart, tagEnd, null);
 
         siblingIndex += offset;
-        ordinalIndex += offset;
+        linearIndex += offset;
 
       } else if (tagStart === tagEnd) {
 
-        if (ordinalIndex === -1) {
-          ordinalIndex = ordinalNodes.length;
+        if (linearIndex === -1) {
+          linearIndex = linearNodes.length;
         }
 
         // The end tag doesn't exist in the markup and was injected by forgiving SAX parser
-        const siblingNode = ordinalNodes[ordinalIndex - 1];
+        const siblingNode = linearNodes[linearIndex - 1];
 
         siblingNodes = siblingNode.parent?.children || rootChildren;
         siblingIndex = siblingNodes.indexOf(siblingNode) + 1;
@@ -276,10 +276,10 @@ export function createIcuDomParser(options: IIcuDomParserOptions = {}): (str: st
   return (str) => {
 
     rootChildren = parseIcu(str, options);
-    ordinalNodes = [];
-    ordinalIndex = 0;
+    linearNodes = [];
+    linearIndex = 0;
 
-    collectNodes(rootChildren, ordinalNodes);
+    linearizeNodes(rootChildren, linearNodes);
     saxParser.parse(str);
 
     decodeTextNodes(rootChildren, decodeText);
