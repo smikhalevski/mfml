@@ -10,7 +10,7 @@
     "README.md"
   ],
   "scripts": {
-    "build": "set -ex; tsc; npm run rollup; npm run terser",
+    "build": "set -e; tsc; npm run rollup; npm run terser",
     "rollup": "rollup --input ./lib/index.js --file ./lib/index-cjs.js --format cjs --plugin @rollup/plugin-node-resolve --plugin @rollup/plugin-commonjs",
     "terser": "terser --compress --mangle toplevel --output ./lib/index-cjs.js -- ./lib/index-cjs.js",
     "clean": "rm -rf ./lib",

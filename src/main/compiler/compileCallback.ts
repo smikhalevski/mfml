@@ -1,27 +1,75 @@
-import {Node} from '../parser/node-types';
-import {compileAst, ICompileAstOptions} from './compileAst';
+import {Node} from '../parser';
+import {compileNode, INodeCompilerOptions, trimComma} from './compileNode';
+import {RuntimeMethod} from '../runtime';
 
-export interface ICompileCallbackOptions extends ICompileAstOptions {
+export interface ICallbackCompilerOptions extends INodeCompilerOptions {
   functionName: string;
   interfaceName: string;
 }
 
-export function compileCallback(node: Node, options: ICompileCallbackOptions): string {
-  const args: Array<[string, unknown]> = [];
-  let source = '';
-  if (args.length) {
-    source += `export interface ${options.interfaceName}<Result>{`;
-    for (let i = 0; i < args.length; i++) {
-      source += args[i][0] + ':Result;';
+export function compileCallback(nodesByLocale: Record<string, Node>, options: ICallbackCompilerOptions): string {
+
+  const {
+    argsVarName = 'args',
+    localeVarName = 'locale',
+    functionName,
+    interfaceName,
+  } = options;
+
+  const argMap: Record<string, string | undefined> = Object.create(null);
+  const usedMethods = new Set<RuntimeMethod>();
+
+  let returnedSource = '';
+
+  const locales = Object.keys(nodesByLocale);
+
+  if (locales.length === 0) {
+    returnedSource = JSON.stringify('');
+  }
+  if (locales.length === 1) {
+    returnedSource = compileNode(nodesByLocale[locales[0]], argMap, usedMethods, options);
+  }
+  if (locales.length > 1) {
+    usedMethods.add(RuntimeMethod.LOCALE);
+    returnedSource = RuntimeMethod.LOCALE + '({';
+
+    for (let i = 0; i < locales.length; i++) {
+      returnedSource += locales[i] + ':' + compileNode(nodesByLocale[locales[i]], argMap, usedMethods, options);
     }
-    source += '}';
+    returnedSource = trimComma(returnedSource) + '})';
   }
-  source += `export function ${options.functionName}<Result>(runtime:IRuntime<Result>,locale:string`;
-  if (args.length) {
-    source += `,args:${options.interfaceName}<Result>`;
+
+  let argsRequired = false;
+  let genericRequired = false;
+  let source = '';
+
+  for (const key in argMap) {
+    argsRequired = true;
+
+    const type = argMap[key];
+    genericRequired ||= type === undefined;
+    source += key + ':' + (type === undefined ? 'T' : type) + ';';
   }
-  source += '):Result{'
-      + 'return ' + compileAst(node, options).slice(0, -1)
-      + '}';
+
+  if (argsRequired) {
+    source = `export interface ${interfaceName}${genericRequired ? '<T>' : ''}{${source}}`;
+  }
+
+  source += `export function ${functionName}${genericRequired ? '<T>' : ''}(`;
+
+  source += `runtime:IRuntime<${genericRequired ? 'T' : 'any'}>,${localeVarName}:string`;
+
+  if (argsRequired) {
+    source += `,${argsVarName}:${interfaceName}`;
+  }
+
+  source += `):${genericRequired || usedMethods.has(RuntimeMethod.ELEMENT) || usedMethods.has(RuntimeMethod.FRAGMENT) || usedMethods.has(RuntimeMethod.FUNCTION) ? 'T' : 'string'}{`;
+
+  if (usedMethods.size) {
+    source += `const {${Array.from(usedMethods).join(',')}}=runtime;`;
+  }
+
+  source += `return ${returnedSource}}`;
+
   return source;
 }

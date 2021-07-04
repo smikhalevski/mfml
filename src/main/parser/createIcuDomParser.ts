@@ -7,6 +7,7 @@ import {findNodeIndex} from './findNodeIndex';
 import {splitTextNode} from './splitTextNode';
 import {isTextNode} from './node-utils';
 import {decodeTextNodes} from './decodeTextNodes';
+import {throwSyntaxError} from './throwSyntaxError';
 
 const xmlDecoder = createEntitiesDecoder();
 
@@ -274,6 +275,7 @@ export function createIcuDomParser(options: IIcuDomParserOptions = {}): (str: st
   });
 
   return (str) => {
+    saxParser.reset();
 
     rootChildren = parseIcu(str, options);
     linearNodes = [];
@@ -304,6 +306,3 @@ export function createIcuDomParser(options: IIcuDomParserOptions = {}): (str: st
   };
 }
 
-function throwSyntaxError(offset: number): never {
-  throw new SyntaxError('Unexpected token at ' + offset);
-}

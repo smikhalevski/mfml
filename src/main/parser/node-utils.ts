@@ -11,6 +11,8 @@ export function isContainerNode(node: Node | null | undefined): node is Containe
       || nodeType === NodeType.ELEMENT
       || nodeType === NodeType.ATTRIBUTE
       || nodeType === NodeType.FUNCTION
+      || nodeType === NodeType.PLURAL
       || nodeType === NodeType.SELECT
+      || nodeType === NodeType.SELECT_ORDINAL
       || nodeType === NodeType.SELECT_CASE;
 }

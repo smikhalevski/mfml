@@ -1,5 +1,6 @@
 import {
   IArgumentNode,
+  IAttributeNode,
   IElementNode,
   IFragmentNode,
   IFunctionNode,
@@ -8,9 +9,9 @@ import {
   ITextNode,
   Node,
   NodeType,
-} from '../parser/node-types';
+} from '../parser';
 
-export interface IVisitor {
+export interface INodeVisitor {
   onFragment?: (node: IFragmentNode, next: () => void) => void;
   onElement?: (node: IElementNode, next: () => void) => void;
   onText?: (node: ITextNode) => void;
@@ -22,7 +23,13 @@ export interface IVisitor {
   onOctothorpe?: (node: IOctothorpeNode) => void;
 }
 
-export function visitAst(node: Node, visitor: IVisitor): void {
+/**
+ * Triggers callback for each node in the AST.
+ *
+ * @param node The node to traverse.
+ * @param visitor Callbacks to invoke.
+ */
+export function visitNode(node: Node, visitor: INodeVisitor): void {
   switch (node.nodeType) {
     case NodeType.FRAGMENT:
       visitor.onFragment?.(node, () => visitChildren(node.children, visitor));
@@ -54,8 +61,8 @@ export function visitAst(node: Node, visitor: IVisitor): void {
   }
 }
 
-function visitChildren(children: Array<Node>, visitor: IVisitor): void {
+function visitChildren(children: Array<Node>, visitor: INodeVisitor): void {
   for (let i = 0; i < children.length; i++) {
-    visitAst(children[i], visitor);
+    visitNode(children[i], visitor);
   }
 }

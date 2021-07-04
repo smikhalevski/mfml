@@ -1,52 +1,44 @@
-import {RuntimeFields} from './RuntimeFields';
+import {RuntimeMethod} from './RuntimeMethod';
 
-export interface IRuntime<Result> {
-  [RuntimeFields.FRAGMENT](...children: Array<Result>): Result;
-
-  [RuntimeFields.ELEMENT](tagName: string, attrs: Record<string, Result> | null, ...children: Array<Result>): Result;
-
-  [RuntimeFields.FUNCTION](name: string, arg: Result, ...children: Array<Result>): Result;
-
-  [RuntimeFields.PLURAL](pluralMap: Record<string, Result>): Result;
-
-  [RuntimeFields.SELECT](selectMap: Record<string, Result>): Result;
-
-  [RuntimeFields.SELECT_ORDINAL](selectMap: Record<string, Result>): Result;
+export interface IRuntime<T> {
+  [RuntimeMethod.LOCALE]: (localeMap: Record<string, T>) => T;
+  [RuntimeMethod.FRAGMENT]: (...children: Array<T>) => T;
+  [RuntimeMethod.ELEMENT]: (tagName: string, attrs: Record<string, T> | null, ...children: Array<T>) => T;
+  [RuntimeMethod.FUNCTION]: (name: string, arg: T, ...children: Array<T>) => T;
+  [RuntimeMethod.PLURAL]: (pluralMap: Record<string, T>) => T;
+  [RuntimeMethod.SELECT]: (selectMap: Record<string, T>) => T;
+  [RuntimeMethod.SELECT_ORDINAL]: (selectMap: Record<string, T>) => T;
 }
 
-export interface IRuntimeOptions<Result> {
-  createFragment(...children: Array<Result>): Result;
-
-  createElement(tagName: string, attrs: Record<string, Result> | null, ...children: Array<Result>): Result;
-
-  callFunction(name: string, arg: Result, ...children: Array<Result>): Result;
+export interface IRuntimeOptions<T> {
+  createFragment: IRuntime<T>[RuntimeMethod.FRAGMENT];
+  createElement: IRuntime<T>[RuntimeMethod.ELEMENT];
+  callFunction: IRuntime<T>[RuntimeMethod.FUNCTION];
+  pickLocale?: IRuntime<T>[RuntimeMethod.LOCALE];
+  pickPlural?: IRuntime<T>[RuntimeMethod.PLURAL];
+  pickSelect?: IRuntime<T>[RuntimeMethod.SELECT];
+  pickSelectOrdinal?: IRuntime<T>[RuntimeMethod.SELECT_ORDINAL];
 }
 
-export function createRuntime<Result>(options: IRuntimeOptions<Result>): IRuntime<Result> {
+export function createRuntime<T>(options: IRuntimeOptions<T>): IRuntime<T> {
+
   const {
     createFragment,
     createElement,
     callFunction,
+    pickLocale = (localeMap) => localeMap.FOO,
+    pickPlural = (pluralMap) => pluralMap.FOO,
+    pickSelect = (selectMap) => selectMap.FOO,
+    pickSelectOrdinal = (selectMap) => selectMap.FOO,
   } = options;
 
   return {
-    [RuntimeFields.FRAGMENT]() {
-      return createFragment.apply(undefined, arguments as unknown as Parameters<IRuntime<Result>[RuntimeFields.FRAGMENT]>);
-    },
-    [RuntimeFields.ELEMENT]() {
-      return createElement.apply(undefined, arguments as unknown as Parameters<IRuntime<Result>[RuntimeFields.ELEMENT]>);
-    },
-    [RuntimeFields.FUNCTION]() {
-      return callFunction.apply(undefined, arguments as unknown as Parameters<IRuntime<Result>[RuntimeFields.FUNCTION]>);
-    },
-    [RuntimeFields.PLURAL](pluralMap) {
-      return pluralMap.FOOO;
-    },
-    [RuntimeFields.SELECT](selectMap) {
-      return selectMap.FOOO;
-    },
-    [RuntimeFields.SELECT_ORDINAL](selectMap) {
-      return selectMap.FOOO;
-    },
+    [RuntimeMethod.LOCALE]: pickLocale,
+    [RuntimeMethod.FRAGMENT]: createFragment,
+    [RuntimeMethod.ELEMENT]: createElement,
+    [RuntimeMethod.FUNCTION]: callFunction,
+    [RuntimeMethod.PLURAL]: pickPlural,
+    [RuntimeMethod.SELECT]: pickSelect,
+    [RuntimeMethod.SELECT_ORDINAL]: pickSelectOrdinal,
   };
 }
