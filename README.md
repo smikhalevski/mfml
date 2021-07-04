@@ -1,6 +1,6 @@
 # icuc
 
-The ICU + HTML compiler and runtime.
+The ICU + XML/HTML compiler and runtime.
 
 Prepare your translations in a `./translations.json` file:
 ```json

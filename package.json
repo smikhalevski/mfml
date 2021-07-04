@@ -1,7 +1,7 @@
 {
   "name": "icuc",
   "version": "1.0.0",
-  "description": "Code generator and runtime for type-safe i18n with ICU and XML support.",
+  "description": "The ICU + XML/HTML compiler and runtime.",
   "main": "./lib/index-cjs.js",
   "module": "./lib/index.js",
   "types": "./lib/index.d.ts",
@@ -21,13 +21,17 @@
     "url": "git+https://github.com/smikhalevski/icuc.git"
   },
   "keywords": [
-    "url",
-    "path",
-    "route",
-    "router",
-    "lazy",
-    "tiny",
-    "import"
+    "i18n",
+    "html",
+    "language",
+    "parser",
+    "translation",
+    "compiler",
+    "xml",
+    "icu",
+    "l10n",
+    "intl",
+    "tms"
   ],
   "author": "Savva Mikhalevski <smikhalevski@gmail.com>",
   "license": "MIT",
