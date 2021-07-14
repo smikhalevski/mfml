@@ -1,5 +1,5 @@
 import {createForgivingSaxParser} from 'tag-soup';
-import {IElementNode, ISelectCaseNode, Node, NodeType} from '../../main/parser/node-types';
+import {ContainerNode, IElementNode, ITextNode, Node, NodeType} from '../../main/parser/node-types';
 import {createIcuDomParser} from '../../main/parser/createIcuDomParser';
 
 describe('createIcuDomParser', () => {
@@ -43,19 +43,22 @@ describe('createIcuDomParser', () => {
       nodeType: NodeType.FUNCTION,
       name: 'date',
       arg: 'foo',
-      children: [],
+      children: [
+        {
+          nodeType: NodeType.TEXT,
+          value: 'YYYY-MM-DD',
+          parent: null,
+          start: 10,
+          end: 20,
+        },
+      ],
       parent: null,
       start: 0,
       end: 10,
     };
 
-    rootNode.children.push({
-      nodeType: NodeType.TEXT,
-      value: 'YYYY-MM-DD',
-      parent: rootNode,
-      start: 10,
-      end: 20,
-    });
+    rootNode.children[0].parent = rootNode;
+
     expect(parse('{foo,date,YYYY-MM-DD}')).toEqual(rootNode);
   });
 
@@ -64,47 +67,50 @@ describe('createIcuDomParser', () => {
       nodeType: NodeType.SELECT,
       arg: 'foo',
       pluralOffset: undefined,
-      children: [],
+      children: [
+        {
+          nodeType: NodeType.SELECT_CASE,
+          key: 'aaa',
+          children: [
+            {
+              nodeType: NodeType.TEXT,
+              value: 'AAA',
+              parent: null,
+              start: 19,
+              end: 22,
+            },
+          ],
+          parent: null,
+          start: 14,
+          end: 19,
+        },
+        {
+          nodeType: NodeType.SELECT_CASE,
+          key: 'bbb',
+          children: [
+            {
+              nodeType: NodeType.TEXT,
+              value: 'BBB',
+              parent: null,
+              start: 29,
+              end: 32,
+            },
+          ],
+          parent: null,
+          start: 23,
+          end: 29,
+        },
+      ],
       parent: null,
       start: 0,
       end: 14,
     };
 
-    const aaaNode: ISelectCaseNode = {
-      nodeType: NodeType.SELECT_CASE,
-      key: 'aaa',
-      children: [],
-      parent: rootNode,
-      start: 14,
-      end: 19,
-    };
-    rootNode.children.push(aaaNode);
+    rootNode.children[0].parent = rootNode;
+    rootNode.children[1].parent = rootNode;
 
-    aaaNode.children.push({
-      nodeType: NodeType.TEXT,
-      value: 'AAA',
-      parent: aaaNode,
-      start: 19,
-      end: 22,
-    });
-
-    const bbbNode: ISelectCaseNode = {
-      nodeType: NodeType.SELECT_CASE,
-      key: 'bbb',
-      children: [],
-      parent: rootNode,
-      start: 23,
-      end: 29,
-    };
-    rootNode.children.push(bbbNode);
-
-    bbbNode.children.push({
-      nodeType: NodeType.TEXT,
-      value: 'BBB',
-      parent: bbbNode,
-      start: 29,
-      end: 32,
-    });
+    (rootNode.children[0] as ContainerNode).children[0].parent = rootNode.children[0] as ContainerNode;
+    (rootNode.children[1] as ContainerNode).children[0].parent = rootNode.children[1] as ContainerNode;
 
     expect(parse('{foo, select, aaa {AAA} bbb {BBB} }')).toEqual(rootNode);
   });
@@ -114,55 +120,57 @@ describe('createIcuDomParser', () => {
       nodeType: NodeType.PLURAL,
       arg: 'foo',
       pluralOffset: undefined,
-      children: [],
+      children: [
+        {
+          nodeType: NodeType.SELECT_CASE,
+          key: 'one',
+          children: [
+            {
+              nodeType: NodeType.TEXT,
+              value: 'aaa',
+              parent: null,
+              start: 19,
+              end: 22,
+            },
+          ],
+          parent: null,
+          start: 14,
+          end: 19,
+        },
+        {
+          nodeType: NodeType.SELECT_CASE,
+          key: 'many',
+          children: [
+            {
+              nodeType: NodeType.OCTOTHORPE,
+              parent: null,
+              start: 30,
+              end: 31,
+            },
+            {
+              nodeType: NodeType.TEXT,
+              value: ' bbb',
+              parent: null,
+              start: 31,
+              end: 35,
+            },
+          ],
+          parent: null,
+          start: 23,
+          end: 30,
+        },
+      ],
       parent: null,
       start: 0,
       end: 14,
     };
 
-    const oneNode: ISelectCaseNode = {
-      nodeType: NodeType.SELECT_CASE,
-      key: 'one',
-      children: [],
-      parent: rootNode,
-      start: 14,
-      end: 19,
-    };
-    rootNode.children.push(oneNode);
+    rootNode.children[0].parent = rootNode;
+    rootNode.children[1].parent = rootNode;
 
-    oneNode.children.push({
-      nodeType: NodeType.TEXT,
-      value: 'aaa',
-      parent: oneNode,
-      start: 19,
-      end: 22,
-    });
-
-    const manyNode: ISelectCaseNode = {
-      nodeType: NodeType.SELECT_CASE,
-      key: 'many',
-      children: [],
-      parent: rootNode,
-      start: 23,
-      end: 30,
-    };
-    rootNode.children.push(manyNode);
-
-    manyNode.children.push(
-        {
-          nodeType: NodeType.OCTOTHORPE,
-          parent: manyNode,
-          start: 30,
-          end: 31,
-        },
-        {
-          nodeType: NodeType.TEXT,
-          value: ' bbb',
-          parent: manyNode,
-          start: 31,
-          end: 35,
-        },
-    );
+    (rootNode.children[0] as ContainerNode).children[0].parent = rootNode.children[0] as ContainerNode;
+    (rootNode.children[1] as ContainerNode).children[0].parent = rootNode.children[1] as ContainerNode;
+    (rootNode.children[1] as ContainerNode).children[1].parent = rootNode.children[1] as ContainerNode;
 
     expect(parse('{foo, plural, one {aaa} many {# bbb} }')).toEqual(rootNode);
   });
@@ -215,21 +223,23 @@ describe('createIcuDomParser', () => {
       nodeType: NodeType.ELEMENT,
       tagName: 'foo',
       attrs: [],
-      children: [],
+      children: [
+        {
+          nodeType: NodeType.ELEMENT,
+          tagName: 'bar',
+          attrs: [],
+          children: [],
+          parent: null,
+          start: 5,
+          end: 10,
+        },
+      ],
       parent: null,
       start: 0,
       end: 10,
     };
 
-    rootNode.children.push({
-      nodeType: NodeType.ELEMENT,
-      tagName: 'bar',
-      attrs: [],
-      children: [],
-      parent: rootNode,
-      start: 5,
-      end: 10,
-    });
+    rootNode.children[0].parent = rootNode;
 
     expect(parse('<foo><bar>')).toEqual(rootNode);
   });
@@ -247,49 +257,52 @@ describe('createIcuDomParser', () => {
 
     const rootNode: Node = {
       nodeType: NodeType.FRAGMENT,
-      children: [],
+      children: [
+        {
+          nodeType: NodeType.ELEMENT,
+          tagName: 'p',
+          attrs: [],
+          children: [
+            {
+              nodeType: NodeType.TEXT,
+              value: 'aaa',
+              parent: null,
+              start: 3,
+              end: 6,
+            },
+          ],
+          parent: null,
+          start: 0,
+          end: 6,
+        },
+        {
+          nodeType: NodeType.ELEMENT,
+          tagName: 'p',
+          attrs: [],
+          children: [
+            {
+              nodeType: NodeType.TEXT,
+              value: 'bbb',
+              parent: null,
+              start: 9,
+              end: 12,
+            },
+          ],
+          parent: null,
+          start: 6,
+          end: 12,
+        },
+      ],
       parent: null,
       start: 0,
       end: 12,
     };
 
-    const pNode1: Node = {
-      nodeType: NodeType.ELEMENT,
-      tagName: 'p',
-      attrs: [],
-      children: [],
-      parent: rootNode,
-      start: 0,
-      end: 6,
-    };
-    rootNode.children.push(pNode1);
+    rootNode.children[0].parent = rootNode;
+    rootNode.children[1].parent = rootNode;
 
-    pNode1.children.push({
-      nodeType: NodeType.TEXT,
-      value: 'aaa',
-      parent: pNode1,
-      start: 3,
-      end: 6,
-    });
-
-    const pNode2: Node = {
-      nodeType: NodeType.ELEMENT,
-      tagName: 'p',
-      attrs: [],
-      children: [],
-      parent: rootNode,
-      start: 6,
-      end: 12,
-    };
-    rootNode.children.push(pNode2);
-
-    pNode2.children.push({
-      nodeType: NodeType.TEXT,
-      value: 'bbb',
-      parent: pNode2,
-      start: 9,
-      end: 12,
-    });
+    (rootNode.children[0] as ContainerNode).children[0].parent = rootNode.children[0] as ContainerNode;
+    (rootNode.children[1] as ContainerNode).children[0].parent = rootNode.children[1] as ContainerNode;
 
     expect(parse('<p>aaa<p>bbb')).toEqual(rootNode);
   });
@@ -298,29 +311,32 @@ describe('createIcuDomParser', () => {
     const rootNode: Node = {
       nodeType: NodeType.ELEMENT,
       tagName: 'foo',
-      attrs: [],
+      attrs: [
+        {
+          nodeType: NodeType.ATTRIBUTE,
+          name: 'bar',
+          children: [
+            {
+              nodeType: NodeType.TEXT,
+              value: 'aaa',
+              parent: null,
+              start: 10,
+              end: 13,
+            },
+          ],
+          parent: null,
+          start: 5,
+          end: 14,
+        },
+      ],
       children: [],
       parent: null,
       start: 0,
       end: 21,
     };
 
-    const attrNode: Node = {
-      nodeType: NodeType.ATTRIBUTE,
-      name: 'bar',
-      children: [],
-      parent: rootNode,
-      start: 5,
-      end: 14,
-    };
-    rootNode.attrs.push(attrNode);
-    attrNode.children.push({
-      nodeType: NodeType.TEXT,
-      value: 'aaa',
-      parent: attrNode,
-      start: 10,
-      end: 13,
-    });
+    rootNode.attrs[0].parent = rootNode;
+    rootNode.attrs[0].children[0].parent = rootNode.attrs[0];
 
     expect(parse('<foo bar="aaa"></foo>')).toEqual(rootNode);
   });
@@ -330,21 +346,23 @@ describe('createIcuDomParser', () => {
       nodeType: NodeType.ELEMENT,
       tagName: 'foo',
       attrs: [],
-      children: [],
+      children: [
+        {
+          nodeType: NodeType.ELEMENT,
+          tagName: 'bar',
+          attrs: [],
+          children: [],
+          parent: null,
+          start: 5,
+          end: 16,
+        },
+      ],
       parent: null,
       start: 0,
       end: 22,
     };
-    const elementNode: Node = {
-      nodeType: NodeType.ELEMENT,
-      tagName: 'bar',
-      attrs: [],
-      children: [],
-      parent: rootNode,
-      start: 5,
-      end: 16,
-    };
-    rootNode.children.push(elementNode);
+
+    rootNode.children[0].parent = rootNode;
 
     expect(parse('<foo><bar></bar></foo>')).toEqual(rootNode);
   });
@@ -355,69 +373,73 @@ describe('createIcuDomParser', () => {
       nodeType: NodeType.SELECT,
       arg: 'www',
       pluralOffset: undefined,
-      children: [],
+      children: [
+        {
+          nodeType: NodeType.SELECT_CASE,
+          key: 'aaa',
+          children: [
+            {
+              nodeType: NodeType.ELEMENT,
+              tagName: 'foo',
+              attrs: [],
+              children: [
+                {
+                  nodeType: NodeType.TEXT,
+                  value: 'AAA',
+                  parent: null,
+                  start: 24,
+                  end: 27,
+                },
+              ],
+              parent: null,
+              start: 19,
+              end: 33,
+            },
+          ],
+          parent: null,
+          start: 14,
+          end: 19,
+        },
+        {
+          nodeType: NodeType.SELECT_CASE,
+          key: 'bbb',
+          children: [
+            {
+              nodeType: NodeType.ELEMENT,
+              tagName: 'bar',
+              attrs: [],
+              children: [
+                {
+                  nodeType: NodeType.TEXT,
+                  value: 'BBB',
+                  parent: null,
+                  start: 45,
+                  end: 48,
+                },
+              ],
+              parent: null,
+              start: 40,
+              end: 54,
+            },
+          ],
+          parent: null,
+          start: 34,
+          end: 40,
+        },
+      ],
       parent: null,
       start: 0,
       end: 14,
     };
 
-    const aaaNode: ISelectCaseNode = {
-      nodeType: NodeType.SELECT_CASE,
-      key: 'aaa',
-      children: [],
-      parent: rootNode,
-      start: 14,
-      end: 19,
-    };
-    rootNode.children.push(aaaNode);
+    rootNode.children[0].parent = rootNode;
+    rootNode.children[1].parent = rootNode;
 
-    const fooNode: IElementNode = {
-      nodeType: NodeType.ELEMENT,
-      tagName: 'foo',
-      attrs: [],
-      children: [],
-      parent: aaaNode,
-      start: 19,
-      end: 33,
-    };
-    aaaNode.children.push(fooNode);
+    (rootNode.children[0] as ContainerNode).children[0].parent = rootNode.children[0] as ContainerNode;
+    (rootNode.children[1] as ContainerNode).children[0].parent = rootNode.children[1] as ContainerNode;
 
-    fooNode.children.push({
-      nodeType: NodeType.TEXT,
-      value: 'AAA',
-      parent: fooNode,
-      start: 24,
-      end: 27,
-    });
-
-    const bbbNode: ISelectCaseNode = {
-      nodeType: NodeType.SELECT_CASE,
-      key: 'bbb',
-      children: [],
-      parent: rootNode,
-      start: 34,
-      end: 40,
-    };
-    rootNode.children.push(bbbNode);
-
-    const barNode: IElementNode = {
-      nodeType: NodeType.ELEMENT,
-      tagName: 'bar',
-      attrs: [],
-      children: [],
-      parent: bbbNode,
-      start: 40,
-      end: 54,
-    };
-    bbbNode.children.push(barNode);
-
-    barNode.children.push({
-      nodeType: NodeType.TEXT,
-      value: 'BBB',
-      parent: barNode,
-      start: 45,
-      end: 48,
-    });
+    ((rootNode.children[0] as ContainerNode).children[0] as ContainerNode).children[0].parent = (rootNode.children[0] as ContainerNode).children[0] as ContainerNode;
+    ((rootNode.children[1] as ContainerNode).children[0] as ContainerNode).children[0].parent = (rootNode.children[1] as ContainerNode).children[0] as ContainerNode;
 
     expect(parse('{www, select, aaa {<foo>AAA</foo>} bbb {<bar>BBB</bar>} }')).toEqual(rootNode);
   });
@@ -425,64 +447,65 @@ describe('createIcuDomParser', () => {
   test('parses an argument surrounded by text and nested in an element', () => {
     const rootNode: Node = {
       nodeType: NodeType.FRAGMENT,
-      children: [],
+      children: [
+        {
+          nodeType: NodeType.TEXT,
+          value: 'aaa',
+          parent: null,
+          start: 0,
+          end: 3,
+        },
+        {
+          nodeType: NodeType.ELEMENT,
+          tagName: 'b',
+          attrs: [],
+          children: [
+            {
+              nodeType: NodeType.TEXT,
+              value: 'bbb',
+              parent: null,
+              start: 6,
+              end: 9,
+            },
+            {
+              nodeType: NodeType.ARGUMENT,
+              arg: 'foo',
+              parent: null,
+              start: 9,
+              end: 14,
+            },
+            {
+              nodeType: NodeType.TEXT,
+              value: 'ddd',
+              parent: null,
+              start: 14,
+              end: 17,
+            },
+          ],
+          parent: null,
+          start: 3,
+          end: 21,
+        },
+        {
+          nodeType: NodeType.TEXT,
+          value: 'eee',
+          parent: null,
+          start: 21,
+          end: 24,
+        },
+      ],
       parent: null,
       start: 0,
       end: 24,
     };
 
-    rootNode.children.push({
-      nodeType: NodeType.TEXT,
-      value: 'aaa',
-      parent: rootNode,
-      start: 0,
-      end: 3,
-    });
+    rootNode.children[0].parent = rootNode;
+    rootNode.children[1].parent = rootNode;
+    rootNode.children[2].parent = rootNode;
 
-    const elementNode: Node = {
-      nodeType: NodeType.ELEMENT,
-      tagName: 'b',
-      attrs: [],
-      children: [],
-      parent: rootNode,
-      start: 3,
-      end: 21,
-    };
-
-    elementNode.children.push(
-        {
-          nodeType: NodeType.TEXT,
-          value: 'bbb',
-          parent: elementNode,
-          start: 6,
-          end: 9,
-        },
-        {
-          nodeType: NodeType.ARGUMENT,
-          arg: 'foo',
-          parent: elementNode,
-          start: 9,
-          end: 14,
-        },
-        {
-          nodeType: NodeType.TEXT,
-          value: 'ddd',
-          parent: elementNode,
-          start: 14,
-          end: 17,
-        },
-    );
-
-    rootNode.children.push(
-        elementNode,
-        {
-          nodeType: NodeType.TEXT,
-          value: 'eee',
-          parent: rootNode,
-          start: 21,
-          end: 24,
-        },
-    );
+    (rootNode.children[1] as ContainerNode).children[0].parent = rootNode.children[1] as ContainerNode;
+    (rootNode.children[1] as ContainerNode).children[1].parent = rootNode.children[1] as ContainerNode;
+    (rootNode.children[1] as ContainerNode).children[2].parent = rootNode.children[1] as ContainerNode;
 
     expect(parse('aaa<b>bbb{foo}ddd</b>eee')).toEqual(rootNode);
   });
@@ -490,97 +513,102 @@ describe('createIcuDomParser', () => {
   test('parses an argument nested in an element', () => {
     const rootNode: Node = {
       nodeType: NodeType.FRAGMENT,
-      children: [],
+      children: [
+        {
+          nodeType: NodeType.TEXT,
+          value: 'aaa',
+          parent: null,
+          start: 0,
+          end: 3,
+        },
+        {
+          nodeType: NodeType.ELEMENT,
+          tagName: 'b',
+          attrs: [],
+          children: [
+            {
+              nodeType: NodeType.ARGUMENT,
+              arg: 'foo',
+              parent: null,
+              start: 6,
+              end: 11,
+            },
+          ],
+          parent: null,
+          start: 3,
+          end: 15,
+        },
+        {
+          nodeType: NodeType.TEXT,
+          value: 'bbb',
+          parent: null,
+          start: 15,
+          end: 18,
+        },
+      ],
       parent: null,
       start: 0,
       end: 18,
     };
 
-    rootNode.children.push({
-      nodeType: NodeType.TEXT,
-      value: 'aaa',
-      parent: rootNode,
-      start: 0,
-      end: 3,
-    });
+    rootNode.children[0].parent = rootNode;
+    rootNode.children[1].parent = rootNode;
+    rootNode.children[2].parent = rootNode;
 
-    const elementNode: Node = {
-      nodeType: NodeType.ELEMENT,
-      tagName: 'b',
-      attrs: [],
-      children: [],
-      parent: rootNode,
-      start: 3,
-      end: 15,
-    };
+    (rootNode.children[1] as ContainerNode).children[0].parent = rootNode.children[1] as ContainerNode;
 
-    elementNode.children.push(
-        {
-          nodeType: NodeType.ARGUMENT,
-          arg: 'foo',
-          parent: elementNode,
-          start: 6,
-          end: 11,
-        },
-    );
+    const qqq = parse('aaa<b>{foo}</b>bbb');
 
-    rootNode.children.push(
-        elementNode,
-        {
-          nodeType: NodeType.TEXT,
-          value: 'bbb',
-          parent: rootNode,
-          start: 15,
-          end: 18,
-        },
-    );
-
-    expect(parse('aaa<b>{foo}</b>bbb')).toEqual(rootNode);
+    expect(qqq).toEqual(rootNode);
   });
 
   test('parses an argument surrounded by text nested in an attribute', () => {
     const rootNode: Node = {
       nodeType: NodeType.ELEMENT,
       tagName: 'foo',
-      attrs: [],
+      attrs: [
+        {
+          nodeType: NodeType.ATTRIBUTE,
+          name: 'bar',
+          children: [
+            {
+              nodeType: NodeType.TEXT,
+              value: 'aaa',
+              parent: null,
+              start: 10,
+              end: 13,
+            },
+            {
+              nodeType: NodeType.ARGUMENT,
+              arg: 'baz',
+              parent: null,
+              start: 13,
+              end: 18,
+            },
+            {
+              nodeType: NodeType.TEXT,
+              value: 'bbb',
+              parent: null,
+              start: 18,
+              end: 21,
+            },
+          ],
+          parent: null,
+          start: 5,
+          end: 22,
+        },
+      ],
       children: [],
       parent: null,
       start: 0,
       end: 29,
     };
 
-    const attrNode: Node = {
-      nodeType: NodeType.ATTRIBUTE,
-      name: 'bar',
-      children: [],
-      parent: rootNode,
-      start: 5,
-      end: 22,
-    };
-    rootNode.attrs.push(attrNode);
-    attrNode.children.push(
-        {
-          nodeType: NodeType.TEXT,
-          value: 'aaa',
-          parent: attrNode,
-          start: 10,
-          end: 13,
-        },
-        {
-          nodeType: NodeType.ARGUMENT,
-          arg: 'baz',
-          parent: attrNode,
-          start: 13,
-          end: 18,
-        },
-        {
-          nodeType: NodeType.TEXT,
-          value: 'bbb',
-          parent: attrNode,
-          start: 18,
-          end: 21,
-        },
-    );
+    rootNode.attrs[0].parent = rootNode;
+
+    rootNode.attrs[0].children[0].parent = rootNode.attrs[0];
+    rootNode.attrs[0].children[1].parent = rootNode.attrs[0];
+    rootNode.attrs[0].children[2].parent = rootNode.attrs[0];
 
     expect(parse('<foo bar="aaa{baz}bbb"></foo>')).toEqual(rootNode);
   });
@@ -589,52 +617,57 @@ describe('createIcuDomParser', () => {
     const rootNode: Node = {
       nodeType: NodeType.ELEMENT,
       tagName: 'foo',
-      attrs: [],
+      attrs: [
+        {
+          nodeType: NodeType.ATTRIBUTE,
+          name: 'bar',
+          children: [
+            {
+              nodeType: NodeType.TEXT,
+              value: 'aaa',
+              parent: null,
+              start: 10,
+              end: 13,
+            },
+            {
+              nodeType: NodeType.ARGUMENT,
+              arg: 'baz',
+              parent: null,
+              start: 13,
+              end: 18,
+            },
+            {
+              nodeType: NodeType.TEXT,
+              value: 'bbb',
+              parent: null,
+              start: 18,
+              end: 21,
+            },
+            {
+              nodeType: NodeType.ARGUMENT,
+              arg: 'qux',
+              parent: null,
+              start: 21,
+              end: 26,
+            },
+          ],
+          parent: null,
+          start: 5,
+          end: 27,
+        },
+      ],
       children: [],
       parent: null,
       start: 0,
       end: 34,
     };
 
-    const attrNode: Node = {
-      nodeType: NodeType.ATTRIBUTE,
-      name: 'bar',
-      children: [],
-      parent: rootNode,
-      start: 5,
-      end: 27,
-    };
-    rootNode.attrs.push(attrNode);
-    attrNode.children.push(
-        {
-          nodeType: NodeType.TEXT,
-          value: 'aaa',
-          parent: attrNode,
-          start: 10,
-          end: 13,
-        },
-        {
-          nodeType: NodeType.ARGUMENT,
-          arg: 'baz',
-          parent: attrNode,
-          start: 13,
-          end: 18,
-        },
-        {
-          nodeType: NodeType.TEXT,
-          value: 'bbb',
-          parent: attrNode,
-          start: 18,
-          end: 21,
-        },
-        {
-          nodeType: NodeType.ARGUMENT,
-          arg: 'qux',
-          parent: attrNode,
-          start: 21,
-          end: 26,
-        },
-    );
+    rootNode.attrs[0].parent = rootNode;
+
+    rootNode.attrs[0].children[0].parent = rootNode.attrs[0];
+    rootNode.attrs[0].children[1].parent = rootNode.attrs[0];
+    rootNode.attrs[0].children[2].parent = rootNode.attrs[0];
+    rootNode.attrs[0].children[3].parent = rootNode.attrs[0];
 
     expect(parse('<foo bar="aaa{baz}bbb{qux}"></foo>')).toEqual(rootNode);
   });
@@ -643,29 +676,33 @@ describe('createIcuDomParser', () => {
     const rootNode: Node = {
       nodeType: NodeType.ELEMENT,
       tagName: 'foo',
-      attrs: [],
+      attrs: [
+        {
+          nodeType: NodeType.ATTRIBUTE,
+          name: 'bar',
+          children: [
+            {
+              nodeType: NodeType.ARGUMENT,
+              arg: 'baz',
+              parent: null,
+              start: 10,
+              end: 15,
+            },
+          ],
+          parent: null,
+          start: 5,
+          end: 16,
+        },
+      ],
       children: [],
       parent: null,
       start: 0,
       end: 23,
     };
 
-    const attrNode: Node = {
-      nodeType: NodeType.ATTRIBUTE,
-      name: 'bar',
-      children: [],
-      parent: rootNode,
-      start: 5,
-      end: 16,
-    };
-    rootNode.attrs.push(attrNode);
-    attrNode.children.push({
-      nodeType: NodeType.ARGUMENT,
-      arg: 'baz',
-      parent: attrNode,
-      start: 10,
-      end: 15,
-    });
+    rootNode.attrs[0].parent = rootNode;
+
+    rootNode.attrs[0].children[0].parent = rootNode.attrs[0];
 
     expect(parse('<foo bar="{baz}"></foo>')).toEqual(rootNode);
   });
@@ -675,7 +712,7 @@ describe('createIcuDomParser', () => {
   });
 
   test('throws on unexpected argument in end tag', () => {
-    expect(() => parse('<foo></foo {baz}>')).toThrow(new SyntaxError('Unexpected token at 11'));
+    expect(() => parse('<foo></foo {baz}>')).toThrow(new SyntaxError('Unexpected token at 5'));
   });
 
   test('throws on element in select in argument', () => {
@@ -691,9 +728,9 @@ describe('createIcuDomParser', () => {
       decodeText: (str) => str.replace('aaa', 'bbb'),
     });
 
-    const node: any = parse('aaa');
+    const node = parse('aaa');
 
-    expect(node.value).toEqual('bbb');
+    expect((node as ITextNode).value).toEqual('bbb');
   });
 
   test('decodes a literal attribute', () => {
@@ -701,9 +738,9 @@ describe('createIcuDomParser', () => {
       decodeAttr: (str) => str.replace('aaa', 'bbb'),
     });
 
-    const node: any = parse('<foo bar="aaa"></foo>');
+    const node = parse('<foo bar="aaa"></foo>');
 
-    expect(node.attrs[0].children[0].value).toEqual('bbb');
+    expect(((node as IElementNode).attrs[0].children[0] as ITextNode).value).toEqual('bbb');
   });
 
   test('decodes an attribute with argument', () => {
@@ -711,9 +748,9 @@ describe('createIcuDomParser', () => {
       decodeAttr: (str) => str.replace('aaa', 'bbb'),
     });
 
-    const node: any = parse('<foo bar="aaa{bar}aaa"></foo>');
+    const node = parse('<foo bar="aaa{bar}aaa"></foo>');
 
-    expect(node.attrs[0].children[0].value).toEqual('bbb');
-    expect(node.attrs[0].children[2].value).toEqual('bbb');
+    expect(((node as IElementNode).attrs[0].children[0] as ITextNode).value).toEqual('bbb');
+    expect(((node as IElementNode).attrs[0].children[2] as ITextNode).value).toEqual('bbb');
   });
 });
