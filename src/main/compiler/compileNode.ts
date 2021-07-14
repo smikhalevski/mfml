@@ -108,10 +108,10 @@ export function compileNode(node: Node, options: INodeCompilerOptions): string {
 
       if (attrCount !== 0) {
         onRuntimeMethodUsed(RuntimeMethod.ELEMENT);
-        src += 'e';
+        src += RuntimeMethod.ELEMENT;
       } else {
         onRuntimeMethodUsed(RuntimeMethod.SHORT_ELEMENT);
-        src += 'E';
+        src += RuntimeMethod.SHORT_ELEMENT;
       }
 
       src += `(${JSON.stringify(renameTag(node.tagName))}`;
