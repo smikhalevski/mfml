@@ -1,4 +1,4 @@
-import {compileCallback} from './compileCallback';
+import {compileMessage} from './compileMessage';
 import {INodeCompilerOptions} from './compileNode';
 
 export interface ICompileModuleOptions extends INodeCompilerOptions {

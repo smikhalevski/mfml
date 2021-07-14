@@ -1,27 +1,23 @@
-import {Node, NodeType} from './node-types';
-import {parseIcu} from './parseIcu';
-import {createEntitiesDecoder, createForgivingSaxParser, ISaxParser, ISaxParserCallbacks, Rewriter} from 'tag-soup';
+import {ITextNode, Node, NodeType} from './node-types';
 import {ParseOptions} from '@messageformat/parser';
-import {linearizeNodes} from './linearizeNodes';
-import {findNodeIndex} from './findNodeIndex';
-import {splitTextNode} from './splitTextNode';
-import {isTextNode} from './node-utils';
-import {decodeTextNodes} from './decodeTextNodes';
-import {throwSyntaxError} from './throwSyntaxError';
+import {parseMessageFormat} from './parseMessageFormat';
+import {createEntitiesDecoder, createForgivingSaxParser, ISaxParser, ISaxParserCallbacks} from 'tag-soup';
+import {isContainerNode, isTextNode} from './node-utils';
+import {die} from '../misc';
 
 const xmlDecoder = createEntitiesDecoder();
 
-export interface IIcuDomParserOptions extends ParseOptions {
+export interface IMfmlParserOptions extends ParseOptions {
 
   /**
    * Decodes XML entities in an attribute value. By default, only XML entities are decoded.
    */
-  decodeAttr?: Rewriter;
+  decodeAttr?: (name: string) => string;
 
   /**
    * Decodes XML entities in plain text value. By default, only XML entities are decoded.
    */
-  decodeText?: Rewriter;
+  decodeText?: (name: string) => string;
 
   /**
    * The factory that creates an instance of a XML/HTML SAX parser that would be used for actual parsing of the input
@@ -37,9 +33,9 @@ export interface IIcuDomParserOptions extends ParseOptions {
 }
 
 /**
- * Creates an ICU + XML/HTML DOM parser.
+ * Creates an ICU MessageFormat + XML/HTML DOM parser.
  */
-export function createIcuDomParser(options: IIcuDomParserOptions = {}): (str: string) => Node {
+export function createMfmlParser(options: IMfmlParserOptions = {}): (str: string) => Node {
 
   const {
     decodeAttr = xmlDecoder,
@@ -64,7 +60,7 @@ export function createIcuDomParser(options: IIcuDomParserOptions = {}): (str: st
       const textNode = linearNodes[linearIndex];
 
       if (!isTextNode(textNode)) {
-        throwSyntaxError(tagStart);
+        die(tagStart);
       }
 
       const elementNode: Node = {
@@ -88,7 +84,7 @@ export function createIcuDomParser(options: IIcuDomParserOptions = {}): (str: st
       linearIndex += offset + 1;
       siblingIndex += offset;
 
-      // An index at which attr declarations start
+      // An index at which attr declarations may start
       const attrsIndex = linearIndex;
 
       // Collect attributes
@@ -134,17 +130,17 @@ export function createIcuDomParser(options: IIcuDomParserOptions = {}): (str: st
           const nodeStart = node.start;
           const nodeEnd = node.end;
 
-          // ICU node is too far ahead
+          // MessageFormat node is too far ahead
           if (attrValueEnd <= nodeStart) {
             break;
           }
 
-          // Skip nested ICU nodes
+          // Skip nested MessageFormat nodes
           if (textNode.parent !== node.parent) {
             continue;
           }
 
-          // ICU node is contained by the attr value
+          // MessageFormat node is contained by the attr value
           if (attrValueStart <= nodeStart && nodeEnd <= attrValueEnd) {
 
             // Leading text in attr value
@@ -177,18 +173,18 @@ export function createIcuDomParser(options: IIcuDomParserOptions = {}): (str: st
             break;
           }
 
-          throwSyntaxError(nodeStart);
+          die(nodeStart);
         }
 
         decodeTextNodes(attrChildren, decodeAttr);
       }
 
-      // Remove ICU nodes that are now part of an attr children
+      // Remove MessageFormat nodes that are now part of attr children
       if (linearIndex !== attrsIndex) {
         siblingNodes.splice(siblingIndex + 1, linearIndex - attrsIndex);
       }
 
-      // Exit if the text node fully contained the start tag
+      // Exit if the MessageFormat text node fully contains the start tag
       if (tagEnd === splitEnd) {
         return;
       }
@@ -202,7 +198,7 @@ export function createIcuDomParser(options: IIcuDomParserOptions = {}): (str: st
         return;
       }
 
-      throwSyntaxError(tailNode.start);
+      die(tailNode.start);
     },
 
     onEndTag(tagToken) {
@@ -235,14 +231,14 @@ export function createIcuDomParser(options: IIcuDomParserOptions = {}): (str: st
           linearIndex = linearNodes.length;
         }
 
-        // The end tag doesn't exist in the markup and was injected by forgiving SAX parser
+        // The end tag doesn't exist in the markup and was injected by the forgiving SAX parser
         const siblingNode = linearNodes[linearIndex - 1];
 
         siblingNodes = siblingNode.parent?.children || rootChildren;
         siblingIndex = siblingNodes.indexOf(siblingNode) + 1;
 
       } else {
-        throwSyntaxError(tagStart);
+        die(tagStart);
       }
 
       // Lookup an element node that is terminated by the end tag
@@ -259,7 +255,7 @@ export function createIcuDomParser(options: IIcuDomParserOptions = {}): (str: st
       }
 
       if (!elementNode) {
-        throwSyntaxError(tagStart);
+        die(tagStart);
       }
 
       const elementChildren = siblingNodes.splice(elementIndex + 1, siblingIndex - elementIndex - 1);
@@ -277,11 +273,12 @@ export function createIcuDomParser(options: IIcuDomParserOptions = {}): (str: st
   return (str) => {
     saxParser.reset();
 
-    rootChildren = parseIcu(str, options);
+    rootChildren = parseMessageFormat(str, options);
     linearNodes = [];
     linearIndex = 0;
 
     linearizeNodes(rootChildren, linearNodes);
+
     saxParser.parse(str);
 
     decodeTextNodes(rootChildren, decodeText);
@@ -306,3 +303,116 @@ export function createIcuDomParser(options: IIcuDomParserOptions = {}): (str: st
   };
 }
 
+/**
+ * Traverse `nodes` and add them to `linearNodes` in the order of occurrence.
+ */
+function linearizeNodes(nodes: Array<Node>, linearNodes: Array<Node>): void {
+  for (let i = 0; i < nodes.length; i++) {
+    const node = nodes[i];
+
+    linearNodes.push(node);
+
+    if (isContainerNode(node)) {
+      linearizeNodes(node.children, linearNodes);
+    }
+  }
+}
+
+/**
+ * Returns the index of the node among `nodes` (starting from `index`) that contains a `[start, end]` char range.
+ * If node wasn't found then -1 is returned.
+ */
+function findNodeIndex(nodes: Array<Node>, index: number, start: number, end: number): number {
+  for (let i = index; i < nodes.length; i++) {
+    const node = nodes[i];
+    const nodeStart = node.start;
+    const nodeEnd = node.end;
+
+    if (end <= nodeStart) {
+      break;
+    }
+    if (start === end && nodeStart === start || isTextNode(node) && nodeStart <= start && end <= nodeEnd) {
+      return i;
+    }
+  }
+  return -1;
+}
+
+/**
+ * Rewrites values of descendant text nodes using `decoder`.
+ */
+function decodeTextNodes(nodes: Array<Node>, decoder: (name: string) => string): void {
+  for (let i = 0; i < nodes.length; i++) {
+    const node = nodes[i];
+
+    if (isTextNode(node)) {
+      node.value = decoder(node.value);
+      continue;
+    }
+    if (isContainerNode(node)) {
+      decodeTextNodes(node.children, decoder);
+    }
+  }
+}
+
+/**
+ * Splits text node in two by char range and inserts a `node` between these new parts.
+ */
+function splitTextNode(linearNodes: Array<Node>, linearIndex: number, siblingNodes: Array<Node>, siblingIndex: number, textNode: ITextNode, start: number, end: number, node: Node | null): number {
+
+  const textStart = textNode.start;
+  const textEnd = textNode.end;
+  const textValue = textNode.value;
+
+  // Replace the text node with node
+  if (textStart === start && textEnd === end) {
+    if (node) {
+      linearNodes[linearIndex] = node;
+      siblingNodes[siblingIndex] = node;
+    } else {
+      linearNodes.splice(linearIndex, 1);
+      siblingNodes.splice(siblingIndex, 1);
+    }
+    return 0;
+  }
+
+  // Node goes before the text node
+  if (textStart === start) {
+    if (node) {
+      linearNodes.splice(linearIndex, 0, node);
+      siblingNodes.splice(siblingIndex, 0, node);
+    }
+    textNode.value = textValue.substring(end - textStart);
+    textNode.start = end;
+    return 0;
+  }
+
+  textNode.value = textValue.substring(0, start - textStart);
+  textNode.end = start;
+
+  // Node goes after the text node
+  if (textEnd === end) {
+    if (node) {
+      linearNodes.splice(linearIndex + 1, 0, node);
+      siblingNodes.splice(siblingIndex + 1, 0, node);
+    }
+    return 1;
+  }
+
+  // Node splits the text node in two
+  const tailNode: ITextNode = {
+    nodeType: NodeType.TEXT,
+    value: textValue.substring(end - textStart),
+    parent: textNode.parent,
+    start: textStart + end - textStart,
+    end: textEnd,
+  };
+  if (node) {
+    linearNodes.splice(linearIndex + 1, 0, node, tailNode);
+    siblingNodes.splice(siblingIndex + 1, 0, node, tailNode);
+  } else {
+    linearNodes.splice(linearIndex + 1, 0, tailNode);
+    siblingNodes.splice(siblingIndex + 1, 0, tailNode);
+  }
+  return 1;
+}

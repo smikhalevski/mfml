@@ -1,13 +1,13 @@
 import {createForgivingSaxParser} from 'tag-soup';
 import {ContainerNode, IElementNode, ITextNode, Node, NodeType} from '../../main/parser/node-types';
-import {createIcuDomParser} from '../../main/parser/createIcuDomParser';
+import {createMfmlParser} from '../../main/parser/createMfmlParser';
 
-describe('createIcuDomParser', () => {
+describe('createMfmlParser', () => {
 
-  const parse = createIcuDomParser();
+  const parse = createMfmlParser();
 
   test('parses text', () => {
-    expect(parse('aaa')).toEqual<Node>({
+    expect(parse('aaa')).toEqual(<Node>{
       nodeType: NodeType.TEXT,
       value: 'aaa',
       parent: null,
@@ -17,9 +17,9 @@ describe('createIcuDomParser', () => {
   });
 
   test('parses an argument', () => {
-    expect(parse('{foo}')).toEqual<Node>({
+    expect(parse('{foo}')).toEqual(<Node>{
       nodeType: NodeType.ARGUMENT,
-      arg: 'foo',
+      name: 'foo',
       parent: null,
       start: 0,
       end: 5,
@@ -27,10 +27,10 @@ describe('createIcuDomParser', () => {
   });
 
   test('parses a function', () => {
-    expect(parse('{foo,number}')).toEqual<Node>({
+    expect(parse('{foo,number}')).toEqual(<Node>{
       nodeType: NodeType.FUNCTION,
       name: 'number',
-      arg: 'foo',
+      argName: 'foo',
       children: [],
       parent: null,
       start: 0,
@@ -42,7 +42,7 @@ describe('createIcuDomParser', () => {
     const rootNode: Node = {
       nodeType: NodeType.FUNCTION,
       name: 'date',
-      arg: 'foo',
+      argName: 'foo',
       children: [
         {
           nodeType: NodeType.TEXT,
@@ -65,7 +65,7 @@ describe('createIcuDomParser', () => {
   test('parses a select node', () => {
     const rootNode: Node = {
       nodeType: NodeType.SELECT,
-      arg: 'foo',
+      argName: 'foo',
       pluralOffset: undefined,
       children: [
         {
@@ -82,7 +82,7 @@ describe('createIcuDomParser', () => {
           ],
           parent: null,
           start: 14,
-          end: 19,
+          end: 23,
         },
         {
           nodeType: NodeType.SELECT_CASE,
@@ -98,12 +98,12 @@ describe('createIcuDomParser', () => {
           ],
           parent: null,
           start: 23,
-          end: 29,
+          end: 33,
         },
       ],
       parent: null,
       start: 0,
-      end: 14,
+      end: 34,
     };
 
     rootNode.children[0].parent = rootNode;
@@ -118,7 +118,7 @@ describe('createIcuDomParser', () => {
   test('parses a plural node', () => {
     const rootNode: Node = {
       nodeType: NodeType.PLURAL,
-      arg: 'foo',
+      argName: 'foo',
       pluralOffset: undefined,
       children: [
         {
@@ -135,7 +135,7 @@ describe('createIcuDomParser', () => {
           ],
           parent: null,
           start: 14,
-          end: 19,
+          end: 23,
         },
         {
           nodeType: NodeType.SELECT_CASE,
@@ -157,12 +157,12 @@ describe('createIcuDomParser', () => {
           ],
           parent: null,
           start: 23,
-          end: 30,
+          end: 36,
         },
       ],
       parent: null,
       start: 0,
-      end: 14,
+      end: 37,
     };
 
     rootNode.children[0].parent = rootNode;
@@ -176,7 +176,7 @@ describe('createIcuDomParser', () => {
   });
 
   test('parses a container element', () => {
-    expect(parse('<foo></foo>')).toEqual<Node>({
+    expect(parse('<foo></foo>')).toEqual(<Node>{
       nodeType: NodeType.ELEMENT,
       tagName: 'foo',
       attrs: [],
@@ -188,14 +188,14 @@ describe('createIcuDomParser', () => {
   });
 
   test('parses a self-closing element', () => {
-    const parse = createIcuDomParser({
+    const parse = createMfmlParser({
       saxParserFactory: (options) => createForgivingSaxParser({
         ...options,
         selfClosingEnabled: true,
       }),
     });
 
-    expect(parse('<foo/>')).toEqual<Node>({
+    expect(parse('<foo/>')).toEqual(<Node>{
       nodeType: NodeType.ELEMENT,
       tagName: 'foo',
       attrs: [],
@@ -207,7 +207,7 @@ describe('createIcuDomParser', () => {
   });
 
   test('parses non-closed tag', () => {
-    expect(parse('<foo>')).toEqual<Node>({
+    expect(parse('<foo>')).toEqual(<Node>{
       nodeType: NodeType.ELEMENT,
       tagName: 'foo',
       attrs: [],
@@ -245,7 +245,7 @@ describe('createIcuDomParser', () => {
   });
 
   test('parses implicitly closed tags', () => {
-    const parse = createIcuDomParser({
+    const parse = createMfmlParser({
       saxParserFactory: (options) => createForgivingSaxParser({
         ...options,
 
@@ -371,7 +371,7 @@ describe('createIcuDomParser', () => {
 
     const rootNode: Node = {
       nodeType: NodeType.SELECT,
-      arg: 'www',
+      argName: 'www',
       pluralOffset: undefined,
       children: [
         {
@@ -398,7 +398,7 @@ describe('createIcuDomParser', () => {
           ],
           parent: null,
           start: 14,
-          end: 19,
+          end: 34,
         },
         {
           nodeType: NodeType.SELECT_CASE,
@@ -424,12 +424,12 @@ describe('createIcuDomParser', () => {
           ],
           parent: null,
           start: 34,
-          end: 40,
+          end: 55,
         },
       ],
       parent: null,
       start: 0,
-      end: 14,
+      end: 56,
     };
 
     rootNode.children[0].parent = rootNode;
@@ -469,7 +469,7 @@ describe('createIcuDomParser', () => {
             },
             {
               nodeType: NodeType.ARGUMENT,
-              arg: 'foo',
+              name: 'foo',
               parent: null,
               start: 9,
               end: 14,
@@ -528,7 +528,7 @@ describe('createIcuDomParser', () => {
           children: [
             {
               nodeType: NodeType.ARGUMENT,
-              arg: 'foo',
+              name: 'foo',
               parent: null,
               start: 6,
               end: 11,
@@ -580,7 +580,7 @@ describe('createIcuDomParser', () => {
             },
             {
               nodeType: NodeType.ARGUMENT,
-              arg: 'baz',
+              name: 'baz',
               parent: null,
               start: 13,
               end: 18,
@@ -631,7 +631,7 @@ describe('createIcuDomParser', () => {
             },
             {
               nodeType: NodeType.ARGUMENT,
-              arg: 'baz',
+              name: 'baz',
               parent: null,
               start: 13,
               end: 18,
@@ -645,7 +645,7 @@ describe('createIcuDomParser', () => {
             },
             {
               nodeType: NodeType.ARGUMENT,
-              arg: 'qux',
+              name: 'qux',
               parent: null,
               start: 21,
               end: 26,
@@ -683,7 +683,7 @@ describe('createIcuDomParser', () => {
           children: [
             {
               nodeType: NodeType.ARGUMENT,
-              arg: 'baz',
+              name: 'baz',
               parent: null,
               start: 10,
               end: 15,
@@ -724,7 +724,7 @@ describe('createIcuDomParser', () => {
   });
 
   test('decodes text', () => {
-    const parse = createIcuDomParser({
+    const parse = createMfmlParser({
       decodeText: (str) => str.replace('aaa', 'bbb'),
     });
 
@@ -734,7 +734,7 @@ describe('createIcuDomParser', () => {
   });
 
   test('decodes a literal attribute', () => {
-    const parse = createIcuDomParser({
+    const parse = createMfmlParser({
       decodeAttr: (str) => str.replace('aaa', 'bbb'),
     });
 
@@ -744,7 +744,7 @@ describe('createIcuDomParser', () => {
   });
 
   test('decodes an attribute with argument', () => {
-    const parse = createIcuDomParser({
+    const parse = createMfmlParser({
       decodeAttr: (str) => str.replace('aaa', 'bbb'),
     });
 

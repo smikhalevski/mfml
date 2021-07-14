@@ -2,18 +2,13 @@ export const enum RuntimeMethod {
   LOCALE = 'l',
   FRAGMENT = 'f',
   ELEMENT = 'e',
-  FUNCTION = 'fn',
+
+  /**
+   * A method that creates an element that has no attributes.
+   */
+  SHORT_ELEMENT = 'E',
+  FUNCTION = 'c',
   PLURAL = 'p',
   SELECT = 's',
   SELECT_ORDINAL = 'o',
 }
-
-export const runtimeMethods = [
-  RuntimeMethod.LOCALE,
-  RuntimeMethod.FRAGMENT,
-  RuntimeMethod.ELEMENT,
-  RuntimeMethod.FUNCTION,
-  RuntimeMethod.PLURAL,
-  RuntimeMethod.SELECT,
-  RuntimeMethod.SELECT_ORDINAL,
-];

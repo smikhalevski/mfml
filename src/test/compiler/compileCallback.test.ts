@@ -1,12 +1,12 @@
-import {createIcuDomParser} from '../../main/parser/createIcuDomParser';
-import {compileCallback} from '../../main/compiler/compileCallback';
+import {createMfmlParser} from '../../main/parser/createMfmlParser';
+import {compileMessage} from '../../main/compiler/compileMessage';
 
 describe('compileCallback', () => {
 
-  const parse = createIcuDomParser();
+  const parse = createMfmlParser();
 
   test('compiles empty function', () => {
-    const source = compileCallback({}, {
+    const source = compileMessage({}, {
       functionName: 'aaa',
       interfaceName: 'IAaa',
     });
@@ -19,21 +19,21 @@ describe('compileCallback', () => {
   });
 
   test('compiles function with multiple locales', () => {
-    const source = compileCallback({en: parse('AAA'), ru: parse('BBB')}, {
+    const source = compileMessage({en: parse('AAA'), ru: parse('BBB')}, {
       functionName: 'aaa',
       interfaceName: 'IAaa',
     });
 
     expect(source).toBe(
         'export function aaa(runtime:IRuntime<any>,locale:string):string{' +
-        'const {l}=runtime;' +
-        'return l({en:"AAA"ru:"BBB"})' +
+        'const {l}=runtime;const li=l(locale,"en","ru","es");' +
+        'return li===0?"AAA":li===1?"BBB":"CCC"})' +
         '}',
     );
   });
 
   test('compiles function with text', () => {
-    const source = compileCallback({'en': parse('aaa')}, {
+    const source = compileMessage({'en': parse('aaa')}, {
       functionName: 'aaa',
       interfaceName: 'IAaa',
     });
@@ -46,7 +46,7 @@ describe('compileCallback', () => {
   });
 
   test('compiles function with arguments', () => {
-    const source = compileCallback({'en': parse('aaa{foo}bbb')}, {
+    const source = compileMessage({'en': parse('aaa{foo}bbb')}, {
       functionName: 'aaa',
       interfaceName: 'IAaa',
     });
@@ -61,7 +61,7 @@ describe('compileCallback', () => {
   });
 
   test('compiles function with plural', () => {
-    const source = compileCallback({'en': parse('{foo,plural,one{AAA} many{BBB}}')}, {
+    const source = compileMessage({'en': parse('{foo,plural,one{AAA} many{BBB}}')}, {
       functionName: 'aaa',
       interfaceName: 'IAaa',
     });
@@ -76,7 +76,7 @@ describe('compileCallback', () => {
   });
 
   test('compiles function with an element', () => {
-    const source = compileCallback({'en': parse('<foo>')}, {
+    const source = compileMessage({'en': parse('<foo>')}, {
       functionName: 'aaa',
       interfaceName: 'IAaa',
     });

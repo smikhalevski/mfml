@@ -5,6 +5,7 @@ import {
   IFragmentNode,
   IFunctionNode,
   IOctothorpeNode,
+  ISelectCaseNode,
   ISelectNode,
   ITextNode,
   Node,
@@ -12,15 +13,17 @@ import {
 } from '../parser';
 
 export interface INodeVisitor {
-  onFragment?: (node: IFragmentNode, next: () => void) => void;
-  onElement?: (node: IElementNode, next: () => void) => void;
-  onText?: (node: ITextNode) => void;
-  onArgument?: (node: IArgumentNode) => void;
-  onFunction?: (node: IFunctionNode, next: () => void) => void;
-  onPlural?: (node: ISelectNode) => void;
-  onSelect?: (node: ISelectNode) => void;
-  onSelectOrdinal?: (node: ISelectNode) => void;
-  onOctothorpe?: (node: IOctothorpeNode) => void;
+  fragment?: (node: IFragmentNode, next: () => void) => void;
+  element?: (node: IElementNode, nextAttributes: () => void, nextChildren: () => void) => void;
+  attribute?: (node: IAttributeNode, next: () => void) => void;
+  text?: (node: ITextNode) => void;
+  argument?: (node: IArgumentNode) => void;
+  function?: (node: IFunctionNode, next: () => void) => void;
+  plural?: (node: ISelectNode, next: () => void) => void;
+  select?: (node: ISelectNode, next: () => void) => void;
+  selectOrdinal?: (node: ISelectNode, next: () => void) => void;
+  selectCase?: (node: ISelectCaseNode, next: () => void) => void;
+  octothorpe?: (node: IOctothorpeNode) => void;
 }
 
 /**
@@ -31,32 +34,49 @@ export interface INodeVisitor {
  */
 export function visitNode(node: Node, visitor: INodeVisitor): void {
   switch (node.nodeType) {
+
     case NodeType.FRAGMENT:
-      visitor.onFragment?.(node, () => visitChildren(node.children, visitor));
+      visitor.fragment?.(node, () => visitChildren(node.children, visitor));
       break;
+
     case NodeType.ELEMENT:
-      visitor.onElement?.(node, () => visitChildren(node.children, visitor));
+      visitor.element?.(node, () => visitChildren(node.attrs, visitor), () => visitChildren(node.children, visitor));
       break;
+
+    case NodeType.ATTRIBUTE:
+      visitor.attribute?.(node, () => visitChildren(node.children, visitor));
+      break;
+
     case NodeType.TEXT:
-      visitor.onText?.(node);
+      visitor.text?.(node);
       break;
+
     case NodeType.ARGUMENT:
-      visitor.onArgument?.(node);
+      visitor.argument?.(node);
       break;
+
     case NodeType.FUNCTION:
-      visitor.onFunction?.(node, () => visitChildren(node.children, visitor));
+      visitor.function?.(node, () => visitChildren(node.children, visitor));
       break;
+
     case NodeType.PLURAL:
-      visitor.onPlural?.(node);
+      visitor.plural?.(node, () => visitChildren(node.children, visitor));
       break;
+
     case NodeType.SELECT:
-      visitor.onSelect?.(node);
+      visitor.select?.(node, () => visitChildren(node.children, visitor));
       break;
+
     case NodeType.SELECT_ORDINAL:
-      visitor.onSelectOrdinal?.(node);
+      visitor.selectOrdinal?.(node, () => visitChildren(node.children, visitor));
       break;
+
+    case NodeType.SELECT_CASE:
+      visitor.selectCase?.(node, () => visitChildren(node.children, visitor));
+      break;
+
     case NodeType.OCTOTHORPE:
-      visitor.onOctothorpe?.(node);
+      visitor.octothorpe?.(node);
       break;
   }
 }

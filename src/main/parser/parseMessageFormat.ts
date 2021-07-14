@@ -2,24 +2,24 @@ import {parse, ParseOptions, Token} from '@messageformat/parser';
 import {ContainerNode, IFunctionNode, ISelectCaseNode, ISelectNode, Node, NodeType} from './node-types';
 
 /**
- * Parses only ICU tags.
+ * Parses ICU MessageFormat as a tree of AST nodes.
  *
  * @param str The string to parse.
- * @param options The ICU parsing options.
- * @returns An array of AST nodes.
+ * @param options The ICU MessageFormat parsing options.
+ * @returns An array of root AST nodes.
  */
-export function parseIcu(str: string, options?: ParseOptions): Array<Node> {
-  return pushIcuTokensAsNodes(parse(str, options), [], null);
+export function parseMessageFormat(str: string, options?: ParseOptions): Array<Node> {
+  return pushMessageFormatTokensAsNodes(parse(str, options), [], null);
 }
 
-function pushIcuTokensAsNodes(tokens: Array<Token>, arr: Array<Node>, parent: ContainerNode | null): Array<Node> {
+function pushMessageFormatTokensAsNodes(tokens: Array<Token>, arr: Array<Node>, parent: ContainerNode | null): Array<Node> {
   for (let i = 0; i < tokens.length; i++) {
-    arr.push(convertIcuTokenToNode(tokens[i], parent));
+    arr.push(convertMessageFormatTokenToNode(tokens[i], parent));
   }
   return arr;
 }
 
-function convertIcuTokenToNode(token: Token, parent: ContainerNode | null): Node {
+function convertMessageFormatTokenToNode(token: Token, parent: ContainerNode | null): Node {
 
   const start = token.ctx.offset;
   const end = start + token.ctx.text.length;
@@ -29,7 +29,7 @@ function convertIcuTokenToNode(token: Token, parent: ContainerNode | null): Node
     case 'argument':
       return {
         nodeType: NodeType.ARGUMENT,
-        arg: token.arg,
+        name: token.arg,
         parent,
         start,
         end,
@@ -44,29 +44,28 @@ function convertIcuTokenToNode(token: Token, parent: ContainerNode | null): Node
         end,
       };
 
-    case 'function': {
+    case 'function':
       const node: IFunctionNode = {
         nodeType: NodeType.FUNCTION,
         name: token.key,
-        arg: token.arg,
+        argName: token.arg,
         children: [],
         parent,
         start,
         end,
       };
       if (token.param) {
-        pushIcuTokensAsNodes(token.param, node.children, node);
+        pushMessageFormatTokensAsNodes(token.param, node.children, node);
       }
       return node;
-    }
 
     case 'plural':
     case 'select':
-    case 'selectordinal': {
+    case 'selectordinal':
       const selectNode: ISelectNode = {
         nodeType: token.type === 'plural' ? NodeType.PLURAL : token.type === 'select' ? NodeType.SELECT : NodeType.SELECT_ORDINAL,
         pluralOffset: token.pluralOffset,
-        arg: token.arg,
+        argName: token.arg,
         children: [],
         parent,
         start,
@@ -75,20 +74,24 @@ function convertIcuTokenToNode(token: Token, parent: ContainerNode | null): Node
 
       for (let i = 0; i < token.cases.length; i++) {
         const caseToken = token.cases[i];
-        const caseStart = caseToken.ctx.offset;
+        const caseChildren: Array<Node> = [];
+
         const caseNode: ISelectCaseNode = {
           nodeType: NodeType.SELECT_CASE,
           key: caseToken.key,
-          children: [],
+          children: caseChildren,
           parent: selectNode,
-          start: caseStart,
-          end: caseStart + caseToken.ctx.text.length,
+          start: caseToken.ctx.offset,
+          end: 0,
         };
         selectNode.children.push(caseNode);
-        pushIcuTokensAsNodes(caseToken.tokens, caseNode.children, caseNode);
+
+        pushMessageFormatTokensAsNodes(caseToken.tokens, caseChildren, caseNode);
+
+        const caseEnd = caseNode.end = caseChildren.length === 0 ? caseNode.start + 1 : caseChildren[caseChildren.length - 1].end + 1;
+        selectNode.end = caseEnd + 1;
       }
       return selectNode;
-    }
 
     case 'octothorpe':
       return {

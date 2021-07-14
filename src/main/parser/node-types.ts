@@ -27,7 +27,7 @@ export type Node =
     | ITextNode;
 
 export interface INode {
-  nodeType: number;
+  nodeType: NodeType;
   parent: ContainerNode | null;
   start: number;
   end: number;
@@ -49,29 +49,32 @@ export interface IElementNode extends IContainerNode {
 
 export interface IAttributeNode extends IContainerNode {
   nodeType: NodeType.ATTRIBUTE;
+  parent: IElementNode | null;
   name: string;
 }
 
 export interface ISelectNode extends IContainerNode {
   nodeType: NodeType.PLURAL | NodeType.SELECT | NodeType.SELECT_ORDINAL;
-  arg: string;
+  argName: string;
+  children: Array<ISelectCaseNode>;
   pluralOffset?: number;
 }
 
 export interface ISelectCaseNode extends IContainerNode {
   nodeType: NodeType.SELECT_CASE;
+  parent: ISelectNode | null;
   key: string;
 }
 
 export interface IFunctionNode extends IContainerNode {
   nodeType: NodeType.FUNCTION;
   name: string;
-  arg: string;
+  argName: string;
 }
 
 export interface IArgumentNode extends INode {
   nodeType: NodeType.ARGUMENT;
-  arg: string;
+  name: string;
 }
 
 export interface IOctothorpeNode extends INode {
