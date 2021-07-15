@@ -1,7 +1,19 @@
-import {compileMessage, IMessageCompilerPublicOptions} from './compileMessage';
-import {Node} from '../parser';
-import {createVarNameProvider} from '../../../../codegen';
+import {
+  ARGS_VAR_NAME,
+  compileMessage,
+  IMessage,
+  IMessageCompilerPublicOptions,
+  LOCALE_VAR_NAME,
+  RUNTIME_VAR_NAME,
+} from './compileMessage';
+import {createVarNameProvider} from '@smikhalevski/codegen';
 import {createMap, jsonStringify} from '../misc';
+import {TEMP_VAR_NAME} from './compileNode';
+import {RuntimeMethod} from '../runtime';
+
+export interface IMessageGroup {
+  [messageKey: string]: IMessage;
+}
 
 export interface IModuleCompilerOptions extends IMessageCompilerPublicOptions {
   renameMessageInterface: (key: string) => string;
@@ -12,10 +24,10 @@ export interface IModuleCompilerOptions extends IMessageCompilerPublicOptions {
 /**
  * Compiles translations as a module that exports message functions and corresponding argument interfaces.
  *
- * @param translations The map from translation key to a mapping from locale to a parsed AST.
+ * @param messageGroup The map from translation key to a mapping from locale to a parsed AST.
  * @param options Compiler options.
  */
-export function compileModule(translations: { [key: string]: { [locale: string]: Node } }, options: IModuleCompilerOptions): string {
+export function compileModule(messageGroup: IMessageGroup, options: IModuleCompilerOptions): string {
   const {
     renameMessageInterface,
     renameMessageFunction,
@@ -30,18 +42,31 @@ export function compileModule(translations: { [key: string]: { [locale: string]:
     otherSelectCaseKey,
   } = options;
 
-  const translationEntries = Object.entries(translations);
-  const supportedLocalesMap = createMap<string>();
-  const nextVarName = createVarNameProvider();
+  const supportedLocalesSrcMap = createMap<string>();
+  const nextVarName = createVarNameProvider([
+    RUNTIME_VAR_NAME,
+    LOCALE_VAR_NAME,
+    ARGS_VAR_NAME,
+    TEMP_VAR_NAME,
+    RuntimeMethod.LOCALE,
+    RuntimeMethod.FRAGMENT,
+    RuntimeMethod.ARGUMENT,
+    RuntimeMethod.ELEMENT,
+    RuntimeMethod.SHORT_ELEMENT,
+    RuntimeMethod.FUNCTION,
+    RuntimeMethod.PLURAL,
+    RuntimeMethod.SELECT,
+    RuntimeMethod.SELECT_ORDINAL,
+  ]);
 
   let src = '';
 
-  for (const [key, nodeMap] of translationEntries) {
+  for (const [key, message] of Object.entries(messageGroup)) {
 
-    const supportedLocales = Object.keys(nodeMap).sort();
-    const supportedLocalesVarName = supportedLocales.length > 2 ? supportedLocalesMap[supportedLocales.map(jsonStringify).join(',')] ||= nextVarName() : '';
+    const supportedLocales = Object.keys(message).sort();
+    const supportedLocalesVarName = supportedLocales.length > 1 ? supportedLocalesSrcMap[supportedLocales.map(jsonStringify).join(',')] ||= nextVarName() : '';
 
-    src += compileMessage(nodeMap, {
+    src += compileMessage(message, {
       interfaceName: renameMessageInterface(key),
       functionName: renameMessageFunction(key),
       displayName: rewriteDisplayName(key),
@@ -58,9 +83,9 @@ export function compileModule(translations: { [key: string]: { [locale: string]:
     });
   }
 
-  const supportedLocalesEntries = Object.entries(supportedLocalesMap);
-  if (supportedLocalesEntries.length) {
-    src = 'const ' + supportedLocalesEntries.map(([localesSrc, varName]) => src + varName + '=[' + localesSrc + ']').join(',') + ';' + src;
+  const supportedLocaleEntries = Object.entries(supportedLocalesSrcMap);
+  if (supportedLocaleEntries.length) {
+    src = 'const ' + supportedLocaleEntries.map(([localesSrc, varName]) => varName + '=[' + localesSrc + ']').join(',') + ';' + src;
   }
 
   return 'import {IRuntime} from "mfml/lib/runtime";' + src;

@@ -14,6 +14,8 @@ const RUNTIME_VAR_NAME = 'runtime';
 const LOCALE_VAR_NAME = 'locale';
 const ARGS_VAR_NAME = 'args';
 
+export {RUNTIME_VAR_NAME, LOCALE_VAR_NAME, ARGS_VAR_NAME};
+
 export interface IMessageCompilerPublicOptions extends INodeCompilerPublicOptions {
   renameArgument: (name: string) => string;
 
@@ -51,13 +53,17 @@ export interface IMessageCompilerOptions extends IMessageCompilerPublicOptions {
   supportedLocalesVarName: string;
 }
 
+export interface IMessage {
+  [locale: string]: Node;
+}
+
 /**
  * Compiles a message function and an interface that describes arguments.
  *
- * @param nodeMap The mapping from locale to a parsed AST node.
+ * @param message The mapping from locale to a parsed AST node.
  * @param options Compilation options.
  */
-export function compileMessage(nodeMap: { [locale: string]: Node }, options: IMessageCompilerOptions): string {
+export function compileMessage(message: IMessage, options: IMessageCompilerOptions): string {
 
   const {
     renameTag,
@@ -114,7 +120,7 @@ export function compileMessage(nodeMap: { [locale: string]: Node }, options: IMe
     onTempVarUsed: () => tempVarUsed = true,
   };
 
-  const resultSrc = compileResult(nodeMap, options, nodeCompilerOptions);
+  const resultSrc = compileResult(message, options, nodeCompilerOptions);
 
   const argNames = Object.keys(argVarMap);
   const argCount = argNames.length;
@@ -140,7 +146,7 @@ export function compileMessage(nodeMap: { [locale: string]: Node }, options: IMe
     varSrcs.push('{' + Array.from(usedMethods).join(',') + '}=' + RUNTIME_VAR_NAME);
   }
   if (argCount !== 0) {
-    varSrcs.push('{' + Object.entries(argVarMap).map(([argName, argVar]) => renameArgument(argName) + ' as ' + argVar).join(',') + '}=' + ARGS_VAR_NAME);
+    varSrcs.push('{' + Object.entries(argVarMap).map(([argName, argVar]) => renameArgument(argName) + ':' + argVar).join(',') + '}=' + ARGS_VAR_NAME);
   }
 
   if (!displayName) {
@@ -153,7 +159,7 @@ export function compileMessage(nodeMap: { [locale: string]: Node }, options: IMe
       + `):T|string${nullable ? '|null' : ''}{`;
 
   if (varSrcs.length) {
-    src += `const ${varSrcs.join(',')};`;
+    src += `let ${varSrcs.join(',')};`;
   }
   src += `return ${resultSrc}}`;
 
@@ -164,7 +170,7 @@ export function compileMessage(nodeMap: { [locale: string]: Node }, options: IMe
   return src;
 }
 
-function compileResult(nodeMap: Record<string, Node>, options: IMessageCompilerOptions, nodeCompilerOptions: INodeCompilerOptions): string {
+function compileResult(message: IMessage, options: IMessageCompilerOptions, nodeCompilerOptions: INodeCompilerOptions): string {
   const {
     supportedLocales,
     defaultLocale,
@@ -176,17 +182,17 @@ function compileResult(nodeMap: Record<string, Node>, options: IMessageCompilerO
 
   const defaultValueSrc = compileDefaultValue(nullable);
 
-  if (Object.values(nodeMap).every(isBlankNode)) {
+  if (Object.values(message).every(isBlankNode)) {
     return defaultValueSrc;
   }
 
-  let defaultLocaleIndex = nodeMap[defaultLocale] ? supportedLocales.indexOf(defaultLocale) : -1;
+  let defaultLocaleIndex = message[defaultLocale] ? supportedLocales.indexOf(defaultLocale) : -1;
   let src = '';
   let childrenSrc = '';
   let j = 0;
 
   for (let i = 0; i < supportedLocales.length; i++) {
-    const node = nodeMap[supportedLocales[i]];
+    const node = message[supportedLocales[i]];
 
     if (i === defaultLocaleIndex || !node) {
       continue;
@@ -202,7 +208,7 @@ function compileResult(nodeMap: Record<string, Node>, options: IMessageCompilerO
     j++;
   }
 
-  const defaultLocaleSrc = compileNode(nodeMap[supportedLocales[defaultLocaleIndex]], nodeCompilerOptions) || defaultValueSrc;
+  const defaultLocaleSrc = compileNode(message[supportedLocales[defaultLocaleIndex]], nodeCompilerOptions) || defaultValueSrc;
 
   if (j === 0) {
     return defaultLocaleSrc;

@@ -1,7 +1,7 @@
 import {ContainerNode, isBlankNode, ISelectCaseNode, ISelectNode, isSelectNode, ITextNode, Node} from '../parser';
 import {visitNode} from './visitNode';
 import {dieAtOffset, jsonStringify} from '../misc';
-import {pluralCategories, PluralCategory} from '../runtime/pluralCategories';
+import {pluralCategories, PluralCategory} from '../runtime/PluralCategory';
 import {RuntimeMethod} from '../runtime';
 import {compilePropertyName} from '@smikhalevski/codegen';
 

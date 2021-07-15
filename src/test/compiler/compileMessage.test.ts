@@ -75,7 +75,7 @@ describe('compileCallback', () => {
     expect(src).toBe(
         'export interface IGggArgs{foo:number;}' +
         'export function ggg<T>(locale:string,runtime:IRuntime<T>,args:IGggArgs):T|string|null{' +
-        'const i,{s}=runtime,{foo as b}=args;' +
+        'const i,{s}=runtime,{foo:b}=args;' +
         'return (i=s(b,"aaa","bbb"),i===0?"AAA":i===1?"BBB":null)' +
         '}',
     );
@@ -89,7 +89,7 @@ describe('compileCallback', () => {
     expect(src).toBe(
         'export interface IGggArgs{foo:number;}' +
         'export function ggg<T>(locale:string,runtime:IRuntime<T>,args:IGggArgs):T|string|null{' +
-        'const {s}=runtime,{foo as b}=args;' +
+        'const {s}=runtime,{foo:b}=args;' +
         'return s(b,"aaa")===0?"AAA":"BBB"' +
         '}',
     );
@@ -103,7 +103,7 @@ describe('compileCallback', () => {
     expect(src).toBe(
         'export interface IGggArgs{foo:number;}' +
         'function ggg<T>(locale:string,runtime:IRuntime<T>,args:IGggArgs):T|string|null{' +
-        'const {s}=runtime,{foo as b}=args;' +
+        'const {s}=runtime,{foo:b}=args;' +
         'return s(b,"aaa")===0?"AAA":"BBB"' +
         '}' +
         'ggg.displayName="__ggg__";' +

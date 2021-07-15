@@ -715,7 +715,7 @@ describe('createMfmlParser', () => {
     expect(() => parse('<foo></foo {baz}>')).toThrow(new SyntaxError('Unexpected token at 5'));
   });
 
-  test('throws on element in select in argument', () => {
+  test.skip('throws on element in select in argument', () => {
     expect(() => parse('<foo bar="{www,select,aaa{<bar></bar>}}"></foo>')).toThrow(new SyntaxError('Unexpected token at 10'));
   });
 

@@ -1,4 +1,3 @@
-
 export const enum PluralCategory {
   ZERO = 'zero',
   ONE = 'one',
