@@ -18,6 +18,7 @@ describe('compileNode', () => {
       renameAttribute: (name) => name,
       renameFunction: (name) => name,
       nullable: true,
+      otherSelectCaseKey: 'other',
       getArgumentVarName: (name) => name,
       getFunctionArgumentType: () => 'qqq',
       onArgumentTypeChanged(argName, type) {
@@ -28,6 +29,7 @@ describe('compileNode', () => {
           usedMethods.push(method);
         }
       },
+      onTempVarUsed: () => undefined,
     };
   });
 
@@ -78,6 +80,16 @@ describe('compileNode', () => {
     test('respects the default value', () => {
       expect(compileNode(parse('{foo,select,aaa{AAA}}'), {...options, nullable: false}))
           .toBe('s(foo,"aaa")===0?"AAA":""');
+    });
+
+    test('compiles other', () => {
+      expect(compileNode(parse('{foo,select,aaa{AAA}other{BBB}}'), {...options}))
+          .toBe('s(foo,"aaa")===0?"AAA":"BBB"');
+    });
+
+    test('respects other key setting', () => {
+      expect(compileNode(parse('{foo,select,aaa{AAA}kkk{BBB}}'), {...options, otherSelectCaseKey: 'kkk'}))
+          .toBe('s(foo,"aaa")===0?"AAA":"BBB"');
     });
   });
 

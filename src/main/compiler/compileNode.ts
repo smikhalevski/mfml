@@ -1,6 +1,6 @@
 import {ContainerNode, isBlankNode, ISelectCaseNode, ISelectNode, isSelectNode, ITextNode, Node} from '../parser';
 import {visitNode} from './visitNode';
-import {dieAtOffset} from '../misc';
+import {dieAtOffset, jsonStringify} from '../misc';
 import {pluralCategories, PluralCategory} from '../runtime/pluralCategories';
 import {RuntimeMethod} from '../runtime';
 import {compilePropertyName} from '@smikhalevski/codegen';
@@ -11,12 +11,11 @@ import {compilePropertyName} from '@smikhalevski/codegen';
 export const TEMP_VAR_NAME = 'i';
 
 /**
- * The type of the argument used in `plural` and `selectordinal`.
+ * The argument type accepted by `plural` and `selectordinal`.
  */
 export const ORDINAL_ARG_TYPE = 'number';
 
-export interface INodeCompilerOptions {
-
+export interface INodeCompilerPublicOptions {
   renameTag: (name: string) => string;
   renameAttribute: (name: string) => string;
   renameFunction: (name: string) => string;
@@ -32,7 +31,13 @@ export interface INodeCompilerOptions {
    */
   getFunctionArgumentType: (name: string) => string | undefined;
 
-  // ----------------------
+  /**
+   * The key that is used as the default for `select`.
+   */
+  otherSelectCaseKey: string;
+}
+
+export interface INodeCompilerOptions extends INodeCompilerPublicOptions {
 
   /**
    * Returns the name of the the variable that holds an argument value.
@@ -51,6 +56,11 @@ export interface INodeCompilerOptions {
    * Triggered if a runtime method usage was rendered.
    */
   onRuntimeMethodUsed: (runtimeMethod: RuntimeMethod) => void;
+
+  /**
+   * Triggered when a {@link TEMP_VAR_NAME} was rendered.
+   */
+  onTempVarUsed: () => void;
 }
 
 /**
@@ -64,7 +74,6 @@ export function compileNode(node: Node, options: INodeCompilerOptions): string {
     renameTag,
     renameAttribute,
     renameFunction,
-    nullable,
     getArgumentVarName,
     getFunctionArgumentType,
     onArgumentTypeChanged,
@@ -128,7 +137,7 @@ export function compileNode(node: Node, options: INodeCompilerOptions): string {
         src += RuntimeMethod.SHORT_ELEMENT;
       }
 
-      src += `(${JSON.stringify(renameTag(node.tagName))}`;
+      src += `(${jsonStringify(renameTag(node.tagName))}`;
 
       if (attrCount !== 0) {
         src += ',{';
@@ -158,7 +167,7 @@ export function compileNode(node: Node, options: INodeCompilerOptions): string {
         return;
       }
       enterChild();
-      src += JSON.stringify(node.value);
+      src += jsonStringify(node.value);
     },
 
     argument(node) {
@@ -177,7 +186,7 @@ export function compileNode(node: Node, options: INodeCompilerOptions): string {
       onArgumentTypeChanged(argName, getFunctionArgumentType(name));
       onRuntimeMethodUsed(RuntimeMethod.FUNCTION);
 
-      src += RuntimeMethod.FUNCTION + `(${JSON.stringify(renameFunction(name))},${getArgumentVarName(argName)}`;
+      src += RuntimeMethod.FUNCTION + `(${jsonStringify(renameFunction(name))},${getArgumentVarName(argName)}`;
       compileFragment(node, next);
       src += ')';
     },
@@ -193,42 +202,8 @@ export function compileNode(node: Node, options: INodeCompilerOptions): string {
     },
 
     select(node) {
-      const {argName, children} = node;
-      const keySrcs: Array<string> = [];
-
-      onArgumentTypeChanged(argName, ORDINAL_ARG_TYPE);
-
-      let childrenSrc = '';
-      let j = 0;
-
-      for (let i = 0; i < children.length; i++) {
-        const child = children[i];
-        const keySrc = JSON.stringify(child.key);
-
-        if (keySrcs.indexOf(keySrc) !== -1 || isBlankNode(child)) {
-          continue;
-        }
-        if (j !== 0) {
-          childrenSrc += ':' + TEMP_VAR_NAME;
-        }
-        childrenSrc += `===${i}?` + compileNode(child, options);
-        keySrcs.push(keySrc);
-        j++;
-      }
-      if (j === 0) {
-        return;
-      }
       enterChild();
-      if (j !== 1) {
-        src += `(${TEMP_VAR_NAME}=`;
-      }
-
-      onRuntimeMethodUsed(RuntimeMethod.SELECT);
-
-      src += RuntimeMethod.SELECT + `(${getArgumentVarName(argName)},${keySrcs.join(',')})`;
-
-      const defaultValueSrc = compileDefaultValue(nullable);
-      src += j === 1 ? childrenSrc + ':' + defaultValueSrc : `,${TEMP_VAR_NAME}${childrenSrc}:${defaultValueSrc})`;
+      src += compileSelect(node, options);
     },
 
     octothorpe(node) {
@@ -250,12 +225,69 @@ export function compileNode(node: Node, options: INodeCompilerOptions): string {
   return src;
 }
 
+function compileSelect(node: ISelectNode, options: INodeCompilerOptions): string {
+  const {
+    nullable,
+    otherSelectCaseKey,
+    getArgumentVarName,
+    onArgumentTypeChanged,
+    onRuntimeMethodUsed,
+    onTempVarUsed,
+  } = options;
+
+  const {argName, children} = node;
+  const keySrcs: Array<string> = [];
+
+  onArgumentTypeChanged(argName, ORDINAL_ARG_TYPE);
+
+  let otherNode: ISelectCaseNode | undefined;
+  let childrenSrc = '';
+  let j = 0;
+
+  for (let i = 0; i < children.length; i++) {
+    const child = children[i];
+    const keySrc = jsonStringify(child.key);
+
+    if (keySrcs.indexOf(keySrc) !== -1 || isBlankNode(child)) {
+      continue;
+    }
+    if (child.key === otherSelectCaseKey) {
+      otherNode = child;
+      continue;
+    }
+    if (j !== 0) {
+      childrenSrc += ':' + TEMP_VAR_NAME;
+    }
+    childrenSrc += `===${i}?` + compileNode(child, options);
+    keySrcs.push(keySrc);
+    j++;
+  }
+
+  let src = '';
+  if (j === 0) {
+    return otherNode ? compileNode(otherNode, options) : src;
+  }
+  if (j !== 1) {
+    onTempVarUsed();
+    src += `(${TEMP_VAR_NAME}=`;
+  }
+
+  onRuntimeMethodUsed(RuntimeMethod.SELECT);
+  src += RuntimeMethod.SELECT + `(${getArgumentVarName(argName)},${keySrcs.join(',')})`;
+
+  const otherSrc = otherNode ? compileNode(otherNode, options) : compileDefaultValue(nullable);
+
+  src += j === 1 ? childrenSrc + ':' + otherSrc : `,${TEMP_VAR_NAME}${childrenSrc}:${otherSrc})`;
+  return src;
+}
+
 function compilePlural(node: ISelectNode, runtimeMethod: RuntimeMethod, options: INodeCompilerOptions): string {
   const {
     nullable,
     getArgumentVarName,
     onArgumentTypeChanged,
     onRuntimeMethodUsed,
+    onTempVarUsed,
   } = options;
 
   const {argName, children} = node;
@@ -288,6 +320,7 @@ function compilePlural(node: ISelectNode, runtimeMethod: RuntimeMethod, options:
     return otherNode ? compileNode(otherNode, options) : src;
   }
   if (j !== 1) {
+    onTempVarUsed();
     src += `(${TEMP_VAR_NAME}=`;
   }
 
@@ -295,7 +328,7 @@ function compilePlural(node: ISelectNode, runtimeMethod: RuntimeMethod, options:
 
   src += runtimeMethod + `(${getArgumentVarName(argName)})`;
 
-  let otherSrc = otherNode ? compileNode(otherNode, options) : compileDefaultValue(nullable);
+  const otherSrc = otherNode ? compileNode(otherNode, options) : compileDefaultValue(nullable);
 
   src += j === 1 ? childrenSrc + ':' + otherSrc : `,${TEMP_VAR_NAME}${childrenSrc}:${otherSrc})`;
   return src;

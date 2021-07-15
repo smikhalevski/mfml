@@ -1,27 +1,67 @@
-import {compileMessage} from './compileMessage';
-import {INodeCompilerOptions} from './compileNode';
+import {compileMessage, IMessageCompilerPublicOptions} from './compileMessage';
+import {Node} from '../parser';
+import {createVarNameProvider} from '../../../../codegen';
+import {createMap, jsonStringify} from '../misc';
 
-export interface ICompileModuleOptions extends INodeCompilerOptions {
-  renameFunction: (translationKey: string) => string;
-  renameInterface: (translationKey: string) => string;
+export interface IModuleCompilerOptions extends IMessageCompilerPublicOptions {
+  renameMessageInterface: (key: string) => string;
+  renameMessageFunction: (key: string) => string;
+  rewriteDisplayName: (key: string) => string | undefined;
 }
 
-export function compileModule(translations: { [translationKey: string]: string }, options: ICompileModuleOptions): string {
+/**
+ * Compiles translations as a module that exports message functions and corresponding argument interfaces.
+ *
+ * @param translations The map from translation key to a mapping from locale to a parsed AST.
+ * @param options Compiler options.
+ */
+export function compileModule(translations: { [key: string]: { [locale: string]: Node } }, options: IModuleCompilerOptions): string {
   const {
-    renameFunction,
-    renameInterface,
+    renameMessageInterface,
+    renameMessageFunction,
+    rewriteDisplayName,
     renameArgument,
+    defaultLocale,
+    renameTag,
+    renameAttribute,
+    renameFunction,
+    nullable,
+    getFunctionArgumentType,
+    otherSelectCaseKey,
   } = options;
 
-  let source = 'import {IRuntime} from "@smikhalevski/icuc/lib/runtime";';
+  const translationEntries = Object.entries(translations);
+  const supportedLocalesMap = createMap<string>();
+  const nextVarName = createVarNameProvider();
 
-  for (const key in translations) {
-    // source += compileCallback(parseIcuTagSoup(translations[key]), {
-    //   interfaceName: renameInterface(key),
-    //   functionName: renameFunction(key),
-    //   renameArgument,
-    // });
+  let src = '';
+
+  for (const [key, nodeMap] of translationEntries) {
+
+    const supportedLocales = Object.keys(nodeMap).sort();
+    const supportedLocalesVarName = supportedLocales.length > 2 ? supportedLocalesMap[supportedLocales.map(jsonStringify).join(',')] ||= nextVarName() : '';
+
+    src += compileMessage(nodeMap, {
+      interfaceName: renameMessageInterface(key),
+      functionName: renameMessageFunction(key),
+      displayName: rewriteDisplayName(key),
+      supportedLocales,
+      supportedLocalesVarName,
+      renameArgument,
+      defaultLocale,
+      renameTag,
+      renameAttribute,
+      renameFunction,
+      nullable,
+      getFunctionArgumentType,
+      otherSelectCaseKey,
+    });
   }
 
-  return source;
+  const supportedLocalesEntries = Object.entries(supportedLocalesMap);
+  if (supportedLocalesEntries.length) {
+    src = 'const ' + supportedLocalesEntries.map(([localesSrc, varName]) => src + varName + '=[' + localesSrc + ']').join(',') + ';' + src;
+  }
+
+  return 'import {IRuntime} from "mfml/lib/runtime";' + src;
 }
