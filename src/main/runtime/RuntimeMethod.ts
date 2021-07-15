@@ -1,6 +1,7 @@
 export const enum RuntimeMethod {
   LOCALE = 'l',
   FRAGMENT = 'f',
+  ARGUMENT = 'a',
   ELEMENT = 'e',
 
   /**

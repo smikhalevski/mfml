@@ -1,30 +1,43 @@
 import {ContainerNode, isBlankNode, ISelectCaseNode, ISelectNode, isSelectNode, ITextNode, Node} from '../parser';
 import {visitNode} from './visitNode';
-import {die} from '../misc';
+import {dieAtOffset} from '../misc';
 import {pluralCategories, PluralCategory} from '../runtime/pluralCategories';
 import {RuntimeMethod} from '../runtime';
+import {compilePropertyName} from '@smikhalevski/codegen';
 
-export const enum KnownArgumentType {
-  NUMBER = 'number',
-}
+/**
+ * Variable name that keeps temporary index returned by `plural`, `select` and `selectordinal`.
+ */
+export const TEMP_VAR_NAME = 'i';
 
-export interface IRenameOptions {
+/**
+ * The type of the argument used in `plural` and `selectordinal`.
+ */
+export const ORDINAL_ARG_TYPE = 'number';
+
+export interface INodeCompilerOptions {
+
   renameTag: (name: string) => string;
   renameAttribute: (name: string) => string;
   renameFunction: (name: string) => string;
 
   /**
-   * Returns the type of an argument that a function accepts.
+   * If `true` then `plural`, `select` and `selectordinal` are allowed to render `null` if no cased matched. Otherwise
+   * an empty string is rendered.
    */
-  rewriteFunctionArgumentType: (name: string) => string | undefined;
-}
+  nullable: boolean;
 
-export interface INodeCompilerOptions extends IRenameOptions {
+  /**
+   * Returns the type of an argument that a formatting function accepts.
+   */
+  getFunctionArgumentType: (name: string) => string | undefined;
+
+  // ----------------------
 
   /**
    * Returns the name of the the variable that holds an argument value.
    */
-  resolveArgumentVarName: (argName: string) => string;
+  getArgumentVarName: (argName: string) => string;
 
   /**
    * Triggered when an argument type is changed during compilation.
@@ -51,8 +64,9 @@ export function compileNode(node: Node, options: INodeCompilerOptions): string {
     renameTag,
     renameAttribute,
     renameFunction,
-    resolveArgumentVarName,
-    rewriteFunctionArgumentType,
+    nullable,
+    getArgumentVarName,
+    getFunctionArgumentType,
     onArgumentTypeChanged,
     onRuntimeMethodUsed,
   } = options;
@@ -129,7 +143,7 @@ export function compileNode(node: Node, options: INodeCompilerOptions): string {
     attribute(node, next) {
       enterChild();
 
-      src += JSON.stringify(renameAttribute(node.name)) + ':';
+      src += compilePropertyName(renameAttribute(node.name)) + ':';
 
       if (node.children.length === 0) {
         src += 'true';
@@ -149,7 +163,10 @@ export function compileNode(node: Node, options: INodeCompilerOptions): string {
 
     argument(node) {
       enterChild();
-      src += resolveArgumentVarName(node.name);
+
+      onRuntimeMethodUsed(RuntimeMethod.ARGUMENT);
+
+      src += RuntimeMethod.ARGUMENT + `(${getArgumentVarName(node.name)})`;
     },
 
     function(node, next) {
@@ -157,10 +174,10 @@ export function compileNode(node: Node, options: INodeCompilerOptions): string {
 
       const {name, argName} = node;
 
-      onArgumentTypeChanged(argName, rewriteFunctionArgumentType(name));
+      onArgumentTypeChanged(argName, getFunctionArgumentType(name));
       onRuntimeMethodUsed(RuntimeMethod.FUNCTION);
 
-      src += RuntimeMethod.FUNCTION + `(${JSON.stringify(renameFunction(name))},${resolveArgumentVarName(argName)}`;
+      src += RuntimeMethod.FUNCTION + `(${JSON.stringify(renameFunction(name))},${getArgumentVarName(argName)}`;
       compileFragment(node, next);
       src += ')';
     },
@@ -179,7 +196,7 @@ export function compileNode(node: Node, options: INodeCompilerOptions): string {
       const {argName, children} = node;
       const keySrcs: Array<string> = [];
 
-      onArgumentTypeChanged(argName, KnownArgumentType.NUMBER);
+      onArgumentTypeChanged(argName, ORDINAL_ARG_TYPE);
 
       let childrenSrc = '';
       let j = 0;
@@ -192,7 +209,7 @@ export function compileNode(node: Node, options: INodeCompilerOptions): string {
           continue;
         }
         if (j !== 0) {
-          childrenSrc += ':i';
+          childrenSrc += ':' + TEMP_VAR_NAME;
         }
         childrenSrc += `===${i}?` + compileNode(child, options);
         keySrcs.push(keySrc);
@@ -203,14 +220,15 @@ export function compileNode(node: Node, options: INodeCompilerOptions): string {
       }
       enterChild();
       if (j !== 1) {
-        src += '(i=';
+        src += `(${TEMP_VAR_NAME}=`;
       }
 
       onRuntimeMethodUsed(RuntimeMethod.SELECT);
 
-      src += RuntimeMethod.SELECT + `(${resolveArgumentVarName(argName)},${keySrcs.join(',')})`;
+      src += RuntimeMethod.SELECT + `(${getArgumentVarName(argName)},${keySrcs.join(',')})`;
 
-      src += j === 1 ? childrenSrc + ':null' : `,i${childrenSrc}:null)`;
+      const defaultValueSrc = compileDefaultValue(nullable);
+      src += j === 1 ? childrenSrc + ':' + defaultValueSrc : `,${TEMP_VAR_NAME}${childrenSrc}:${defaultValueSrc})`;
     },
 
     octothorpe(node) {
@@ -224,7 +242,7 @@ export function compileNode(node: Node, options: INodeCompilerOptions): string {
         enterChild();
         src += selectNode.argName;
       } else {
-        die(node.start);
+        dieAtOffset(node.start);
       }
     },
   });
@@ -234,14 +252,15 @@ export function compileNode(node: Node, options: INodeCompilerOptions): string {
 
 function compilePlural(node: ISelectNode, runtimeMethod: RuntimeMethod, options: INodeCompilerOptions): string {
   const {
-    resolveArgumentVarName,
+    nullable,
+    getArgumentVarName,
     onArgumentTypeChanged,
     onRuntimeMethodUsed,
   } = options;
 
   const {argName, children} = node;
 
-  onArgumentTypeChanged(argName, KnownArgumentType.NUMBER);
+  onArgumentTypeChanged(argName, ORDINAL_ARG_TYPE);
 
   let otherNode: ISelectCaseNode | undefined;
   let childrenSrc = '';
@@ -257,7 +276,7 @@ function compilePlural(node: ISelectNode, runtimeMethod: RuntimeMethod, options:
         continue;
       }
       if (j !== 0) {
-        childrenSrc += ':i';
+        childrenSrc += ':' + TEMP_VAR_NAME;
       }
       childrenSrc += `===${i}?` + compileNode(child, options);
       j++;
@@ -269,15 +288,19 @@ function compilePlural(node: ISelectNode, runtimeMethod: RuntimeMethod, options:
     return otherNode ? compileNode(otherNode, options) : src;
   }
   if (j !== 1) {
-    src += '(i=';
+    src += `(${TEMP_VAR_NAME}=`;
   }
 
   onRuntimeMethodUsed(runtimeMethod);
 
-  src += runtimeMethod + `(${resolveArgumentVarName(argName)})`;
+  src += runtimeMethod + `(${getArgumentVarName(argName)})`;
 
-  let otherSrc = otherNode ? compileNode(otherNode, options) : 'null';
+  let otherSrc = otherNode ? compileNode(otherNode, options) : compileDefaultValue(nullable);
 
-  src += j === 1 ? childrenSrc + ':' + otherSrc : `,i${childrenSrc}:${otherSrc})`;
+  src += j === 1 ? childrenSrc + ':' + otherSrc : `,${TEMP_VAR_NAME}${childrenSrc}:${otherSrc})`;
   return src;
+}
+
+export function compileDefaultValue(nullable: boolean): string {
+  return nullable ? 'null' : '""';
 }

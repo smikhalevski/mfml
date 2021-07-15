@@ -3,7 +3,7 @@ import {ParseOptions} from '@messageformat/parser';
 import {parseMessageFormat} from './parseMessageFormat';
 import {createEntitiesDecoder, createForgivingSaxParser, ISaxParser, ISaxParserCallbacks} from 'tag-soup';
 import {isContainerNode, isTextNode} from './node-utils';
-import {die} from '../misc';
+import {dieAtOffset} from '../misc';
 
 const xmlDecoder = createEntitiesDecoder();
 
@@ -60,7 +60,7 @@ export function createMfmlParser(options: IMfmlParserOptions = {}): (str: string
       const textNode = linearNodes[linearIndex];
 
       if (!isTextNode(textNode)) {
-        die(tagStart);
+        dieAtOffset(tagStart);
       }
 
       const elementNode: Node = {
@@ -173,7 +173,7 @@ export function createMfmlParser(options: IMfmlParserOptions = {}): (str: string
             break;
           }
 
-          die(nodeStart);
+          dieAtOffset(nodeStart);
         }
 
         decodeTextNodes(attrChildren, decodeAttr);
@@ -198,7 +198,7 @@ export function createMfmlParser(options: IMfmlParserOptions = {}): (str: string
         return;
       }
 
-      die(tailNode.start);
+      dieAtOffset(tailNode.start);
     },
 
     onEndTag(tagToken) {
@@ -238,7 +238,7 @@ export function createMfmlParser(options: IMfmlParserOptions = {}): (str: string
         siblingIndex = siblingNodes.indexOf(siblingNode) + 1;
 
       } else {
-        die(tagStart);
+        dieAtOffset(tagStart);
       }
 
       // Lookup an element node that is terminated by the end tag
@@ -255,7 +255,7 @@ export function createMfmlParser(options: IMfmlParserOptions = {}): (str: string
       }
 
       if (!elementNode) {
-        die(tagStart);
+        dieAtOffset(tagStart);
       }
 
       const elementChildren = siblingNodes.splice(elementIndex + 1, siblingIndex - elementIndex - 1);

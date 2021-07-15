@@ -58,6 +58,7 @@
     "react": ">=16.8.0"
   },
   "dependencies": {
-    "@messageformat/parser": "^5.0.0"
+    "@messageformat/parser": "^5.0.0",
+    "@smikhalevski/codegen": "^1.0.0"
   }
 }
