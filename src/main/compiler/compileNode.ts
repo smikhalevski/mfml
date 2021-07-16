@@ -9,7 +9,7 @@ import {
   Node,
 } from '../parser';
 import {visitNode} from './visitNode';
-import {dieSyntax, jsonStringify} from '../misc';
+import {die, jsonStringify} from '../misc';
 import {pluralCategories, PluralCategory} from '../runtime/PluralCategory';
 import {RuntimeMethod} from '../runtime';
 import {compilePropertyName} from '@smikhalevski/codegen';
@@ -209,7 +209,7 @@ export function compileNode(node: Node, options: INodeCompilerOptions): string {
         onRuntimeMethodUsed(RuntimeMethod.ARGUMENT, false);
         src += RuntimeMethod.ARGUMENT + `(${provideArgVarName(selectNode.argName)})`;
       } else {
-        dieSyntax(node.start);
+        die('Octothorpe must be nested in a select');
       }
     },
   });
