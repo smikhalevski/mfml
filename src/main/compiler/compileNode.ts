@@ -1,35 +1,26 @@
-import {ContainerNode, isBlankNode, ISelectCaseNode, ISelectNode, isSelectNode, ITextNode, Node} from '../parser';
+import {
+  ContainerNode,
+  IFunctionNode,
+  isBlankNode,
+  ISelectCaseNode,
+  ISelectNode,
+  isSelectNode,
+  ITextNode,
+  Node,
+} from '../parser';
 import {visitNode} from './visitNode';
 import {dieSyntax, jsonStringify} from '../misc';
 import {pluralCategories, PluralCategory} from '../runtime/PluralCategory';
 import {RuntimeMethod} from '../runtime';
 import {compilePropertyName} from '@smikhalevski/codegen';
 
-/**
- * Variable name that keeps temporary index returned by `plural`, `select` and `selectordinal`.
- */
-export const TEMP_VAR_NAME = 'i';
-
-/**
- * The argument type accepted by `plural` and `selectordinal`.
- */
-export const ORDINAL_ARG_TYPE = 'number';
-
-export interface INodeCompilerPublicOptions {
-  renameTag: (name: string) => string;
-  renameAttribute: (name: string) => string;
-  renameFunction: (name: string) => string;
+export interface INodeCompilerDialectOptions {
 
   /**
-   * If `true` then `plural`, `select` and `selectordinal` are allowed to render `null` if no cased matched. Otherwise
+   * If `true` then `plural`, `select` and `selectordinal` are allowed to render `null` if no cases matched. Otherwise
    * an empty string is rendered.
    */
   nullable: boolean;
-
-  /**
-   * Returns the type of an argument that a formatting function accepts.
-   */
-  getFunctionArgumentType: (name: string) => string | undefined;
 
   /**
    * The key that is used as the default for `select`.
@@ -37,61 +28,65 @@ export interface INodeCompilerPublicOptions {
   otherSelectCaseKey: string;
 }
 
-export interface INodeCompilerOptions extends INodeCompilerPublicOptions {
+export interface INodeCompilerOptions extends INodeCompilerDialectOptions {
 
   /**
    * Returns the name of the the variable that holds an argument value.
    */
-  getArgumentVarName: (argName: string) => string;
+  provideArgVarName: (argName: string) => string;
 
   /**
-   * Triggered when an argument type is changed during compilation.
-   *
-   * @param argName The original argument name.
-   * @param argType The new argument type.
+   * The name of the temporary variable used by `plural`, `select` and `selectordinal` to store the detected index.
    */
-  onArgumentTypeChanged: (argName: string, argType: string | undefined) => void;
+  indexVarName: string;
+
+  /**
+   * Triggered if a function node was rendered.
+   *
+   * @param node The node that was rendered.
+   */
+  onFunctionUsed: (node: IFunctionNode) => void;
+
+  /**
+   * Triggered if a select node was rendered.
+   *
+   * @param node The node that was rendered.
+   * @param selectVarUsed `true` if {@link indexVarName} was rendered.
+   */
+  onSelectUsed: (node: ISelectNode) => void;
 
   /**
    * Triggered if a runtime method usage was rendered.
    */
-  onRuntimeMethodUsed: (runtimeMethod: RuntimeMethod) => void;
-
-  /**
-   * Triggered when a {@link TEMP_VAR_NAME} was rendered.
-   */
-  onTempVarUsed: () => void;
+  onRuntimeMethodUsed: (runtimeMethod: RuntimeMethod, indexVarUsed: boolean) => void;
 }
 
 /**
- * Compiles an AST node as a source code.
+ * Compiles an AST node as a source code. This may return an empty string if
  *
  * @param node The node to compile.
  * @param options Compilation options.
  */
 export function compileNode(node: Node, options: INodeCompilerOptions): string {
   const {
-    renameTag,
-    renameAttribute,
-    renameFunction,
-    getArgumentVarName,
-    getFunctionArgumentType,
-    onArgumentTypeChanged,
+    otherSelectCaseKey,
+    provideArgVarName,
+    onFunctionUsed,
     onRuntimeMethodUsed,
   } = options;
 
   let src = '';
-  let requiresSeparator = false;
+  let separatorRequired = false;
 
   const enterChild = () => {
-    if (requiresSeparator) {
+    if (separatorRequired) {
       src += ',';
     }
-    requiresSeparator = true;
+    separatorRequired = true;
   };
 
   const enterBlock = () => {
-    requiresSeparator = false;
+    separatorRequired = false;
   };
 
   const compileFragment = (node: ContainerNode, next: () => void) => {
@@ -110,8 +105,7 @@ export function compileNode(node: Node, options: INodeCompilerOptions): string {
     }
     enterChild();
     if (childrenCount > 1) {
-      onRuntimeMethodUsed(RuntimeMethod.FRAGMENT);
-
+      onRuntimeMethodUsed(RuntimeMethod.FRAGMENT, false);
       src += RuntimeMethod.FRAGMENT + '(';
       enterBlock();
       next();
@@ -130,16 +124,16 @@ export function compileNode(node: Node, options: INodeCompilerOptions): string {
       const attrCount = node.attrs.length;
 
       if (attrCount !== 0) {
-        onRuntimeMethodUsed(RuntimeMethod.ELEMENT);
+        onRuntimeMethodUsed(RuntimeMethod.ELEMENT, false);
         src += RuntimeMethod.ELEMENT;
       } else {
-        onRuntimeMethodUsed(RuntimeMethod.SHORT_ELEMENT);
+        onRuntimeMethodUsed(RuntimeMethod.SHORT_ELEMENT, false);
         src += RuntimeMethod.SHORT_ELEMENT;
       }
 
-      src += `(${jsonStringify(renameTag(node.tagName))}`;
+      src += '(' + jsonStringify(node.tagName);
 
-      if (attrCount !== 0) {
+      if (attrCount > 0) {
         src += ',{';
         enterBlock();
         nextAttributes();
@@ -152,7 +146,7 @@ export function compileNode(node: Node, options: INodeCompilerOptions): string {
     attribute(node, next) {
       enterChild();
 
-      src += compilePropertyName(renameAttribute(node.name)) + ':';
+      src += compilePropertyName(node.name) + ':';
 
       if (node.children.length === 0) {
         src += 'true';
@@ -173,37 +167,34 @@ export function compileNode(node: Node, options: INodeCompilerOptions): string {
     argument(node) {
       enterChild();
 
-      onRuntimeMethodUsed(RuntimeMethod.ARGUMENT);
-
-      src += RuntimeMethod.ARGUMENT + `(${getArgumentVarName(node.name)})`;
+      onRuntimeMethodUsed(RuntimeMethod.ARGUMENT, false);
+      src += RuntimeMethod.ARGUMENT + `(${provideArgVarName(node.name)})`;
     },
 
     function(node, next) {
       enterChild();
 
-      const {name, argName} = node;
+      onFunctionUsed(node);
+      onRuntimeMethodUsed(RuntimeMethod.FUNCTION, false);
+      src += RuntimeMethod.FUNCTION + `(${jsonStringify(node.name)},${provideArgVarName(node.argName)}`;
 
-      onArgumentTypeChanged(argName, getFunctionArgumentType(name));
-      onRuntimeMethodUsed(RuntimeMethod.FUNCTION);
-
-      src += RuntimeMethod.FUNCTION + `(${jsonStringify(renameFunction(name))},${getArgumentVarName(argName)}`;
       compileFragment(node, next);
       src += ')';
     },
 
     plural(node) {
       enterChild();
-      src += compilePlural(node, RuntimeMethod.PLURAL, options);
+      src += compileSelect(node, RuntimeMethod.PLURAL, PluralCategory.OTHER, pluralCategories, options);
     },
 
     selectOrdinal(node) {
       enterChild();
-      src += compilePlural(node, RuntimeMethod.SELECT_ORDINAL, options);
+      src += compileSelect(node, RuntimeMethod.SELECT_ORDINAL, PluralCategory.OTHER, pluralCategories, options);
     },
 
     select(node) {
       enterChild();
-      src += compileSelect(node, options);
+      src += compileSelect(node, RuntimeMethod.SELECT, otherSelectCaseKey, undefined, options);
     },
 
     octothorpe(node) {
@@ -212,10 +203,11 @@ export function compileNode(node: Node, options: INodeCompilerOptions): string {
       while (selectNode != null && !isSelectNode(selectNode)) {
         selectNode = selectNode.parent;
       }
-
       if (selectNode) {
         enterChild();
-        src += selectNode.argName;
+
+        onRuntimeMethodUsed(RuntimeMethod.ARGUMENT, false);
+        src += RuntimeMethod.ARGUMENT + `(${provideArgVarName(selectNode.argName)})`;
       } else {
         dieSyntax(node.start);
       }
@@ -225,112 +217,70 @@ export function compileNode(node: Node, options: INodeCompilerOptions): string {
   return src;
 }
 
-function compileSelect(node: ISelectNode, options: INodeCompilerOptions): string {
+function compileSelect(node: ISelectNode, runtimeMethod: RuntimeMethod, otherSelectCaseKey: string, knownKeys: Array<string> | undefined, options: INodeCompilerOptions): string {
   const {
     nullable,
-    otherSelectCaseKey,
-    getArgumentVarName,
-    onArgumentTypeChanged,
+    provideArgVarName,
+    indexVarName,
     onRuntimeMethodUsed,
-    onTempVarUsed,
+    onSelectUsed,
   } = options;
 
-  const {argName, children} = node;
-  const keySrcs: Array<string> = [];
+  // If true then case keys are retained at runtime
+  let keysRetained = false;
 
-  onArgumentTypeChanged(argName, ORDINAL_ARG_TYPE);
+  if (!knownKeys) {
+    keysRetained = true;
+    knownKeys = [];
+
+    for (const child of node.children) {
+      if (knownKeys.indexOf(child.key) === -1) {
+        knownKeys.push(child.key);
+      }
+    }
+  }
 
   let otherNode: ISelectCaseNode | undefined;
   let childrenSrc = '';
-  let j = 0;
+  let childrenCount = 0;
 
-  for (let i = 0; i < children.length; i++) {
-    const child = children[i];
-    const keySrc = jsonStringify(child.key);
-
-    if (keySrcs.indexOf(keySrc) !== -1 || isBlankNode(child)) {
-      continue;
-    }
-    if (child.key === otherSelectCaseKey) {
-      otherNode = child;
-      continue;
-    }
-    if (j !== 0) {
-      childrenSrc += ':' + TEMP_VAR_NAME;
-    }
-    childrenSrc += `===${i}?` + compileNode(child, options);
-    keySrcs.push(keySrc);
-    j++;
-  }
-
-  let src = '';
-  if (j === 0) {
-    return otherNode ? compileNode(otherNode, options) : src;
-  }
-  if (j !== 1) {
-    onTempVarUsed();
-    src += `(${TEMP_VAR_NAME}=`;
-  }
-
-  onRuntimeMethodUsed(RuntimeMethod.SELECT);
-  src += RuntimeMethod.SELECT + `(${getArgumentVarName(argName)},${keySrcs.join(',')})`;
-
-  const otherSrc = otherNode ? compileNode(otherNode, options) : compileDefaultValue(nullable);
-
-  src += j === 1 ? childrenSrc + ':' + otherSrc : `,${TEMP_VAR_NAME}${childrenSrc}:${otherSrc})`;
-  return src;
-}
-
-function compilePlural(node: ISelectNode, runtimeMethod: RuntimeMethod, options: INodeCompilerOptions): string {
-  const {
-    nullable,
-    getArgumentVarName,
-    onArgumentTypeChanged,
-    onRuntimeMethodUsed,
-    onTempVarUsed,
-  } = options;
-
-  const {argName, children} = node;
-
-  onArgumentTypeChanged(argName, ORDINAL_ARG_TYPE);
-
-  let otherNode: ISelectCaseNode | undefined;
-  let childrenSrc = '';
-  let j = 0;
-
-  for (let i = 0; i < pluralCategories.length; i++) {
-    for (const child of children) {
-      if (child.key !== pluralCategories[i] || isBlankNode(child)) {
+  for (let i = 0; i < knownKeys.length; i++) {
+    for (const child of node.children) {
+      if (child.key !== knownKeys[i] || isBlankNode(child)) {
         continue;
       }
-      if (child.key === PluralCategory.OTHER) {
+      if (child.key === otherSelectCaseKey) {
         otherNode = child;
         continue;
       }
-      if (j !== 0) {
-        childrenSrc += ':' + TEMP_VAR_NAME;
+      if (childrenCount > 0) {
+        childrenSrc += ':' + indexVarName;
       }
       childrenSrc += `===${i}?` + compileNode(child, options);
-      j++;
+      childrenCount++;
     }
   }
 
+  onSelectUsed(node);
+
   let src = '';
-  if (j === 0) {
+  if (childrenCount === 0) {
     return otherNode ? compileNode(otherNode, options) : src;
   }
-  if (j !== 1) {
-    onTempVarUsed();
-    src += `(${TEMP_VAR_NAME}=`;
+  if (childrenCount > 1) {
+    src += `(${indexVarName}=`;
   }
 
-  onRuntimeMethodUsed(runtimeMethod);
-
-  src += runtimeMethod + `(${getArgumentVarName(argName)})`;
+  onRuntimeMethodUsed(runtimeMethod, childrenCount > 1);
+  src += runtimeMethod
+      + '('
+      + provideArgVarName(node.argName)
+      + (keysRetained ? ',' + knownKeys.map(jsonStringify).join(',') : '')
+      + ')';
 
   const otherSrc = otherNode ? compileNode(otherNode, options) : compileDefaultValue(nullable);
 
-  src += j === 1 ? childrenSrc + ':' + otherSrc : `,${TEMP_VAR_NAME}${childrenSrc}:${otherSrc})`;
+  src += childrenCount > 1 ? `,${indexVarName}${childrenSrc}:${otherSrc})` : childrenSrc + ':' + otherSrc;
   return src;
 }
 

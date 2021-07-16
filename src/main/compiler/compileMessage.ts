@@ -1,31 +1,25 @@
 import {isBlankNode, Node} from '../parser';
-import {
-  compileDefaultValue,
-  compileNode,
-  INodeCompilerOptions,
-  INodeCompilerPublicOptions,
-  TEMP_VAR_NAME,
-} from './compileNode';
+import {compileDefaultValue, compileNode, INodeCompilerDialectOptions, INodeCompilerOptions} from './compileNode';
 import {RuntimeMethod} from '../runtime';
-import {createMap, die, jsonStringify} from '../misc';
-import {compilePropertyName, createVarNameProvider} from '@smikhalevski/codegen';
+import {createMap, jsonStringify, Maybe} from '../misc';
+import {compileDocComment, compilePropertyName, createVarNameProvider} from '@smikhalevski/codegen';
 
-const RUNTIME_VAR_NAME = 'runtime';
-const LOCALE_VAR_NAME = 'locale';
-const ARGS_VAR_NAME = 'args';
-
-export {RUNTIME_VAR_NAME, LOCALE_VAR_NAME, ARGS_VAR_NAME};
-
-export interface IMessageCompilerPublicOptions extends INodeCompilerPublicOptions {
-  renameArgument: (name: string) => string;
+export interface IMessageCompilerDialectOptions extends INodeCompilerDialectOptions {
 
   /**
    * The default locale from {@link supportedLocales}.
    */
   defaultLocale: string;
+
+  /**
+   * Returns the TypeScript type of the argument that a function expects.
+   *
+   * @param functionName The name of the function.
+   */
+  provideFunctionType: (functionName: string) => Maybe<string>;
 }
 
-export interface IMessageCompilerOptions extends IMessageCompilerPublicOptions {
+export interface IMessageCompilerOptions extends IMessageCompilerDialectOptions {
 
   /**
    * The name of the TypeScript interface that describes arguments.
@@ -38,9 +32,29 @@ export interface IMessageCompilerOptions extends IMessageCompilerPublicOptions {
   functionName: string;
 
   /**
-   * The display name that must be assigned to the rendering function.
+   * The name of the variable that holds the locale.
    */
-  displayName: string | undefined;
+  localeVarName: string;
+
+  /**
+   * The name of the variable that holds the runtime object.
+   */
+  runtimeVarName: string;
+
+  /**
+   * The name of the variable that holds the arguments object.
+   */
+  argsVarName: string;
+
+  /**
+   * The name of the variable that holds temporary index result returned by runtime methods.
+   */
+  indexVarName: string;
+
+  /**
+   * The doc comment of the rendering function.
+   */
+  comment: Maybe<string>;
 
   /**
    * The list of all supported locales stored in {@link supportedLocalesVarName}.
@@ -53,12 +67,23 @@ export interface IMessageCompilerOptions extends IMessageCompilerPublicOptions {
   supportedLocalesVarName: string;
 }
 
-export interface IMessage {
+/**
+ * The mapping from a locale to an AST node.
+ */
+export interface ITranslationMap {
   [locale: string]: Node;
 }
 
 /**
- * Compiles a message function and an interface that describes arguments.
+ * Holds all information about the message.
+ */
+export interface IMessage {
+  translationMap: ITranslationMap;
+  displayName?: string;
+}
+
+/**
+ * Compiles a message function and an interface that describes its arguments.
  *
  * @param message The mapping from locale to a parsed AST node.
  * @param options Compilation options.
@@ -66,28 +91,25 @@ export interface IMessage {
 export function compileMessage(message: IMessage, options: IMessageCompilerOptions): string {
 
   const {
-    renameTag,
-    renameAttribute,
-    renameFunction,
     nullable,
-    getFunctionArgumentType,
     otherSelectCaseKey,
-    renameArgument,
+    provideFunctionType,
     interfaceName,
     functionName,
-    displayName,
+    localeVarName,
+    runtimeVarName,
+    argsVarName,
+    indexVarName,
+    comment,
     supportedLocalesVarName,
   } = options;
 
-  const argVarMap = createMap<string>();
-  const argTypeMap = createMap<string | undefined>();
-  const usedMethods = new Set<RuntimeMethod>();
   const nextVarName = createVarNameProvider([
+    localeVarName,
+    runtimeVarName,
+    argsVarName,
+    indexVarName,
     supportedLocalesVarName,
-    RUNTIME_VAR_NAME,
-    LOCALE_VAR_NAME,
-    ARGS_VAR_NAME,
-    TEMP_VAR_NAME,
     RuntimeMethod.LOCALE,
     RuntimeMethod.FRAGMENT,
     RuntimeMethod.ARGUMENT,
@@ -99,63 +121,73 @@ export function compileMessage(message: IMessage, options: IMessageCompilerOptio
     RuntimeMethod.SELECT_ORDINAL,
   ]);
 
-  let tempVarUsed = false;
+  const {translationMap, displayName} = message;
+
+  let indexVarUsed = false;
+
+  const argVarNameMap = createMap<string>();
+  const argTypeMap = createMap<Array<string>>();
+  const usedRuntimeMethods = new Set<RuntimeMethod>();
 
   const nodeCompilerOptions: INodeCompilerOptions = {
-    renameTag,
-    renameAttribute,
-    renameFunction,
     nullable,
-    getFunctionArgumentType,
     otherSelectCaseKey,
-    getArgumentVarName: (argName) => argVarMap[argName] ||= nextVarName(),
-    onArgumentTypeChanged(argName, argType) {
-      if (argTypeMap[argName] == null || argTypeMap[argName] === argType) {
-        argTypeMap[argName] = argType;
-      } else {
-        die(`Incompatible types ${argType} and ${argTypeMap[argName]} are used for an argument ${argName}`);
+    indexVarName,
+    provideArgVarName: (name) => argVarNameMap[name] ||= nextVarName(),
+
+    onFunctionUsed(node) {
+      const tsType = provideFunctionType(node.name);
+      if (tsType) {
+        (argTypeMap[node.argName] ||= []).push(isIntersectionType(tsType) ? '(' + tsType + ')' : tsType);
       }
     },
-    onRuntimeMethodUsed: (method) => usedMethods.add(method),
-    onTempVarUsed: () => tempVarUsed = true,
+    onSelectUsed(node) {
+      (argTypeMap[node.argName] ||= []).push('number');
+    },
+    onRuntimeMethodUsed(runtimeMethod, varUsed) {
+      usedRuntimeMethods.add(runtimeMethod);
+      indexVarUsed ||= varUsed;
+    },
   };
 
-  const resultSrc = compileResult(message, options, nodeCompilerOptions);
+  const resultSrc = compileTranslationMap(translationMap, options, nodeCompilerOptions);
 
-  const argNames = Object.keys(argVarMap);
-  const argCount = argNames.length;
-  const generic = argCount !== 0 && argNames.some((argName) => !argTypeMap[argName]);
+  const argEntries = Object.entries(argVarNameMap);
+  const argRequired = argEntries.length !== 0;
 
   let src = '';
 
-  if (argCount !== 0) {
-    src += `export interface ${interfaceName}${generic ? '<T>' : ''}{`;
-
-    for (const argName of argNames) {
-      src += compilePropertyName(renameArgument(argName)) + ':' + (argTypeMap[argName] || 'T') + ';';
+  if (argRequired) {
+    src += `export interface ${interfaceName}{`;
+    for (const [argName] of argEntries) {
+      src += compilePropertyName(argName) + ':' + (argTypeMap[argName]?.join('&') || 'unknown') + ';';
     }
     src += '}';
   }
 
+  src += compileDocComment(comment);
+
   if (!displayName) {
     src += 'export ';
   }
+
   src += `function ${functionName}<T>(`
-      + LOCALE_VAR_NAME + ':string,'
-      + RUNTIME_VAR_NAME + ':IRuntime<T>'
-      + (argCount === 0 ? '' : `,${ARGS_VAR_NAME}:${interfaceName}${generic ? '<T>' : ''}`)
+      + localeVarName + ':string,'
+      + runtimeVarName + ':IRuntime<T>'
+      + (argRequired ? `,${argsVarName}:${interfaceName}` : '')
       + `):T|string${nullable ? '|null' : ''}{`;
 
-  if (tempVarUsed) {
-    src += `let ${TEMP_VAR_NAME};`;
+  if (indexVarUsed) {
+    src += `let ${indexVarName};`;
   }
 
   const constSrcs: Array<string> = [];
-  if (usedMethods.size !== 0) {
-    constSrcs.push('{' + Array.from(usedMethods).join(',') + '}=' + RUNTIME_VAR_NAME);
+
+  if (usedRuntimeMethods.size !== 0) {
+    constSrcs.push('{' + Array.from(usedRuntimeMethods).join(',') + '}=' + runtimeVarName);
   }
-  if (argCount !== 0) {
-    constSrcs.push('{' + Object.entries(argVarMap).map(([argName, argVar]) => renameArgument(argName) + ':' + argVar).join(',') + '}=' + ARGS_VAR_NAME);
+  if (argRequired) {
+    constSrcs.push('{' + argEntries.map(([argName, argVar]) => compilePropertyName(argName) + ':' + argVar).join(',') + '}=' + argsVarName);
   }
   if (constSrcs.length !== 0) {
     src += `const ${constSrcs.join(',')};`;
@@ -167,11 +199,14 @@ export function compileMessage(message: IMessage, options: IMessageCompilerOptio
     src += functionName + '.displayName=' + jsonStringify(displayName) + ';'
         + `export{${functionName}};`;
   }
+
   return src;
 }
 
-function compileResult(message: IMessage, options: IMessageCompilerOptions, nodeCompilerOptions: INodeCompilerOptions): string {
+function compileTranslationMap(translationMap: ITranslationMap, options: IMessageCompilerOptions, nodeCompilerOptions: INodeCompilerOptions): string {
   const {
+    localeVarName,
+    indexVarName,
     supportedLocales,
     defaultLocale,
     nullable,
@@ -182,17 +217,17 @@ function compileResult(message: IMessage, options: IMessageCompilerOptions, node
 
   const defaultValueSrc = compileDefaultValue(nullable);
 
-  if (Object.values(message).every(isBlankNode)) {
+  if (Object.values(translationMap).every(isBlankNode)) {
     return defaultValueSrc;
   }
 
-  let defaultLocaleIndex = message[defaultLocale] ? supportedLocales.indexOf(defaultLocale) : -1;
+  let defaultLocaleIndex = translationMap[defaultLocale] ? supportedLocales.indexOf(defaultLocale) : -1;
   let src = '';
   let childrenSrc = '';
-  let j = 0;
+  let childrenCount = 0;
 
   for (let i = 0; i < supportedLocales.length; i++) {
-    const node = message[supportedLocales[i]];
+    const node = translationMap[supportedLocales[i]];
 
     if (i === defaultLocaleIndex || !node) {
       continue;
@@ -201,25 +236,29 @@ function compileResult(message: IMessage, options: IMessageCompilerOptions, node
       defaultLocaleIndex = i;
       continue;
     }
-    if (j !== 0) {
-      childrenSrc += ':' + TEMP_VAR_NAME;
+    if (childrenCount !== 0) {
+      childrenSrc += ':' + indexVarName;
     }
     childrenSrc += `===${i}?` + (compileNode(node, nodeCompilerOptions) || defaultValueSrc);
-    j++;
+    childrenCount++;
   }
 
-  const defaultLocaleSrc = compileNode(message[supportedLocales[defaultLocaleIndex]], nodeCompilerOptions) || defaultValueSrc;
+  const defaultResultSrc = compileNode(translationMap[supportedLocales[defaultLocaleIndex]], nodeCompilerOptions) || defaultValueSrc;
 
-  if (j === 0) {
-    return defaultLocaleSrc;
+  if (childrenCount === 0) {
+    return defaultResultSrc;
   }
-  if (j !== 1) {
-    src += `(${TEMP_VAR_NAME}=`;
+  if (childrenCount > 1) {
+    src += `(${indexVarName}=`;
   }
 
-  onRuntimeMethodUsed(RuntimeMethod.LOCALE);
-  src += RuntimeMethod.LOCALE + `(${LOCALE_VAR_NAME},${supportedLocalesVarName})`;
+  onRuntimeMethodUsed(RuntimeMethod.LOCALE, childrenCount > 1);
+  src += RuntimeMethod.LOCALE + `(${localeVarName},${supportedLocalesVarName})`;
 
-  src += j === 1 ? childrenSrc + ':' + defaultLocaleSrc : `,${TEMP_VAR_NAME}${childrenSrc}:${defaultLocaleSrc})`;
+  src += childrenCount > 1 ? `,${indexVarName}${childrenSrc}:${defaultResultSrc})` : childrenSrc + ':' + defaultResultSrc;
   return src;
+}
+
+function isIntersectionType(tsType: string): boolean {
+  return tsType.indexOf('|') !== -1;
 }

@@ -1,13 +1,12 @@
 import {ITextNode, Node, NodeType} from './node-types';
-import {ParseOptions} from '@messageformat/parser';
-import {parseMessageFormat} from './parseMessageFormat';
+import {IMessageFormatParserOptions, parseMessageFormat} from './parseMessageFormat';
 import {createEntitiesDecoder, createForgivingSaxParser, ISaxParser, ISaxParserCallbacks} from 'tag-soup';
 import {isContainerNode, isTextNode} from './node-utils';
 import {dieSyntax, identity, Rewriter} from '../misc';
 
 const xmlDecoder = createEntitiesDecoder();
 
-export interface IMfmlParserOptions extends ParseOptions {
+export interface IMfmlParserOptions extends IMessageFormatParserOptions {
 
   /**
    * Decodes XML entities in plain text value. By default, only XML entities are decoded.
@@ -29,6 +28,7 @@ export interface IMfmlParserOptions extends ParseOptions {
    * - SAX parser must emit tags in the correct order;
    * - SAX parser may not decode text and attributes for sake of performance, because they are also processed with
    * {@link decodeAttr} and {@link decodeText};
+   * - SAX parser should make required tag and attribute renames.
    *
    * @default {@link https://smikhalevski.github.io/tag-soup/globals.html#createforgivingsaxparser createForgivingSaxParser}
    */
@@ -85,10 +85,9 @@ export function createMfmlParser(options: IMfmlParserOptions = {}): (str: string
       const offset = splitTextNode(linearNodes, linearIndex, siblingNodes, siblingIndex, textNode, tagStart, splitEnd, elementNode);
 
       linearIndex += offset + 1;
-      siblingIndex += offset;
 
-      // The number of sibling nodes that were consumed by attributes
-      let attrSiblingNodesCount = 0;
+      // Sibling index at which attributes may start
+      const attrSiblingIndex = siblingIndex += offset;
 
       // Collect attributes
       for (let i = 0; i < tagToken.attrs.length; i++) {
@@ -161,8 +160,8 @@ export function createMfmlParser(options: IMfmlParserOptions = {}): (str: string
             attrChildren.push(node);
             node.parent = attrNode;
 
-            attrSiblingNodesCount++;
             linearIndex++;
+            siblingIndex++;
             continue;
           }
 
@@ -185,8 +184,8 @@ export function createMfmlParser(options: IMfmlParserOptions = {}): (str: string
       }
 
       // Remove MessageFormat nodes that are now part of attr children
-      if (attrSiblingNodesCount !== 0) {
-        siblingNodes.splice(siblingIndex + 1, attrSiblingNodesCount);
+      if (attrSiblingIndex !== siblingIndex) {
+        siblingNodes.splice(attrSiblingIndex + 1, siblingIndex - attrSiblingIndex);
       }
 
       // Exit if the MessageFormat text node fully contains the start tag
@@ -308,6 +307,9 @@ export function createMfmlParser(options: IMfmlParserOptions = {}): (str: string
   };
 }
 
+/**
+ * Creates the default SAX parser that doesn't decode XML entities.
+ */
 function createMfmlSaxParser(options: ISaxParserCallbacks): ISaxParser {
   return createForgivingSaxParser(Object.assign({
     decodeAttr: identity,

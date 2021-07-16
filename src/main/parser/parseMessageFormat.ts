@@ -1,5 +1,19 @@
 import {parse, ParseOptions, Token} from '@messageformat/parser';
 import {ContainerNode, IFunctionNode, ISelectCaseNode, ISelectNode, Node, NodeType} from './node-types';
+import {identity, Rewriter} from '../misc';
+
+export interface IMessageFormatParserOptions extends ParseOptions {
+
+  /**
+   * Rewrites formatting function name.
+   */
+  renameFunction?: Rewriter;
+
+  /**
+   * Rewrites argument name.
+   */
+  renameArgument?: Rewriter;
+}
 
 /**
  * Parses ICU MessageFormat as a tree of AST nodes.
@@ -8,18 +22,22 @@ import {ContainerNode, IFunctionNode, ISelectCaseNode, ISelectNode, Node, NodeTy
  * @param options The ICU MessageFormat parsing options.
  * @returns An array of root AST nodes.
  */
-export function parseMessageFormat(str: string, options?: ParseOptions): Array<Node> {
-  return pushMessageFormatTokensAsNodes(parse(str, options), [], null);
+export function parseMessageFormat(str: string, options: IMessageFormatParserOptions = {}): Array<Node> {
+  return pushMessageFormatTokensAsNodes(parse(str, options), [], null, options);
 }
 
-function pushMessageFormatTokensAsNodes(tokens: Array<Token>, arr: Array<Node>, parent: ContainerNode | null): Array<Node> {
+function pushMessageFormatTokensAsNodes(tokens: Array<Token>, arr: Array<Node>, parent: ContainerNode | null, options: IMessageFormatParserOptions): Array<Node> {
   for (let i = 0; i < tokens.length; i++) {
-    arr.push(convertMessageFormatTokenToNode(tokens[i], parent));
+    arr.push(convertMessageFormatTokenToNode(tokens[i], parent, options));
   }
   return arr;
 }
 
-function convertMessageFormatTokenToNode(token: Token, parent: ContainerNode | null): Node {
+function convertMessageFormatTokenToNode(token: Token, parent: ContainerNode | null, options: IMessageFormatParserOptions): Node {
+  const {
+    renameFunction = identity,
+    renameArgument = identity,
+  } = options;
 
   const start = token.ctx.offset;
   const end = start + token.ctx.text.length;
@@ -29,7 +47,7 @@ function convertMessageFormatTokenToNode(token: Token, parent: ContainerNode | n
     case 'argument':
       return {
         nodeType: NodeType.ARGUMENT,
-        name: token.arg,
+        name: renameArgument(token.arg),
         parent,
         start,
         end,
@@ -47,15 +65,15 @@ function convertMessageFormatTokenToNode(token: Token, parent: ContainerNode | n
     case 'function':
       const node: IFunctionNode = {
         nodeType: NodeType.FUNCTION,
-        name: token.key,
-        argName: token.arg,
+        name: renameFunction(token.key),
+        argName: renameArgument(token.arg),
         children: [],
         parent,
         start,
         end,
       };
       if (token.param) {
-        pushMessageFormatTokensAsNodes(token.param, node.children, node);
+        pushMessageFormatTokensAsNodes(token.param, node.children, node, options);
       }
       return node;
 
@@ -65,7 +83,7 @@ function convertMessageFormatTokenToNode(token: Token, parent: ContainerNode | n
       const selectNode: ISelectNode = {
         nodeType: token.type === 'plural' ? NodeType.PLURAL : token.type === 'select' ? NodeType.SELECT : NodeType.SELECT_ORDINAL,
         pluralOffset: token.pluralOffset,
-        argName: token.arg,
+        argName: renameArgument(token.arg),
         children: [],
         parent,
         start,
@@ -86,7 +104,7 @@ function convertMessageFormatTokenToNode(token: Token, parent: ContainerNode | n
         };
         selectNode.children.push(caseNode);
 
-        pushMessageFormatTokensAsNodes(caseToken.tokens, caseChildren, caseNode);
+        pushMessageFormatTokensAsNodes(caseToken.tokens, caseChildren, caseNode, options);
 
         const caseEnd = caseNode.end = caseChildren.length === 0 ? caseNode.start + 1 : caseChildren[caseChildren.length - 1].end + 1;
         selectNode.end = caseEnd + 1;
