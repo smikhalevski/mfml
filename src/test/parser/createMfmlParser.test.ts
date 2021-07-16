@@ -707,16 +707,70 @@ describe('createMfmlParser', () => {
     expect(parse('<foo bar="{baz}"></foo>')).toEqual(rootNode);
   });
 
+  test('parses elements in an attribute as text', () => {
+    const rootNode: Node = {
+      nodeType: NodeType.ELEMENT,
+      tagName: 'foo',
+      attrs: [
+        {
+          nodeType: NodeType.ATTRIBUTE,
+          name: 'bar',
+          children: [
+            {
+              nodeType: NodeType.SELECT,
+              argName: 'www',
+              pluralOffset: undefined,
+              children: [
+                {
+                  nodeType: NodeType.SELECT_CASE,
+                  key: 'aaa',
+                  children: [
+                    {
+                      nodeType: NodeType.TEXT,
+                      value: '<bar></bar>',
+                      parent: null,
+                      start: 26,
+                      end: 37,
+                    },
+                  ],
+                  parent: null,
+                  start: 22,
+                  end: 38,
+                }
+              ],
+              parent: null,
+              start: 10,
+              end: 39,
+            },
+          ],
+          parent: null,
+          start: 5,
+          end: 40,
+        },
+      ],
+      children: [],
+      parent: null,
+      start: 0,
+      end: 47,
+    };
+
+    rootNode.attrs[0].parent = rootNode;
+
+    rootNode.attrs[0].children[0].parent = rootNode.attrs[0];
+
+    (rootNode.attrs[0].children[0] as ContainerNode).children[0].parent = rootNode.attrs[0].children[0] as ContainerNode;
+
+    ((rootNode.attrs[0].children[0] as ContainerNode).children[0] as ContainerNode).children[0].parent = (rootNode.attrs[0].children[0] as ContainerNode).children[0] as ContainerNode;
+
+    expect(parse('<foo bar="{www,select,aaa{<bar></bar>}}"></foo>')).toEqual(rootNode);
+  });
+
   test('throws on unexpected argument in start tag', () => {
     expect(() => parse('<foo {baz}></foo>')).toThrow(new SyntaxError('Unexpected token at 5'));
   });
 
   test('throws on unexpected argument in end tag', () => {
     expect(() => parse('<foo></foo {baz}>')).toThrow(new SyntaxError('Unexpected token at 5'));
-  });
-
-  test.skip('throws on element in select in argument', () => {
-    expect(() => parse('<foo bar="{www,select,aaa{<bar></bar>}}"></foo>')).toThrow(new SyntaxError('Unexpected token at 10'));
   });
 
   test('throws on unclosed argument', () => {

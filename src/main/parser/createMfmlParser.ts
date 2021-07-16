@@ -3,21 +3,23 @@ import {ParseOptions} from '@messageformat/parser';
 import {parseMessageFormat} from './parseMessageFormat';
 import {createEntitiesDecoder, createForgivingSaxParser, ISaxParser, ISaxParserCallbacks} from 'tag-soup';
 import {isContainerNode, isTextNode} from './node-utils';
-import {dieAtOffset} from '../misc';
+import {dieSyntax, identity, Rewriter} from '../misc';
 
 const xmlDecoder = createEntitiesDecoder();
 
 export interface IMfmlParserOptions extends ParseOptions {
 
   /**
-   * Decodes XML entities in an attribute value. By default, only XML entities are decoded.
+   * Decodes XML entities in plain text value. By default, only XML entities are decoded.
+   *
+   * @see createEntitiesDecoder
    */
-  decodeAttr?: (name: string) => string;
+  decodeText?: Rewriter;
 
   /**
-   * Decodes XML entities in plain text value. By default, only XML entities are decoded.
+   * Decodes XML entities in an attribute value. By default, uses rewriter from {@link decodeText}.
    */
-  decodeText?: (name: string) => string;
+  decodeAttr?: Rewriter;
 
   /**
    * The factory that creates an instance of a XML/HTML SAX parser that would be used for actual parsing of the input
@@ -25,7 +27,8 @@ export interface IMfmlParserOptions extends ParseOptions {
    *
    * Implementation considerations:
    * - SAX parser must emit tags in the correct order;
-   * - SAX parser mustn't decode text and attributes, use {@link decodeAttr} and {@link decodeText} instead;
+   * - SAX parser may not decode text and attributes for sake of performance, because they are also processed with
+   * {@link decodeAttr} and {@link decodeText};
    *
    * @default {@link https://smikhalevski.github.io/tag-soup/globals.html#createforgivingsaxparser createForgivingSaxParser}
    */
@@ -38,9 +41,9 @@ export interface IMfmlParserOptions extends ParseOptions {
 export function createMfmlParser(options: IMfmlParserOptions = {}): (str: string) => Node {
 
   const {
-    decodeAttr = xmlDecoder,
     decodeText = xmlDecoder,
-    saxParserFactory = createForgivingSaxParser,
+    decodeAttr = decodeText,
+    saxParserFactory = createMfmlSaxParser,
   } = options;
 
   let rootChildren: Array<Node>;
@@ -60,7 +63,7 @@ export function createMfmlParser(options: IMfmlParserOptions = {}): (str: string
       const textNode = linearNodes[linearIndex];
 
       if (!isTextNode(textNode)) {
-        dieAtOffset(tagStart);
+        dieSyntax(tagStart);
       }
 
       const elementNode: Node = {
@@ -84,8 +87,8 @@ export function createMfmlParser(options: IMfmlParserOptions = {}): (str: string
       linearIndex += offset + 1;
       siblingIndex += offset;
 
-      // An index at which attr declarations may start
-      const attrsIndex = linearIndex;
+      // The number of sibling nodes that were consumed by attributes
+      let attrSiblingNodesCount = 0;
 
       // Collect attributes
       for (let i = 0; i < tagToken.attrs.length; i++) {
@@ -137,6 +140,7 @@ export function createMfmlParser(options: IMfmlParserOptions = {}): (str: string
 
           // Skip nested MessageFormat nodes
           if (textNode.parent !== node.parent) {
+            linearIndex++;
             continue;
           }
 
@@ -157,6 +161,7 @@ export function createMfmlParser(options: IMfmlParserOptions = {}): (str: string
             attrChildren.push(node);
             node.parent = attrNode;
 
+            attrSiblingNodesCount++;
             linearIndex++;
             continue;
           }
@@ -173,15 +178,15 @@ export function createMfmlParser(options: IMfmlParserOptions = {}): (str: string
             break;
           }
 
-          dieAtOffset(nodeStart);
+          dieSyntax(nodeStart);
         }
 
         decodeTextNodes(attrChildren, decodeAttr);
       }
 
       // Remove MessageFormat nodes that are now part of attr children
-      if (linearIndex !== attrsIndex) {
-        siblingNodes.splice(siblingIndex + 1, linearIndex - attrsIndex);
+      if (attrSiblingNodesCount !== 0) {
+        siblingNodes.splice(siblingIndex + 1, attrSiblingNodesCount);
       }
 
       // Exit if the MessageFormat text node fully contains the start tag
@@ -198,7 +203,7 @@ export function createMfmlParser(options: IMfmlParserOptions = {}): (str: string
         return;
       }
 
-      dieAtOffset(tailNode.start);
+      dieSyntax(tailNode.start);
     },
 
     onEndTag(tagToken) {
@@ -238,7 +243,7 @@ export function createMfmlParser(options: IMfmlParserOptions = {}): (str: string
         siblingIndex = siblingNodes.indexOf(siblingNode) + 1;
 
       } else {
-        dieAtOffset(tagStart);
+        dieSyntax(tagStart);
       }
 
       // Lookup an element node that is terminated by the end tag
@@ -255,7 +260,7 @@ export function createMfmlParser(options: IMfmlParserOptions = {}): (str: string
       }
 
       if (!elementNode) {
-        dieAtOffset(tagStart);
+        dieSyntax(tagStart);
       }
 
       const elementChildren = siblingNodes.splice(elementIndex + 1, siblingIndex - elementIndex - 1);
@@ -301,6 +306,13 @@ export function createMfmlParser(options: IMfmlParserOptions = {}): (str: string
 
     return rootNode;
   };
+}
+
+function createMfmlSaxParser(options: ISaxParserCallbacks): ISaxParser {
+  return createForgivingSaxParser(Object.assign({
+    decodeAttr: identity,
+    decodeText: identity,
+  }, options));
 }
 
 /**

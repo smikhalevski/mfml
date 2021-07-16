@@ -75,7 +75,7 @@ describe('compileCallback', () => {
     expect(src).toBe(
         'export interface IGggArgs{foo:number;}' +
         'export function ggg<T>(locale:string,runtime:IRuntime<T>,args:IGggArgs):T|string|null{' +
-        'const i,{s}=runtime,{foo:b}=args;' +
+        'let i;const {s}=runtime,{foo:b}=args;' +
         'return (i=s(b,"aaa","bbb"),i===0?"AAA":i===1?"BBB":null)' +
         '}',
     );

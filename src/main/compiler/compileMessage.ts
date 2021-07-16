@@ -137,18 +137,6 @@ export function compileMessage(message: IMessage, options: IMessageCompilerOptio
     src += '}';
   }
 
-  const varSrcs: Array<string> = [];
-
-  if (tempVarUsed) {
-    varSrcs.push(TEMP_VAR_NAME);
-  }
-  if (usedMethods.size !== 0) {
-    varSrcs.push('{' + Array.from(usedMethods).join(',') + '}=' + RUNTIME_VAR_NAME);
-  }
-  if (argCount !== 0) {
-    varSrcs.push('{' + Object.entries(argVarMap).map(([argName, argVar]) => renameArgument(argName) + ':' + argVar).join(',') + '}=' + ARGS_VAR_NAME);
-  }
-
   if (!displayName) {
     src += 'export ';
   }
@@ -158,9 +146,21 @@ export function compileMessage(message: IMessage, options: IMessageCompilerOptio
       + (argCount === 0 ? '' : `,${ARGS_VAR_NAME}:${interfaceName}${generic ? '<T>' : ''}`)
       + `):T|string${nullable ? '|null' : ''}{`;
 
-  if (varSrcs.length) {
-    src += `let ${varSrcs.join(',')};`;
+  if (tempVarUsed) {
+    src += `let ${TEMP_VAR_NAME};`;
   }
+
+  const constSrcs: Array<string> = [];
+  if (usedMethods.size !== 0) {
+    constSrcs.push('{' + Array.from(usedMethods).join(',') + '}=' + RUNTIME_VAR_NAME);
+  }
+  if (argCount !== 0) {
+    constSrcs.push('{' + Object.entries(argVarMap).map(([argName, argVar]) => renameArgument(argName) + ':' + argVar).join(',') + '}=' + ARGS_VAR_NAME);
+  }
+  if (constSrcs.length !== 0) {
+    src += `const ${constSrcs.join(',')};`;
+  }
+
   src += `return ${resultSrc}}`;
 
   if (displayName) {

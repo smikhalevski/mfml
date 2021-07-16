@@ -1,6 +1,6 @@
 import {ContainerNode, isBlankNode, ISelectCaseNode, ISelectNode, isSelectNode, ITextNode, Node} from '../parser';
 import {visitNode} from './visitNode';
-import {dieAtOffset, jsonStringify} from '../misc';
+import {dieSyntax, jsonStringify} from '../misc';
 import {pluralCategories, PluralCategory} from '../runtime/PluralCategory';
 import {RuntimeMethod} from '../runtime';
 import {compilePropertyName} from '@smikhalevski/codegen';
@@ -217,7 +217,7 @@ export function compileNode(node: Node, options: INodeCompilerOptions): string {
         enterChild();
         src += selectNode.argName;
       } else {
-        dieAtOffset(node.start);
+        dieSyntax(node.start);
       }
     },
   });

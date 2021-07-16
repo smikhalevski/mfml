@@ -1,8 +1,12 @@
+export type Maybe<T> = T | null | undefined;
+
+export type Rewriter = (str: string) => string;
+
 export function die(message: string): never {
   throw new Error(message);
 }
 
-export function dieAtOffset(offset: number): never {
+export function dieSyntax(offset: number): never {
   throw new SyntaxError('Unexpected token at ' + offset);
 }
 

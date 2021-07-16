@@ -10,8 +10,8 @@
     "README.md"
   ],
   "scripts": {
-    "build": "set -e; tsc; npm run rollup; npm run rollup-bin;",
-    "rollup": "rollup --input ./lib/index.js --file ./lib/index-cjs.js --format cjs --plugin @rollup/plugin-node-resolve --plugin @rollup/plugin-commonjs",
+    "build": "set -e; tsc; npm run rollup; npm run rollup-bin; npm run terser",
+    "rollup": "rollup --external commander,glob,@messageformat/parser,@smikhalevski/codegen,tag-soup --input ./lib/index.js --file ./lib/index-cjs.js --format cjs --plugin @rollup/plugin-node-resolve --plugin @rollup/plugin-commonjs",
     "rollup-bin": "rollup --external commander,glob,@messageformat/parser,@smikhalevski/codegen,tag-soup --exports named --input ./lib/mfml-bin.js --file ./lib/mfml-bin.js --format cjs --banner '#!/usr/bin/env node' --plugin @rollup/plugin-node-resolve",
     "rollup-runtime": "rollup --exports named --input ./lib/jtd-dialect/runtime.js --file ./lib/jtd-dialect/runtime.js --format cjs --plugin @rollup/plugin-node-resolve",
     "terser": "terser --compress --mangle toplevel --output ./lib/index-cjs.js -- ./lib/index-cjs.js",
