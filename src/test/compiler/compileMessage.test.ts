@@ -9,8 +9,8 @@ describe('compileCallback', () => {
 
   beforeEach(() => {
     options = {
-      supportedLocales: ['en', 'es'],
-      supportedLocalesVarName: 'supportedLocales',
+      locales: ['en', 'es'],
+      localesVarName: 'locales',
       defaultLocale: 'en',
       interfaceName: 'IGggArgs',
       functionName: 'ggg',
@@ -25,189 +25,139 @@ describe('compileCallback', () => {
     };
   });
 
-  test('compiles message with no nodes', () => {
-    expect(compileMessage({translationMap: {}}, options)).toBe(
-        'export function ggg<T>(locale:string,runtime:IRuntime<T>):T|string|null{return null}',
-    );
-  });
-
-  test('compiles message a blank non-default locale', () => {
-    expect(compileMessage({translationMap: {es: parse('')}}, options)).toBe(
-        'export function ggg<T>(locale:string,runtime:IRuntime<T>):T|string|null{return null}',
-    );
-  });
-
-  test('compiles message a blank default locale', () => {
-    expect(compileMessage({translationMap: {en: parse('')}}, options)).toBe(
-        'export function ggg<T>(locale:string,runtime:IRuntime<T>):T|string|null{return null}',
-    );
-  });
-
-  test('compiles message a non-blank non-default locale', () => {
-    expect(compileMessage({translationMap: {es: parse('aaa')}}, options)).toBe(
-        'export function ggg<T>(locale:string,runtime:IRuntime<T>):T|string|null{' +
-        'return "aaa"' +
-        '}',
-    );
-  });
-
-  test('compiles message a non-blank default locale', () => {
-    expect(compileMessage({translationMap: {en: parse('aaa')}}, options)).toBe(
-        'export function ggg<T>(locale:string,runtime:IRuntime<T>):T|string|null{' +
-        'return "aaa"' +
-        '}',
-    );
-  });
-
-  test('respects nullable', () => {
-    expect(compileMessage({translationMap: {en: parse('')}}, {...options, nullable: false})).toBe(
-        'export function ggg<T>(locale:string,runtime:IRuntime<T>):T|string{' +
+  test('compiles non-nullable message', () => {
+    options.nullable = false;
+    expect(compileMessage({}, options)).toBe(
+        'let ggg=<T>(locale:string,runtime:IRuntime<T>):T|string=>{' +
         'return ""' +
         '}',
     );
   });
 
-  test('compiles select with a index variable', () => {
-    const src = compileMessage({
-      translationMap: {
-        en: parse('{foo,select,aaa{AAA}bbb{BBB}}'),
-      },
-    }, options);
-
-    expect(src).toBe(
-        'export interface IGggArgs{foo:number;}' +
-        'export function ggg<T>(locale:string,runtime:IRuntime<T>,args:IGggArgs):T|string|null{' +
-        'let i;const {s}=runtime,{foo:b}=args;' +
-        'return (i=s(b,"aaa","bbb"),i===0?"AAA":i===1?"BBB":null)' +
+  test('compiles message without arguments', () => {
+    expect(compileMessage({}, options)).toBe(
+        'let ggg=<T>(locale:string,runtime:IRuntime<T>):T|string|null=>{' +
+        'return null' +
         '}',
     );
   });
 
-  test('compiles select without a index variable', () => {
-    const src = compileMessage({
-      translationMap: {
-        en: parse('{foo,select,aaa{AAA}other{BBB}}'),
-      },
-    }, options);
-
-    expect(src).toBe(
-        'export interface IGggArgs{foo:number;}' +
-        'export function ggg<T>(locale:string,runtime:IRuntime<T>,args:IGggArgs):T|string|null{' +
-        'const {s}=runtime,{foo:b}=args;' +
-        'return s(b,"aaa","other")===0?"AAA":"BBB"' +
-        '}',
-    );
-  });
-
-  test('compiles variable used in both function and select', () => {
-    const src = compileMessage({
-      translationMap: {
-        en: parse('{foo,select,aaa{AAA{foo,www}}}'),
-      },
-    }, {...options, provideFunctionType: () => 'Baz&Bar'});
-
-    expect(src).toBe(
-        'export interface IGggArgs{foo:Baz&Bar&number;}' +
-        'export function ggg<T>(locale:string,runtime:IRuntime<T>,args:IGggArgs):T|string|null{' +
-        'const {f,c,s}=runtime,{foo:b}=args;' +
-        'return s(b,"aaa")===0?f("AAA",c("www",b)):null' +
-        '}',
-    );
-  });
-
-  test('compiles variable used in both function and select with intersection type', () => {
-    const src = compileMessage({
-      translationMap: {
-        en: parse('{foo,select,aaa{AAA{foo,www}}}'),
-      },
-    }, {...options, provideFunctionType: () => 'Baz|Bar'});
-
-    expect(src).toBe(
-        'export interface IGggArgs{foo:(Baz|Bar)&number;}' +
-        'export function ggg<T>(locale:string,runtime:IRuntime<T>,args:IGggArgs):T|string|null{' +
-        'const {f,c,s}=runtime,{foo:b}=args;' +
-        'return s(b,"aaa")===0?f("AAA",c("www",b)):null' +
-        '}',
-    );
-  });
-
-  test('compiles message with a display name', () => {
-    const src = compileMessage({
-      translationMap: {
-        en: parse('{foo,select,aaa{AAA}other{BBB}}'),
-      },
-      displayName: '__ggg__',
-    }, options);
-
-    expect(src).toBe(
-        'export interface IGggArgs{foo:number;}' +
-        'function ggg<T>(locale:string,runtime:IRuntime<T>,args:IGggArgs):T|string|null{' +
-        'const {s}=runtime,{foo:b}=args;' +
-        'return s(b,"aaa","other")===0?"AAA":"BBB"' +
+  test('compiles message with a single untyped argument', () => {
+    expect(compileMessage({en: parse('{foo}')}, options)).toBe(
+        'export interface IGggArgs{' +
+        'foo:unknown;' +
         '}' +
-        'ggg.displayName="__ggg__";' +
-        'export{ggg};',
-    );
-  });
-
-  test('compiles message with a single non-default locale', () => {
-    const src = compileMessage({
-      translationMap: {
-        es: parse('Hola!'),
-      },
-    }, {...options, supportedLocales: ['es']});
-
-    expect(src).toBe(
-        'export function ggg<T>(locale:string,runtime:IRuntime<T>):T|string|null{' +
-        'return "Hola!"' +
+        'let ggg=<T>(locale:string,runtime:IRuntime<T>,args:IGggArgs):T|string|null=>{' +
+        'const{a}=runtime;' +
+        'const{foo:b}=args;' +
+        'return a(b)' +
         '}',
     );
   });
 
-  test('compiles message with a single non-default locale', () => {
-    const src = compileMessage({
-      translationMap: {
-        es: parse('Hola!'),
-      },
-    }, options);
+  test('compiles message with a single typed argument', () => {
+    options.provideFunctionType = () => 'string';
 
-    expect(src).toBe(
-        'export function ggg<T>(locale:string,runtime:IRuntime<T>):T|string|null{' +
-        'return "Hola!"' +
+    expect(compileMessage({en: parse('{foo,aaa}')}, options)).toBe(
+        'export interface IGggArgs{' +
+        'foo:string;' +
+        '}' +
+        'let ggg=<T>(locale:string,runtime:IRuntime<T>,args:IGggArgs):T|string|null=>{' +
+        'const{c}=runtime;' +
+        'const{foo:b}=args;' +
+        'return c("aaa",b)' +
         '}',
     );
   });
 
-  test('compiles message with a multiple non-default locales', () => {
-    const src = compileMessage({
-      translationMap: {
-        es: parse('Hola!'),
-        ru: parse('Привет!'),
-      },
-    }, {...options, supportedLocales: ['es', 'ru', 'en']});
+  test('compiles message with a single dual-typed argument', () => {
+    options.provideFunctionType = (functionName) => functionName === 'aaa' ? 'string' : 'number';
 
-    expect(src).toBe(
-        'export function ggg<T>(locale:string,runtime:IRuntime<T>):T|string|null{' +
-        'const {l}=runtime;' +
-        'return l(locale,supportedLocales)===1?"Привет!":"Hola!"' +
+    expect(compileMessage({en: parse('{foo,aaa}{foo,bbb}')}, options)).toBe(
+        'export interface IGggArgs{' +
+        'foo:string&number;' +
+        '}' +
+        'let ggg=<T>(locale:string,runtime:IRuntime<T>,args:IGggArgs):T|string|null=>{' +
+        'const{f,c}=runtime;' +
+        'const{foo:b}=args;' +
+        'return f(c("aaa",b),c("bbb",b))' +
         '}',
     );
   });
 
-  test('compiles message with a blank non-default locale and a default locale', () => {
-    const src = compileMessage({
-      translationMap: {
-        en: parse('Hello!'),
-        es: parse(''),
-      },
-    }, options);
+  test('compiles message with a single dual-typed argument with intersection type', () => {
+    options.provideFunctionType = (functionName) => functionName === 'aaa' ? 'string' : 'Foo|Bar';
 
-    expect(src).toBe(
-        'export function ggg<T>(locale:string,runtime:IRuntime<T>):T|string|null{' +
-        'const {l}=runtime;' +
-        'return l(locale,supportedLocales)===1?null:"Hello!"' +
+    expect(compileMessage({en: parse('{foo,aaa}{foo,bbb}')}, options)).toBe(
+        'export interface IGggArgs{' +
+        'foo:string&(Foo|Bar);' +
+        '}' +
+        'let ggg=<T>(locale:string,runtime:IRuntime<T>,args:IGggArgs):T|string|null=>{' +
+        'const{f,c}=runtime;' +
+        'const{foo:b}=args;' +
+        'return f(c("aaa",b),c("bbb",b))' +
         '}',
     );
   });
 
+  test('compiles non-identifier argument names', () => {
+    expect(compileMessage({en: parse('{123f}')}, options)).toBe(
+        'export interface IGggArgs{' +
+        '"123f":unknown;' +
+        '}' +
+        'let ggg=<T>(locale:string,runtime:IRuntime<T>,args:IGggArgs):T|string|null=>{' +
+        'const{a}=runtime;' +
+        'const{"123f":b}=args;' +
+        'return a(b)' +
+        '}',
+    );
+  });
+
+  test('compiles select argument', () => {
+    expect(compileMessage({en: parse('{foo,select,AAA{okay}}')}, options)).toBe(
+        'export interface IGggArgs{' +
+        'foo:number;' +
+        '}' +
+        'let ggg=<T>(locale:string,runtime:IRuntime<T>,args:IGggArgs):T|string|null=>{' +
+        'const{s}=runtime;' +
+        'const{foo:b}=args;' +
+        'return s(b,"AAA")===0?"okay":null' +
+        '}',
+    );
+  });
+
+  test('compiles an interface for unused var', () => {
+    expect(compileMessage({en: parse('{foo,select,}')}, options)).toBe(
+        'export interface IGggArgs{' +
+        'foo:number;' +
+        '}' +
+        'let ggg=<T>(locale:string,runtime:IRuntime<T>,args:IGggArgs):T|string|null=>{' +
+        'return null' +
+        '}',
+    );
+  });
+
+  test('compiles plural', () => {
+    expect(compileMessage({en: parse('{foo,plural,one{okay}}')}, options)).toBe(
+        'export interface IGggArgs{' +
+        'foo:number;' +
+        '}' +
+        'let ggg=<T>(locale:string,runtime:IRuntime<T>,args:IGggArgs):T|string|null=>{' +
+        'const{p}=runtime;' +
+        'const{foo:b}=args;' +
+        'return p(b)===1?"okay":null' +
+        '}',
+    );
+  });
+
+  test('compiles comment', () => {
+    options.comment = 'hello!';
+
+    expect(compileMessage({}, options)).toBe(
+        '/**\n * hello!\n */' +
+        'let ggg=<T>(locale:string,runtime:IRuntime<T>):T|string|null=>{' +
+        'return null' +
+        '}',
+    );
+  });
 });

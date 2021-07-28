@@ -1,4 +1,4 @@
-import {ContainerNode, ISelectNode, ITextNode, Node, NodeType} from './node-types';
+import {ContainerNode, ISelectNode, ITextNode, Node, NodeType} from './parser-types';
 
 export function isTextNode(node: Node | null | undefined): node is ITextNode {
   return node?.nodeType === NodeType.TEXT;
@@ -24,6 +24,7 @@ export function isContainerNode(node: Node | null | undefined): node is Containe
 }
 
 export function isBlankNode(node: Node | null | undefined): boolean {
-  return (isSelectNode(node) || node?.nodeType === NodeType.SELECT_CASE || node?.nodeType === NodeType.FRAGMENT) && node.children.every(isBlankNode)
+  return !node
+      || (isSelectNode(node) || node?.nodeType === NodeType.SELECT_CASE || node?.nodeType === NodeType.FRAGMENT) && node.children.every(isBlankNode)
       || isTextNode(node) && node.value === '';
 }

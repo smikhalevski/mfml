@@ -1,3 +1,3 @@
-export * from './node-types';
+export * from './parser-types';
 export * from './node-utils';
 export * from './createMfmlParser';

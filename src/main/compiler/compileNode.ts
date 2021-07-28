@@ -9,31 +9,27 @@ import {
   Node,
 } from '../parser';
 import {visitNode} from './visitNode';
-import {die, jsonStringify} from '../misc';
+import {die, jsonStringify, Maybe} from '../misc';
 import {pluralCategories, PluralCategory} from '../runtime/PluralCategory';
 import {RuntimeMethod} from '../runtime';
 import {compilePropertyName} from '@smikhalevski/codegen';
 
-export interface INodeCompilerDialectOptions {
+export interface INodeCompilerOptions {
 
   /**
    * If `true` then `plural`, `select` and `selectordinal` are allowed to render `null` if no cases matched. Otherwise
    * an empty string is rendered.
+   *
+   * @default false
    */
-  nullable: boolean;
+  nullable?: boolean;
 
   /**
    * The key that is used as the default for `select`.
+   *
+   * @default "other"
    */
-  otherSelectCaseKey: string;
-}
-
-export interface INodeCompilerOptions extends INodeCompilerDialectOptions {
-
-  /**
-   * Returns the name of the the variable that holds an argument value.
-   */
-  provideArgVarName: (argName: string) => string;
+  otherSelectCaseKey?: string;
 
   /**
    * The name of the temporary variable used by `plural`, `select` and `selectordinal` to store the detected index.
@@ -41,36 +37,45 @@ export interface INodeCompilerOptions extends INodeCompilerDialectOptions {
   indexVarName: string;
 
   /**
+   * Returns the name of the the variable that holds an argument value.
+   */
+  provideArgumentVarName(argumentName: string): string;
+
+  /**
    * Triggered if a function node was rendered.
    *
    * @param node The node that was rendered.
    */
-  onFunctionUsed: (node: IFunctionNode) => void;
+  onFunctionUsed?(node: IFunctionNode): void;
 
   /**
    * Triggered if a select node was rendered.
    *
    * @param node The node that was rendered.
-   * @param selectVarUsed `true` if {@link indexVarName} was rendered.
    */
-  onSelectUsed: (node: ISelectNode) => void;
+  onSelectUsed?(node: ISelectNode): void;
 
   /**
    * Triggered if a runtime method usage was rendered.
+   *
+   * @param runtimeMethod The name of the used runtime method.
+   * @param indexVarUsed `true` if the method used an index var to store temporary runtime result.
    */
-  onRuntimeMethodUsed: (runtimeMethod: RuntimeMethod, indexVarUsed: boolean) => void;
+  onRuntimeMethodUsed?(runtimeMethod: RuntimeMethod, indexVarUsed: boolean): void;
 }
 
 /**
- * Compiles an AST node as a source code. This may return an empty string if
+ * Compiles an AST node to a source code. This may return an empty string if an AST nodes doesn't describe any
+ * meaningful value.
  *
  * @param node The node to compile.
- * @param options Compilation options.
+ * @param options The compiler options.
  */
 export function compileNode(node: Node, options: INodeCompilerOptions): string {
+
   const {
-    otherSelectCaseKey,
-    provideArgVarName,
+    otherSelectCaseKey = 'other',
+    provideArgumentVarName,
     onFunctionUsed,
     onRuntimeMethodUsed,
   } = options;
@@ -91,8 +96,9 @@ export function compileNode(node: Node, options: INodeCompilerOptions): string {
 
   const compileFragment = (node: ContainerNode, next: () => void) => {
     let childrenCount = 0;
-    for (let i = 0, children = node.children; i < children.length; i++) {
-      if (!isBlankNode(children[i]) && ++childrenCount === 2) {
+
+    for (const child of node.children) {
+      if (!isBlankNode(child) && ++childrenCount === 2) {
         break;
       }
     }
@@ -105,7 +111,7 @@ export function compileNode(node: Node, options: INodeCompilerOptions): string {
     }
     enterChild();
     if (childrenCount > 1) {
-      onRuntimeMethodUsed(RuntimeMethod.FRAGMENT, false);
+      onRuntimeMethodUsed?.(RuntimeMethod.FRAGMENT, false);
       src += RuntimeMethod.FRAGMENT + '(';
       enterBlock();
       next();
@@ -121,13 +127,13 @@ export function compileNode(node: Node, options: INodeCompilerOptions): string {
     element(node, nextAttributes, nextChildren) {
       enterChild();
 
-      const attrCount = node.attrs.length;
+      const attrCount = node.attributes.length;
 
       if (attrCount !== 0) {
-        onRuntimeMethodUsed(RuntimeMethod.ELEMENT, false);
+        onRuntimeMethodUsed?.(RuntimeMethod.ELEMENT, false);
         src += RuntimeMethod.ELEMENT;
       } else {
-        onRuntimeMethodUsed(RuntimeMethod.SHORT_ELEMENT, false);
+        onRuntimeMethodUsed?.(RuntimeMethod.SHORT_ELEMENT, false);
         src += RuntimeMethod.SHORT_ELEMENT;
       }
 
@@ -167,16 +173,16 @@ export function compileNode(node: Node, options: INodeCompilerOptions): string {
     argument(node) {
       enterChild();
 
-      onRuntimeMethodUsed(RuntimeMethod.ARGUMENT, false);
-      src += RuntimeMethod.ARGUMENT + `(${provideArgVarName(node.name)})`;
+      onRuntimeMethodUsed?.(RuntimeMethod.ARGUMENT, false);
+      src += RuntimeMethod.ARGUMENT + `(${provideArgumentVarName(node.name)})`;
     },
 
     function(node, next) {
       enterChild();
 
-      onFunctionUsed(node);
-      onRuntimeMethodUsed(RuntimeMethod.FUNCTION, false);
-      src += RuntimeMethod.FUNCTION + `(${jsonStringify(node.name)},${provideArgVarName(node.argName)}`;
+      onFunctionUsed?.(node);
+      onRuntimeMethodUsed?.(RuntimeMethod.FUNCTION, false);
+      src += RuntimeMethod.FUNCTION + `(${jsonStringify(node.name)},${provideArgumentVarName(node.argumentName)}`;
 
       compileFragment(node, next);
       src += ')';
@@ -206,8 +212,8 @@ export function compileNode(node: Node, options: INodeCompilerOptions): string {
       if (selectNode) {
         enterChild();
 
-        onRuntimeMethodUsed(RuntimeMethod.ARGUMENT, false);
-        src += RuntimeMethod.ARGUMENT + `(${provideArgVarName(selectNode.argName)})`;
+        onRuntimeMethodUsed?.(RuntimeMethod.ARGUMENT, false);
+        src += RuntimeMethod.ARGUMENT + `(${provideArgumentVarName(selectNode.argumentName)})`;
       } else {
         die('Octothorpe must be nested in a select');
       }
@@ -217,10 +223,28 @@ export function compileNode(node: Node, options: INodeCompilerOptions): string {
   return src;
 }
 
-function compileSelect(node: ISelectNode, runtimeMethod: RuntimeMethod, otherSelectCaseKey: string, knownKeys: Array<string> | undefined, options: INodeCompilerOptions): string {
+/**
+ * Compiles a select node to a source code.
+ *
+ * @param node The select node to compile.
+ * @param runtimeMethod The runtime method name that is used to resolve what case to use.
+ * @param otherSelectCaseKey The case key that would be a default.
+ * @param knownKeys The list of case keys that are used. If `undefined` then all case keys from `node` are used.
+ * @param options The node compiler options.
+ *
+ * @returns The compiled source.
+ */
+function compileSelect(
+    node: ISelectNode,
+    runtimeMethod: RuntimeMethod,
+    otherSelectCaseKey: string,
+    knownKeys: Array<string> | undefined,
+    options: INodeCompilerOptions,
+): string {
+
   const {
     nullable,
-    provideArgVarName,
+    provideArgumentVarName,
     indexVarName,
     onRuntimeMethodUsed,
     onSelectUsed,
@@ -244,7 +268,7 @@ function compileSelect(node: ISelectNode, runtimeMethod: RuntimeMethod, otherSel
   let childrenSrc = '';
   let childrenCount = 0;
 
-  for (let i = 0; i < knownKeys.length; i++) {
+  for (let i = 0; i < knownKeys.length; ++i) {
     for (const child of node.children) {
       if (child.key !== knownKeys[i] || isBlankNode(child)) {
         continue;
@@ -257,11 +281,11 @@ function compileSelect(node: ISelectNode, runtimeMethod: RuntimeMethod, otherSel
         childrenSrc += ':' + indexVarName;
       }
       childrenSrc += `===${i}?` + compileNode(child, options);
-      childrenCount++;
+      ++childrenCount;
     }
   }
 
-  onSelectUsed(node);
+  onSelectUsed?.(node);
 
   let src = '';
   if (childrenCount === 0) {
@@ -271,19 +295,19 @@ function compileSelect(node: ISelectNode, runtimeMethod: RuntimeMethod, otherSel
     src += `(${indexVarName}=`;
   }
 
-  onRuntimeMethodUsed(runtimeMethod, childrenCount > 1);
+  onRuntimeMethodUsed?.(runtimeMethod, childrenCount > 1);
   src += runtimeMethod
       + '('
-      + provideArgVarName(node.argName)
+      + provideArgumentVarName(node.argumentName)
       + (keysRetained ? ',' + knownKeys.map(jsonStringify).join(',') : '')
       + ')';
 
-  const otherSrc = otherNode ? compileNode(otherNode, options) : compileDefaultValue(nullable);
+  const otherSrc = otherNode != null ? compileNode(otherNode, options) : compileBlankValue(nullable);
 
   src += childrenCount > 1 ? `,${indexVarName}${childrenSrc}:${otherSrc})` : childrenSrc + ':' + otherSrc;
   return src;
 }
 
-export function compileDefaultValue(nullable: boolean): string {
+export function compileBlankValue(nullable: Maybe<boolean>): string {
   return nullable ? 'null' : '""';
 }

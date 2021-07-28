@@ -13,17 +13,17 @@ import {
 } from '../parser';
 
 export interface INodeVisitor {
-  fragment?: (node: IFragmentNode, next: () => void) => void;
-  element?: (node: IElementNode, nextAttributes: () => void, nextChildren: () => void) => void;
-  attribute?: (node: IAttributeNode, next: () => void) => void;
-  text?: (node: ITextNode) => void;
-  argument?: (node: IArgumentNode) => void;
-  function?: (node: IFunctionNode, next: () => void) => void;
-  plural?: (node: ISelectNode, next: () => void) => void;
-  select?: (node: ISelectNode, next: () => void) => void;
-  selectOrdinal?: (node: ISelectNode, next: () => void) => void;
-  selectCase?: (node: ISelectCaseNode, next: () => void) => void;
-  octothorpe?: (node: IOctothorpeNode) => void;
+  fragment?(node: IFragmentNode, next: () => void): void;
+  element?(node: IElementNode, nextAttributes: () => void, nextChildren: () => void): void;
+  attribute?(node: IAttributeNode, next: () => void): void;
+  text?(node: ITextNode): void;
+  argument?(node: IArgumentNode): void;
+  function?(node: IFunctionNode, next: () => void): void;
+  plural?(node: ISelectNode, next: () => void): void;
+  select?(node: ISelectNode, next: () => void): void;
+  selectOrdinal?(node: ISelectNode, next: () => void): void;
+  selectCase?(node: ISelectCaseNode, next: () => void): void;
+  octothorpe?(node: IOctothorpeNode): void;
 }
 
 /**
@@ -40,7 +40,7 @@ export function visitNode(node: Node, visitor: INodeVisitor): void {
       break;
 
     case NodeType.ELEMENT:
-      visitor.element?.(node, () => visitChildren(node.attrs, visitor), () => visitChildren(node.children, visitor));
+      visitor.element?.(node, () => visitChildren(node.attributes, visitor), () => visitChildren(node.children, visitor));
       break;
 
     case NodeType.ATTRIBUTE:

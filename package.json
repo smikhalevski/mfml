@@ -64,6 +64,8 @@
     "@messageformat/parser": "^5.0.0",
     "@smikhalevski/codegen": "^1.0.0",
     "commander": "^8.0.0",
-    "glob": "^7.1.7"
+    "glob": "^7.1.7",
+    "speedy-entities": "^1.1.0",
+    "tag-soup": "^1.0.0-next.0"
   }
 }

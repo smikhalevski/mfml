@@ -12,6 +12,12 @@ export const enum NodeType {
   OCTOTHORPE,
 }
 
+export type Node =
+    | ContainerNode
+    | IArgumentNode
+    | IOctothorpeNode
+    | ITextNode;
+
 export type ContainerNode =
     | IFragmentNode
     | IElementNode
@@ -19,12 +25,6 @@ export type ContainerNode =
     | ISelectNode
     | ISelectCaseNode
     | IFunctionNode;
-
-export type Node =
-    | ContainerNode
-    | IArgumentNode
-    | IOctothorpeNode
-    | ITextNode;
 
 export interface INode {
   nodeType: NodeType;
@@ -44,7 +44,7 @@ export interface IFragmentNode extends IContainerNode {
 export interface IElementNode extends IContainerNode {
   nodeType: NodeType.ELEMENT;
   tagName: string;
-  attrs: Array<IAttributeNode>;
+  attributes: Array<IAttributeNode>;
 }
 
 export interface IAttributeNode extends IContainerNode {
@@ -55,7 +55,7 @@ export interface IAttributeNode extends IContainerNode {
 
 export interface ISelectNode extends IContainerNode {
   nodeType: NodeType.PLURAL | NodeType.SELECT | NodeType.SELECT_ORDINAL;
-  argName: string;
+  argumentName: string;
   children: Array<ISelectCaseNode>;
   pluralOffset?: number;
 }
@@ -69,7 +69,7 @@ export interface ISelectCaseNode extends IContainerNode {
 export interface IFunctionNode extends IContainerNode {
   nodeType: NodeType.FUNCTION;
   name: string;
-  argName: string;
+  argumentName: string;
 }
 
 export interface IArgumentNode extends INode {

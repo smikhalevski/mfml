@@ -1,63 +1,31 @@
-import {ITextNode, Node, NodeType} from './node-types';
+import {ITextNode, Node, NodeType} from './parser-types';
 import {IMessageFormatParserOptions, parseMessageFormat} from './parseMessageFormat';
-import {createEntitiesDecoder, createForgivingSaxParser, ISaxParser, ISaxParserCallbacks} from 'tag-soup';
+import {createSaxParser, IParserOptions} from 'tag-soup';
 import {isContainerNode, isTextNode} from './node-utils';
-import {dieSyntax, identity, Rewriter} from '../misc';
+import {dieSyntax} from '../misc';
 
-const xmlDecoder = createEntitiesDecoder();
-
-export interface IMfmlParserOptions extends IMessageFormatParserOptions {
-
-  /**
-   * Decodes XML entities in plain text value. By default, only XML entities are decoded.
-   *
-   * @see createEntitiesDecoder
-   */
-  decodeText?: Rewriter;
-
-  /**
-   * Decodes XML entities in an attribute value. By default, uses rewriter from {@link decodeText}.
-   */
-  decodeAttr?: Rewriter;
-
-  /**
-   * The factory that creates an instance of a XML/HTML SAX parser that would be used for actual parsing of the input
-   * strings.
-   *
-   * Implementation considerations:
-   * - SAX parser must emit tags in the correct order;
-   * - SAX parser may not decode text and attributes for sake of performance, because they are also processed with
-   * {@link decodeAttr} and {@link decodeText};
-   * - SAX parser should make required tag and attribute renames.
-   *
-   * @default {@link https://smikhalevski.github.io/tag-soup/globals.html#createforgivingsaxparser createForgivingSaxParser}
-   */
-  saxParserFactory?: (options: ISaxParserCallbacks) => ISaxParser;
+export interface IMfmlParserOptions extends IMessageFormatParserOptions, IParserOptions {
 }
 
 /**
  * Creates an ICU MessageFormat + XML/HTML DOM parser.
  */
-export function createMfmlParser(options: IMfmlParserOptions = {}): (str: string) => Node {
+export function createMfmlParser(options: IMfmlParserOptions = {}): (input: string) => Node {
 
-  const {
-    decodeText = xmlDecoder,
-    decodeAttr = decodeText,
-    saxParserFactory = createMfmlSaxParser,
-  } = options;
+  const {decodeText, decodeAttribute} = options;
 
   let rootChildren: Array<Node>;
   let linearNodes: Array<Node>;
   let linearIndex = 0;
 
-  const saxParser = saxParserFactory({
+  const saxParser = createSaxParser({
 
-    onStartTag(tagToken) {
+    startTag(token) {
 
-      const tagStart = tagToken.start;
-      const tagEnd = tagToken.end;
+      const tagStart = token.start;
+      const tagEnd = token.end;
 
-      linearIndex = findNodeIndex(linearNodes, linearIndex, tagStart, tagToken.nameEnd);
+      linearIndex = findNodeIndex(linearNodes, linearIndex, tagStart, token.nameEnd);
 
       // The text node that contains the start tag name
       const textNode = linearNodes[linearIndex];
@@ -68,10 +36,10 @@ export function createMfmlParser(options: IMfmlParserOptions = {}): (str: string
 
       const elementNode: Node = {
         nodeType: NodeType.ELEMENT,
-        tagName: tagToken.name,
+        tagName: token.name,
         parent: textNode.parent,
         children: [],
-        attrs: [],
+        attributes: [],
         start: tagStart,
         end: tagEnd,
       };
@@ -90,8 +58,10 @@ export function createMfmlParser(options: IMfmlParserOptions = {}): (str: string
       const attrSiblingIndex = siblingIndex += offset;
 
       // Collect attributes
-      for (let i = 0; i < tagToken.attrs.length; i++) {
-        const attrToken = tagToken.attrs[i];
+      const attributes = token.attributes;
+
+      for (let i = 0; i < attributes.length; ++i) {
+        const attrToken = attributes[i];
 
         const attrValue = attrToken.rawValue;
         const attrValueStart = attrToken.valueStart;
@@ -107,7 +77,7 @@ export function createMfmlParser(options: IMfmlParserOptions = {}): (str: string
           end: attrToken.end,
         };
 
-        elementNode.attrs.push(attrNode);
+        elementNode.attributes.push(attrNode);
 
         // Attr has no value
         if (attrValue == null) {
@@ -118,7 +88,7 @@ export function createMfmlParser(options: IMfmlParserOptions = {}): (str: string
         if (attrValueEnd <= linearNodes[linearIndex].start) {
           attrChildren.push({
             nodeType: NodeType.TEXT,
-            value: decodeAttr(attrValue),
+            value: decodeAttribute != null ? decodeAttribute(attrValue) : attrValue,
             parent: attrNode,
             start: attrValueStart,
             end: attrValueEnd,
@@ -139,7 +109,7 @@ export function createMfmlParser(options: IMfmlParserOptions = {}): (str: string
 
           // Skip nested MessageFormat nodes
           if (textNode.parent !== node.parent) {
-            linearIndex++;
+            ++linearIndex;
             continue;
           }
 
@@ -160,8 +130,8 @@ export function createMfmlParser(options: IMfmlParserOptions = {}): (str: string
             attrChildren.push(node);
             node.parent = attrNode;
 
-            linearIndex++;
-            siblingIndex++;
+            ++linearIndex;
+            ++siblingIndex;
             continue;
           }
 
@@ -180,7 +150,9 @@ export function createMfmlParser(options: IMfmlParserOptions = {}): (str: string
           dieSyntax(nodeStart);
         }
 
-        decodeTextNodes(attrChildren, decodeAttr);
+        if (decodeAttribute != null) {
+          decodeTextNodes(attrChildren, decodeAttribute);
+        }
       }
 
       // Remove MessageFormat nodes that are now part of attr children
@@ -205,10 +177,10 @@ export function createMfmlParser(options: IMfmlParserOptions = {}): (str: string
       dieSyntax(tailNode.start);
     },
 
-    onEndTag(tagToken) {
+    endTag(token) {
 
-      const tagStart = tagToken.start;
-      const tagEnd = tagToken.end;
+      const tagStart = token.start;
+      const tagEnd = token.end;
 
       linearIndex = findNodeIndex(linearNodes, linearIndex, tagStart, tagEnd);
 
@@ -252,7 +224,7 @@ export function createMfmlParser(options: IMfmlParserOptions = {}): (str: string
       while (elementIndex > 0) {
         const node = siblingNodes[--elementIndex];
 
-        if (node.nodeType === NodeType.ELEMENT && node.tagName === tagToken.name) {
+        if (node.nodeType === NodeType.ELEMENT && node.tagName === token.name) {
           elementNode = node;
           break;
         }
@@ -267,25 +239,26 @@ export function createMfmlParser(options: IMfmlParserOptions = {}): (str: string
       elementNode.end = tagEnd;
       elementNode.children = elementChildren;
 
-      for (let i = 0; i < elementChildren.length; i++) {
+      for (let i = 0; i < elementChildren.length; ++i) {
         elementChildren[i].parent = elementNode;
       }
     },
 
-  });
+  }, options);
 
-  return (str) => {
-    saxParser.reset();
-
-    rootChildren = parseMessageFormat(str, options);
+  return (input) => {
+    rootChildren = parseMessageFormat(input, options);
     linearNodes = [];
     linearIndex = 0;
 
     linearizeNodes(rootChildren, linearNodes);
 
-    saxParser.parse(str);
+    saxParser.reset();
+    saxParser.parse(input);
 
-    decodeTextNodes(rootChildren, decodeText);
+    if (decodeText != null) {
+      decodeTextNodes(rootChildren, decodeText);
+    }
 
     if (rootChildren.length === 1) {
       return rootChildren[0];
@@ -296,10 +269,10 @@ export function createMfmlParser(options: IMfmlParserOptions = {}): (str: string
       children: rootChildren,
       parent: null,
       start: 0,
-      end: str.length,
+      end: input.length,
     };
 
-    for (let i = 0; i < rootChildren.length; i++) {
+    for (let i = 0; i < rootChildren.length; ++i) {
       rootChildren[i].parent = rootNode;
     }
 
@@ -308,20 +281,10 @@ export function createMfmlParser(options: IMfmlParserOptions = {}): (str: string
 }
 
 /**
- * Creates the default SAX parser that doesn't decode XML entities.
- */
-function createMfmlSaxParser(options: ISaxParserCallbacks): ISaxParser {
-  return createForgivingSaxParser(Object.assign({
-    decodeAttr: identity,
-    decodeText: identity,
-  }, options));
-}
-
-/**
  * Traverse `nodes` and add them to `linearNodes` in the order of occurrence.
  */
 function linearizeNodes(nodes: Array<Node>, linearNodes: Array<Node>): void {
-  for (let i = 0; i < nodes.length; i++) {
+  for (let i = 0; i < nodes.length; ++i) {
     const node = nodes[i];
 
     linearNodes.push(node);
@@ -337,7 +300,7 @@ function linearizeNodes(nodes: Array<Node>, linearNodes: Array<Node>): void {
  * If node wasn't found then -1 is returned.
  */
 function findNodeIndex(nodes: Array<Node>, index: number, start: number, end: number): number {
-  for (let i = index; i < nodes.length; i++) {
+  for (let i = index; i < nodes.length; ++i) {
     const node = nodes[i];
     const nodeStart = node.start;
     const nodeEnd = node.end;
@@ -356,7 +319,7 @@ function findNodeIndex(nodes: Array<Node>, index: number, start: number, end: nu
  * Rewrites values of descendant text nodes using `decoder`.
  */
 function decodeTextNodes(nodes: Array<Node>, decoder: (name: string) => string): void {
-  for (let i = 0; i < nodes.length; i++) {
+  for (let i = 0; i < nodes.length; ++i) {
     const node = nodes[i];
 
     if (isTextNode(node)) {

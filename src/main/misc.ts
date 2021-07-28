@@ -21,3 +21,8 @@ export function jsonStringify(value: any): string {
 export function identity<T>(value: T): T {
   return value;
 }
+
+export function setMap<K, V>(map: Map<K, V>, key: K, value: V): V {
+  map.set(key, value);
+  return value;
+}

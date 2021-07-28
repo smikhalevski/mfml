@@ -1,5 +1,4 @@
-import {createForgivingSaxParser} from 'tag-soup';
-import {ContainerNode, IElementNode, ITextNode, Node, NodeType} from '../../main/parser/node-types';
+import {ContainerNode, IElementNode, ITextNode, Node, NodeType} from '../../main/parser/parser-types';
 import {createMfmlParser} from '../../main/parser/createMfmlParser';
 
 describe('createMfmlParser', () => {
@@ -30,7 +29,7 @@ describe('createMfmlParser', () => {
     expect(parse('{foo,number}')).toEqual(<Node>{
       nodeType: NodeType.FUNCTION,
       name: 'number',
-      argName: 'foo',
+      argumentName: 'foo',
       children: [],
       parent: null,
       start: 0,
@@ -42,7 +41,7 @@ describe('createMfmlParser', () => {
     const rootNode: Node = {
       nodeType: NodeType.FUNCTION,
       name: 'date',
-      argName: 'foo',
+      argumentName: 'foo',
       children: [
         {
           nodeType: NodeType.TEXT,
@@ -65,7 +64,7 @@ describe('createMfmlParser', () => {
   test('parses a select node', () => {
     const rootNode: Node = {
       nodeType: NodeType.SELECT,
-      argName: 'foo',
+      argumentName: 'foo',
       pluralOffset: undefined,
       children: [
         {
@@ -118,7 +117,7 @@ describe('createMfmlParser', () => {
   test('parses a plural node', () => {
     const rootNode: Node = {
       nodeType: NodeType.PLURAL,
-      argName: 'foo',
+      argumentName: 'foo',
       pluralOffset: undefined,
       children: [
         {
@@ -179,7 +178,7 @@ describe('createMfmlParser', () => {
     expect(parse('<foo></foo>')).toEqual(<Node>{
       nodeType: NodeType.ELEMENT,
       tagName: 'foo',
-      attrs: [],
+      attributes: [],
       children: [],
       parent: null,
       start: 0,
@@ -189,16 +188,13 @@ describe('createMfmlParser', () => {
 
   test('parses a self-closing element', () => {
     const parse = createMfmlParser({
-      saxParserFactory: (options) => createForgivingSaxParser({
-        ...options,
-        selfClosingEnabled: true,
-      }),
+      selfClosingEnabled: true,
     });
 
     expect(parse('<foo/>')).toEqual(<Node>{
       nodeType: NodeType.ELEMENT,
       tagName: 'foo',
-      attrs: [],
+      attributes: [],
       children: [],
       parent: null,
       start: 0,
@@ -210,7 +206,7 @@ describe('createMfmlParser', () => {
     expect(parse('<foo>')).toEqual(<Node>{
       nodeType: NodeType.ELEMENT,
       tagName: 'foo',
-      attrs: [],
+      attributes: [],
       children: [],
       parent: null,
       start: 0,
@@ -222,12 +218,12 @@ describe('createMfmlParser', () => {
     const rootNode: Node = {
       nodeType: NodeType.ELEMENT,
       tagName: 'foo',
-      attrs: [],
+      attributes: [],
       children: [
         {
           nodeType: NodeType.ELEMENT,
           tagName: 'bar',
-          attrs: [],
+          attributes: [],
           children: [],
           parent: null,
           start: 5,
@@ -246,13 +242,9 @@ describe('createMfmlParser', () => {
 
   test('parses implicitly closed tags', () => {
     const parse = createMfmlParser({
-      saxParserFactory: (options) => createForgivingSaxParser({
-        ...options,
-
-        isImplicitEnd(containerToken, token) {
-          return containerToken.name === 'p' && token.name === 'p';
-        },
-      }),
+      endsAncestorAt(ancestors, token) {
+        return ancestors[0].name === 'p' && token.name === 'p' ? 0 : -1;
+      },
     });
 
     const rootNode: Node = {
@@ -261,7 +253,7 @@ describe('createMfmlParser', () => {
         {
           nodeType: NodeType.ELEMENT,
           tagName: 'p',
-          attrs: [],
+          attributes: [],
           children: [
             {
               nodeType: NodeType.TEXT,
@@ -278,7 +270,7 @@ describe('createMfmlParser', () => {
         {
           nodeType: NodeType.ELEMENT,
           tagName: 'p',
-          attrs: [],
+          attributes: [],
           children: [
             {
               nodeType: NodeType.TEXT,
@@ -311,7 +303,7 @@ describe('createMfmlParser', () => {
     const rootNode: Node = {
       nodeType: NodeType.ELEMENT,
       tagName: 'foo',
-      attrs: [
+      attributes: [
         {
           nodeType: NodeType.ATTRIBUTE,
           name: 'bar',
@@ -335,8 +327,8 @@ describe('createMfmlParser', () => {
       end: 21,
     };
 
-    rootNode.attrs[0].parent = rootNode;
-    rootNode.attrs[0].children[0].parent = rootNode.attrs[0];
+    rootNode.attributes[0].parent = rootNode;
+    rootNode.attributes[0].children[0].parent = rootNode.attributes[0];
 
     expect(parse('<foo bar="aaa"></foo>')).toEqual(rootNode);
   });
@@ -345,12 +337,12 @@ describe('createMfmlParser', () => {
     const rootNode: Node = {
       nodeType: NodeType.ELEMENT,
       tagName: 'foo',
-      attrs: [],
+      attributes: [],
       children: [
         {
           nodeType: NodeType.ELEMENT,
           tagName: 'bar',
-          attrs: [],
+          attributes: [],
           children: [],
           parent: null,
           start: 5,
@@ -371,7 +363,7 @@ describe('createMfmlParser', () => {
 
     const rootNode: Node = {
       nodeType: NodeType.SELECT,
-      argName: 'www',
+      argumentName: 'www',
       pluralOffset: undefined,
       children: [
         {
@@ -381,7 +373,7 @@ describe('createMfmlParser', () => {
             {
               nodeType: NodeType.ELEMENT,
               tagName: 'foo',
-              attrs: [],
+              attributes: [],
               children: [
                 {
                   nodeType: NodeType.TEXT,
@@ -407,7 +399,7 @@ describe('createMfmlParser', () => {
             {
               nodeType: NodeType.ELEMENT,
               tagName: 'bar',
-              attrs: [],
+              attributes: [],
               children: [
                 {
                   nodeType: NodeType.TEXT,
@@ -458,7 +450,7 @@ describe('createMfmlParser', () => {
         {
           nodeType: NodeType.ELEMENT,
           tagName: 'b',
-          attrs: [],
+          attributes: [],
           children: [
             {
               nodeType: NodeType.TEXT,
@@ -524,7 +516,7 @@ describe('createMfmlParser', () => {
         {
           nodeType: NodeType.ELEMENT,
           tagName: 'b',
-          attrs: [],
+          attributes: [],
           children: [
             {
               nodeType: NodeType.ARGUMENT,
@@ -566,7 +558,7 @@ describe('createMfmlParser', () => {
     const rootNode: Node = {
       nodeType: NodeType.ELEMENT,
       tagName: 'foo',
-      attrs: [
+      attributes: [
         {
           nodeType: NodeType.ATTRIBUTE,
           name: 'bar',
@@ -604,11 +596,11 @@ describe('createMfmlParser', () => {
       end: 29,
     };
 
-    rootNode.attrs[0].parent = rootNode;
+    rootNode.attributes[0].parent = rootNode;
 
-    rootNode.attrs[0].children[0].parent = rootNode.attrs[0];
-    rootNode.attrs[0].children[1].parent = rootNode.attrs[0];
-    rootNode.attrs[0].children[2].parent = rootNode.attrs[0];
+    rootNode.attributes[0].children[0].parent = rootNode.attributes[0];
+    rootNode.attributes[0].children[1].parent = rootNode.attributes[0];
+    rootNode.attributes[0].children[2].parent = rootNode.attributes[0];
 
     expect(parse('<foo bar="aaa{baz}bbb"></foo>')).toEqual(rootNode);
   });
@@ -617,7 +609,7 @@ describe('createMfmlParser', () => {
     const rootNode: Node = {
       nodeType: NodeType.ELEMENT,
       tagName: 'foo',
-      attrs: [
+      attributes: [
         {
           nodeType: NodeType.ATTRIBUTE,
           name: 'bar',
@@ -662,12 +654,12 @@ describe('createMfmlParser', () => {
       end: 34,
     };
 
-    rootNode.attrs[0].parent = rootNode;
+    rootNode.attributes[0].parent = rootNode;
 
-    rootNode.attrs[0].children[0].parent = rootNode.attrs[0];
-    rootNode.attrs[0].children[1].parent = rootNode.attrs[0];
-    rootNode.attrs[0].children[2].parent = rootNode.attrs[0];
-    rootNode.attrs[0].children[3].parent = rootNode.attrs[0];
+    rootNode.attributes[0].children[0].parent = rootNode.attributes[0];
+    rootNode.attributes[0].children[1].parent = rootNode.attributes[0];
+    rootNode.attributes[0].children[2].parent = rootNode.attributes[0];
+    rootNode.attributes[0].children[3].parent = rootNode.attributes[0];
 
     expect(parse('<foo bar="aaa{baz}bbb{qux}"></foo>')).toEqual(rootNode);
   });
@@ -676,7 +668,7 @@ describe('createMfmlParser', () => {
     const rootNode: Node = {
       nodeType: NodeType.ELEMENT,
       tagName: 'foo',
-      attrs: [
+      attributes: [
         {
           nodeType: NodeType.ATTRIBUTE,
           name: 'bar',
@@ -700,9 +692,9 @@ describe('createMfmlParser', () => {
       end: 23,
     };
 
-    rootNode.attrs[0].parent = rootNode;
+    rootNode.attributes[0].parent = rootNode;
 
-    rootNode.attrs[0].children[0].parent = rootNode.attrs[0];
+    rootNode.attributes[0].children[0].parent = rootNode.attributes[0];
 
     expect(parse('<foo bar="{baz}"></foo>')).toEqual(rootNode);
   });
@@ -711,14 +703,14 @@ describe('createMfmlParser', () => {
     const rootNode: Node = {
       nodeType: NodeType.ELEMENT,
       tagName: 'foo',
-      attrs: [
+      attributes: [
         {
           nodeType: NodeType.ATTRIBUTE,
           name: 'bar',
           children: [
             {
               nodeType: NodeType.SELECT,
-              argName: 'www',
+              argumentName: 'www',
               pluralOffset: undefined,
               children: [
                 {
@@ -736,7 +728,7 @@ describe('createMfmlParser', () => {
                   parent: null,
                   start: 22,
                   end: 38,
-                }
+                },
               ],
               parent: null,
               start: 10,
@@ -754,13 +746,13 @@ describe('createMfmlParser', () => {
       end: 47,
     };
 
-    rootNode.attrs[0].parent = rootNode;
+    rootNode.attributes[0].parent = rootNode;
 
-    rootNode.attrs[0].children[0].parent = rootNode.attrs[0];
+    rootNode.attributes[0].children[0].parent = rootNode.attributes[0];
 
-    (rootNode.attrs[0].children[0] as ContainerNode).children[0].parent = rootNode.attrs[0].children[0] as ContainerNode;
+    (rootNode.attributes[0].children[0] as ContainerNode).children[0].parent = rootNode.attributes[0].children[0] as ContainerNode;
 
-    ((rootNode.attrs[0].children[0] as ContainerNode).children[0] as ContainerNode).children[0].parent = (rootNode.attrs[0].children[0] as ContainerNode).children[0] as ContainerNode;
+    ((rootNode.attributes[0].children[0] as ContainerNode).children[0] as ContainerNode).children[0].parent = (rootNode.attributes[0].children[0] as ContainerNode).children[0] as ContainerNode;
 
     expect(parse('<foo bar="{www,select,aaa{<bar></bar>}}"></foo>')).toEqual(rootNode);
   });
@@ -789,22 +781,22 @@ describe('createMfmlParser', () => {
 
   test('decodes a literal attribute', () => {
     const parse = createMfmlParser({
-      decodeAttr: (str) => str.replace('aaa', 'bbb'),
+      decodeAttribute: (str) => str.replace('aaa', 'bbb'),
     });
 
     const node = parse('<foo bar="aaa"></foo>');
 
-    expect(((node as IElementNode).attrs[0].children[0] as ITextNode).value).toEqual('bbb');
+    expect(((node as IElementNode).attributes[0].children[0] as ITextNode).value).toEqual('bbb');
   });
 
   test('decodes an attribute with argument', () => {
     const parse = createMfmlParser({
-      decodeAttr: (str) => str.replace('aaa', 'bbb'),
+      decodeAttribute: (str) => str.replace('aaa', 'bbb'),
     });
 
     const node = parse('<foo bar="aaa{bar}aaa"></foo>');
 
-    expect(((node as IElementNode).attrs[0].children[0] as ITextNode).value).toEqual('bbb');
-    expect(((node as IElementNode).attrs[0].children[2] as ITextNode).value).toEqual('bbb');
+    expect(((node as IElementNode).attributes[0].children[0] as ITextNode).value).toEqual('bbb');
+    expect(((node as IElementNode).attributes[0].children[2] as ITextNode).value).toEqual('bbb');
   });
 });

@@ -1,6 +1,6 @@
 import {createMfmlParser} from '../../main/parser/createMfmlParser';
 import {compileModule, IModuleCompilerOptions} from '../../main/compiler/compileModule';
-import {camelCase, pascalCase} from '@smikhalevski/codegen';
+import {IMessageModule} from '../../main/compiler/compiler-types';
 
 describe('c', () => {
 
@@ -9,79 +9,149 @@ describe('c', () => {
   let options: IModuleCompilerOptions;
 
   beforeEach(() => {
-    options = {
-      defaultLocale: 'en',
-      nullable: false,
-      otherSelectCaseKey: 'other',
-      renameInterface: (messageKey) => 'I' + pascalCase(messageKey),
-      renameFunction: (messageKey) => camelCase(messageKey),
-      extractComment: () => null,
-      provideFunctionType: () => undefined,
-    };
+    options = {};
+  });
+
+  test('compiles an empty module', () => {
+    expect(compileModule({messages: {}}, parse, options)).toBe(
+        'import{IRuntime}from"mfml/lib/runtime";',
+    );
   });
 
   test('compiles a module with multiple messages that share same locales', () => {
-    expect(compileModule({
-      sayHello: {
-        translationMap: {
-          en: parse('Hello!'),
-          es: parse('Hola!'),
+    const messageModule: IMessageModule = {
+      messages: {
+        sayHello: {
+          translations: {
+            en: 'Hello!',
+            es: 'Hola!',
+          },
         },
-        displayName: 'say_hello',
-      },
-      sayBye: {
-        translationMap: {
-          en: parse('Bye!'),
-          es: parse('Adiós!'),
+        sayBye: {
+          translations: {
+            en: 'Bye!',
+            es: 'Adiós!',
+          },
         },
       },
-    }, options)).toBe(
-        'import {IRuntime} from "mfml/lib/runtime";' +
+    };
 
+    expect(compileModule(messageModule, parse, options)).toBe(
+        'import{IRuntime}from"mfml/lib/runtime";' +
         'const b=["en","es"];' +
 
-        'function sayHello<T>(locale:string,runtime:IRuntime<T>):T|string{' +
-        'const {l}=runtime;' +
+        'let sayHello=<T>(locale:string,runtime:IRuntime<T>):T|string=>{' +
+        'const{l}=runtime;' +
         'return l(locale,b)===1?"Hola!":"Hello!"' +
         '}' +
-        'sayHello.displayName="say_hello";' +
-        'export{sayHello};' +
 
-        'export function sayBye<T>(locale:string,runtime:IRuntime<T>):T|string{' +
-        'const {l}=runtime;' +
+        'let sayBye=<T>(locale:string,runtime:IRuntime<T>):T|string=>{' +
+        'const{l}=runtime;' +
         'return l(locale,b)===1?"Adiós!":"Bye!"' +
-        '}',
+        '}' +
+
+        'export{sayHello,sayBye};',
     );
   });
 
   test('compiles a module with multiple messages that use different locales', () => {
-    expect(compileModule({
-      sayHello: {
-        translationMap: {
-          en: parse('Hello!'),
-          ru: parse('Привет!'),
+    const messageModule: IMessageModule = {
+      messages: {
+        sayHello: {
+          translations: {
+            en: 'Hello!',
+            ru: 'Привет!',
+          },
+        },
+        sayBye: {
+          translations: {
+            en: 'Bye!',
+            es: 'Adiós!',
+          },
         },
       },
-      sayBye: {
-        translationMap: {
-          es: parse('Adiós!'),
-          pt: parse('Tchau!'),
-        },
-      },
-    }, options)).toBe(
-        'import {IRuntime} from "mfml/lib/runtime";' +
+    };
 
-        'const b=["en","ru"],d=["es","pt"];' +
+    expect(compileModule(messageModule, parse, options)).toBe(
+        'import{IRuntime}from"mfml/lib/runtime";' +
+        'const b=["en","ru"];' +
+        'const d=["en","es"];' +
 
-        'export function sayHello<T>(locale:string,runtime:IRuntime<T>):T|string{' +
-        'const {l}=runtime;' +
+        'let sayHello=<T>(locale:string,runtime:IRuntime<T>):T|string=>{' +
+        'const{l}=runtime;' +
         'return l(locale,b)===1?"Привет!":"Hello!"' +
         '}' +
 
-        'export function sayBye<T>(locale:string,runtime:IRuntime<T>):T|string{' +
-        'const {l}=runtime;' +
-        'return l(locale,d)===1?"Tchau!":"Adiós!"' +
-        '}',
+        'let sayBye=<T>(locale:string,runtime:IRuntime<T>):T|string=>{' +
+        'const{l}=runtime;' +
+        'return l(locale,d)===1?"Adiós!":"Bye!"' +
+        '}' +
+
+        'export{sayHello,sayBye};',
+    );
+  });
+
+  test('function names are excluded from locales var names', () => {
+    const messageModule: IMessageModule = {
+      messages: {
+        a: {
+          translations: {
+            en: '{foo}',
+            es: '{foo}',
+          },
+        },
+      },
+    };
+
+    expect(compileModule(messageModule, parse, options)).toBe(
+        'import{IRuntime}from"mfml/lib/runtime";' +
+        'const b=["en","es"];' +
+
+        'export interface A{' +
+        'foo:unknown;' +
+        '}' +
+
+        'let a=<T>(locale:string,runtime:IRuntime<T>,args:A):T|string=>{' +
+        'const{a,l}=runtime;' +
+        'const{foo:d}=args;' +
+        'return l(locale,b)===1?a(d):a(d)' +
+        '}' +
+
+        'export{a};',
+    );
+  });
+
+  test('renders metadata', () => {
+    const messageModule: IMessageModule = {
+      messages: {
+        ___a: {
+          translations: {
+            en: '{foo}',
+          },
+        },
+      },
+    };
+
+    options.renderMetadata = (messageName, message, metadata) => {
+      return metadata.functionName + '.displayName=' + JSON.stringify(messageName) + ';';
+    };
+
+    expect(compileModule(messageModule, parse, options)).toBe(
+        'import{IRuntime}from"mfml/lib/runtime";' +
+
+        'export interface A{' +
+        'foo:unknown;' +
+        '}' +
+
+        'let a=<T>(locale:string,runtime:IRuntime<T>,args:A):T|string=>{' +
+        'const{a}=runtime;' +
+        'const{foo:b}=args;' +
+        'return a(b)' +
+        '}' +
+
+        'a.displayName="___a";' +
+
+        'export{a};',
     );
   });
 

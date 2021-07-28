@@ -12,7 +12,7 @@ describe('compileNode', () => {
       nullable: true,
       otherSelectCaseKey: 'other',
       indexVarName: 'i',
-      provideArgVarName: (name) => name,
+      provideArgumentVarName: (name) => name,
       onFunctionUsed: () => undefined,
       onRuntimeMethodUsed: () => undefined,
       onSelectUsed: () => undefined,
@@ -52,17 +52,21 @@ describe('compileNode', () => {
     });
 
     test('respects the default value', () => {
-      expect(compileNode(parse('{foo,select,aaa{AAA}}'), {...options, nullable: false}))
+      options.nullable = false;
+
+      expect(compileNode(parse('{foo,select,aaa{AAA}}'), options))
           .toBe('s(foo,"aaa")===0?"AAA":""');
     });
 
     test('compiles other', () => {
-      expect(compileNode(parse('{foo,select,aaa{AAA}other{BBB}}'), {...options}))
+      expect(compileNode(parse('{foo,select,aaa{AAA}other{BBB}}'), options))
           .toBe('s(foo,"aaa","other")===0?"AAA":"BBB"');
     });
 
     test('respects other key setting', () => {
-      expect(compileNode(parse('{foo,select,aaa{AAA}kkk{BBB}}'), {...options, otherSelectCaseKey: 'kkk'}))
+      options.otherSelectCaseKey = 'kkk';
+
+      expect(compileNode(parse('{foo,select,aaa{AAA}kkk{BBB}}'), options))
           .toBe('s(foo,"aaa","kkk")===0?"AAA":"BBB"');
     });
   });
@@ -120,7 +124,9 @@ describe('compileNode', () => {
     });
 
     test('respects the default value', () => {
-      expect(compileNode(parse('{foo,plural,one{AAA}}'), {...options, nullable: false}))
+      options.nullable = false;
+
+      expect(compileNode(parse('{foo,plural,one{AAA}}'), options))
           .toBe('p(foo)===1?"AAA":""');
     });
   });
@@ -229,18 +235,17 @@ describe('compileNode', () => {
     });
 
     test('invokes function callbacks', () => {
-      const argumentVarNameProviderMock = jest.fn(() => 'eee');
+      const provideArgumentVarNameMock = jest.fn(() => 'eee');
       const onFunctionUsedMock = jest.fn();
 
-      compileNode(parse('{foo,www,{bar}}'), {
-        ...options,
-        provideArgVarName: argumentVarNameProviderMock,
-        onFunctionUsed: onFunctionUsedMock,
-      });
+      options.provideArgumentVarName = provideArgumentVarNameMock;
+      options.onFunctionUsed = onFunctionUsedMock;
 
-      expect(argumentVarNameProviderMock).toHaveBeenCalledTimes(2);
-      expect(argumentVarNameProviderMock).toHaveBeenNthCalledWith(1, 'foo');
-      expect(argumentVarNameProviderMock).toHaveBeenNthCalledWith(2, 'bar');
+      compileNode(parse('{foo,www,{bar}}'), options);
+
+      expect(provideArgumentVarNameMock).toHaveBeenCalledTimes(2);
+      expect(provideArgumentVarNameMock).toHaveBeenNthCalledWith(1, 'foo');
+      expect(provideArgumentVarNameMock).toHaveBeenNthCalledWith(2, 'bar');
 
       expect(onFunctionUsedMock).toHaveBeenCalledTimes(1);
     });

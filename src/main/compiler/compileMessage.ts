@@ -1,40 +1,44 @@
-import {isBlankNode, Node} from '../parser';
-import {compileDefaultValue, compileNode, INodeCompilerDialectOptions, INodeCompilerOptions} from './compileNode';
-import {RuntimeMethod} from '../runtime';
-import {createMap, jsonStringify, Maybe} from '../misc';
+import {RuntimeMethod, runtimeMethods} from '../runtime';
+import {createMap, Maybe} from '../misc';
 import {compileDocComment, compilePropertyName, createVarNameProvider} from '@smikhalevski/codegen';
+import {compileLocaleNodeMap, ILocaleNodeMap, ILocaleNodeMapCompilerOptions} from './compileLocaleNodeMap';
 
-export interface IMessageCompilerDialectOptions extends INodeCompilerDialectOptions {
+export interface IMessageMetadata {
 
   /**
-   * The default locale from {@link supportedLocales}.
+   * The name of the TypeScript interface that describe the message arguments or `null` if message has no arguments.
    */
-  defaultLocale: string;
+  interfaceName: string | null;
 
   /**
-   * Returns the TypeScript type of the argument that a function expects.
-   *
-   * @param functionName The name of the function.
-   */
-  provideFunctionType: (functionName: string) => Maybe<string>;
-}
-
-export interface IMessageCompilerOptions extends IMessageCompilerDialectOptions {
-
-  /**
-   * The name of the TypeScript interface that describes arguments.
-   */
-  interfaceName: string;
-
-  /**
-   * The name of the rendering function.
+   * The name of the message rendering function.
    */
   functionName: string;
 
   /**
-   * The name of the variable that holds the locale.
+   * The list of argument names.
    */
-  localeVarName: string;
+  argumentNames: Array<string>;
+}
+
+export interface IMessageCompilerOptions extends Pick<ILocaleNodeMapCompilerOptions,
+    | 'nullable'
+    | 'otherSelectCaseKey'
+    | 'indexVarName'
+    | 'localeVarName'
+    | 'defaultLocale'
+    | 'locales'
+    | 'localesVarName'> {
+
+  /**
+   * The name of the TypeScript interface that describe the message arguments.
+   */
+  interfaceName: string;
+
+  /**
+   * The name of the message rendering function.
+   */
+  functionName: string;
 
   /**
    * The name of the variable that holds the runtime object.
@@ -47,53 +51,36 @@ export interface IMessageCompilerOptions extends IMessageCompilerDialectOptions 
   argsVarName: string;
 
   /**
-   * The name of the variable that holds temporary index result returned by runtime methods.
-   */
-  indexVarName: string;
-
-  /**
    * The doc comment of the rendering function.
    */
   comment: Maybe<string>;
 
   /**
-   * The list of all supported locales stored in {@link supportedLocalesVarName}.
+   * Returns the TypeScript type of the argument that a function expects.
+   *
+   * @param functionName The name of the function.
    */
-  supportedLocales: Array<string>;
+  provideFunctionType?(functionName: string): Maybe<string>;
 
   /**
-   * The name of the variable that holds an array of locales supported by the message.
+   * Returns arbitrary source code that is rendered after message function rendering is completed.
    */
-  supportedLocalesVarName: string;
-}
-
-/**
- * The mapping from a locale to an AST node.
- */
-export interface ITranslationMap {
-  [locale: string]: Node;
-}
-
-/**
- * Holds all information about the message.
- */
-export interface IMessage {
-  translationMap: ITranslationMap;
-  displayName?: string;
+  renderMetadata?(metadata: IMessageMetadata): Maybe<string>;
 }
 
 /**
  * Compiles a message function and an interface that describes its arguments.
  *
- * @param message The mapping from locale to a parsed AST node.
+ * @param localeNodeMap The map from locale to an AST node.
  * @param options Compilation options.
  */
-export function compileMessage(message: IMessage, options: IMessageCompilerOptions): string {
+export function compileMessage(localeNodeMap: ILocaleNodeMap, options: IMessageCompilerOptions): string {
 
   const {
     nullable,
     otherSelectCaseKey,
     provideFunctionType,
+    renderMetadata,
     interfaceName,
     functionName,
     localeVarName,
@@ -101,161 +88,120 @@ export function compileMessage(message: IMessage, options: IMessageCompilerOptio
     argsVarName,
     indexVarName,
     comment,
-    supportedLocalesVarName,
+    localesVarName,
+    locales,
+    defaultLocale,
   } = options;
 
-  const nextVarName = createVarNameProvider([
+  const varNameProvider = createVarNameProvider([
     localeVarName,
     runtimeVarName,
     argsVarName,
     indexVarName,
-    supportedLocalesVarName,
-    RuntimeMethod.LOCALE,
-    RuntimeMethod.FRAGMENT,
-    RuntimeMethod.ARGUMENT,
-    RuntimeMethod.ELEMENT,
-    RuntimeMethod.SHORT_ELEMENT,
-    RuntimeMethod.FUNCTION,
-    RuntimeMethod.PLURAL,
-    RuntimeMethod.SELECT,
-    RuntimeMethod.SELECT_ORDINAL,
-  ]);
-
-  const {translationMap, displayName} = message;
-
-  let indexVarUsed = false;
+    localesVarName,
+  ].concat(runtimeMethods));
 
   const argVarNameMap = createMap<string>();
   const argTypeMap = createMap<Array<string>>();
   const usedRuntimeMethods = new Set<RuntimeMethod>();
 
-  const nodeCompilerOptions: INodeCompilerOptions = {
+  let indexVarUsed = false;
+
+  const resultSrc = compileLocaleNodeMap(localeNodeMap, {
     nullable,
-    otherSelectCaseKey,
+    localeVarName,
     indexVarName,
-    provideArgVarName: (name) => argVarNameMap[name] ||= nextVarName(),
+    defaultLocale,
+    locales,
+    localesVarName,
+    otherSelectCaseKey,
+
+    provideArgumentVarName(name) {
+      return argVarNameMap[name] ||= varNameProvider.next();
+    },
 
     onFunctionUsed(node) {
-      const tsType = provideFunctionType(node.name);
+      const tsType = provideFunctionType?.(node.name);
       if (tsType) {
-        (argTypeMap[node.argName] ||= []).push(isIntersectionType(tsType) ? '(' + tsType + ')' : tsType);
+        (argTypeMap[node.argumentName] ||= []).push(isIntersectionType(tsType) ? '(' + tsType + ')' : tsType);
       }
     },
+
     onSelectUsed(node) {
-      (argTypeMap[node.argName] ||= []).push('number');
+      (argTypeMap[node.argumentName] ||= []).push('number');
     },
+
     onRuntimeMethodUsed(runtimeMethod, varUsed) {
       usedRuntimeMethods.add(runtimeMethod);
       indexVarUsed ||= varUsed;
     },
-  };
+  });
 
-  const resultSrc = compileTranslationMap(translationMap, options, nodeCompilerOptions);
+  const usedArgNames = Object.keys(argVarNameMap);
+  const unusedArgNames = Object.keys(argTypeMap).filter((name) => !usedArgNames.includes(name));
 
-  const argEntries = Object.entries(argVarNameMap);
-  const argRequired = argEntries.length !== 0;
+  const interfaceUsed = usedArgNames.length || unusedArgNames.length;
+  const argumentNames = usedArgNames.concat(unusedArgNames);
 
   let src = '';
 
-  if (argRequired) {
+  // Interface
+  if (interfaceUsed) {
     src += `export interface ${interfaceName}{`;
-    for (const [argName] of argEntries) {
-      src += compilePropertyName(argName) + ':' + (argTypeMap[argName]?.join('&') || 'unknown') + ';';
+
+    for (const name of argumentNames) {
+      src += compilePropertyName(name)
+          + ':'
+          + (argTypeMap[name]?.join('&') || 'unknown')
+          + ';';
     }
     src += '}';
   }
 
+  // Comment
   src += compileDocComment(comment);
 
-  if (!displayName) {
-    src += 'export ';
-  }
-
-  src += `function ${functionName}<T>(`
+  // Function
+  src += `let ${functionName}=<T>(`
       + localeVarName + ':string,'
       + runtimeVarName + ':IRuntime<T>'
-      + (argRequired ? `,${argsVarName}:${interfaceName}` : '')
-      + `):T|string${nullable ? '|null' : ''}{`;
+      + (interfaceUsed ? `,${argsVarName}:${interfaceName}` : '')
+      + '):T|string'
+      + (nullable ? '|null' : '')
+      + '=>{';
 
+  // Index var
   if (indexVarUsed) {
     src += `let ${indexVarName};`;
   }
 
-  const constSrcs: Array<string> = [];
+  // Runtime method vars
+  if (usedRuntimeMethods.size) {
+    src += 'const{' + Array.from(usedRuntimeMethods).join(',') + '}=' + runtimeVarName + ';';
+  }
 
-  if (usedRuntimeMethods.size !== 0) {
-    constSrcs.push('{' + Array.from(usedRuntimeMethods).join(',') + '}=' + runtimeVarName);
-  }
-  if (argRequired) {
-    constSrcs.push('{' + argEntries.map(([argName, argVar]) => compilePropertyName(argName) + ':' + argVar).join(',') + '}=' + argsVarName);
-  }
-  if (constSrcs.length !== 0) {
-    src += `const ${constSrcs.join(',')};`;
+  // Used argument vars
+  if (usedArgNames.length) {
+    src += 'const{'
+        + usedArgNames.map((name) =>
+            compilePropertyName(name)
+            + ':'
+            + argVarNameMap[name],
+        ).join(',')
+        + '}='
+        + argsVarName
+        + ';';
   }
 
   src += `return ${resultSrc}}`;
 
-  if (displayName) {
-    src += functionName + '.displayName=' + jsonStringify(displayName) + ';'
-        + `export{${functionName}};`;
-  }
+  // Metadata
+  src += renderMetadata?.({
+    interfaceName: interfaceUsed ? interfaceName : null,
+    functionName,
+    argumentNames,
+  }) || '';
 
-  return src;
-}
-
-function compileTranslationMap(translationMap: ITranslationMap, options: IMessageCompilerOptions, nodeCompilerOptions: INodeCompilerOptions): string {
-  const {
-    localeVarName,
-    indexVarName,
-    supportedLocales,
-    defaultLocale,
-    nullable,
-    supportedLocalesVarName,
-  } = options;
-
-  const {onRuntimeMethodUsed} = nodeCompilerOptions;
-
-  const defaultValueSrc = compileDefaultValue(nullable);
-
-  if (Object.values(translationMap).every(isBlankNode)) {
-    return defaultValueSrc;
-  }
-
-  let defaultLocaleIndex = translationMap[defaultLocale] ? supportedLocales.indexOf(defaultLocale) : -1;
-  let src = '';
-  let childrenSrc = '';
-  let childrenCount = 0;
-
-  for (let i = 0; i < supportedLocales.length; i++) {
-    const node = translationMap[supportedLocales[i]];
-
-    if (i === defaultLocaleIndex || !node) {
-      continue;
-    }
-    if (defaultLocaleIndex === -1) {
-      defaultLocaleIndex = i;
-      continue;
-    }
-    if (childrenCount !== 0) {
-      childrenSrc += ':' + indexVarName;
-    }
-    childrenSrc += `===${i}?` + (compileNode(node, nodeCompilerOptions) || defaultValueSrc);
-    childrenCount++;
-  }
-
-  const defaultResultSrc = compileNode(translationMap[supportedLocales[defaultLocaleIndex]], nodeCompilerOptions) || defaultValueSrc;
-
-  if (childrenCount === 0) {
-    return defaultResultSrc;
-  }
-  if (childrenCount > 1) {
-    src += `(${indexVarName}=`;
-  }
-
-  onRuntimeMethodUsed(RuntimeMethod.LOCALE, childrenCount > 1);
-  src += RuntimeMethod.LOCALE + `(${localeVarName},${supportedLocalesVarName})`;
-
-  src += childrenCount > 1 ? `,${indexVarName}${childrenSrc}:${defaultResultSrc})` : childrenSrc + ':' + defaultResultSrc;
   return src;
 }
 

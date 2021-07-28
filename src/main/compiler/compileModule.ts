@@ -1,88 +1,117 @@
-import {compileMessage, IMessage, IMessageCompilerDialectOptions} from './compileMessage';
-import {createVarNameProvider} from '@smikhalevski/codegen';
-import {createMap, jsonStringify, Maybe, Rewriter} from '../misc';
-import {RuntimeMethod} from '../runtime';
+import {compileMessage, IMessageCompilerOptions, IMessageMetadata} from './compileMessage';
+import {camelCase, createVarNameProvider, pascalCase} from '@smikhalevski/codegen';
+import {createMap, jsonStringify, Maybe} from '../misc';
+import {runtimeMethods} from '../runtime';
+import {IMessage, IMessageModule} from './compiler-types';
+import {Node} from '../parser';
+import {ILocaleNodeMap} from './compileLocaleNodeMap';
 
-const RUNTIME_VAR_NAME = 'runtime';
-const LOCALE_VAR_NAME = 'locale';
-const ARGS_VAR_NAME = 'args';
-const INDEX_VAR_NAME = 'i';
+const VAR_NAME_RUNTIME = 'runtime';
+const VAR_NAME_LOCALE = 'locale';
+const VAR_NAME_ARGS = 'args';
+const VAR_NAME_INDEX = 'i';
 
-const excludedVarNames = [
-  RUNTIME_VAR_NAME,
-  LOCALE_VAR_NAME,
-  ARGS_VAR_NAME,
-  INDEX_VAR_NAME,
-  RuntimeMethod.LOCALE,
-  RuntimeMethod.FRAGMENT,
-  RuntimeMethod.ARGUMENT,
-  RuntimeMethod.ELEMENT,
-  RuntimeMethod.SHORT_ELEMENT,
-  RuntimeMethod.FUNCTION,
-  RuntimeMethod.PLURAL,
-  RuntimeMethod.SELECT,
-  RuntimeMethod.SELECT_ORDINAL,
-];
+export interface IModuleCompilerOptions extends Pick<IMessageCompilerOptions,
+    | 'nullable'
+    | 'provideFunctionType'
+    | 'otherSelectCaseKey'> {
 
-export interface IMessageGroup {
-  [messageKey: string]: IMessage;
-}
+  /**
+   * The default locale.
+   *
+   * @default "en"
+   */
+  defaultLocale?: string;
 
-export interface IModuleCompilerOptions extends Omit<IMessageCompilerDialectOptions, 'defaultLocale'> {
-  renameInterface: Rewriter;
-  renameFunction: Rewriter;
-  extractComment: (message: IMessage) => Maybe<string>;
-  defaultLocale: ((message: IMessage) => string) | string;
+  /**
+   * Returns an arguments interface name.
+   *
+   * @default `pascalCase`
+   */
+  renameInterface?(messageName: string, message: IMessage): string;
+
+  /**
+   * Returns a message rendering function name.
+   *
+   * @default `camelCase`
+   */
+  renameMessageFunction?(messageName: string, message: IMessage): string;
+
+  /**
+   * Returns the doc comment rendered.
+   */
+  extractComment?(messageName: string, message: IMessage): Maybe<string>;
+
+  /**
+   * Returns arbitrary source code that is rendered after message function rendering is completed.
+   */
+  renderMetadata?(messageName: string, message: IMessage, metadata: IMessageMetadata): Maybe<string>;
 }
 
 /**
- * Compiles a group of messages as a module that exports functions and corresponding interfaces.
+ * Compiles messages as a module that exports functions and corresponding interfaces.
  *
- * @param messageGroup The map from the message name to an actual message.
+ * @param messageModule The map from the message name to an actual message.
+ * @param parseToNode The MFML parser instance.
  * @param options Compiler options.
  */
-export function compileModule(messageGroup: IMessageGroup, options: IModuleCompilerOptions): string {
+export function compileModule(messageModule: IMessageModule, parseToNode: (input: string) => Node, options: IModuleCompilerOptions): string {
   const {
-    renameInterface,
-    renameFunction,
-    extractComment,
-    defaultLocale,
+    renameInterface = pascalCase,
+    renameMessageFunction = camelCase,
     nullable,
-    otherSelectCaseKey,
     provideFunctionType,
+    otherSelectCaseKey,
+    defaultLocale = 'en',
+    extractComment,
+    renderMetadata,
   } = options;
 
-  const supportedLocalesSrcMap = createMap<string>();
-  const nextVarName = createVarNameProvider(excludedVarNames);
+  const messageEntries = Object.entries(messageModule.messages);
+  const functionNames = messageEntries.map(([messageName, message]) => renameMessageFunction(messageName, message));
+  const localesVarSrcMap = createMap<string>();
+
+  const varNameProvider = createVarNameProvider([
+    VAR_NAME_RUNTIME,
+    VAR_NAME_LOCALE,
+    VAR_NAME_ARGS,
+    VAR_NAME_INDEX,
+  ].concat(runtimeMethods, functionNames));
 
   let src = '';
 
-  for (const [messageKey, message] of Object.entries(messageGroup)) {
+  for (const [messageName, message] of messageEntries) {
 
-    const supportedLocales = Object.keys(message.translationMap).sort();
-    const supportedLocalesVarName = supportedLocales.length > 1 ? supportedLocalesSrcMap[supportedLocales.map(jsonStringify).join(',')] ||= nextVarName() : '';
+    const locales = Object.keys(message.translations).sort();
+    const localesVarName = locales.length > 1 ? localesVarSrcMap[jsonStringify(locales)] ||= varNameProvider.next() : '';
 
-    src += compileMessage(message, {
+    const localeNodeMap: ILocaleNodeMap = {};
+    for (const locale of locales) {
+      localeNodeMap[locale] = parseToNode(message.translations[locale]);
+    }
+
+    src += compileMessage(localeNodeMap, {
       nullable,
       otherSelectCaseKey,
       provideFunctionType,
-      interfaceName: renameInterface(messageKey),
-      functionName: renameFunction(messageKey),
-      runtimeVarName: RUNTIME_VAR_NAME,
-      localeVarName: LOCALE_VAR_NAME,
-      argsVarName: ARGS_VAR_NAME,
-      indexVarName: INDEX_VAR_NAME,
-      comment: extractComment(message),
-      supportedLocalesVarName,
-      defaultLocale: typeof defaultLocale === 'function' ? defaultLocale(message) : defaultLocale,
-      supportedLocales,
+      renderMetadata: renderMetadata ? (metadata) => renderMetadata(messageName, message, metadata) : undefined,
+      interfaceName: renameInterface(messageName, message),
+      functionName: renameMessageFunction(messageName, message),
+      localeVarName: VAR_NAME_LOCALE,
+      runtimeVarName: VAR_NAME_RUNTIME,
+      argsVarName: VAR_NAME_ARGS,
+      indexVarName: VAR_NAME_INDEX,
+      comment: extractComment?.(messageName, message),
+      localesVarName,
+      locales,
+      defaultLocale,
     });
   }
 
-  const supportedLocaleEntries = Object.entries(supportedLocalesSrcMap);
-  if (supportedLocaleEntries.length) {
-    src = 'const ' + supportedLocaleEntries.map(([localesSrc, varName]) => varName + '=[' + localesSrc + ']').join(',') + ';' + src;
-  }
-
-  return 'import {IRuntime} from "mfml/lib/runtime";' + src;
+  return 'import{IRuntime}from"mfml/lib/runtime";'
+      + Object.entries(localesVarSrcMap).reduce((src, [localesSrc, localesVarName]) => src
+          + `const ${localesVarName}=${localesSrc};`,
+          '')
+      + src
+      + (functionNames.length ? `export{${functionNames.join(',')}};` : '');
 }

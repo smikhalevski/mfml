@@ -13,3 +13,15 @@ export const enum RuntimeMethod {
   SELECT = 's',
   SELECT_ORDINAL = 'o',
 }
+
+export const runtimeMethods = [
+  RuntimeMethod.LOCALE,
+  RuntimeMethod.FRAGMENT,
+  RuntimeMethod.ARGUMENT,
+  RuntimeMethod.ELEMENT,
+  RuntimeMethod.SHORT_ELEMENT,
+  RuntimeMethod.FUNCTION,
+  RuntimeMethod.PLURAL,
+  RuntimeMethod.SELECT,
+  RuntimeMethod.SELECT_ORDINAL,
+];
