@@ -1,4 +1,13 @@
-import {ContainerNode, IElementNode, ITextNode, Node, NodeType} from '../../main/parser/parser-types';
+import {
+  ContainerNode,
+  IAttributeNode,
+  IElementNode,
+  IFunctionNode,
+  ISelectNode,
+  ITextNode,
+  Node,
+  NodeType,
+} from '../../main/parser/parser-types';
 import {createMfmlParser} from '../../main/parser/createMfmlParser';
 
 describe('createMfmlParser', () => {
@@ -798,5 +807,46 @@ describe('createMfmlParser', () => {
 
     expect(((node as IElementNode).attributes[0].children[0] as ITextNode).value).toEqual('bbb');
     expect(((node as IElementNode).attributes[0].children[2] as ITextNode).value).toEqual('bbb');
+  });
+
+  test('renames arguments', () => {
+    const parse = createMfmlParser({
+      renameArgument: (str) => str.toUpperCase(),
+    });
+
+    const node = parse('{foo}{bar}');
+
+    expect(((node as ContainerNode).children[0] as IAttributeNode).name).toBe('FOO');
+    expect(((node as ContainerNode).children[1] as IAttributeNode).name).toBe('BAR');
+  });
+
+  test('renames function arguments', () => {
+    const parse = createMfmlParser({
+      renameArgument: (str) => str.toUpperCase(),
+    });
+
+    const node = parse('{foo,okay}');
+
+    expect((node as IFunctionNode).argumentName).toBe('FOO');
+  });
+
+  test('renames select arguments', () => {
+    const parse = createMfmlParser({
+      renameArgument: (str) => str.toUpperCase(),
+    });
+
+    const node = parse('{foo,select,}');
+
+    expect((node as ISelectNode).argumentName).toBe('FOO');
+  });
+
+  test('renames function', () => {
+    const parse = createMfmlParser({
+      renameFunction: (str) => str.toUpperCase(),
+    });
+
+    const node = parse('{foo,eee}');
+
+    expect((node as IFunctionNode).name).toBe('EEE');
   });
 });

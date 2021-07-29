@@ -15,7 +15,3 @@ export function createMap<T = any>(): Record<string, T> {
 export function jsonStringify(value: any): string {
   return JSON.stringify(value);
 }
-
-export function identity<T>(value: T): T {
-  return value;
-}

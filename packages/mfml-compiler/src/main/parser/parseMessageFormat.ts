@@ -1,6 +1,5 @@
 import {parse, ParseOptions, Token} from '@messageformat/parser';
 import {ContainerNode, IFunctionNode, ISelectCaseNode, ISelectNode, Node, NodeType} from './parser-types';
-import {identity} from '../misc';
 
 export interface IMessageFormatParserOptions extends ParseOptions {
 
@@ -40,10 +39,8 @@ function pushMessageFormatTokensAsNodes(tokens: Array<Token>, arr: Array<Node>, 
 }
 
 function convertMessageFormatTokenToNode(token: Token, parent: ContainerNode | null, options: IMessageFormatParserOptions): Node {
-  const {
-    renameFunction = identity,
-    renameArgument = identity,
-  } = options;
+
+  const {renameFunction, renameArgument} = options;
 
   const start = token.ctx.offset;
   const end = start + token.ctx.text.length;
@@ -53,7 +50,7 @@ function convertMessageFormatTokenToNode(token: Token, parent: ContainerNode | n
     case 'argument':
       return {
         nodeType: NodeType.ARGUMENT,
-        name: renameArgument(token.arg),
+        name: renameArgument ? renameArgument(token.arg) : token.arg,
         parent,
         start,
         end,
@@ -71,8 +68,8 @@ function convertMessageFormatTokenToNode(token: Token, parent: ContainerNode | n
     case 'function':
       const node: IFunctionNode = {
         nodeType: NodeType.FUNCTION,
-        name: renameFunction(token.key),
-        argumentName: renameArgument(token.arg),
+        name: renameFunction ? renameFunction(token.key) : token.key,
+        argumentName: renameArgument ? renameArgument(token.arg) : token.arg,
         children: [],
         parent,
         start,
@@ -89,7 +86,7 @@ function convertMessageFormatTokenToNode(token: Token, parent: ContainerNode | n
       const selectNode: ISelectNode = {
         nodeType: token.type === 'plural' ? NodeType.PLURAL : token.type === 'select' ? NodeType.SELECT : NodeType.SELECT_ORDINAL,
         pluralOffset: token.pluralOffset,
-        argumentName: renameArgument(token.arg),
+        argumentName: renameArgument ? renameArgument(token.arg) : token.arg,
         children: [],
         parent,
         start,
