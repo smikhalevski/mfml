@@ -28,7 +28,7 @@ describe('localeFilesAdapter', () => {
   test('compiles files', () => {
     expect(localeFilesAdapter(files, compileModuleMock)).toEqual({
       './messages.ts':
-          'import{IRuntime}from"mfml/lib/runtime";' +
+          'import{IRuntime}from"mfml-runtime";' +
           'const b=["en","es"];' +
 
           'let aaa=<T>(locale:string,runtime:IRuntime<T>):T|string=>{' +

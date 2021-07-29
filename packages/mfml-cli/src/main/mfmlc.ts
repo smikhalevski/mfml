@@ -50,8 +50,8 @@ const files = filePaths.reduce((files, filePath) => {
   return files;
 }, {});
 
-const parseToNode = createMfmlParser(config);
-const moduleCompiler = (messageModule: IMessageModule) => compileModule(messageModule, parseToNode, options);
+const parseMfml = createMfmlParser(config);
+const moduleCompiler = (messageModule: IMessageModule) => compileModule(messageModule, parseMfml, options);
 
 const adapterPath = config.adapterPath || ADAPTER_PATH;
 const adapter: Adapter<unknown> = require(adapterPath);

@@ -7,10 +7,12 @@ import {dieSyntax} from '../misc';
 export interface IMfmlParserOptions extends IMessageFormatParserOptions, IParserOptions {
 }
 
+export type MfmlParser = (input: string) => Node;
+
 /**
  * Creates an ICU MessageFormat + XML/HTML DOM parser.
  */
-export function createMfmlParser(options: IMfmlParserOptions = {}): (input: string) => Node {
+export function createMfmlParser(options: IMfmlParserOptions = {}): MfmlParser {
 
   const {decodeText, decodeAttribute} = options;
 

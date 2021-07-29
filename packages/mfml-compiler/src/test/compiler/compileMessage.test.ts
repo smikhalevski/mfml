@@ -1,7 +1,7 @@
 import {createMfmlParser} from '../../main/parser/createMfmlParser';
 import {compileMessage, IMessageCompilerOptions} from '../../main/compiler/compileMessage';
 
-describe('compileCallback', () => {
+describe('compileMessage', () => {
 
   const parse = createMfmlParser();
 

@@ -2,7 +2,7 @@ import {createMfmlParser} from '../../main/parser/createMfmlParser';
 import {compileModule, IModuleCompilerOptions} from '../../main/compiler/compileModule';
 import {IMessageModule} from '../../main/compiler/compiler-types';
 
-describe('c', () => {
+describe('compileModule', () => {
 
   const parse = createMfmlParser();
 

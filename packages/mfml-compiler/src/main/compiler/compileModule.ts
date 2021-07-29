@@ -3,7 +3,7 @@ import {camelCase, createVarNameProvider, pascalCase} from '@smikhalevski/codege
 import {createMap, jsonStringify, Maybe} from '../misc';
 import {runtimeMethods} from 'mfml-runtime';
 import {IMessage, IMessageModule} from './compiler-types';
-import {Node} from '../parser';
+import {MfmlParser, Node} from '../parser';
 import {ILocaleNodeMap} from './compileLocaleNodeMap';
 
 const VAR_NAME_RUNTIME = 'runtime';
@@ -52,10 +52,10 @@ export interface IModuleCompilerOptions extends Pick<IMessageCompilerOptions,
  * Compiles messages as a module that exports functions and corresponding interfaces.
  *
  * @param messageModule The map from the message name to an actual message.
- * @param parseToNode The MFML parser instance.
+ * @param mfmlParser The MFML parser instance.
  * @param options Compiler options.
  */
-export function compileModule(messageModule: IMessageModule, parseToNode: (input: string) => Node, options: Readonly<IModuleCompilerOptions> = {}): string {
+export function compileModule(messageModule: IMessageModule, mfmlParser: MfmlParser, options: Readonly<IModuleCompilerOptions> = {}): string {
   const {
     renameInterface = pascalCase,
     renameMessageFunction = camelCase,
@@ -87,7 +87,7 @@ export function compileModule(messageModule: IMessageModule, parseToNode: (input
 
     const localeNodeMap: ILocaleNodeMap = {};
     for (const locale of locales) {
-      localeNodeMap[locale] = parseToNode(message.translations[locale]);
+      localeNodeMap[locale] = mfmlParser(message.translations[locale]);
     }
 
     src += compileMessage(localeNodeMap, {
