@@ -1,7 +1,5 @@
 export type Maybe<T> = T | null | undefined;
 
-export type Rewriter = (str: string) => string;
-
 export function die(message: string): never {
   throw new Error(message);
 }
@@ -22,7 +20,6 @@ export function identity<T>(value: T): T {
   return value;
 }
 
-export function setMap<K, V>(map: Map<K, V>, key: K, value: V): V {
-  map.set(key, value);
-  return value;
+export function trimExtension(filePath: string): string {
+  return filePath.replace(/\.[^.]*$/, '');
 }

@@ -17,11 +17,11 @@ export interface IModuleCompilerOptions extends Pick<IMessageCompilerOptions,
     | 'otherSelectCaseKey'> {
 
   /**
-   * The default locale.
+   * Returns the default locale for a message.
    *
-   * @default "en"
+   * @default () => 'en'
    */
-  defaultLocale?: string;
+  provideDefaultLocale?(messageName: string, message: IMessage): string;
 
   /**
    * Returns an arguments interface name.
@@ -55,14 +55,14 @@ export interface IModuleCompilerOptions extends Pick<IMessageCompilerOptions,
  * @param parseToNode The MFML parser instance.
  * @param options Compiler options.
  */
-export function compileModule(messageModule: IMessageModule, parseToNode: (input: string) => Node, options: IModuleCompilerOptions): string {
+export function compileModule(messageModule: IMessageModule, parseToNode: (input: string) => Node, options: IModuleCompilerOptions = {}): string {
   const {
     renameInterface = pascalCase,
     renameMessageFunction = camelCase,
     nullable,
-    provideFunctionType,
     otherSelectCaseKey,
-    defaultLocale = 'en',
+    provideFunctionType,
+    provideDefaultLocale = () => 'en',
     extractComment,
     renderMetadata,
   } = options;
@@ -102,9 +102,9 @@ export function compileModule(messageModule: IMessageModule, parseToNode: (input
       argsVarName: VAR_NAME_ARGS,
       indexVarName: VAR_NAME_INDEX,
       comment: extractComment?.(messageName, message),
+      defaultLocale: provideDefaultLocale(messageName, message),
       localesVarName,
       locales,
-      defaultLocale,
     });
   }
 

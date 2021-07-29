@@ -1,4 +1,4 @@
-# icuc
+# mfml
 
 The ICU + XML/HTML compiler and runtime.
 
@@ -14,7 +14,7 @@ Prepare your translations in a `./translations.json` file:
 
 Compile translations module source and write it to `./messages.ts` file:
 ```ts
-import {compileModule} from '@smikhalevski/icuc/lib/compiler';
+import {compileModule} from 'mfml/lib/compiler';
 import fs from 'fs';
 import translations from './translations.json';
 
@@ -26,7 +26,7 @@ fs.writeFileSync('./messages.ts', source);
 Use messages in the application source:
 ```ts
 import {greeting} from './mesasges';
-import {createRuntime} from '@smikhalevski/icuc';
+import {createRuntime} from 'mfml';
 
 const runtime = createRuntime();
 

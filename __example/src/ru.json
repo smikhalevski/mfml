@@ -1,0 +1,4 @@
+{
+  "login.say_hello": "Привет, <b>{name}</b>!",
+  "landing.title": "Очень важная страница!"
+}
