@@ -55,7 +55,7 @@ export interface IModuleCompilerOptions extends Pick<IMessageCompilerOptions,
  * @param parseToNode The MFML parser instance.
  * @param options Compiler options.
  */
-export function compileModule(messageModule: IMessageModule, parseToNode: (input: string) => Node, options: IModuleCompilerOptions = {}): string {
+export function compileModule(messageModule: IMessageModule, parseToNode: (input: string) => Node, options: Readonly<IModuleCompilerOptions> = {}): string {
   const {
     renameInterface = pascalCase,
     renameMessageFunction = camelCase,
@@ -108,7 +108,7 @@ export function compileModule(messageModule: IMessageModule, parseToNode: (input
     });
   }
 
-  return 'import{IRuntime}from"mfml/lib/runtime";'
+  return 'import{IRuntime}from"mfml-runtime";'
       + Object.entries(localesVarSrcMap).reduce((src, [localesSrc, localesVarName]) => src
           + `const ${localesVarName}=${localesSrc};`,
           '')

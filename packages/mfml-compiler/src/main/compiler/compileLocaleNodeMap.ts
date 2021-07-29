@@ -1,6 +1,7 @@
 import {compileBlankValue, compileNode, INodeCompilerOptions} from './compileNode';
 import {isBlankNode, Node} from '../parser';
 import {RuntimeMethod} from 'mfml-runtime';
+import {jsonStringify} from '../misc';
 
 /**
  * The mapping from a locale to an AST node.
@@ -9,7 +10,14 @@ export interface ILocaleNodeMap {
   [locale: string]: Node;
 }
 
-export interface ILocaleNodeMapCompilerOptions extends INodeCompilerOptions {
+export interface ILocaleNodeMapCompilerOptions extends Pick<INodeCompilerOptions,
+    | 'nullable'
+    | 'otherSelectCaseKey'
+    | 'indexVarName'
+    | 'provideArgumentVarName'
+    | 'onFunctionUsed'
+    | 'onSelectUsed'
+    | 'onRuntimeMethodUsed'> {
 
   /**
    * The name of the variable that holds the current locale.
@@ -38,7 +46,7 @@ export interface ILocaleNodeMapCompilerOptions extends INodeCompilerOptions {
  * @param localeNodeMap The map from locale to an AST node.
  * @param options The compiler options.
  */
-export function compileLocaleNodeMap(localeNodeMap: ILocaleNodeMap, options: ILocaleNodeMapCompilerOptions): string {
+export function compileLocaleNodeMap(localeNodeMap: ILocaleNodeMap, options: Readonly<ILocaleNodeMapCompilerOptions>): string {
 
   const {
     nullable,
@@ -57,6 +65,8 @@ export function compileLocaleNodeMap(localeNodeMap: ILocaleNodeMap, options: ILo
   let childrenSrc = '';
   let childrenCount = 0;
 
+  const nodeCompilerOptions: INodeCompilerOptions = Object.assign({localeSrc: localeVarName}, options);
+
   for (let i = 0; i < locales.length; ++i) {
     const locale = locales[i];
     const node = localeNodeMap[locale];
@@ -67,7 +77,8 @@ export function compileLocaleNodeMap(localeNodeMap: ILocaleNodeMap, options: ILo
     }
     if (locale === defaultLocale) {
       // The default translation
-      defaultSrc = compileNode(node, options);
+      nodeCompilerOptions.localeSrc = jsonStringify(locale);
+      defaultSrc = compileNode(node, nodeCompilerOptions);
       continue;
     }
     if (isBlankNode(node)) {
@@ -78,7 +89,9 @@ export function compileLocaleNodeMap(localeNodeMap: ILocaleNodeMap, options: ILo
     if (childrenCount !== 0) {
       childrenSrc += ':' + indexVarName;
     }
-    childrenSrc += '===' + i + '?' + compileNode(node, options);
+
+    nodeCompilerOptions.localeSrc = localeVarName;
+    childrenSrc += '===' + i + '?' + compileNode(node, nodeCompilerOptions);
     childrenCount++;
   }
 

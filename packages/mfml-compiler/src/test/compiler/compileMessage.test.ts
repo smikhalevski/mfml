@@ -145,7 +145,7 @@ describe('compileCallback', () => {
         'let ggg=<T>(locale:string,runtime:IRuntime<T>,args:IGggArgs):T|string|null=>{' +
         'const{p}=runtime;' +
         'const{foo:b}=args;' +
-        'return p(b)===1?"okay":null' +
+        'return p("en",b)===1?"okay":null' +
         '}',
     );
   });

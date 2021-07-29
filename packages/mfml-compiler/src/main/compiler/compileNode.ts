@@ -36,6 +36,11 @@ export interface INodeCompilerOptions {
   indexVarName: string;
 
   /**
+   * The locale var name or a source code of a literal locale string.
+   */
+  localeSrc: string;
+
+  /**
    * Returns the name of the the variable that holds an argument value.
    */
   provideArgumentVarName(argumentName: string): string;
@@ -70,7 +75,7 @@ export interface INodeCompilerOptions {
  * @param node The node to compile.
  * @param options The compiler options.
  */
-export function compileNode(node: Node, options: INodeCompilerOptions): string {
+export function compileNode(node: Node, options: Readonly<INodeCompilerOptions>): string {
 
   const {
     otherSelectCaseKey = 'other',
@@ -189,17 +194,17 @@ export function compileNode(node: Node, options: INodeCompilerOptions): string {
 
     plural(node) {
       enterChild();
-      src += compileSelect(node, RuntimeMethod.PLURAL, PluralCategory.OTHER, pluralCategories, options);
+      src += compileSelect(node, RuntimeMethod.PLURAL, PluralCategory.OTHER, true, options);
     },
 
     selectOrdinal(node) {
       enterChild();
-      src += compileSelect(node, RuntimeMethod.SELECT_ORDINAL, PluralCategory.OTHER, pluralCategories, options);
+      src += compileSelect(node, RuntimeMethod.SELECT_ORDINAL, PluralCategory.OTHER, true, options);
     },
 
     select(node) {
       enterChild();
-      src += compileSelect(node, RuntimeMethod.SELECT, otherSelectCaseKey, undefined, options);
+      src += compileSelect(node, RuntimeMethod.SELECT, otherSelectCaseKey, false, options);
     },
 
     octothorpe(node) {
@@ -228,7 +233,7 @@ export function compileNode(node: Node, options: INodeCompilerOptions): string {
  * @param node The select node to compile.
  * @param runtimeMethod The runtime method name that is used to resolve what case to use.
  * @param otherSelectCaseKey The case key that would be a default.
- * @param knownKeys The list of case keys that are used. If `undefined` then all case keys from `node` are used.
+ * @param plural If `true` then runtime method call is formatted like plural.
  * @param options The node compiler options.
  *
  * @returns The compiled source.
@@ -237,28 +242,29 @@ function compileSelect(
     node: ISelectNode,
     runtimeMethod: RuntimeMethod,
     otherSelectCaseKey: string,
-    knownKeys: Array<string> | undefined,
-    options: INodeCompilerOptions,
+    plural: boolean,
+    options: Readonly<INodeCompilerOptions>,
 ): string {
 
   const {
     nullable,
     provideArgumentVarName,
     indexVarName,
+    localeSrc,
     onRuntimeMethodUsed,
     onSelectUsed,
   } = options;
 
-  // If true then case keys are retained at runtime
-  let keysRetained = false;
+  let knownKeys: Array<string>;
 
-  if (!knownKeys) {
-    keysRetained = true;
+  if (plural) {
+    knownKeys = pluralCategories;
+  } else {
     knownKeys = [];
 
-    for (const child of node.children) {
-      if (knownKeys.indexOf(child.key) === -1) {
-        knownKeys.push(child.key);
+    for (const childNode of node.children) {
+      if (knownKeys.indexOf(childNode.key) === -1) {
+        knownKeys.push(childNode.key);
       }
     }
   }
@@ -297,8 +303,9 @@ function compileSelect(
   onRuntimeMethodUsed?.(runtimeMethod, childrenCount > 1);
   src += runtimeMethod
       + '('
+      + (plural ? localeSrc + ',' : '')
       + provideArgumentVarName(node.argumentName)
-      + (keysRetained ? ',' + knownKeys.map(jsonStringify).join(',') : '')
+      + (plural ? '' : ',' + knownKeys.map(jsonStringify).join(','))
       + ')';
 
   const otherSrc = otherNode != null ? compileNode(otherNode, options) : compileBlankValue(nullable);

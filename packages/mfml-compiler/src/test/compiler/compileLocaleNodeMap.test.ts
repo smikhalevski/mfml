@@ -144,4 +144,12 @@ describe('compileLocaleNodeMap', () => {
     }, options))
         .toBe('(i=l(locale,locales),i===1?"bar":i===2?"qux":null)');
   });
+
+  test('compiles plural in default branch', () => {
+    expect(compileLocaleNodeMap({
+      en: parse('{foo,plural,one{1}}'),
+      ru: parse('{foo,plural,one{1}}'),
+    }, options))
+        .toBe('l(locale,locales)===1?p(locale,foo)===1?"1":null:p("en",foo)===1?"1":null');
+  });
 });

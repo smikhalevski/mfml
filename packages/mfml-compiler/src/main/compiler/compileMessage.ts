@@ -74,7 +74,7 @@ export interface IMessageCompilerOptions extends Pick<ILocaleNodeMapCompilerOpti
  * @param localeNodeMap The map from locale to an AST node.
  * @param options Compilation options.
  */
-export function compileMessage(localeNodeMap: ILocaleNodeMap, options: IMessageCompilerOptions): string {
+export function compileMessage(localeNodeMap: ILocaleNodeMap, options: Readonly<IMessageCompilerOptions>): string {
 
   const {
     nullable,
