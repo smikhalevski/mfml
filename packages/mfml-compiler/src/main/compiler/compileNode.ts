@@ -9,19 +9,11 @@ import {
   Node,
 } from '../parser';
 import {visitNode} from './visitNode';
-import {die, jsonStringify, Maybe} from '../misc';
+import {die, jsonStringify} from '../misc';
 import {pluralCategories, PluralCategory, RuntimeMethod} from 'mfml-runtime';
 import {compilePropertyName} from '@smikhalevski/codegen';
 
 export interface INodeCompilerOptions {
-
-  /**
-   * If `true` then `plural`, `select` and `selectordinal` are allowed to render `null` if no cases matched. Otherwise
-   * an empty string is rendered.
-   *
-   * @default false
-   */
-  nullable?: boolean;
 
   /**
    * The key that is used as the default for `select`.
@@ -247,7 +239,6 @@ function compileSelect(
 ): string {
 
   const {
-    nullable,
     provideArgumentVarName,
     indexVarName,
     localeSrc,
@@ -308,12 +299,24 @@ function compileSelect(
       + (plural ? '' : ',' + knownKeys.map(jsonStringify).join(','))
       + ')';
 
-  const otherSrc = otherNode != null ? compileNode(otherNode, options) : compileBlankValue(nullable);
+  let otherSrc;
+
+  if (otherNode != null) {
+    otherSrc = compileNode(otherNode, options);
+  } else {
+    otherSrc = compileEmptyFragment(onRuntimeMethodUsed);
+  }
 
   src += childrenCount > 1 ? `,${indexVarName}${childrenSrc}:${otherSrc})` : childrenSrc + ':' + otherSrc;
   return src;
 }
 
-export function compileBlankValue(nullable: Maybe<boolean>): string {
-  return nullable ? 'null' : '""';
+/**
+ * Compiles an empty fragment and notifies a listener.
+ *
+ * @param onRuntimeMethodUsed The listener to notify.
+ */
+export function compileEmptyFragment(onRuntimeMethodUsed: INodeCompilerOptions['onRuntimeMethodUsed']): string {
+  onRuntimeMethodUsed?.(RuntimeMethod.FRAGMENT, false);
+  return RuntimeMethod.FRAGMENT + '()';
 }

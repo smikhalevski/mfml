@@ -13,14 +13,6 @@ const VAR_NAME_INDEX = 'i';
 export interface IFunctionCompilerOptions {
 
   /**
-   * If `true` then `plural`, `select` and `selectordinal` are allowed to render `null` if no cases matched. Otherwise
-   * an empty string is rendered.
-   *
-   * @default false
-   */
-  nullable?: boolean;
-
-  /**
    * The key that is used as the default for `select`.
    *
    * @default "other"
@@ -52,7 +44,6 @@ export function compileFunction(translations: Record<string, string>, mfmlParser
   const {
     otherSelectCaseKey = 'other',
     defaultLocale = 'en',
-    nullable,
   } = options;
 
   const localeNodeMap: ILocaleNodeMap = createMap();
@@ -69,7 +60,6 @@ export function compileFunction(translations: Record<string, string>, mfmlParser
     localesVarName: VAR_NAME_LOCALES,
     otherSelectCaseKey,
     defaultLocale,
-    nullable,
   });
 
   return new Function(VAR_NAME_RUNTIME, VAR_NAME_LOCALE, VAR_NAME_ARGS, bodySrc) as MessageFunction;

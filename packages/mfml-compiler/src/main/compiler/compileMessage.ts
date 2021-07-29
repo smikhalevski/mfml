@@ -22,7 +22,6 @@ export interface IMessageMetadata {
 }
 
 export interface IMessageCompilerOptions extends Pick<ILocaleNodeMapCompilerOptions,
-    | 'nullable'
     | 'otherSelectCaseKey'
     | 'indexVarName'
     | 'localeVarName'
@@ -77,7 +76,6 @@ export interface IMessageCompilerOptions extends Pick<ILocaleNodeMapCompilerOpti
 export function compileMessage(localeNodeMap: ILocaleNodeMap, options: Readonly<IMessageCompilerOptions>): string {
 
   const {
-    nullable,
     otherSelectCaseKey,
     provideFunctionType,
     renderMetadata,
@@ -108,7 +106,6 @@ export function compileMessage(localeNodeMap: ILocaleNodeMap, options: Readonly<
   let indexVarUsed = false;
 
   const resultSrc = compileLocaleNodeMap(localeNodeMap, {
-    nullable,
     localeVarName,
     indexVarName,
     defaultLocale,
@@ -166,9 +163,7 @@ export function compileMessage(localeNodeMap: ILocaleNodeMap, options: Readonly<
       + localeVarName + ':string,'
       + runtimeVarName + ':IRuntime<T>'
       + (interfaceUsed ? `,${argsVarName}:${interfaceName}` : '')
-      + '):T|string'
-      + (nullable ? '|null' : '')
-      + '=>{';
+      + '):T=>{';
 
   // Index var
   if (indexVarUsed) {

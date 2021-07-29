@@ -10,7 +10,6 @@ describe('compileFunctionBody', () => {
   beforeEach(() => {
     options = {
       defaultLocale: 'en',
-      nullable: true,
       argsVarName: 'args',
       runtimeVarName: 'runtime',
       indexVarName: 'i',

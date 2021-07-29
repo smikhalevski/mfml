@@ -12,7 +12,6 @@ const VAR_NAME_ARGS = 'args';
 const VAR_NAME_INDEX = 'i';
 
 export interface IModuleCompilerOptions extends Pick<IMessageCompilerOptions,
-    | 'nullable'
     | 'provideFunctionType'
     | 'otherSelectCaseKey'> {
 
@@ -59,7 +58,6 @@ export function compileModule(messageModule: IMessageModule, mfmlParser: MfmlPar
   const {
     renameInterface = pascalCase,
     renameMessageFunction = camelCase,
-    nullable,
     otherSelectCaseKey,
     provideFunctionType,
     provideDefaultLocale = () => 'en',
@@ -91,7 +89,6 @@ export function compileModule(messageModule: IMessageModule, mfmlParser: MfmlPar
     }
 
     src += compileMessage(localeNodeMap, {
-      nullable,
       otherSelectCaseKey,
       provideFunctionType,
       renderMetadata: renderMetadata ? (metadata) => renderMetadata(messageName, message, metadata) : undefined,

@@ -1,23 +1,17 @@
 import {compileFunctionBody, IFunctionBodyCompilerOptions} from '../../main/compiler/compileFunctionBody';
 import {createMfmlParser} from '../../main/parser/createMfmlParser';
-import {compileFunction} from '../../main/compiler/compileFunction';
+import {compileFunction, IFunctionCompilerOptions} from '../../main/compiler/compileFunction';
 import {stringRuntime} from 'mfml-runtime';
 
 describe('compileFunctionBody', () => {
 
   const parse = createMfmlParser();
 
-  let options: IFunctionBodyCompilerOptions;
+  let options: IFunctionCompilerOptions;
 
   beforeEach(() => {
     options = {
       defaultLocale: 'en',
-      nullable: true,
-      argsVarName: 'args',
-      runtimeVarName: 'runtime',
-      indexVarName: 'i',
-      localesVarName: 'locales',
-      localeVarName: 'locale',
       otherSelectCaseKey: 'other',
     };
   });

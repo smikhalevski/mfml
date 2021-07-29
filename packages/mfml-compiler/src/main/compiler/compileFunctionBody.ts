@@ -8,8 +8,7 @@ export interface IFunctionBodyCompilerOptions extends Pick<ILocaleNodeMapCompile
     | 'otherSelectCaseKey'
     | 'defaultLocale'
     | 'indexVarName'
-    | 'localesVarName'
-    | 'nullable'> {
+    | 'localesVarName'> {
 
   /**
    * The name of the variable that holds the runtime object.
@@ -38,7 +37,6 @@ export function compileFunctionBody(localeNodeMap: ILocaleNodeMap, options: IFun
     defaultLocale,
     indexVarName,
     localesVarName,
-    nullable,
   } = options;
 
   const varNameProvider = createVarNameProvider([
@@ -55,7 +53,6 @@ export function compileFunctionBody(localeNodeMap: ILocaleNodeMap, options: IFun
   const runtimeVarsSrc = /*@__INLINE__*/compileRuntimeMethodVars(runtimeVarName);
 
   const resultSrc = compileLocaleNodeMap(localeNodeMap, {
-    nullable,
     otherSelectCaseKey,
     indexVarName,
     provideArgumentVarName: (name) => argVarNameMap[name] ||= varNameProvider.next(),

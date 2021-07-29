@@ -9,7 +9,6 @@ describe('compileNode', () => {
 
   beforeEach(() => {
     options = {
-      nullable: true,
       otherSelectCaseKey: 'other',
       indexVarName: 'i',
       localeSrc: 'locale',
@@ -34,7 +33,7 @@ describe('compileNode', () => {
 
     test('compiles select with a single non-blank case', () => {
       expect(compileNode(parse('{foo,select,aaa{AAA}}'), options))
-          .toBe('s(foo,"aaa")===0?"AAA":null');
+          .toBe('s(foo,"aaa")===0?"AAA":f()');
     });
 
     test('compiles select with a multiple blank cases', () => {
@@ -44,19 +43,12 @@ describe('compileNode', () => {
 
     test('compiles select with a blank case and non-blank case', () => {
       expect(compileNode(parse('{foo,select,aaa{}bbb{BBB}}'), options))
-          .toBe('s(foo,"aaa","bbb")===1?"BBB":null');
+          .toBe('s(foo,"aaa","bbb")===1?"BBB":f()');
     });
 
     test('compiles select with multiple non-blank cases', () => {
       expect(compileNode(parse('{foo,select,aaa{AAA}bbb{BBB}}'), options))
-          .toBe('(i=s(foo,"aaa","bbb"),i===0?"AAA":i===1?"BBB":null)');
-    });
-
-    test('respects the default value', () => {
-      options.nullable = false;
-
-      expect(compileNode(parse('{foo,select,aaa{AAA}}'), options))
-          .toBe('s(foo,"aaa")===0?"AAA":""');
+          .toBe('(i=s(foo,"aaa","bbb"),i===0?"AAA":i===1?"BBB":f())');
     });
 
     test('compiles other', () => {
@@ -91,7 +83,7 @@ describe('compileNode', () => {
 
     test('compiles plural with a single non-blank case', () => {
       expect(compileNode(parse('{foo,plural,one{AAA}}'), options))
-          .toBe('p(locale,foo)===1?"AAA":null');
+          .toBe('p(locale,foo)===1?"AAA":f()');
     });
 
     test('compiles plural with a multiple blank cases', () => {
@@ -101,7 +93,7 @@ describe('compileNode', () => {
 
     test('compiles plural with a blank case and non-blank case', () => {
       expect(compileNode(parse('{foo,plural,one{}zero{BBB}}'), options))
-          .toBe('p(locale,foo)===0?"BBB":null');
+          .toBe('p(locale,foo)===0?"BBB":f()');
     });
 
     test('compiles plural cases in order', () => {
@@ -111,24 +103,17 @@ describe('compileNode', () => {
 
     test('compiles plural with an octothorpe', () => {
       expect(compileNode(parse('{foo,plural,many{#aaa}}'), options))
-          .toBe('p(locale,foo)===4?f(a(foo),"aaa"):null');
+          .toBe('p(locale,foo)===4?f(a(foo),"aaa"):f()');
     });
 
     test('compiles nested plurals with an octothorpe', () => {
       expect(compileNode(parse('{foo,plural,many{#{bar,plural,one{#aaa}}}}'), options))
-          .toBe('p(locale,foo)===4?f(a(foo),p(locale,bar)===1?f(a(bar),"aaa"):null):null');
+          .toBe('p(locale,foo)===4?f(a(foo),p(locale,bar)===1?f(a(bar),"aaa"):f()):f()');
     });
 
     test('compiles plural with an octothorpe nested in an element', () => {
       expect(compileNode(parse('{foo,plural,many{<b>#aaa</b>}}'), options))
-          .toBe('p(locale,foo)===4?E("b",a(foo),"aaa"):null');
-    });
-
-    test('respects the default value', () => {
-      options.nullable = false;
-
-      expect(compileNode(parse('{foo,plural,one{AAA}}'), options))
-          .toBe('p(locale,foo)===1?"AAA":""');
+          .toBe('p(locale,foo)===4?E("b",a(foo),"aaa"):f()');
     });
   });
 

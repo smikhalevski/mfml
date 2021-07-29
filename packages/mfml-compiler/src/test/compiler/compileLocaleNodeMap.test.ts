@@ -9,7 +9,6 @@ describe('compileLocaleNodeMap', () => {
 
   beforeEach(() => {
     options = {
-      nullable: true,
       otherSelectCaseKey: 'other',
       indexVarName: 'i',
       localesVarName: 'locales',
@@ -25,13 +24,7 @@ describe('compileLocaleNodeMap', () => {
 
   test('compiles an empty map', () => {
     expect(compileLocaleNodeMap({}, options))
-        .toBe('null');
-  });
-
-  test('respects nullable', () => {
-    options.nullable = false;
-    expect(compileLocaleNodeMap({}, options))
-        .toBe('""');
+        .toBe('f()');
   });
 
   test('ignores unknown locales', () => {
@@ -49,7 +42,7 @@ describe('compileLocaleNodeMap', () => {
 
   test('compiles a non-default', () => {
     expect(compileLocaleNodeMap({ru: parse('foo')}, options))
-        .toBe('l(locale,locales)===1?"foo":null');
+        .toBe('l(locale,locales)===1?"foo":f()');
   });
 
   test('compiles a default and non-default', () => {
@@ -65,7 +58,7 @@ describe('compileLocaleNodeMap', () => {
       en: parse('foo'),
       ru: parse(''),
     }, options))
-        .toBe('l(locale,locales)===1?null:"foo"');
+        .toBe('l(locale,locales)===1?f():"foo"');
   });
 
   test('compiles a blank default and non-default', () => {
@@ -73,7 +66,7 @@ describe('compileLocaleNodeMap', () => {
       en: parse(''),
       ru: parse('bar'),
     }, options))
-        .toBe('l(locale,locales)===1?"bar":null');
+        .toBe('l(locale,locales)===1?"bar":f()');
   });
 
   test('compiles multiple non-default', () => {
@@ -83,7 +76,7 @@ describe('compileLocaleNodeMap', () => {
       es: parse('foo'),
       ru: parse('bar'),
     }, options))
-        .toBe('(i=l(locale,locales),i===1?"foo":i===2?"bar":null)');
+        .toBe('(i=l(locale,locales),i===1?"foo":i===2?"bar":f())');
   });
 
   test('compiles multiple blank non-default', () => {
@@ -93,7 +86,7 @@ describe('compileLocaleNodeMap', () => {
       es: parse(''),
       ru: parse(''),
     }, options))
-        .toBe('null');
+        .toBe('f()');
   });
 
   test('compiles default and multiple blank non-default', () => {
@@ -104,7 +97,7 @@ describe('compileLocaleNodeMap', () => {
       es: parse(''),
       ru: parse(''),
     }, options))
-        .toBe('(i=l(locale,locales),i===1||i===2?null:"foo")');
+        .toBe('(i=l(locale,locales),i===1||i===2?f():"foo")');
   });
 
   test('compiles default, non-default and multiple blank non-default', () => {
@@ -116,7 +109,7 @@ describe('compileLocaleNodeMap', () => {
       es: parse(''),
       ru: parse(''),
     }, options))
-        .toBe('(i=l(locale,locales),i===1?"bar":i===2||i===3?null:"foo")');
+        .toBe('(i=l(locale,locales),i===1?"bar":i===2||i===3?f():"foo")');
   });
 
   test('compiles default, multiple non-default and multiple blank non-default', () => {
@@ -129,7 +122,7 @@ describe('compileLocaleNodeMap', () => {
       es: parse(''),
       ru: parse(''),
     }, options))
-        .toBe('(i=l(locale,locales),i===1?"bar":i===2?"qux":i===3||i===4?null:"foo")');
+        .toBe('(i=l(locale,locales),i===1?"bar":i===2?"qux":i===3||i===4?f():"foo")');
   });
 
   test('compiles blank default, multiple non-default and multiple blank non-default', () => {
@@ -142,7 +135,7 @@ describe('compileLocaleNodeMap', () => {
       es: parse(''),
       ru: parse(''),
     }, options))
-        .toBe('(i=l(locale,locales),i===1?"bar":i===2?"qux":null)');
+        .toBe('(i=l(locale,locales),i===1?"bar":i===2?"qux":f())');
   });
 
   test('compiles plural in default branch', () => {
@@ -150,6 +143,6 @@ describe('compileLocaleNodeMap', () => {
       en: parse('{foo,plural,one{1}}'),
       ru: parse('{foo,plural,one{1}}'),
     }, options))
-        .toBe('l(locale,locales)===1?p(locale,foo)===1?"1":null:p("en",foo)===1?"1":null');
+        .toBe('l(locale,locales)===1?p(locale,foo)===1?"1":f():p("en",foo)===1?"1":f()');
   });
 });

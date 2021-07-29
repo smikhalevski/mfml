@@ -1,4 +1,4 @@
-import {compileBlankValue, compileNode, INodeCompilerOptions} from './compileNode';
+import {compileEmptyFragment, compileNode, INodeCompilerOptions} from './compileNode';
 import {isBlankNode, Node} from '../parser';
 import {RuntimeMethod} from 'mfml-runtime';
 import {jsonStringify} from '../misc';
@@ -11,7 +11,6 @@ export interface ILocaleNodeMap {
 }
 
 export interface ILocaleNodeMapCompilerOptions extends Pick<INodeCompilerOptions,
-    | 'nullable'
     | 'otherSelectCaseKey'
     | 'indexVarName'
     | 'provideArgumentVarName'
@@ -49,7 +48,6 @@ export interface ILocaleNodeMapCompilerOptions extends Pick<INodeCompilerOptions
 export function compileLocaleNodeMap(localeNodeMap: ILocaleNodeMap, options: Readonly<ILocaleNodeMapCompilerOptions>): string {
 
   const {
-    nullable,
     localeVarName,
     indexVarName,
     defaultLocale,
@@ -59,7 +57,6 @@ export function compileLocaleNodeMap(localeNodeMap: ILocaleNodeMap, options: Rea
   } = options;
 
   const blankIndices: Array<number> = [];
-  const blankSrc = compileBlankValue(nullable);
 
   let defaultSrc = '';
   let childrenSrc = '';
@@ -98,11 +95,11 @@ export function compileLocaleNodeMap(localeNodeMap: ILocaleNodeMap, options: Rea
   const caseCount = childrenCount + blankIndices.length;
 
   if (caseCount === 0) {
-    return defaultSrc || blankSrc;
+    return defaultSrc || compileEmptyFragment(onRuntimeMethodUsed);
   }
 
   if (childrenCount === 0 && defaultSrc === '') {
-    return blankSrc;
+    return compileEmptyFragment(onRuntimeMethodUsed);
   }
 
   let src = '';
@@ -133,10 +130,10 @@ export function compileLocaleNodeMap(localeNodeMap: ILocaleNodeMap, options: Rea
       }
       src += '===' + blankIndices[i];
     }
-    src += '?' + blankSrc;
+    src += '?' + compileEmptyFragment(onRuntimeMethodUsed);
   }
 
-  src += ':' + (defaultSrc || blankSrc);
+  src += ':' + (defaultSrc || compileEmptyFragment(onRuntimeMethodUsed));
 
   if (caseCount !== 1) {
     src += ')';
