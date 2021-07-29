@@ -19,7 +19,3 @@ export function jsonStringify(value: any): string {
 export function identity<T>(value: T): T {
   return value;
 }
-
-export function trimExtension(filePath: string): string {
-  return filePath.replace(/\.[^.]*$/, '');
-}

@@ -1,4 +1,4 @@
-import {compileModule, createMfmlParser, IMessageModule} from '../../main';
+import {compileModule, createMfmlParser, IMessageModule} from 'mfml-compiler';
 import localeFilesAdapter, {ILocaleFilesAdapterOptions} from '../../main/adapters/localeFilesAdapter';
 import path from 'path';
 
@@ -41,7 +41,7 @@ describe('localeFilesAdapter', () => {
           'return l(locale,b)===1?"Adiós!":"Bye!"' +
           '}' +
 
-          'export{aaa,bbb};',
+          'export{aaa,bbb};\n',
     });
   });
 

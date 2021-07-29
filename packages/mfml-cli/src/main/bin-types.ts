@@ -1,5 +1,4 @@
-import {IMfmlParserOptions} from '../parser';
-import {IModuleCompilerOptions} from '../compiler';
+import {IMfmlParserOptions, IModuleCompilerOptions} from 'mfml-compiler';
 
 /**
  * The compilation config.

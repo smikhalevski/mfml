@@ -1,74 +1,23 @@
 {
   "name": "mfml",
-  "version": "1.0.0",
-  "description": "The ICU MessageFormat + XML/HTML compiler.",
-  "main": "./lib/index-cjs.js",
-  "module": "./lib/index.js",
-  "types": "./lib/index.d.ts",
-  "bin": {
-    "mfmlc": "./lib/bin/mfmlc.js"
-  },
-  "files": [
-    "lib"
-  ],
+  "private": true,
   "scripts": {
-    "build": "tsc && npm run rollup && npm run rollup-bin && npm run rollup-adapters && npm run rollup-runtime && npm run terser-runtime",
-    "rollup": "rollup --external commander,glob,@messageformat/parser,@smikhalevski/codegen,tag-soup --input ./lib/index.js --file ./lib/index-cjs.js --format cjs --plugin @rollup/plugin-node-resolve",
-    "rollup-bin": "rollup --external commander,glob,@messageformat/parser,@smikhalevski/codegen,tag-soup --input ./lib/bin/mfmlc.js --file ./lib/bin/mfmlc.js --format cjs --banner '#!/usr/bin/env node' --plugin @rollup/plugin-node-resolve",
-    "rollup-adapters": "for p in ./lib/adapters/localeFilesAdapter.js; do rollup --exports default --input $p --file $p --format cjs --plugin @rollup/plugin-node-resolve || exit 1; done",
-    "rollup-runtime": "rollup --exports named --input ./lib/runtime/index.js --file ./lib/runtime/index.js --format cjs --plugin @rollup/plugin-node-resolve",
-    "terser-runtime": "terser --compress --mangle toplevel --output ./lib/runtime/index.js -- ./lib/runtime/index.js",
-    "clean": "rm -rf ./lib ./docs",
-    "test": "jest --detectOpenHandles"
+    "build": "npm run build --workspaces",
+    "clean": "npm run clean --workspaces",
+    "test": "npm run test --workspaces"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/smikhalevski/mfml.git"
-  },
-  "keywords": [
-    "i18n",
-    "html",
-    "language",
-    "parser",
-    "translation",
-    "compiler",
-    "xml",
-    "icu",
-    "l10n",
-    "intl",
-    "tms"
+  "workspaces": [
+    "./packages/mfml-runtime",
+    "./packages/mfml-compiler",
+    "./packages/mfml-cli"
   ],
-  "author": "Savva Mikhalevski <smikhalevski@gmail.com>",
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/smikhalevski/mfml/issues"
-  },
-  "homepage": "https://github.com/smikhalevski/mfml#readme",
-  "jest": {
-    "preset": "ts-jest"
-  },
   "devDependencies": {
-    "@rollup/plugin-commonjs": "^19.0.0",
     "@rollup/plugin-node-resolve": "^13.0.0",
-    "@types/glob": "^7.1.4",
     "@types/jest": "^26.0.23",
-    "@types/moo": "^0.5.4",
-    "@types/react": "^17.0.11",
     "jest": "^27.0.2",
     "rollup": "^2.50.5",
     "terser": "^5.7.0",
     "ts-jest": "^27.0.2",
     "typescript": "^4.3.2"
-  },
-  "peerDependencies": {
-    "react": ">=16.8.0"
-  },
-  "dependencies": {
-    "@messageformat/parser": "^5.0.0",
-    "@smikhalevski/codegen": "^1.0.0",
-    "commander": "^8.0.0",
-    "glob": "^7.1.7",
-    "speedy-entities": "^1.1.0",
-    "tag-soup": "^1.0.0-next.0"
   }
 }

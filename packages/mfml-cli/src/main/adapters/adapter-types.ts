@@ -1,4 +1,4 @@
-import {IMessageModule} from '../compiler';
+import {IMessageModule} from 'mfml-compiler';
 
 /**
  * An adapter that receives a `files` that were included in the compilation, compiles them with `compileModule` and

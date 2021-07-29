@@ -1,4 +1,4 @@
-import {RuntimeMethod, runtimeMethods} from '../runtime';
+import {RuntimeMethod, runtimeMethods} from 'mfml-runtime';
 import {createMap, Maybe} from '../misc';
 import {compileDocComment, compilePropertyName, createVarNameProvider} from '@smikhalevski/codegen';
 import {compileLocaleNodeMap, ILocaleNodeMap, ILocaleNodeMapCompilerOptions} from './compileLocaleNodeMap';

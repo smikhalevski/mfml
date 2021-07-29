@@ -1,6 +1,5 @@
 import {Adapter} from './adapter-types';
-import {IMessage, IMessageModule} from '../compiler';
-import {createMap, trimExtension} from '../misc';
+import {IMessage, IMessageModule} from 'mfml-compiler';
 import path from 'path';
 
 export interface ILocaleFilesAdapterOptions {
@@ -42,8 +41,8 @@ const localeFilesAdapter: Adapter<ILocaleFilesAdapterOptions | undefined | void>
     rewriteFilePath = () => './messages.ts',
   } = options;
 
-  const messages = createMap<IMessage>();
-  const messageModules = createMap<IMessageModule>();
+  const messages: Record<string, IMessage> = Object.create(null);
+  const messageModules: Record<string, IMessageModule> = Object.create(null);
   const outputFiles: Record<string, string> = {};
 
   // Collect messages
@@ -87,3 +86,7 @@ const localeFilesAdapter: Adapter<ILocaleFilesAdapterOptions | undefined | void>
 };
 
 export default localeFilesAdapter;
+
+export function trimExtension(filePath: string): string {
+  return filePath.replace(/\.[^.]*$/, '');
+}

@@ -1,6 +1,6 @@
 import {compileBlankValue, compileNode, INodeCompilerOptions} from './compileNode';
 import {isBlankNode, Node} from '../parser';
-import {RuntimeMethod} from '../runtime';
+import {RuntimeMethod} from 'mfml-runtime';
 
 /**
  * The mapping from a locale to an AST node.

@@ -10,8 +10,7 @@ import {
 } from '../parser';
 import {visitNode} from './visitNode';
 import {die, jsonStringify, Maybe} from '../misc';
-import {pluralCategories, PluralCategory} from '../runtime/PluralCategory';
-import {RuntimeMethod} from '../runtime';
+import {pluralCategories, PluralCategory, RuntimeMethod} from 'mfml-runtime';
 import {compilePropertyName} from '@smikhalevski/codegen';
 
 export interface INodeCompilerOptions {

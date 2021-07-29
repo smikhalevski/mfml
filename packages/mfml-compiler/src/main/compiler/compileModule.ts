@@ -1,7 +1,7 @@
 import {compileMessage, IMessageCompilerOptions, IMessageMetadata} from './compileMessage';
 import {camelCase, createVarNameProvider, pascalCase} from '@smikhalevski/codegen';
 import {createMap, jsonStringify, Maybe} from '../misc';
-import {runtimeMethods} from '../runtime';
+import {runtimeMethods} from 'mfml-runtime';
 import {IMessage, IMessageModule} from './compiler-types';
 import {Node} from '../parser';
 import {ILocaleNodeMap} from './compileLocaleNodeMap';
