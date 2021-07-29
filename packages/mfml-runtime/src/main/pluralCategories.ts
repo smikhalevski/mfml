@@ -7,7 +7,10 @@ export const enum PluralCategory {
   OTHER = 'other',
 }
 
-export const pluralCategories = [
+/**
+ * The ordered list of plural categories.
+ */
+export const pluralCategories: Array<string> = [
   PluralCategory.ZERO,
   PluralCategory.ONE,
   PluralCategory.TWO,
