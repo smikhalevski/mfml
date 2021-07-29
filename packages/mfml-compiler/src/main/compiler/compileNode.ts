@@ -93,8 +93,8 @@ export function compileNode(node: Node, options: Readonly<INodeCompilerOptions>)
   const compileFragment = (node: ContainerNode, next: () => void) => {
     let childrenCount = 0;
 
-    for (const child of node.children) {
-      if (!isBlankNode(child) && ++childrenCount === 2) {
+    for (const childNode of node.children) {
+      if (!isBlankNode(childNode) && ++childrenCount === 2) {
         break;
       }
     }
@@ -265,18 +265,18 @@ function compileSelect(
   let childrenCount = 0;
 
   for (let i = 0; i < knownKeys.length; ++i) {
-    for (const child of node.children) {
-      if (child.key !== knownKeys[i] || isBlankNode(child)) {
+    for (const childNode of node.children) {
+      if (childNode.key !== knownKeys[i] || isBlankNode(childNode)) {
         continue;
       }
-      if (child.key === otherSelectCaseKey) {
-        otherNode = child;
+      if (childNode.key === otherSelectCaseKey) {
+        otherNode = childNode;
         continue;
       }
       if (childrenCount > 0) {
         childrenSrc += ':' + indexVarName;
       }
-      childrenSrc += `===${i}?` + compileNode(child, options);
+      childrenSrc += `===${i}?` + compileNode(childNode, options);
       ++childrenCount;
     }
   }

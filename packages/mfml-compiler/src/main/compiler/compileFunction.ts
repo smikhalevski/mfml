@@ -2,7 +2,7 @@ import {IRuntime} from 'mfml-runtime';
 import {compileFunctionBody} from './compileFunctionBody';
 import {ILocaleNodeMap} from './index';
 import {createMap} from '../misc';
-import {MfmlParser, Node} from '../parser';
+import {MfmlParser} from '../parser';
 
 const VAR_NAME_RUNTIME = 'runtime';
 const VAR_NAME_LOCALES = 'locales';

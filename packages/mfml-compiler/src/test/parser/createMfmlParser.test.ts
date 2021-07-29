@@ -70,6 +70,30 @@ describe('createMfmlParser', () => {
     expect(parse('{foo,date,YYYY-MM-DD}')).toEqual(rootNode);
   });
 
+  test('parses a function with an argument param', () => {
+    const rootNode: Node = {
+      nodeType: NodeType.FUNCTION,
+      name: 'date',
+      argumentName: 'foo',
+      children: [
+        {
+          nodeType: NodeType.ARGUMENT,
+          name: 'bar',
+          parent: null,
+          start: 10,
+          end: 15,
+        },
+      ],
+      parent: null,
+      start: 0,
+      end: 10,
+    };
+
+    rootNode.children[0].parent = rootNode;
+
+    expect(parse('{foo,date,{bar}}')).toEqual(rootNode);
+  });
+
   test('parses a select node', () => {
     const rootNode: Node = {
       nodeType: NodeType.SELECT,

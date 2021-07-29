@@ -1,10 +1,10 @@
 import {compileMessage, IMessageCompilerOptions, IMessageMetadata} from './compileMessage';
 import {camelCase, createVarNameProvider, pascalCase} from '@smikhalevski/codegen';
 import {createMap, jsonStringify, Maybe} from '../misc';
-import {runtimeMethods} from 'mfml-runtime';
 import {IMessage, IMessageModule} from './compiler-types';
-import {MfmlParser, Node} from '../parser';
+import {MfmlParser} from '../parser';
 import {ILocaleNodeMap} from './compileLocaleNodeMap';
+import {runtimeMethods} from './runtimeMethods';
 
 const VAR_NAME_RUNTIME = 'runtime';
 const VAR_NAME_LOCALE = 'locale';
@@ -14,6 +14,13 @@ const VAR_NAME_INDEX = 'i';
 export interface IModuleCompilerOptions extends Pick<IMessageCompilerOptions,
     | 'provideFunctionType'
     | 'otherSelectCaseKey'> {
+
+  /**
+   * The path from which an `IRuntime` interface is imported.
+   *
+   * @default 'mfml-runtime'
+   */
+  runtimeImportPath?: string;
 
   /**
    * Returns the default locale for a message.
@@ -56,6 +63,7 @@ export interface IModuleCompilerOptions extends Pick<IMessageCompilerOptions,
  */
 export function compileModule(messageModule: IMessageModule, mfmlParser: MfmlParser, options: Readonly<IModuleCompilerOptions> = {}): string {
   const {
+    runtimeImportPath = 'mfml-runtime',
     renameInterface = pascalCase,
     renameMessageFunction = camelCase,
     otherSelectCaseKey,
@@ -105,7 +113,7 @@ export function compileModule(messageModule: IMessageModule, mfmlParser: MfmlPar
     });
   }
 
-  return 'import{IRuntime}from"mfml-runtime";'
+  return `import{IRuntime}from"${runtimeImportPath}";`
       + Object.entries(localesVarSrcMap).reduce((src, [localesSrc, localesVarName]) => src
           + `const ${localesVarName}=${localesSrc};`,
           '')

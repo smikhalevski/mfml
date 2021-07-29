@@ -1,4 +1,4 @@
-import {compileFunctionBody, IFunctionBodyCompilerOptions} from '../../main/compiler/compileFunctionBody';
+import {compileFunctionBody} from '../../main/compiler/compileFunctionBody';
 import {createMfmlParser} from '../../main/parser/createMfmlParser';
 import {compileFunction, IFunctionCompilerOptions} from '../../main/compiler/compileFunction';
 import {stringRuntime} from 'mfml-runtime';

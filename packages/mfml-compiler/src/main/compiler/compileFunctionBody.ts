@@ -1,7 +1,7 @@
 import {compilePropertyAccessor, createVarNameProvider} from '@smikhalevski/codegen';
-import {runtimeMethods} from 'mfml-runtime';
 import {compileLocaleNodeMap, ILocaleNodeMap, ILocaleNodeMapCompilerOptions} from './index';
 import {createMap} from '../misc';
+import {runtimeMethods} from './runtimeMethods';
 
 export interface IFunctionBodyCompilerOptions extends Pick<ILocaleNodeMapCompilerOptions,
     | 'localeVarName'

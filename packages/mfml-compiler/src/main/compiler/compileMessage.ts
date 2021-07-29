@@ -1,7 +1,8 @@
-import {RuntimeMethod, runtimeMethods} from 'mfml-runtime';
+import {RuntimeMethod} from 'mfml-runtime';
 import {createMap, Maybe} from '../misc';
 import {compileDocComment, compilePropertyName, createVarNameProvider} from '@smikhalevski/codegen';
 import {compileLocaleNodeMap, ILocaleNodeMap, ILocaleNodeMapCompilerOptions} from './compileLocaleNodeMap';
+import {runtimeMethods} from './runtimeMethods';
 
 export interface IMessageMetadata {
 
@@ -163,7 +164,7 @@ export function compileMessage(localeNodeMap: ILocaleNodeMap, options: Readonly<
       + localeVarName + ':string,'
       + runtimeVarName + ':IRuntime<T>'
       + (interfaceUsed ? `,${argsVarName}:${interfaceName}` : '')
-      + '):T=>{';
+      + '):T|string=>{';
 
   // Index var
   if (indexVarUsed) {
