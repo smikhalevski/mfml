@@ -115,6 +115,11 @@ describe('compileNode', () => {
       expect(compileNode(parse('{foo,plural,many{<b>#aaa</b>}}'), options))
           .toBe('p(locale,foo)===4?e("b",null,a(foo),"aaa"):f()');
     });
+
+    test('compiles octothorpe as a sting outside of plural', () => {
+      expect(compileNode(parse('aaa#bbb'), options))
+          .toBe('"aaa#bbb"');
+    });
   });
 
   describe('fragment', () => {

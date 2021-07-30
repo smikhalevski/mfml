@@ -40,12 +40,12 @@ describe('compileModule', () => {
         'import{IRuntime}from"mfml-runtime";' +
         'const b=["en","es"];' +
 
-        'let sayHello=<T>(locale:string,runtime:IRuntime<T>):T|string=>{' +
+        'let sayHello=<T>(runtime:IRuntime<T>,locale:string):T|string=>{' +
         'const{l}=runtime;' +
         'return l(locale,b)===1?"Hola!":"Hello!"' +
         '};' +
 
-        'let sayBye=<T>(locale:string,runtime:IRuntime<T>):T|string=>{' +
+        'let sayBye=<T>(runtime:IRuntime<T>,locale:string):T|string=>{' +
         'const{l}=runtime;' +
         'return l(locale,b)===1?"Adiós!":"Bye!"' +
         '};' +
@@ -77,12 +77,12 @@ describe('compileModule', () => {
         'const b=["en","ru"];' +
         'const d=["en","es"];' +
 
-        'let sayHello=<T>(locale:string,runtime:IRuntime<T>):T|string=>{' +
+        'let sayHello=<T>(runtime:IRuntime<T>,locale:string):T|string=>{' +
         'const{l}=runtime;' +
         'return l(locale,b)===1?"Привет!":"Hello!"' +
         '};' +
 
-        'let sayBye=<T>(locale:string,runtime:IRuntime<T>):T|string=>{' +
+        'let sayBye=<T>(runtime:IRuntime<T>,locale:string):T|string=>{' +
         'const{l}=runtime;' +
         'return l(locale,d)===1?"Adiós!":"Bye!"' +
         '};' +
@@ -111,7 +111,7 @@ describe('compileModule', () => {
         'foo:unknown;' +
         '}' +
 
-        'let a=<T>(locale:string,runtime:IRuntime<T>,args:A):T|string=>{' +
+        'let a=<T>(runtime:IRuntime<T>,locale:string,args:A):T|string=>{' +
         'const{a,l}=runtime;' +
         'const{foo:d}=args;' +
         'return l(locale,b)===1?a(d):a(d)' +
@@ -143,7 +143,7 @@ describe('compileModule', () => {
         'foo:unknown;' +
         '}' +
 
-        'let a=<T>(locale:string,runtime:IRuntime<T>,args:A):T|string=>{' +
+        'let a=<T>(runtime:IRuntime<T>,locale:string,args:A):T|string=>{' +
         'const{a}=runtime;' +
         'const{foo:b}=args;' +
         'return a(b)' +

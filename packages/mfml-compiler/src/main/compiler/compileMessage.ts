@@ -167,8 +167,8 @@ export function compileMessage(localeNodeMap: ILocaleNodeMap, options: Readonly<
 
   // Function
   src += `let ${functionName}=<T>(`
-      + localeVarName + ':string,'
-      + runtimeVarName + ':IRuntime<T>'
+      + runtimeVarName + ':IRuntime<T>,'
+      + localeVarName + ':string'
       + (interfaceUsed ? `,${argsVarName}:${interfaceName}` : '')
       + '):T|string=>{';
 

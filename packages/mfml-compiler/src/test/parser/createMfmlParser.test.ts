@@ -8,11 +8,15 @@ import {
   Node,
   NodeType,
 } from '../../main/parser/parser-types';
-import {createMfmlParser} from '../../main/parser/createMfmlParser';
+import {createMfmlParser, MfmlParser} from '../../main/parser/createMfmlParser';
 
 describe('createMfmlParser', () => {
 
-  const parse = createMfmlParser();
+  let parse: MfmlParser;
+
+  beforeEach(() => {
+    parse = createMfmlParser();
+  });
 
   test('parses text', () => {
     expect(parse('aaa')).toEqual(<Node>{
@@ -220,7 +224,7 @@ describe('createMfmlParser', () => {
   });
 
   test('parses a self-closing element', () => {
-    const parse = createMfmlParser({
+    parse = createMfmlParser({
       selfClosingEnabled: true,
     });
 
@@ -274,7 +278,7 @@ describe('createMfmlParser', () => {
   });
 
   test('parses implicitly closed tags', () => {
-    const parse = createMfmlParser({
+    parse = createMfmlParser({
       endsAncestorAt(ancestors, token) {
         return ancestors[0].name === 'p' && token.name === 'p' ? 0 : -1;
       },
@@ -587,6 +591,41 @@ describe('createMfmlParser', () => {
     expect(qqq).toEqual(rootNode);
   });
 
+  test('parses an argument in an attribute', () => {
+    const rootNode: Node = {
+      nodeType: NodeType.ELEMENT,
+      tagName: 'foo',
+      attributes: [
+        {
+          nodeType: NodeType.ATTRIBUTE,
+          name: 'bar',
+          children: [
+            {
+              nodeType: NodeType.ARGUMENT,
+              name: 'baz',
+              parent: null,
+              start: 10,
+              end: 15,
+            },
+          ],
+          parent: null,
+          start: 5,
+          end: 16,
+        },
+      ],
+      children: [],
+      parent: null,
+      start: 0,
+      end: 23,
+    };
+
+    rootNode.attributes[0].parent = rootNode;
+
+    rootNode.attributes[0].children[0].parent = rootNode.attributes[0];
+
+    expect(parse('<foo bar="{baz}"></foo>')).toEqual(rootNode);
+  });
+
   test('parses an argument surrounded by text nested in an attribute', () => {
     const rootNode: Node = {
       nodeType: NodeType.ELEMENT,
@@ -803,7 +842,7 @@ describe('createMfmlParser', () => {
   });
 
   test('decodes text', () => {
-    const parse = createMfmlParser({
+    parse = createMfmlParser({
       decodeText: (str) => str.replace('aaa', 'bbb'),
     });
 
@@ -813,7 +852,7 @@ describe('createMfmlParser', () => {
   });
 
   test('decodes a literal attribute', () => {
-    const parse = createMfmlParser({
+    parse = createMfmlParser({
       decodeAttribute: (str) => str.replace('aaa', 'bbb'),
     });
 
@@ -823,7 +862,7 @@ describe('createMfmlParser', () => {
   });
 
   test('decodes an attribute with argument', () => {
-    const parse = createMfmlParser({
+    parse = createMfmlParser({
       decodeAttribute: (str) => str.replace('aaa', 'bbb'),
     });
 
@@ -834,7 +873,7 @@ describe('createMfmlParser', () => {
   });
 
   test('renames arguments', () => {
-    const parse = createMfmlParser({
+    parse = createMfmlParser({
       renameArgument: (str) => str.toUpperCase(),
     });
 
@@ -845,7 +884,7 @@ describe('createMfmlParser', () => {
   });
 
   test('renames function arguments', () => {
-    const parse = createMfmlParser({
+    parse = createMfmlParser({
       renameArgument: (str) => str.toUpperCase(),
     });
 
@@ -855,7 +894,7 @@ describe('createMfmlParser', () => {
   });
 
   test('renames select arguments', () => {
-    const parse = createMfmlParser({
+    parse = createMfmlParser({
       renameArgument: (str) => str.toUpperCase(),
     });
 
@@ -865,7 +904,7 @@ describe('createMfmlParser', () => {
   });
 
   test('renames function', () => {
-    const parse = createMfmlParser({
+    parse = createMfmlParser({
       renameFunction: (str) => str.toUpperCase(),
     });
 
