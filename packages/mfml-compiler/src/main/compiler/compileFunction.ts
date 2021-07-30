@@ -34,7 +34,7 @@ export interface IFunctionCompilerOptions {
  * @param mfmlParser The MFML parser instance.
  * @param options Compiler options.
  */
-export function compileFunction(translations: Record<string, string>, mfmlParser: MfmlParser, options: IFunctionCompilerOptions = {}): MessageFunction {
+export function compileFunction(translations: Record<string, string>, mfmlParser: MfmlParser, options: IFunctionCompilerOptions = {}): MessageFunction<any> {
 
   const {
     otherSelectCaseKey = 'other',

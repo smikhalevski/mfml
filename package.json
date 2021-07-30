@@ -12,7 +12,8 @@
   "workspaces": [
     "./packages/mfml-runtime",
     "./packages/mfml-compiler",
-    "./packages/mfml-cli"
+    "./packages/mfml-cli",
+    "./packages/mfml-react-runtime"
   ],
   "devDependencies": {
     "@rollup/plugin-node-resolve": "^13.0.0",

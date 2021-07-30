@@ -1,4 +1,4 @@
-import {IRuntime, IRuntimeOptions, RuntimeMethod} from './runtime-types';
+import {IMessageRuntime, IMessageRuntimeOptions, RuntimeMethod} from './runtime-types';
 import {createPluralMatcher, exactMatchSelect, matchLocaleOrLanguage} from './runtime-utils';
 
 /**
@@ -6,7 +6,7 @@ import {createPluralMatcher, exactMatchSelect, matchLocaleOrLanguage} from './ru
  *
  * @param options The runtime options.
  */
-export function createRuntime<T>(options: IRuntimeOptions<T>): IRuntime<T> {
+export function createMessageRuntime<T>(options: IMessageRuntimeOptions<T>): IMessageRuntime<T> {
 
   const {
     renderFragment,

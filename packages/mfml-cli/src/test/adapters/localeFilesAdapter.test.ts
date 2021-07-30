@@ -28,18 +28,18 @@ describe('localeFilesAdapter', () => {
   test('compiles files', () => {
     expect(localeFilesAdapter(files, compileModuleMock)).toEqual({
       './messages.ts':
-          'import{IRuntime}from"mfml-runtime";' +
+          'import{MessageFunction}from"mfml-runtime";' +
           'const b=["en","es"];' +
 
-          'let aaa=<T>(locale:string,runtime:IRuntime<T>):T|string=>{' +
+          'let aaa:MessageFunction=(runtime,locale)=>{' +
           'const{l}=runtime;' +
           'return l(locale,b)===1?"Hola!":"Hello!"' +
-          '}' +
+          '};' +
 
-          'let bbb=<T>(locale:string,runtime:IRuntime<T>):T|string=>{' +
+          'let bbb:MessageFunction=(runtime,locale)=>{' +
           'const{l}=runtime;' +
           'return l(locale,b)===1?"Adiós!":"Bye!"' +
-          '}' +
+          '};' +
 
           'export{aaa,bbb};\n',
     });

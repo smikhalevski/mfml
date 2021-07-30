@@ -166,7 +166,9 @@ export function compileMessage(localeNodeMap: ILocaleNodeMap, options: Readonly<
   src += compileDocComment(comment);
 
   // Function
-  src += `let ${functionName}:MessageFunction<${interfaceUsed ? interfaceName : 'void'}>=(`
+  src += `let ${functionName}:MessageFunction`
+      + (interfaceUsed ? '<' + interfaceName + '>' : '')
+      + '=('
       + runtimeVarName + ','
       + localeVarName
       + (interfaceUsed ? ',' + argsVarName : '')

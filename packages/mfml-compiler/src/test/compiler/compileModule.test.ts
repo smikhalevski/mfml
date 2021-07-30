@@ -40,12 +40,12 @@ describe('compileModule', () => {
         'import{MessageFunction}from"mfml-runtime";' +
         'const b=["en","es"];' +
 
-        'let sayHello:MessageFunction<void>=(runtime,locale)=>{' +
+        'let sayHello:MessageFunction=(runtime,locale)=>{' +
         'const{l}=runtime;' +
         'return l(locale,b)===1?"Hola!":"Hello!"' +
         '};' +
 
-        'let sayBye:MessageFunction<void>=(runtime,locale)=>{' +
+        'let sayBye:MessageFunction=(runtime,locale)=>{' +
         'const{l}=runtime;' +
         'return l(locale,b)===1?"Adiós!":"Bye!"' +
         '};' +
@@ -77,12 +77,12 @@ describe('compileModule', () => {
         'const b=["en","ru"];' +
         'const d=["en","es"];' +
 
-        'let sayHello:MessageFunction<void>=(runtime,locale)=>{' +
+        'let sayHello:MessageFunction=(runtime,locale)=>{' +
         'const{l}=runtime;' +
         'return l(locale,b)===1?"Привет!":"Hello!"' +
         '};' +
 
-        'let sayBye:MessageFunction<void>=(runtime,locale)=>{' +
+        'let sayBye:MessageFunction=(runtime,locale)=>{' +
         'const{l}=runtime;' +
         'return l(locale,d)===1?"Adiós!":"Bye!"' +
         '};' +

@@ -26,7 +26,7 @@ describe('compileMessage', () => {
 
   test('compiles message without arguments', () => {
     expect(compileMessage({}, options)).toBe(
-        'let ggg:MessageFunction<void>=(runtime,locale)=>{' +
+        'let ggg:MessageFunction=(runtime,locale)=>{' +
         'const{f}=runtime;' +
         'return f()' +
         '};',
@@ -147,7 +147,7 @@ describe('compileMessage', () => {
 
     expect(compileMessage({}, options)).toBe(
         '/**\n * hello!\n */' +
-        'let ggg:MessageFunction<void>=(runtime,locale)=>{' +
+        'let ggg:MessageFunction=(runtime,locale)=>{' +
         'const{f}=runtime;' +
         'return f()' +
         '};',

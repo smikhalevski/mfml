@@ -1,11 +1,11 @@
 import {compileFunctionBody} from '../../main/compiler/compileFunctionBody';
 import {createMfmlParser} from '../../main/parser/createMfmlParser';
 import {compileFunction, IFunctionCompilerOptions} from '../../main/compiler/compileFunction';
-import {createRuntime} from 'mfml-runtime';
+import {createMessageRuntime} from 'mfml-runtime';
 
 describe('compileFunctionBody', () => {
 
-  const runtime = createRuntime<string>({
+  const runtime = createMessageRuntime<string>({
     renderFragment: (...children) => children.join(''),
     renderElement: (tagName, attributes, ...children) => children.join(''),
     renderFunction: (name, value) => String(value),
