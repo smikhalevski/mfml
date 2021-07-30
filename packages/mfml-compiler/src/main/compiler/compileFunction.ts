@@ -7,7 +7,7 @@ import {MfmlParser} from '../parser';
 const VAR_NAME_RUNTIME = 'runtime';
 const VAR_NAME_LOCALES = 'locales';
 const VAR_NAME_LOCALE = 'locale';
-const VAR_NAME_ARGS = 'args';
+const VAR_NAME_ARGS = 'values';
 const VAR_NAME_INDEX = 'i';
 
 export interface IFunctionCompilerOptions {

@@ -111,9 +111,9 @@ describe('compileModule', () => {
         'foo:unknown;' +
         '}' +
 
-        'let a:MessageFunction<A>=(runtime,locale,args)=>{' +
+        'let a:MessageFunction<A>=(runtime,locale,values)=>{' +
         'const{a,l}=runtime;' +
-        'const{foo:d}=args;' +
+        'const{foo:d}=values;' +
         'return l(locale,b)===1?a(d):a(d)' +
         '};' +
 
@@ -143,9 +143,9 @@ describe('compileModule', () => {
         'foo:unknown;' +
         '}' +
 
-        'let a:MessageFunction<A>=(runtime,locale,args)=>{' +
+        'let a:MessageFunction<A>=(runtime,locale,values)=>{' +
         'const{a}=runtime;' +
-        'const{foo:b}=args;' +
+        'const{foo:b}=values;' +
         'return a(b)' +
         '};' +
 

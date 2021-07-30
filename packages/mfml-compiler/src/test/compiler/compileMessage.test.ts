@@ -12,11 +12,11 @@ describe('compileMessage', () => {
       locales: ['en', 'es'],
       localesVarName: 'locales',
       defaultLocale: 'en',
-      interfaceName: 'IGggArgs',
+      interfaceName: 'IGggValues',
       functionName: 'ggg',
       localeVarName: 'locale',
       runtimeVarName: 'runtime',
-      argsVarName: 'args',
+      argsVarName: 'values',
       indexVarName: 'i',
       comment: undefined,
       otherSelectCaseKey: 'other',
@@ -35,12 +35,12 @@ describe('compileMessage', () => {
 
   test('compiles message with a single untyped argument', () => {
     expect(compileMessage({en: parse('{foo}')}, options)).toBe(
-        'export interface IGggArgs{' +
+        'export interface IGggValues{' +
         'foo:unknown;' +
         '}' +
-        'let ggg:MessageFunction<IGggArgs>=(runtime,locale,args)=>{' +
+        'let ggg:MessageFunction<IGggValues>=(runtime,locale,values)=>{' +
         'const{a}=runtime;' +
-        'const{foo:b}=args;' +
+        'const{foo:b}=values;' +
         'return a(b)' +
         '};',
     );
@@ -50,12 +50,12 @@ describe('compileMessage', () => {
     options.provideFunctionType = () => 'string';
 
     expect(compileMessage({en: parse('{foo,aaa}')}, options)).toBe(
-        'export interface IGggArgs{' +
+        'export interface IGggValues{' +
         'foo:string;' +
         '}' +
-        'let ggg:MessageFunction<IGggArgs>=(runtime,locale,args)=>{' +
+        'let ggg:MessageFunction<IGggValues>=(runtime,locale,values)=>{' +
         'const{c}=runtime;' +
-        'const{foo:b}=args;' +
+        'const{foo:b}=values;' +
         'return c("aaa",b)' +
         '};',
     );
@@ -65,12 +65,12 @@ describe('compileMessage', () => {
     options.provideFunctionType = (functionName) => functionName === 'aaa' ? 'string' : 'number';
 
     expect(compileMessage({en: parse('{foo,aaa}{foo,bbb}')}, options)).toBe(
-        'export interface IGggArgs{' +
+        'export interface IGggValues{' +
         'foo:string&number;' +
         '}' +
-        'let ggg:MessageFunction<IGggArgs>=(runtime,locale,args)=>{' +
+        'let ggg:MessageFunction<IGggValues>=(runtime,locale,values)=>{' +
         'const{f,c}=runtime;' +
-        'const{foo:b}=args;' +
+        'const{foo:b}=values;' +
         'return f(c("aaa",b),c("bbb",b))' +
         '};',
     );
@@ -80,12 +80,12 @@ describe('compileMessage', () => {
     options.provideFunctionType = (functionName) => functionName === 'aaa' ? 'string' : 'Foo|Bar';
 
     expect(compileMessage({en: parse('{foo,aaa}{foo,bbb}')}, options)).toBe(
-        'export interface IGggArgs{' +
+        'export interface IGggValues{' +
         'foo:string&(Foo|Bar);' +
         '}' +
-        'let ggg:MessageFunction<IGggArgs>=(runtime,locale,args)=>{' +
+        'let ggg:MessageFunction<IGggValues>=(runtime,locale,values)=>{' +
         'const{f,c}=runtime;' +
-        'const{foo:b}=args;' +
+        'const{foo:b}=values;' +
         'return f(c("aaa",b),c("bbb",b))' +
         '};',
     );
@@ -93,12 +93,12 @@ describe('compileMessage', () => {
 
   test('compiles non-identifier argument names', () => {
     expect(compileMessage({en: parse('{123f}')}, options)).toBe(
-        'export interface IGggArgs{' +
+        'export interface IGggValues{' +
         '"123f":unknown;' +
         '}' +
-        'let ggg:MessageFunction<IGggArgs>=(runtime,locale,args)=>{' +
+        'let ggg:MessageFunction<IGggValues>=(runtime,locale,values)=>{' +
         'const{a}=runtime;' +
-        'const{"123f":b}=args;' +
+        'const{"123f":b}=values;' +
         'return a(b)' +
         '};',
     );
@@ -106,12 +106,12 @@ describe('compileMessage', () => {
 
   test('compiles select argument', () => {
     expect(compileMessage({en: parse('{foo,select,AAA{okay}}')}, options)).toBe(
-        'export interface IGggArgs{' +
+        'export interface IGggValues{' +
         'foo:number;' +
         '}' +
-        'let ggg:MessageFunction<IGggArgs>=(runtime,locale,args)=>{' +
+        'let ggg:MessageFunction<IGggValues>=(runtime,locale,values)=>{' +
         'const{s,f}=runtime;' +
-        'const{foo:b}=args;' +
+        'const{foo:b}=values;' +
         'return s(b,"AAA")===0?"okay":f()' +
         '};',
     );
@@ -119,10 +119,10 @@ describe('compileMessage', () => {
 
   test('compiles an interface for unused var', () => {
     expect(compileMessage({en: parse('{foo,select,}')}, options)).toBe(
-        'export interface IGggArgs{' +
+        'export interface IGggValues{' +
         'foo:number;' +
         '}' +
-        'let ggg:MessageFunction<IGggArgs>=(runtime,locale,args)=>{' +
+        'let ggg:MessageFunction<IGggValues>=(runtime,locale,values)=>{' +
         'const{f}=runtime;' +
         'return f()' +
         '};',
@@ -131,12 +131,12 @@ describe('compileMessage', () => {
 
   test('compiles plural', () => {
     expect(compileMessage({en: parse('{foo,plural,one{okay}}')}, options)).toBe(
-        'export interface IGggArgs{' +
+        'export interface IGggValues{' +
         'foo:number;' +
         '}' +
-        'let ggg:MessageFunction<IGggArgs>=(runtime,locale,args)=>{' +
+        'let ggg:MessageFunction<IGggValues>=(runtime,locale,values)=>{' +
         'const{p,f}=runtime;' +
-        'const{foo:b}=args;' +
+        'const{foo:b}=values;' +
         'return p("en",b)===1?"okay":f()' +
         '};',
     );
