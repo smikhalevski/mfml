@@ -3,11 +3,12 @@ import {pluralCategories} from './pluralCategories';
 /**
  * The locale matching algorithm:
  * 1. Lookup exact `locale` in `locales`;
- * 2. Lookup an language-only locale;
- * 3. Lookup the first locale in `locales` with the same language as in `locale`;
+ * 2. Lookup a language-only locale;
+ * 3. Lookup the first locale in `locales` with the same language as `locale`;
  * 4. Return -1.
  *
- * **Note:** This doesn't validate or normalize provided locales.
+ * **Note:** This function doesn't validate or normalize provided locales. Valid locales must look like "en", "en_US" or
+ * "en_US.UTF-8".
  *
  * @param locale The locale to match.
  * @param locales The list of known locales.
@@ -21,24 +22,23 @@ export function matchLocaleOrLanguage(locale: string, locales: Array<string>): n
     return index;
   }
 
-  let language = locale;
+  const a0 = locale.charCodeAt(0);
+  const a1 = locale.charCodeAt(1);
 
   // Lookup a language-only locale
-  if (locale.length > 2) {
-    language = locale.substr(0, 2);
-    index = locales.indexOf(language);
-
-    if (index !== -1) {
-      return index;
+  if (locale.length !== 2) {
+    for (let i = 0; i < locales.length; ++i) {
+      const otherLocale = locales[i];
+      if (otherLocale.length === 2 && otherLocale.charCodeAt(0) === a0 && otherLocale.charCodeAt(1) === a1) {
+        return i;
+      }
     }
   }
 
-  const a0 = language.charCodeAt(0);
-  const a1 = language.charCodeAt(1);
-
-  // Lookup locale with the same language
+  // Lookup any locale with the same language
   for (let i = 0; i < locales.length; i++) {
-    if (locales[i].charCodeAt(0) === a0 && locales[i].charCodeAt(1) === a1) {
+    const otherLocale = locales[i];
+    if (otherLocale.length !== 2 && otherLocale.charCodeAt(0) === a0 && otherLocale.charCodeAt(1) === a1) {
       return i;
     }
   }

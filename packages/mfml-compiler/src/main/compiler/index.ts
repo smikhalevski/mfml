@@ -1,3 +1,5 @@
+export * from './compileFunction';
+export * from './compileFunctionBody';
 export * from './compileLocaleNodeMap';
 export * from './compileMessage';
 export * from './compileModule';

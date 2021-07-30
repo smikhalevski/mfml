@@ -123,24 +123,18 @@ export function compileNode(node: Node, options: Readonly<INodeCompilerOptions>)
     element(node, nextAttributes, nextChildren) {
       enterChild();
 
-      const attrCount = node.attributes.length;
+      onRuntimeMethodUsed?.(RuntimeMethod.ELEMENT, false);
+      src += RuntimeMethod.ELEMENT + '(' + jsonStringify(node.tagName);
 
-      if (attrCount !== 0) {
-        onRuntimeMethodUsed?.(RuntimeMethod.ELEMENT, false);
-        src += RuntimeMethod.ELEMENT;
-      } else {
-        onRuntimeMethodUsed?.(RuntimeMethod.SHORT_ELEMENT, false);
-        src += RuntimeMethod.SHORT_ELEMENT;
-      }
-
-      src += '(' + jsonStringify(node.tagName);
-
-      if (attrCount > 0) {
+      if (node.attributes.length > 0) {
         src += ',{';
         enterBlock();
         nextAttributes();
         src += '}';
+      } else {
+        src += ',null';
       }
+
       nextChildren();
       src += ')';
     },

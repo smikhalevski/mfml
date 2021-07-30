@@ -26,7 +26,6 @@ describe('compileFunctionBody', () => {
         'f=runtime.f,' +
         'a=runtime.a,' +
         'e=runtime.e,' +
-        'E=runtime.E,' +
         'c=runtime.c,' +
         'p=runtime.p,' +
         's=runtime.s,' +

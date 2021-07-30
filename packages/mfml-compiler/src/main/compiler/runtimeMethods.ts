@@ -8,7 +8,6 @@ export const runtimeMethods = [
   RuntimeMethod.FRAGMENT,
   RuntimeMethod.ARGUMENT,
   RuntimeMethod.ELEMENT,
-  RuntimeMethod.SHORT_ELEMENT,
   RuntimeMethod.FUNCTION,
   RuntimeMethod.PLURAL,
   RuntimeMethod.SELECT,
