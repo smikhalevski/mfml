@@ -6,8 +6,9 @@
     "lib"
   ],
   "scripts": {
-    "build": "tsc --project tsconfig.build.json && npm run rollup",
+    "build": "tsc --project tsconfig.build.json && npm run rollup && npm run rollup-adapters",
     "rollup": "rollup --external commander,glob,mfml-compiler --input ./lib/mfmlc.js --file ./lib/mfmlc.js --format cjs --plugin @rollup/plugin-node-resolve",
+    "rollup-adapters": "for p in $(ls ./lib/adapters); do rollup --exports default --external mfml-compiler --input ./lib/adapters/$p --file ./lib/adapters/$p --format cjs --plugin @rollup/plugin-node-resolve || exit 1; done",
     "clean": "rm -rf ./lib",
     "test": "jest --detectOpenHandles"
   },

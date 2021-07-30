@@ -2,9 +2,8 @@ import {program} from 'commander';
 import fs from 'fs';
 import path from 'path';
 import glob from 'glob';
-import {IConfig} from './bin-types';
+import {Adapter, IConfig} from './cli-types';
 import {compileModule, createMfmlParser, IMessageModule} from 'mfml-compiler';
-import {Adapter} from './adapters';
 
 const CONFIG_PATH = 'mfml.config.js';
 const ADAPTER_PATH = '../adapters/localeFilesAdapter';
