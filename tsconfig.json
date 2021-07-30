@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "moduleResolution": "Node",
+    "esModuleInterop": true,
+    "strict": true,
+    "target": "ES5",
+    "module": "ES6",
+    "rootDir": ".",
+    "baseUrl": ".",
+    "paths": {
+      "*": [
+        "./packages/*/src/main"
+      ]
+    }
+  },
+  "include": [
+    "./packages/*/src/main/**/*"
+  ]
+}

@@ -6,7 +6,7 @@
     "lib"
   ],
   "scripts": {
-    "build": "tsc && npm run rollup",
+    "build": "tsc --project tsconfig.build.json && npm run rollup",
     "rollup": "rollup --external commander,glob,mfml-compiler --input ./lib/mfmlc.js --file ./lib/mfmlc.js --format cjs --plugin @rollup/plugin-node-resolve",
     "clean": "rm -rf ./lib",
     "test": "jest --detectOpenHandles"

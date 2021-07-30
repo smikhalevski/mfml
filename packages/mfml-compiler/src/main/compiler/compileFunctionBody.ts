@@ -1,5 +1,5 @@
 import {compilePropertyAccessor, createVarNameProvider} from '@smikhalevski/codegen';
-import {compileLocaleNodeMap, ILocaleNodeMap, ILocaleNodeMapCompilerOptions} from './index';
+import {compileLocaleNodeMap, ILocaleNodeMap, ILocaleNodeMapCompilerOptions} from './compileLocaleNodeMap';
 import {createMap} from '../misc';
 import {runtimeMethods} from './runtimeMethods';
 

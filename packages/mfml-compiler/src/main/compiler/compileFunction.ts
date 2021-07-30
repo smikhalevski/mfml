@@ -1,6 +1,6 @@
 import {IRuntime} from 'mfml-runtime';
 import {compileFunctionBody} from './compileFunctionBody';
-import {ILocaleNodeMap} from './index';
+import {ILocaleNodeMap} from './compileLocaleNodeMap';
 import {createMap} from '../misc';
 import {MfmlParser} from '../parser';
 
