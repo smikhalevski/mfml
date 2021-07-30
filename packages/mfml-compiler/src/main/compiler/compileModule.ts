@@ -23,6 +23,16 @@ export interface IModuleCompilerOptions extends Pick<IMessageCompilerOptions,
   runtimeImportPath?: string;
 
   /**
+   * Receives a message translation and returns a new translation.
+   *
+   * Use this to apply preprocessors (such as markdown-to-HTML) or typography re-writers.
+   *
+   * @param translation The text of the translation.
+   * @param locale The translation locale.
+   */
+  rewriteTranslation?(translation: string, locale: string): string;
+
+  /**
    * Returns the default locale for a message.
    *
    * @default `() => "en"`
@@ -68,6 +78,7 @@ export function compileModule(messageModule: IMessageModule, mfmlParser: MfmlPar
     renameMessageFunction = camelCase,
     otherSelectCaseKey,
     provideFunctionType,
+    rewriteTranslation,
     provideDefaultLocale = () => 'en',
     extractComment,
     renderMetadata,
@@ -92,8 +103,14 @@ export function compileModule(messageModule: IMessageModule, mfmlParser: MfmlPar
     const localesVarName = locales.length > 1 ? localesVarSrcMap[jsonStringify(locales)] ||= varNameProvider.next() : '';
 
     const localeNodeMap: ILocaleNodeMap = {};
+
     for (const locale of locales) {
-      localeNodeMap[locale] = mfmlParser(message.translations[locale]);
+      let translation = message.translations[locale];
+
+      if (rewriteTranslation != null) {
+        translation = rewriteTranslation(translation, locale);
+      }
+      localeNodeMap[locale] = mfmlParser(translation);
     }
 
     src += compileMessage(localeNodeMap, {

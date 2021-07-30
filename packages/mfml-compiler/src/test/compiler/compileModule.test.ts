@@ -155,4 +155,26 @@ describe('compileModule', () => {
     );
   });
 
+  test('rewrites translations', () => {
+    const messageModule: IMessageModule = {
+      messages: {
+        ___a: {
+          translations: {
+            en: 'aaa',
+          },
+        },
+      },
+    };
+
+    options.rewriteTranslation = (translation) => translation.toUpperCase();
+
+    expect(compileModule(messageModule, parse, options)).toBe(
+        'import{MessageFunction}from"mfml-runtime";' +
+        'let a:MessageFunction=(runtime,locale)=>{' +
+        'return "AAA"' +
+        '};' +
+        'export{a};',
+    );
+  });
+
 });
