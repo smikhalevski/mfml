@@ -22,14 +22,14 @@ export function matchLocaleOrLanguage(locale: string, locales: Array<string>): n
     return index;
   }
 
-  const a0 = locale.charCodeAt(0);
-  const a1 = locale.charCodeAt(1);
+  const charCode0 = locale.charCodeAt(0);
+  const charCode1 = locale.charCodeAt(1);
 
   // Lookup a language-only locale
   if (locale.length !== 2) {
     for (let i = 0; i < locales.length; ++i) {
       const otherLocale = locales[i];
-      if (otherLocale.length === 2 && otherLocale.charCodeAt(0) === a0 && otherLocale.charCodeAt(1) === a1) {
+      if (otherLocale.length === 2 && otherLocale.charCodeAt(0) === charCode0 && otherLocale.charCodeAt(1) === charCode1) {
         return i;
       }
     }
@@ -38,7 +38,7 @@ export function matchLocaleOrLanguage(locale: string, locales: Array<string>): n
   // Lookup any locale with the same language
   for (let i = 0; i < locales.length; i++) {
     const otherLocale = locales[i];
-    if (otherLocale.length !== 2 && otherLocale.charCodeAt(0) === a0 && otherLocale.charCodeAt(1) === a1) {
+    if (otherLocale.length !== 2 && otherLocale.charCodeAt(0) === charCode0 && otherLocale.charCodeAt(1) === charCode1) {
       return i;
     }
   }

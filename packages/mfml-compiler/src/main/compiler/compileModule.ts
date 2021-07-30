@@ -16,7 +16,7 @@ export interface IModuleCompilerOptions extends Pick<IMessageCompilerOptions,
     | 'otherSelectCaseKey'> {
 
   /**
-   * The path from which an `IRuntime` interface is imported.
+   * The path from which a `MessageFunction` type is imported.
    *
    * @default 'mfml-runtime'
    */
@@ -113,7 +113,7 @@ export function compileModule(messageModule: IMessageModule, mfmlParser: MfmlPar
     });
   }
 
-  return `import{IRuntime}from"${runtimeImportPath}";`
+  return `import{MessageFunction}from"${runtimeImportPath}";`
       + Object.entries(localesVarSrcMap).reduce((src, [localesSrc, localesVarName]) => src
           + `const ${localesVarName}=${localesSrc};`,
           '')

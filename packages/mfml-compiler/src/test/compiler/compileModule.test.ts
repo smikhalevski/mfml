@@ -14,7 +14,7 @@ describe('compileModule', () => {
 
   test('compiles an empty module', () => {
     expect(compileModule({messages: {}}, parse, options)).toBe(
-        'import{IRuntime}from"mfml-runtime";',
+        'import{MessageFunction}from"mfml-runtime";',
     );
   });
 
@@ -37,15 +37,15 @@ describe('compileModule', () => {
     };
 
     expect(compileModule(messageModule, parse, options)).toBe(
-        'import{IRuntime}from"mfml-runtime";' +
+        'import{MessageFunction}from"mfml-runtime";' +
         'const b=["en","es"];' +
 
-        'let sayHello=<T>(runtime:IRuntime<T>,locale:string):T|string=>{' +
+        'let sayHello:MessageFunction<void>=(runtime,locale)=>{' +
         'const{l}=runtime;' +
         'return l(locale,b)===1?"Hola!":"Hello!"' +
         '};' +
 
-        'let sayBye=<T>(runtime:IRuntime<T>,locale:string):T|string=>{' +
+        'let sayBye:MessageFunction<void>=(runtime,locale)=>{' +
         'const{l}=runtime;' +
         'return l(locale,b)===1?"Adiós!":"Bye!"' +
         '};' +
@@ -73,16 +73,16 @@ describe('compileModule', () => {
     };
 
     expect(compileModule(messageModule, parse, options)).toBe(
-        'import{IRuntime}from"mfml-runtime";' +
+        'import{MessageFunction}from"mfml-runtime";' +
         'const b=["en","ru"];' +
         'const d=["en","es"];' +
 
-        'let sayHello=<T>(runtime:IRuntime<T>,locale:string):T|string=>{' +
+        'let sayHello:MessageFunction<void>=(runtime,locale)=>{' +
         'const{l}=runtime;' +
         'return l(locale,b)===1?"Привет!":"Hello!"' +
         '};' +
 
-        'let sayBye=<T>(runtime:IRuntime<T>,locale:string):T|string=>{' +
+        'let sayBye:MessageFunction<void>=(runtime,locale)=>{' +
         'const{l}=runtime;' +
         'return l(locale,d)===1?"Adiós!":"Bye!"' +
         '};' +
@@ -104,14 +104,14 @@ describe('compileModule', () => {
     };
 
     expect(compileModule(messageModule, parse, options)).toBe(
-        'import{IRuntime}from"mfml-runtime";' +
+        'import{MessageFunction}from"mfml-runtime";' +
         'const b=["en","es"];' +
 
         'export interface A{' +
         'foo:unknown;' +
         '}' +
 
-        'let a=<T>(runtime:IRuntime<T>,locale:string,args:A):T|string=>{' +
+        'let a:MessageFunction<A>=(runtime,locale,args)=>{' +
         'const{a,l}=runtime;' +
         'const{foo:d}=args;' +
         'return l(locale,b)===1?a(d):a(d)' +
@@ -137,13 +137,13 @@ describe('compileModule', () => {
     };
 
     expect(compileModule(messageModule, parse, options)).toBe(
-        'import{IRuntime}from"mfml-runtime";' +
+        'import{MessageFunction}from"mfml-runtime";' +
 
         'export interface A{' +
         'foo:unknown;' +
         '}' +
 
-        'let a=<T>(runtime:IRuntime<T>,locale:string,args:A):T|string=>{' +
+        'let a:MessageFunction<A>=(runtime,locale,args)=>{' +
         'const{a}=runtime;' +
         'const{foo:b}=args;' +
         'return a(b)' +

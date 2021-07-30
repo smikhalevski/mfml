@@ -1,12 +1,12 @@
-import {IRuntime, IRuntimeHandler, RuntimeMethod} from './runtime-types';
+import {IRuntime, IRuntimeOptions, RuntimeMethod} from './runtime-types';
 import {createPluralMatcher, exactMatchSelect, matchLocaleOrLanguage} from './runtime-utils';
 
 /**
  * Creates the new runtime that uses provided callbacks.
  *
- * @param handler The runtime callbacks.
+ * @param options The runtime options.
  */
-export function createRuntime<T>(handler: IRuntimeHandler<T>): IRuntime<T> {
+export function createRuntime<T>(options: IRuntimeOptions<T>): IRuntime<T> {
 
   const {
     renderFragment,
@@ -17,7 +17,7 @@ export function createRuntime<T>(handler: IRuntimeHandler<T>): IRuntime<T> {
     matchSelect = exactMatchSelect,
     matchPlural = createPluralMatcher('cardinal'),
     matchSelectOrdinal = createPluralMatcher('ordinal'),
-  } = handler;
+  } = options;
 
   return {
     [RuntimeMethod.FRAGMENT]: renderFragment,

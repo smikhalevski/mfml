@@ -1,4 +1,4 @@
-import {IRuntime} from 'mfml-runtime';
+import {MessageFunction} from 'mfml-runtime';
 import {compileFunctionBody} from './compileFunctionBody';
 import {ILocaleNodeMap} from './compileLocaleNodeMap';
 import {createMap} from '../misc';
@@ -26,11 +26,6 @@ export interface IFunctionCompilerOptions {
    */
   defaultLocale?: string;
 }
-
-/**
- * A function that renders a translation.
- */
-export type MessageFunction<Args = any> = <T>(runtime: IRuntime<T>, locale: string, args: Args) => T | string | null;
 
 /**
  * Compiles an executable function that renders a translation.

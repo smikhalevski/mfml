@@ -1,4 +1,4 @@
-export interface IRuntimeHandler<T> {
+export interface IRuntimeOptions<T> {
 
   /**
    * Renders an element.
@@ -89,12 +89,17 @@ export const enum RuntimeMethod {
  * The runtime that compiled messages use for rendering.
  */
 export interface IRuntime<T> {
-  [RuntimeMethod.ELEMENT]: IRuntimeHandler<T>['renderElement'];
-  [RuntimeMethod.FRAGMENT]: IRuntimeHandler<T>['renderFragment'];
-  [RuntimeMethod.FUNCTION]: IRuntimeHandler<T>['renderFunction'];
-  [RuntimeMethod.ARGUMENT]: IRuntimeHandler<T>['renderArgument'];
-  [RuntimeMethod.LOCALE]: IRuntimeHandler<T>['matchLocale'] & {};
-  [RuntimeMethod.PLURAL]: IRuntimeHandler<T>['matchPlural'] & {};
-  [RuntimeMethod.SELECT]: IRuntimeHandler<T>['matchSelect'] & {};
-  [RuntimeMethod.SELECT_ORDINAL]: IRuntimeHandler<T>['matchSelectOrdinal'] & {};
+  [RuntimeMethod.ELEMENT]: IRuntimeOptions<T>['renderElement'];
+  [RuntimeMethod.FRAGMENT]: IRuntimeOptions<T>['renderFragment'];
+  [RuntimeMethod.FUNCTION]: IRuntimeOptions<T>['renderFunction'];
+  [RuntimeMethod.ARGUMENT]: IRuntimeOptions<T>['renderArgument'];
+  [RuntimeMethod.LOCALE]: IRuntimeOptions<T>['matchLocale'] & {};
+  [RuntimeMethod.PLURAL]: IRuntimeOptions<T>['matchPlural'] & {};
+  [RuntimeMethod.SELECT]: IRuntimeOptions<T>['matchSelect'] & {};
+  [RuntimeMethod.SELECT_ORDINAL]: IRuntimeOptions<T>['matchSelectOrdinal'] & {};
 }
+
+/**
+ * A function that renders a message.
+ */
+export type MessageFunction<Values = unknown> = <T>(runtime: IRuntime<T>, locale: string, values: Values) => T | string;

@@ -166,11 +166,11 @@ export function compileMessage(localeNodeMap: ILocaleNodeMap, options: Readonly<
   src += compileDocComment(comment);
 
   // Function
-  src += `let ${functionName}=<T>(`
-      + runtimeVarName + ':IRuntime<T>,'
-      + localeVarName + ':string'
-      + (interfaceUsed ? `,${argsVarName}:${interfaceName}` : '')
-      + '):T|string=>{';
+  src += `let ${functionName}:MessageFunction<${interfaceUsed ? interfaceName : 'void'}>=(`
+      + runtimeVarName + ','
+      + localeVarName
+      + (interfaceUsed ? ',' + argsVarName : '')
+      + ')=>{';
 
   // Index var
   if (indexVarUsed) {
