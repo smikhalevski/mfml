@@ -1,6 +1,6 @@
 import {IMessage, IMessageModule} from 'mfml-compiler';
 import path from 'path';
-import {Adapter} from '../cli-types';
+import {CliAdapter} from '../cli-types';
 import {trimFileExtension} from '../adapter-utils';
 
 export interface ILocaleFilesAdapterOptions {
@@ -34,7 +34,7 @@ export interface ILocaleFilesAdapterOptions {
  * Treats contents each file from `files` as a JSON object that maps a message name to a translation. The name of each
  * file is treated as a locale.
  */
-const localeFilesAdapter: Adapter<ILocaleFilesAdapterOptions | undefined | void> = (files, moduleCompiler, options = {}) => {
+const localeFilesAdapter: CliAdapter<ILocaleFilesAdapterOptions | undefined | void> = (files, moduleCompiler, options = {}) => {
 
   const {
     digestFilePath,

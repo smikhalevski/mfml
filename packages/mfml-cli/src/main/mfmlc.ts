@@ -2,7 +2,7 @@ import {program} from 'commander';
 import fs from 'fs';
 import path from 'path';
 import glob from 'glob';
-import {Adapter, IConfig} from './cli-types';
+import {CliAdapter, ICliConfig} from './cli-types';
 import {compileModule, createMfmlParser, IMessageModule} from 'mfml-compiler';
 
 const CONFIG_PATH = 'mfml.config.js';
@@ -28,7 +28,7 @@ const outDir = path.resolve(dir, options.outDir);
 const rootDir = path.resolve(dir, options.rootDir);
 const configPath = path.join(dir, options.config);
 
-let config: IConfig = {};
+let config: ICliConfig = {};
 
 if (fs.existsSync(configPath)) {
   config = require(configPath);
@@ -53,7 +53,7 @@ const parseMfml = createMfmlParser(config);
 const moduleCompiler = (messageModule: IMessageModule) => compileModule(messageModule, parseMfml, options);
 
 const adapterPath = config.adapterPath || ADAPTER_PATH;
-const adapter: Adapter<unknown> = require(adapterPath);
+const adapter: CliAdapter<unknown> = require(adapterPath);
 
 if (typeof adapter !== 'function') {
   console.log('error: Expected a function as a default export: ' + adapterPath);

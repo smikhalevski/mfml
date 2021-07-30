@@ -4,18 +4,18 @@ import {IMessageModule, IMfmlParserOptions, IModuleCompilerOptions} from 'mfml-c
  * An adapter that receives a `files` that were included in the compilation, compiles them with `compileModule` and
  * returns a map from relative file path to a corresponding compile source.
  */
-export type Adapter<Options> = (files: Record<string, string>, moduleCompiler: (messageModule: IMessageModule) => string, options: Options) => Record<string, string>;
+export type CliAdapter<Options> = (files: Record<string, string>, moduleCompiler: (messageModule: IMessageModule) => string, options: Options) => Record<string, string>;
 
 /**
- * The compilation config.
+ * The CLI config. By default, this config should be located in `mfml.config.js`.
  */
-export interface IConfig extends IMfmlParserOptions, IModuleCompilerOptions {
+export interface ICliConfig extends IMfmlParserOptions, IModuleCompilerOptions {
 
   /**
    * The path to the compilation adapter.
    *
    * @default 'mfml-cli/lib/adapters/localeFilesAdapter'
-   * @see {@link Adapter}
+   * @see {@link CliAdapter}
    */
   adapterPath?: string;
 

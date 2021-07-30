@@ -16,6 +16,12 @@ export function createMfmlParser(options: IMfmlParserOptions = {}): MfmlParser {
 
   const {decodeText, decodeAttribute} = options;
 
+  // MFML parser handles the HTML decoding
+  const saxParserOptions: IParserOptions = Object.assign({}, options, {
+    decodeText: undefined,
+    decodeAttribute: undefined,
+  });
+
   let rootChildren: Array<Node>;
   let linearNodes: Array<Node>;
   let linearIndex = 0;
@@ -246,7 +252,7 @@ export function createMfmlParser(options: IMfmlParserOptions = {}): MfmlParser {
       }
     },
 
-  }, options);
+  }, saxParserOptions);
 
   return (input) => {
     rootChildren = parseMessageFormat(input, options);
