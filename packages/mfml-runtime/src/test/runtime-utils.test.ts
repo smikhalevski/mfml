@@ -1,4 +1,5 @@
-import {exactMatchSelect, matchLocaleOrLanguage} from '../main/runtime-utils';
+import {createPluralMatcher, exactMatchSelect, matchLocaleOrLanguage} from '../main/runtime-utils';
+import {pluralCategories, PluralCategory} from '../main';
 
 describe('matchLocaleOrLanguage', () => {
 
@@ -17,6 +18,19 @@ describe('matchLocaleOrLanguage', () => {
 
   test('returns -1 if no locale matched', () => {
     expect(matchLocaleOrLanguage('cz_CZ', ['pt', 'ru'])).toBe(-1);
+  });
+});
+
+describe('createPluralMatcher', () => {
+
+  test('creates a matcher', () => {
+    const matcher = createPluralMatcher('cardinal');
+
+    expect(matcher('en', 1)).toBe(pluralCategories.indexOf(PluralCategory.ONE));
+    expect(matcher('en', 100)).toBe(pluralCategories.indexOf(PluralCategory.OTHER));
+
+    expect(matcher('ru', 1)).toBe(pluralCategories.indexOf(PluralCategory.ONE));
+    expect(matcher('ru', 3)).toBe(pluralCategories.indexOf(PluralCategory.FEW));
   });
 });
 

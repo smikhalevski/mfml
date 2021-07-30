@@ -14,7 +14,7 @@ export interface ICliConfig extends IMfmlParserOptions, IModuleCompilerOptions {
   /**
    * The path to the compilation adapter.
    *
-   * @default 'mfml-cli/lib/adapters/localeFilesAdapter'
+   * @default `"mfml-cli/lib/adapters/localeFilesAdapter"`
    * @see {@link CliAdapter}
    */
   adapterPath?: string;

@@ -14,28 +14,13 @@ export type MessageProps<F extends MessageFunction<any>> =
  */
 export type MessageComponent = <F extends MessageFunction<any>>(props: MessageProps<F>) => React.ReactElement;
 
-export interface IMessageComponentOptions {
-
-  /**
-   * The context that provides a runtime that renders a message.
-   */
-  runtimeContext: React.Context<IMessageRuntime<React.ReactNode>>;
-
-  /**
-   * The context that provides the current locale.
-   */
-  localeContext: React.Context<string>;
-}
-
 /**
- * Creates a component that renders a message using a runtime provided through the
- * {@link IMessageComponentOptions.runtimeContext}.
+ * Creates a component that renders a message using a runtime provided through the `runtimeContext`.
  *
- * @param options Component options.
+ * @param runtimeContext The context that provides a runtime that renders a message.
+ * @param localeContext The context that provides the current locale.
  */
-export function createMessageComponent(options: IMessageComponentOptions): MessageComponent {
-  const {runtimeContext, localeContext} = options;
-
+export function createMessageComponent(runtimeContext: React.Context<IMessageRuntime<React.ReactNode>>, localeContext: React.Context<string>): MessageComponent {
   return (props: IUnsafeMessageProps) => {
     const {message, values} = props;
 

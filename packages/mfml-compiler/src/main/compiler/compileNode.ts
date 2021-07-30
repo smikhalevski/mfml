@@ -18,7 +18,7 @@ export interface INodeCompilerOptions {
   /**
    * The key that is used as the default for `select`.
    *
-   * @default "other"
+   * @default `"other"`
    */
   otherSelectCaseKey?: string;
 

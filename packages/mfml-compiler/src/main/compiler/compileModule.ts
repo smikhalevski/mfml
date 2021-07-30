@@ -18,14 +18,14 @@ export interface IModuleCompilerOptions extends Pick<IMessageCompilerOptions,
   /**
    * The path from which a `MessageFunction` type is imported.
    *
-   * @default 'mfml-runtime'
+   * @default `"mfml-runtime"`
    */
   runtimeImportPath?: string;
 
   /**
    * Returns the default locale for a message.
    *
-   * @default () => 'en'
+   * @default `() => "en"`
    */
   provideDefaultLocale?(messageName: string, message: IMessage): string;
 

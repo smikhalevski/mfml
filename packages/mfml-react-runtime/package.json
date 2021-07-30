@@ -39,13 +39,15 @@
   },
   "homepage": "https://github.com/smikhalevski/mfml#readme",
   "jest": {
-    "preset": "ts-jest"
+    "preset": "ts-jest",
+    "testEnvironment": "jsdom"
   },
   "peerDependencies": {
     "mfml-runtime": "^1.0.0",
     "react": ">=16.8.0"
   },
   "devDependencies": {
+    "@testing-library/react": "^12.0.0",
     "@types/react": "^17.0.15"
   }
 }

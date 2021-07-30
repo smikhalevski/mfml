@@ -7,7 +7,7 @@ export interface ILocaleFilesAdapterOptions {
   /**
    * The name of the index file that would re-export all message modules.
    *
-   * @default './index.ts'
+   * @default `"./index.ts"`
    */
   digestFilePath?: string;
 
@@ -24,7 +24,7 @@ export interface ILocaleFilesAdapterOptions {
   /**
    * Returns the relative file path with an extension where the message must be stored.
    *
-   * @default () => './messages.ts'
+   * @default `() => "./messages.ts"`
    */
   rewriteFilePath?(messageName: string, message: IMessage): string;
 }

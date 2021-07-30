@@ -15,14 +15,14 @@ export interface IFunctionCompilerOptions {
   /**
    * The key that is used as the default for `select`.
    *
-   * @default "other"
+   * @default `"other"`
    */
   otherSelectCaseKey?: string;
 
   /**
    * The default locale that that would be used if no other locales from `translations` matched.
    *
-   * @default 'en'
+   * @default `"en"`
    */
   defaultLocale?: string;
 }
