@@ -1,7 +1,6 @@
 import {IMessage, IMessageModule} from 'mfml-compiler';
 import path from 'path';
 import {CliAdapter} from '../cli-types';
-import {trimFileExtension} from '../adapter-utils';
 
 export interface ILocaleFilesAdapterOptions {
 
@@ -48,7 +47,7 @@ const localeFilesAdapter: CliAdapter<ILocaleFilesAdapterOptions | undefined | vo
 
   // Collect messages
   for (const [filePath, json] of Object.entries(files)) {
-    const locale = trimFileExtension(path.basename(filePath));
+    const locale = path.basename(filePath, '.json');
 
     for (const [messageName, messageSource] of Object.entries<string>(JSON.parse(json))) {
       const message = messages[messageName] ||= {translations: {}};
@@ -74,7 +73,7 @@ const localeFilesAdapter: CliAdapter<ILocaleFilesAdapterOptions | undefined | vo
       } else {
         digestSrc += 'export*from';
       }
-      digestSrc += JSON.stringify(filePath);
+      digestSrc += JSON.stringify(path.dirname(filePath) + path.sep + path.basename(filePath, '.ts')) + ';';
     }
     outputFiles[filePath] = moduleCompiler(messageModule) + '\n';
   }

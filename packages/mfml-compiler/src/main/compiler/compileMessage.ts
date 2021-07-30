@@ -101,10 +101,14 @@ export function compileMessage(localeNodeMap: ILocaleNodeMap, options: Readonly<
   ].concat(runtimeMethods));
 
   const argVarNameMap = createMap<string>();
-  const argTypeMap = createMap<Array<string>>();
+  const argTypeMap = createMap<Set<string>>();
   const usedRuntimeMethods = new Set<RuntimeMethod>();
 
   let indexVarUsed = false;
+
+  const pushArgType = (argumentName: string, type: string) => {
+    (argTypeMap[argumentName] ||= new Set()).add(type);
+  };
 
   const resultSrc = compileLocaleNodeMap(localeNodeMap, {
     localeVarName,
@@ -119,14 +123,14 @@ export function compileMessage(localeNodeMap: ILocaleNodeMap, options: Readonly<
     },
 
     onFunctionUsed(node) {
-      const tsType = provideFunctionType?.(node.name);
-      if (tsType) {
-        (argTypeMap[node.argumentName] ||= []).push(isIntersectionType(tsType) ? '(' + tsType + ')' : tsType);
+      const type = provideFunctionType?.(node.name);
+      if (type) {
+        pushArgType(node.argumentName, isIntersectionType(type) ? '(' + type + ')' : type);
       }
     },
 
     onSelectUsed(node) {
-      (argTypeMap[node.argumentName] ||= []).push('number');
+      pushArgType(node.argumentName, 'number');
     },
 
     onRuntimeMethodUsed(runtimeMethod, varUsed) {
@@ -148,9 +152,11 @@ export function compileMessage(localeNodeMap: ILocaleNodeMap, options: Readonly<
     src += `export interface ${interfaceName}{`;
 
     for (const name of argumentNames) {
+      const types = argTypeMap[name];
+
       src += compilePropertyName(name)
           + ':'
-          + (argTypeMap[name]?.join('&') || 'unknown')
+          + (types ? Array.from(types).join('&') : 'unknown')
           + ';';
     }
     src += '}';
@@ -189,7 +195,7 @@ export function compileMessage(localeNodeMap: ILocaleNodeMap, options: Readonly<
         + ';';
   }
 
-  src += `return ${resultSrc}}`;
+  src += `return ${resultSrc}};`;
 
   // Metadata
   src += renderMetadata?.({

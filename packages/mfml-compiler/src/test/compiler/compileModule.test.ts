@@ -43,12 +43,12 @@ describe('compileModule', () => {
         'let sayHello=<T>(locale:string,runtime:IRuntime<T>):T|string=>{' +
         'const{l}=runtime;' +
         'return l(locale,b)===1?"Hola!":"Hello!"' +
-        '}' +
+        '};' +
 
         'let sayBye=<T>(locale:string,runtime:IRuntime<T>):T|string=>{' +
         'const{l}=runtime;' +
         'return l(locale,b)===1?"Adiós!":"Bye!"' +
-        '}' +
+        '};' +
 
         'export{sayHello,sayBye};',
     );
@@ -80,12 +80,12 @@ describe('compileModule', () => {
         'let sayHello=<T>(locale:string,runtime:IRuntime<T>):T|string=>{' +
         'const{l}=runtime;' +
         'return l(locale,b)===1?"Привет!":"Hello!"' +
-        '}' +
+        '};' +
 
         'let sayBye=<T>(locale:string,runtime:IRuntime<T>):T|string=>{' +
         'const{l}=runtime;' +
         'return l(locale,d)===1?"Adiós!":"Bye!"' +
-        '}' +
+        '};' +
 
         'export{sayHello,sayBye};',
     );
@@ -115,7 +115,7 @@ describe('compileModule', () => {
         'const{a,l}=runtime;' +
         'const{foo:d}=args;' +
         'return l(locale,b)===1?a(d):a(d)' +
-        '}' +
+        '};' +
 
         'export{a};',
     );
@@ -147,7 +147,7 @@ describe('compileModule', () => {
         'const{a}=runtime;' +
         'const{foo:b}=args;' +
         'return a(b)' +
-        '}' +
+        '};' +
 
         'a.displayName="___a";' +
 

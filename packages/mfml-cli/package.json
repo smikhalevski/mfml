@@ -5,6 +5,9 @@
   "files": [
     "lib"
   ],
+  "bin": {
+    "mfmlc": "./lib/mfmlc.js"
+  },
   "scripts": {
     "build": "tsc --project tsconfig.build.json && npm run rollup && npm run rollup-adapters",
     "rollup": "rollup --external commander,glob,mfml-compiler --input ./lib/mfmlc.js --file ./lib/mfmlc.js --format cjs --plugin @rollup/plugin-node-resolve",
@@ -44,5 +47,8 @@
   },
   "devDependencies": {
     "@types/glob": "^7.1.4"
+  },
+  "peerDependencies": {
+    "mfml-compiler": "^1.0.0"
   }
 }

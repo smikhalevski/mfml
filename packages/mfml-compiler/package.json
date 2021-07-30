@@ -49,5 +49,8 @@
     "@smikhalevski/codegen": "^1.0.0",
     "speedy-entities": "^1.1.0",
     "tag-soup": "^1.0.0-next.0"
+  },
+  "peerDependencies": {
+    "mfml-runtime": "^1.0.0"
   }
 }

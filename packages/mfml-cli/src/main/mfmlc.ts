@@ -6,9 +6,9 @@ import {CliAdapter, ICliConfig} from './cli-types';
 import {compileModule, createMfmlParser, IMessageModule} from 'mfml-compiler';
 
 const CONFIG_PATH = 'mfml.config.js';
-const ADAPTER_PATH = '../adapters/localeFilesAdapter';
+const ADAPTER_PATH = './adapters/localeFilesAdapter';
 
-const packageJson = require('../../package.json');
+const packageJson = require('../package.json');
 
 program.name('mfmlc');
 program.version(packageJson.version);
@@ -50,7 +50,7 @@ const files = filePaths.reduce((files, filePath) => {
 }, {});
 
 const parseMfml = createMfmlParser(config);
-const moduleCompiler = (messageModule: IMessageModule) => compileModule(messageModule, parseMfml, options);
+const moduleCompiler = (messageModule: IMessageModule) => compileModule(messageModule, parseMfml, config);
 
 const adapterPath = config.adapterPath || ADAPTER_PATH;
 const adapter: CliAdapter<unknown> = require(adapterPath);

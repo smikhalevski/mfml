@@ -49,7 +49,7 @@ describe('localeFilesAdapter', () => {
     options.digestFilePath = './index.ts';
 
     expect(localeFilesAdapter(files, compileModuleMock, options)).toEqual({
-      './index.ts': 'export*from"./messages.ts"',
+      './index.ts': 'export*from"./messages";',
       './messages.ts': expect.any(String),
     });
   });
@@ -59,7 +59,7 @@ describe('localeFilesAdapter', () => {
     options.renameDigestNamespace = (filePath) => path.basename(filePath, '.ts');
 
     expect(localeFilesAdapter(files, compileModuleMock, options)).toEqual({
-      './index.ts': 'export*as messages from"./messages.ts"',
+      './index.ts': 'export*as messages from"./messages";',
       './messages.ts': expect.any(String),
     });
   });

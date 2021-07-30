@@ -29,7 +29,7 @@ describe('compileMessage', () => {
         'let ggg=<T>(locale:string,runtime:IRuntime<T>):T|string=>{' +
         'const{f}=runtime;' +
         'return f()' +
-        '}',
+        '};',
     );
   });
 
@@ -42,7 +42,7 @@ describe('compileMessage', () => {
         'const{a}=runtime;' +
         'const{foo:b}=args;' +
         'return a(b)' +
-        '}',
+        '};',
     );
   });
 
@@ -57,7 +57,7 @@ describe('compileMessage', () => {
         'const{c}=runtime;' +
         'const{foo:b}=args;' +
         'return c("aaa",b)' +
-        '}',
+        '};',
     );
   });
 
@@ -72,7 +72,7 @@ describe('compileMessage', () => {
         'const{f,c}=runtime;' +
         'const{foo:b}=args;' +
         'return f(c("aaa",b),c("bbb",b))' +
-        '}',
+        '};',
     );
   });
 
@@ -87,7 +87,7 @@ describe('compileMessage', () => {
         'const{f,c}=runtime;' +
         'const{foo:b}=args;' +
         'return f(c("aaa",b),c("bbb",b))' +
-        '}',
+        '};',
     );
   });
 
@@ -100,7 +100,7 @@ describe('compileMessage', () => {
         'const{a}=runtime;' +
         'const{"123f":b}=args;' +
         'return a(b)' +
-        '}',
+        '};',
     );
   });
 
@@ -113,7 +113,7 @@ describe('compileMessage', () => {
         'const{s,f}=runtime;' +
         'const{foo:b}=args;' +
         'return s(b,"AAA")===0?"okay":f()' +
-        '}',
+        '};',
     );
   });
 
@@ -125,7 +125,7 @@ describe('compileMessage', () => {
         'let ggg=<T>(locale:string,runtime:IRuntime<T>,args:IGggArgs):T|string=>{' +
         'const{f}=runtime;' +
         'return f()' +
-        '}',
+        '};',
     );
   });
 
@@ -138,7 +138,7 @@ describe('compileMessage', () => {
         'const{p,f}=runtime;' +
         'const{foo:b}=args;' +
         'return p("en",b)===1?"okay":f()' +
-        '}',
+        '};',
     );
   });
 
@@ -150,7 +150,7 @@ describe('compileMessage', () => {
         'let ggg=<T>(locale:string,runtime:IRuntime<T>):T|string=>{' +
         'const{f}=runtime;' +
         'return f()' +
-        '}',
+        '};',
     );
   });
 });
