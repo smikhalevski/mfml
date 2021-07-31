@@ -1,19 +1,14 @@
 import React from 'react';
 import {createReactMessageRuntime} from './createReactMessageRuntime';
-import {IMessageRuntime} from 'mfml-runtime';
 import {createMessageComponent} from './createMessageComponent';
-
-/**
- * The default runtime exposed by {@link MessageRuntimeContext}.
- *
- * **Note:** This runtime renders all tags as DOM elements using `React.createElement`.
- */
-export const reactMessageRuntime = createReactMessageRuntime();
+import {createMessageHook} from './createMessageHook';
 
 /**
  * Provides runtime for {@link Message}.
+ *
+ * **Note:** The default runtime renders all tags as DOM elements using `React.createElement`.
  */
-export const MessageRuntimeContext = React.createContext<IMessageRuntime<React.ReactNode>>(reactMessageRuntime);
+export const MessageRuntimeContext = React.createContext(createReactMessageRuntime());
 
 /**
  * Provides locale for {@link Message}.
@@ -28,3 +23,5 @@ export const LocaleProvider = LocaleContext.Provider;
  * Renders a message using a runtime provided through {@link MessageRuntimeContext}.
  */
 export const Message = createMessageComponent(MessageRuntimeContext, LocaleContext);
+
+export const useMessage = createMessageHook(MessageRuntimeContext, LocaleContext);
