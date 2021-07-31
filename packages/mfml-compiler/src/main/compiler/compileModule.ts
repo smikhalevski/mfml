@@ -12,11 +12,12 @@ const VAR_NAME_ARGS = 'values';
 const VAR_NAME_INDEX = 'i';
 
 export interface IModuleCompilerOptions extends Pick<IMessageCompilerOptions,
+    | 'typingsEnabled'
     | 'provideFunctionType'
     | 'otherSelectCaseKey'> {
 
   /**
-   * The path from which a `MessageFunction` type is imported.
+   * The path from which runtime dependencies are imported.
    *
    * @default `"mfml-runtime"`
    */
@@ -78,6 +79,7 @@ export interface IModuleCompilerOptions extends Pick<IMessageCompilerOptions,
  */
 export function compileModule(messageModule: IMessageModule, mfmlParser: MfmlParser, options: Readonly<IModuleCompilerOptions> = {}): string {
   const {
+    typingsEnabled,
     runtimeImportPath = 'mfml-runtime',
     renameInterface = pascalCase,
     renameMessageFunction = camelCase,
@@ -120,6 +122,7 @@ export function compileModule(messageModule: IMessageModule, mfmlParser: MfmlPar
     }
 
     const compilerOptions: IMessageCompilerOptions = {
+      typingsEnabled,
       otherSelectCaseKey,
       provideFunctionType,
       renderMetadata: renderMetadata ? (metadata) => renderMetadata(metadata, messageName, message) : undefined,
@@ -146,7 +149,7 @@ export function compileModule(messageModule: IMessageModule, mfmlParser: MfmlPar
     }
   }
 
-  return `import{MessageFunction}from"${runtimeImportPath}";`
+  return (typingsEnabled ? `import{MessageFunction}from"${runtimeImportPath}";` : '')
       + Object.entries(localesVarSrcMap).reduce((src, [localesSrc, localesVarName]) => src
           + `const ${localesVarName}=${localesSrc};`,
           '')

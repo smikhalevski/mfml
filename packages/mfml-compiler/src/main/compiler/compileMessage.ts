@@ -31,6 +31,13 @@ export interface IMessageCompilerOptions extends Pick<ILocaleNodeMapCompilerOpti
     | 'localesVarName'> {
 
   /**
+   * If set to `true` then TypeScript interfaces and function types are rendered.
+   *
+   * @default false
+   */
+  typingsEnabled?: boolean;
+
+  /**
    * The name of the TypeScript interface that describe the message arguments.
    */
   interfaceName: string;
@@ -77,6 +84,7 @@ export interface IMessageCompilerOptions extends Pick<ILocaleNodeMapCompilerOpti
 export function compileMessage(localeNodeMap: ILocaleNodeMap, options: Readonly<IMessageCompilerOptions>): string {
 
   const {
+    typingsEnabled,
     otherSelectCaseKey,
     provideFunctionType,
     renderMetadata,
@@ -148,7 +156,7 @@ export function compileMessage(localeNodeMap: ILocaleNodeMap, options: Readonly<
   let src = '';
 
   // Interface
-  if (interfaceUsed) {
+  if (typingsEnabled && interfaceUsed) {
     src += `export interface ${interfaceName}{`;
 
     for (const name of argumentNames) {
@@ -161,8 +169,9 @@ export function compileMessage(localeNodeMap: ILocaleNodeMap, options: Readonly<
   src += compileDocComment(comment);
 
   // Function
-  src += `let ${functionName}:MessageFunction`
-      + (interfaceUsed ? '<' + interfaceName + '>' : '')
+  src += 'let '
+      + functionName
+      + (typingsEnabled ? ':MessageFunction' + (interfaceUsed ? '<' + interfaceName + '>' : '<void>') : '')
       + '=('
       + runtimeVarName + ','
       + localeVarName

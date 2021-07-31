@@ -9,13 +9,18 @@ describe('compileModule', () => {
   let options: IModuleCompilerOptions;
 
   beforeEach(() => {
-    options = {};
+    options = {typingsEnabled: true};
   });
 
   test('compiles an empty module', () => {
     expect(compileModule({messages: {}}, parse, options)).toBe(
         'import{MessageFunction}from"mfml-runtime";',
     );
+  });
+
+  test('compiles an empty module without typings', () => {
+    options.typingsEnabled = false;
+    expect(compileModule({messages: {}}, parse, options)).toBe('');
   });
 
   test('compiles a module with multiple messages that share same locales', () => {
@@ -40,12 +45,12 @@ describe('compileModule', () => {
         'import{MessageFunction}from"mfml-runtime";' +
         'const b=["en","es"];' +
 
-        'let sayHello:MessageFunction=(runtime,locale)=>{' +
+        'let sayHello:MessageFunction<void>=(runtime,locale)=>{' +
         'const{l}=runtime;' +
         'return l(locale,b)===1?"Hola!":"Hello!"' +
         '};' +
 
-        'let sayBye:MessageFunction=(runtime,locale)=>{' +
+        'let sayBye:MessageFunction<void>=(runtime,locale)=>{' +
         'const{l}=runtime;' +
         'return l(locale,b)===1?"Adiós!":"Bye!"' +
         '};' +
@@ -77,12 +82,12 @@ describe('compileModule', () => {
         'const b=["en","ru"];' +
         'const d=["en","es"];' +
 
-        'let sayHello:MessageFunction=(runtime,locale)=>{' +
+        'let sayHello:MessageFunction<void>=(runtime,locale)=>{' +
         'const{l}=runtime;' +
         'return l(locale,b)===1?"Привет!":"Hello!"' +
         '};' +
 
-        'let sayBye:MessageFunction=(runtime,locale)=>{' +
+        'let sayBye:MessageFunction<void>=(runtime,locale)=>{' +
         'const{l}=runtime;' +
         'return l(locale,d)===1?"Adiós!":"Bye!"' +
         '};' +
@@ -170,7 +175,7 @@ describe('compileModule', () => {
 
     expect(compileModule(messageModule, parse, options)).toBe(
         'import{MessageFunction}from"mfml-runtime";' +
-        'let a:MessageFunction=(runtime,locale)=>{' +
+        'let a:MessageFunction<void>=(runtime,locale)=>{' +
         'return "AAA"' +
         '};' +
         'export{a};',

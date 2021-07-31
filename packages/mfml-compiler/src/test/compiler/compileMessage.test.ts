@@ -9,6 +9,7 @@ describe('compileMessage', () => {
 
   beforeEach(() => {
     options = {
+      typingsEnabled: true,
       locales: ['en', 'es'],
       localesVarName: 'locales',
       defaultLocale: 'en',
@@ -26,7 +27,7 @@ describe('compileMessage', () => {
 
   test('compiles message without arguments', () => {
     expect(compileMessage({}, options)).toBe(
-        'let ggg:MessageFunction=(runtime,locale)=>{' +
+        'let ggg:MessageFunction<void>=(runtime,locale)=>{' +
         'const{f}=runtime;' +
         'return f()' +
         '};',
@@ -157,12 +158,24 @@ describe('compileMessage', () => {
     );
   });
 
+  test('compiles a message without typings', () => {
+    options.typingsEnabled = false;
+
+    expect(compileMessage({en: parse('{foo}')}, options)).toBe(
+        'let ggg=(runtime,locale,values)=>{' +
+        'const{a}=runtime;' +
+        'const{foo:b}=values;' +
+        'return a(b)' +
+        '};',
+    );
+  });
+
   test('compiles comment', () => {
     options.comment = 'hello!';
 
     expect(compileMessage({}, options)).toBe(
         '/**\n * hello!\n */' +
-        'let ggg:MessageFunction=(runtime,locale)=>{' +
+        'let ggg:MessageFunction<void>=(runtime,locale)=>{' +
         'const{f}=runtime;' +
         'return f()' +
         '};',
