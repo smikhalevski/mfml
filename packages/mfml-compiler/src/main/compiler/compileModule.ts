@@ -1,6 +1,6 @@
 import {compileMessage, IMessageCompilerOptions, IMessageMetadata} from './compileMessage';
 import {camelCase, createVarNameProvider, pascalCase} from '@smikhalevski/codegen';
-import {createMap, jsonStringify, Maybe} from '../misc';
+import {createMap, die, jsonStringify, Maybe} from '../misc';
 import {IMessage, IMessageModule} from './compiler-types';
 import {MfmlParser} from '../parser';
 import {ILocaleNodeMap} from './compileLocaleNodeMap';
@@ -61,7 +61,12 @@ export interface IModuleCompilerOptions extends Pick<IMessageCompilerOptions,
   /**
    * Returns arbitrary source code that is rendered after message function rendering is completed.
    */
-  renderMetadata?(messageName: string, message: IMessage, metadata: IMessageMetadata): Maybe<string>;
+  renderMetadata?(metadata: IMessageMetadata, messageName: string, message: IMessage): Maybe<string>;
+
+  /**
+   * Triggered if an error occurred while compiling a message. If omitted then an error is thrown.
+   */
+  onError?(error: unknown, messageName: string, message: IMessage): void;
 }
 
 /**
@@ -82,6 +87,7 @@ export function compileModule(messageModule: IMessageModule, mfmlParser: MfmlPar
     provideDefaultLocale = () => 'en',
     extractComment,
     renderMetadata,
+    onError,
   } = options;
 
   const messageEntries = Object.entries(messageModule.messages);
@@ -113,10 +119,10 @@ export function compileModule(messageModule: IMessageModule, mfmlParser: MfmlPar
       localeNodeMap[locale] = mfmlParser(translation);
     }
 
-    src += compileMessage(localeNodeMap, {
+    const compilerOptions: IMessageCompilerOptions = {
       otherSelectCaseKey,
       provideFunctionType,
-      renderMetadata: renderMetadata ? (metadata) => renderMetadata(messageName, message, metadata) : undefined,
+      renderMetadata: renderMetadata ? (metadata) => renderMetadata(metadata, messageName, message) : undefined,
       interfaceName: renameInterface(messageName, message),
       functionName: renameMessageFunction(messageName, message),
       localeVarName: VAR_NAME_LOCALE,
@@ -127,7 +133,17 @@ export function compileModule(messageModule: IMessageModule, mfmlParser: MfmlPar
       defaultLocale: provideDefaultLocale(messageName, message),
       localesVarName,
       locales,
-    });
+    };
+
+    try {
+      src += compileMessage(localeNodeMap, compilerOptions);
+    } catch (error) {
+      if (onError) {
+        onError(error, messageName, message);
+      } else {
+        die('Message compilation failed: ' + messageName);
+      }
+    }
   }
 
   return `import{MessageFunction}from"${runtimeImportPath}";`

@@ -132,7 +132,7 @@ describe('compileModule', () => {
       },
     };
 
-    options.renderMetadata = (messageName, message, metadata) => {
+    options.renderMetadata = (metadata, messageName, message) => {
       return metadata.functionName + '.displayName=' + JSON.stringify(messageName) + ';';
     };
 
