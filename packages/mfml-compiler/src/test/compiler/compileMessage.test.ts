@@ -76,7 +76,7 @@ describe('compileMessage', () => {
     );
   });
 
-  test('compiles message with a single dual-typed argument with intersection type', () => {
+  test('compiles message with a single dual-typed argument with an intersection type', () => {
     options.provideFunctionType = (functionName) => functionName === 'aaa' ? 'string' : 'Foo|Bar';
 
     expect(compileMessage({en: parse('{foo,aaa}{foo,bbb}')}, options)).toBe(
@@ -87,6 +87,21 @@ describe('compileMessage', () => {
         'const{f,c}=runtime;' +
         'const{foo:b}=values;' +
         'return f(c("aaa",b),c("bbb",b))' +
+        '};',
+    );
+  });
+
+  test('compiles message with a single argument with an intersection type', () => {
+    options.provideFunctionType = () => 'Foo|Bar';
+
+    expect(compileMessage({en: parse('{foo,aaa}')}, options)).toBe(
+        'export interface IGggValues{' +
+        'foo:Foo|Bar;' +
+        '}' +
+        'let ggg:MessageFunction<IGggValues>=(runtime,locale,values)=>{' +
+        'const{c}=runtime;' +
+        'const{foo:b}=values;' +
+        'return c("aaa",b)' +
         '};',
     );
   });

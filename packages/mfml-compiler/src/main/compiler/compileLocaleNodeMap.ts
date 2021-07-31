@@ -79,7 +79,7 @@ export function compileLocaleNodeMap(localeNodeMap: ILocaleNodeMap, options: Rea
       continue;
     }
     if (isBlankNode(node)) {
-      // Blank translations are rendered as blank
+      // Blank translations are rendered as empty fragments
       blankIndices.push(i);
       continue;
     }

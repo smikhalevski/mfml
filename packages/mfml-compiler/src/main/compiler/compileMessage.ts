@@ -125,7 +125,7 @@ export function compileMessage(localeNodeMap: ILocaleNodeMap, options: Readonly<
     onFunctionUsed(node) {
       const type = provideFunctionType?.(node.name);
       if (type) {
-        pushArgType(node.argumentName, isIntersectionType(type) ? '(' + type + ')' : type);
+        pushArgType(node.argumentName, type);
       }
     },
 
@@ -152,12 +152,7 @@ export function compileMessage(localeNodeMap: ILocaleNodeMap, options: Readonly<
     src += `export interface ${interfaceName}{`;
 
     for (const name of argumentNames) {
-      const types = argTypeMap[name];
-
-      src += compilePropertyName(name)
-          + ':'
-          + (types ? Array.from(types).join('&') : 'unknown')
-          + ';';
+      src += compilePropertyName(name) + ':' + compileType(argTypeMap[name]) + ';';
     }
     src += '}';
   }
@@ -200,15 +195,23 @@ export function compileMessage(localeNodeMap: ILocaleNodeMap, options: Readonly<
   src += `return ${resultSrc}};`;
 
   // Metadata
-  src += renderMetadata?.({
-    interfaceName: interfaceUsed ? interfaceName : null,
-    functionName,
-    argumentNames,
-  }) || '';
+  if (renderMetadata) {
+    src += renderMetadata({
+      interfaceName: interfaceUsed ? interfaceName : null,
+      functionName,
+      argumentNames,
+    });
+  }
 
   return src;
 }
 
-function isIntersectionType(tsType: string): boolean {
-  return tsType.indexOf('|') !== -1;
+function compileType(types: Set<string> | undefined): string {
+  if (!types) {
+    return 'unknown';
+  }
+  if (types.size === 1) {
+    return types.values().next().value;
+  }
+  return Array.from(types).map((type) => type.indexOf('|') !== -1 ? '(' + type + ')' : type).join('&');
 }
