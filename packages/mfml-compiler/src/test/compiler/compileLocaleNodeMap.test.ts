@@ -11,10 +11,11 @@ describe('compileLocaleNodeMap', () => {
     options = {
       otherSelectCaseKey: 'other',
       indexVarName: 'i',
-      localesVarName: 'locales',
       defaultLocale: 'en',
+      defaultLocaleSrc: '"en"',
       localeVarName: 'locale',
       locales: ['en', 'ru'],
+      localesVarName: 'locales',
       provideArgumentVarName: (name) => name,
       onFunctionUsed: () => undefined,
       onRuntimeMethodUsed: () => undefined,

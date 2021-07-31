@@ -34,9 +34,8 @@ export interface IModuleCompilerOptions extends Pick<IMessageCompilerOptions,
   rewriteTranslation?(translation: string, locale: string): string;
 
   /**
-   * Returns the default locale for a message.
-   *
-   * @default `() => "en"`
+   * Returns the default locale for a message. If omitted then the first locale from `message.translations` is used as
+   * default.
    */
   provideDefaultLocale?(messageName: string, message: IMessage): string;
 
@@ -71,7 +70,8 @@ export interface IModuleCompilerOptions extends Pick<IMessageCompilerOptions,
 }
 
 /**
- * Compiles messages as a module that exports functions and corresponding interfaces.
+ * Compiles messages as a module that exports functions and corresponding interfaces. May return an empty string is
+ * module has no translations.
  *
  * @param messageModule The map from the message name to an actual message.
  * @param mfmlParser The MFML parser instance.
@@ -86,15 +86,29 @@ export function compileModule(messageModule: IMessageModule, mfmlParser: MfmlPar
     otherSelectCaseKey,
     provideFunctionType,
     rewriteTranslation,
-    provideDefaultLocale = () => 'en',
+    provideDefaultLocale,
     extractComment,
     renderMetadata,
     onError,
   } = options;
 
   const messageEntries = Object.entries(messageModule.messages);
+
+  if (messageEntries.length === 0) {
+    // Nothing to compile
+    return '';
+  }
+
   const functionNames = messageEntries.map(([messageName, message]) => renameMessageFunction(messageName, message));
+
+  // Maps locale to a var name {"en_US": "x"}
+  const localeVarNameMap = createMap<string>();
+
+  // Maps serialized locales array to a var name like {"[\"en_US\",\"ru_RU\"]": "y"}
   const localesVarSrcMap = createMap<string>();
+
+  // Maps var name to the list of locales stored in that var
+  const localesMap = createMap<Array<string>>();
 
   const varNameProvider = createVarNameProvider([
     VAR_NAME_RUNTIME,
@@ -108,14 +122,28 @@ export function compileModule(messageModule: IMessageModule, mfmlParser: MfmlPar
   for (const [messageName, message] of messageEntries) {
 
     const locales = Object.keys(message.translations).sort();
+
+    if (locales.length === 0) {
+      // Nothing to compile
+      continue;
+    }
+
+    const defaultLocale = provideDefaultLocale ? provideDefaultLocale(messageName, message) : locales[0];
+    const defaultLocaleVarName = localeVarNameMap[defaultLocale] ||= varNameProvider.next();
     const localesVarName = locales.length > 1 ? localesVarSrcMap[jsonStringify(locales)] ||= varNameProvider.next() : '';
 
+    if (localesVarName) {
+      localesMap[localesVarName] = locales;
+    }
+
+    // Maps locale to a parsed node
     const localeNodeMap: ILocaleNodeMap = {};
 
     for (const locale of locales) {
       let translation = message.translations[locale];
 
       if (rewriteTranslation != null) {
+        // Apply preprocessors
         translation = rewriteTranslation(translation, locale);
       }
       localeNodeMap[locale] = mfmlParser(translation);
@@ -133,7 +161,8 @@ export function compileModule(messageModule: IMessageModule, mfmlParser: MfmlPar
       argsVarName: VAR_NAME_ARGS,
       indexVarName: VAR_NAME_INDEX,
       comment: extractComment?.(messageName, message),
-      defaultLocale: provideDefaultLocale(messageName, message),
+      defaultLocale,
+      defaultLocaleVarName,
       localesVarName,
       locales,
     };
@@ -149,10 +178,19 @@ export function compileModule(messageModule: IMessageModule, mfmlParser: MfmlPar
     }
   }
 
+  let localesSrc = '';
+
+  for (const [locale, varName] of Object.entries(localeVarNameMap)) {
+    localesSrc += `const ${varName}=${jsonStringify(locale)};`;
+  }
+  for (const [varName, locales] of Object.entries(localesMap)) {
+    localesSrc += `const ${varName}=[`
+        + locales.map((locale) => localeVarNameMap[locale] || jsonStringify(locale)).join(',')
+        + '];';
+  }
+
   return (typingsEnabled ? `import{MessageFunction}from"${runtimeImportPath}";` : '')
-      + Object.entries(localesVarSrcMap).reduce((src, [localesSrc, localesVarName]) => src
-          + `const ${localesVarName}=${localesSrc};`,
-          '')
+      + localesSrc
       + src
-      + (functionNames.length ? `export{${functionNames.join(',')}};` : '');
+      + `export{${functionNames.join(',')}};`;
 }

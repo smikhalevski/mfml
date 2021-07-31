@@ -13,9 +13,7 @@ describe('compileModule', () => {
   });
 
   test('compiles an empty module', () => {
-    expect(compileModule({messages: {}}, parse, options)).toBe(
-        'import{MessageFunction}from"mfml-runtime";',
-    );
+    expect(compileModule({messages: {}}, parse, options)).toBe('');
   });
 
   test('compiles an empty module without typings', () => {
@@ -42,20 +40,18 @@ describe('compileModule', () => {
     };
 
     expect(compileModule(messageModule, parse, options)).toBe(
-        'import{MessageFunction}from"mfml-runtime";' +
-        'const b=["en","es"];' +
-
-        'let sayHello:MessageFunction<void>=(runtime,locale)=>{' +
-        'const{l}=runtime;' +
-        'return l(locale,b)===1?"Hola!":"Hello!"' +
-        '};' +
-
-        'let sayBye:MessageFunction<void>=(runtime,locale)=>{' +
-        'const{l}=runtime;' +
-        'return l(locale,b)===1?"Adiós!":"Bye!"' +
-        '};' +
-
-        'export{sayHello,sayBye};',
+        'import{MessageFunction}from"mfml-runtime";'
+        + 'const b="en";'
+        + 'const d=[b,"es"];'
+        + 'let sayHello:MessageFunction<void>=(runtime,locale)=>{'
+        + 'const{l}=runtime;'
+        + 'return l(locale,d)===1?"Hola!":"Hello!"'
+        + '};'
+        + 'let sayBye:MessageFunction<void>=(runtime,locale)=>{'
+        + 'const{l}=runtime;'
+        + 'return l(locale,d)===1?"Adiós!":"Bye!"'
+        + '};'
+        + 'export{sayHello,sayBye};',
     );
   });
 
@@ -78,28 +74,26 @@ describe('compileModule', () => {
     };
 
     expect(compileModule(messageModule, parse, options)).toBe(
-        'import{MessageFunction}from"mfml-runtime";' +
-        'const b=["en","ru"];' +
-        'const d=["en","es"];' +
-
-        'let sayHello:MessageFunction<void>=(runtime,locale)=>{' +
-        'const{l}=runtime;' +
-        'return l(locale,b)===1?"Привет!":"Hello!"' +
-        '};' +
-
-        'let sayBye:MessageFunction<void>=(runtime,locale)=>{' +
-        'const{l}=runtime;' +
-        'return l(locale,d)===1?"Adiós!":"Bye!"' +
-        '};' +
-
-        'export{sayHello,sayBye};',
+        'import{MessageFunction}from"mfml-runtime";'
+        + 'const b="en";'
+        + 'const d=[b,"ru"];'
+        + 'const g=[b,"es"];'
+        + 'let sayHello:MessageFunction<void>=(runtime,locale)=>{'
+        + 'const{l}=runtime;'
+        + 'return l(locale,d)===1?"Привет!":"Hello!"'
+        + '};'
+        + 'let sayBye:MessageFunction<void>=(runtime,locale)=>{'
+        + 'const{l}=runtime;'
+        + 'return l(locale,g)===1?"Adiós!":"Bye!"'
+        + '};'
+        + 'export{sayHello,sayBye};',
     );
   });
 
   test('function names are excluded from locales var names', () => {
     const messageModule: IMessageModule = {
       messages: {
-        a: {
+        b: {
           translations: {
             en: '{foo}',
             es: '{foo}',
@@ -109,20 +103,16 @@ describe('compileModule', () => {
     };
 
     expect(compileModule(messageModule, parse, options)).toBe(
-        'import{MessageFunction}from"mfml-runtime";' +
-        'const b=["en","es"];' +
-
-        'export interface A{' +
-        'foo:unknown;' +
-        '}' +
-
-        'let a:MessageFunction<A>=(runtime,locale,values)=>{' +
-        'const{a,l}=runtime;' +
-        'const{foo:d}=values;' +
-        'return l(locale,b)===1?a(d):a(d)' +
-        '};' +
-
-        'export{a};',
+        'import{MessageFunction}from"mfml-runtime";'
+        + 'const d="en";'
+        + 'const g=[d,"es"];'
+        + 'export interface B{foo:unknown;}'
+        + 'let b:MessageFunction<B>=(runtime,locale,values)=>{'
+        + 'const{a,l}=runtime;'
+        + 'const{foo:b}=values;'
+        + 'return l(locale,g)===1?a(locale,b):a(d,b)'
+        + '};'
+        + 'export{b};',
     );
   });
 
@@ -142,21 +132,18 @@ describe('compileModule', () => {
     };
 
     expect(compileModule(messageModule, parse, options)).toBe(
-        'import{MessageFunction}from"mfml-runtime";' +
-
-        'export interface A{' +
-        'foo:unknown;' +
-        '}' +
-
-        'let a:MessageFunction<A>=(runtime,locale,values)=>{' +
-        'const{a}=runtime;' +
-        'const{foo:b}=values;' +
-        'return a(b)' +
-        '};' +
-
-        'a.displayName="___a";' +
-
-        'export{a};',
+        'import{MessageFunction}from"mfml-runtime";'
+        + 'const b="en";'
+        + 'export interface A{'
+        + 'foo:unknown;'
+        + '}'
+        + 'let a:MessageFunction<A>=(runtime,locale,values)=>{'
+        + 'const{a}=runtime;'
+        + 'const{foo:d}=values;'
+        + 'return a(b,d)'
+        + '};'
+        + 'a.displayName="___a";'
+        + 'export{a};',
     );
   });
 
@@ -174,11 +161,12 @@ describe('compileModule', () => {
     options.rewriteTranslation = (translation) => translation.toUpperCase();
 
     expect(compileModule(messageModule, parse, options)).toBe(
-        'import{MessageFunction}from"mfml-runtime";' +
-        'let a:MessageFunction<void>=(runtime,locale)=>{' +
-        'return "AAA"' +
-        '};' +
-        'export{a};',
+        'import{MessageFunction}from"mfml-runtime";'
+        + 'const b="en";'
+        + 'let a:MessageFunction<void>=(runtime,locale)=>{'
+        + 'return "AAA"'
+        + '};'
+        + 'export{a};',
     );
   });
 

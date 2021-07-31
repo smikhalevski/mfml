@@ -58,12 +58,18 @@ export interface IMessageCompilerOptions extends Pick<ILocaleNodeMapCompilerOpti
   argsVarName: string;
 
   /**
+   * The name of the variable that holds the default locale.
+   */
+  defaultLocaleVarName: string;
+
+  /**
    * The doc comment of the rendering function.
    */
   comment: Maybe<string>;
 
   /**
-   * Returns the TypeScript type of the argument that a function expects.
+   * Returns the TypeScript type of the argument that a function expects. If omitted then arguments of all functions
+   * are typed as `unknown`.
    *
    * @param functionName The name of the function.
    */
@@ -98,6 +104,7 @@ export function compileMessage(localeNodeMap: ILocaleNodeMap, options: Readonly<
     localesVarName,
     locales,
     defaultLocale,
+    defaultLocaleVarName,
   } = options;
 
   const varNameProvider = createVarNameProvider([
@@ -106,6 +113,7 @@ export function compileMessage(localeNodeMap: ILocaleNodeMap, options: Readonly<
     argsVarName,
     indexVarName,
     localesVarName,
+    defaultLocaleVarName,
   ].concat(runtimeMethods));
 
   const argVarNameMap = createMap<string>();
@@ -119,12 +127,13 @@ export function compileMessage(localeNodeMap: ILocaleNodeMap, options: Readonly<
   };
 
   const resultSrc = compileLocaleNodeMap(localeNodeMap, {
-    localeVarName,
     indexVarName,
     defaultLocale,
+    localeVarName,
     locales,
     localesVarName,
     otherSelectCaseKey,
+    defaultLocaleSrc: defaultLocaleVarName,
 
     provideArgumentVarName(name) {
       return argVarNameMap[name] ||= varNameProvider.next();

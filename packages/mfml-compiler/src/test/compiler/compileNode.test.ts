@@ -103,17 +103,17 @@ describe('compileNode', () => {
 
     test('compiles plural with an octothorpe', () => {
       expect(compileNode(parse('{foo,plural,many{#aaa}}'), options))
-          .toBe('p(locale,foo)===4?f(a(foo),"aaa"):f()');
+          .toBe('p(locale,foo)===4?f(a(locale,foo),"aaa"):f()');
     });
 
     test('compiles nested plurals with an octothorpe', () => {
       expect(compileNode(parse('{foo,plural,many{#{bar,plural,one{#aaa}}}}'), options))
-          .toBe('p(locale,foo)===4?f(a(foo),p(locale,bar)===1?f(a(bar),"aaa"):f()):f()');
+          .toBe('p(locale,foo)===4?f(a(locale,foo),p(locale,bar)===1?f(a(locale,bar),"aaa"):f()):f()');
     });
 
     test('compiles plural with an octothorpe nested in an element', () => {
       expect(compileNode(parse('{foo,plural,many{<b>#aaa</b>}}'), options))
-          .toBe('p(locale,foo)===4?e("b",null,a(foo),"aaa"):f()');
+          .toBe('p(locale,foo)===4?e("b",null,a(locale,foo),"aaa"):f()');
     });
 
     test('compiles octothorpe as a sting outside of plural', () => {
@@ -136,7 +136,7 @@ describe('compileNode', () => {
 
     test('compiles fragment with multiple nodes', () => {
       expect(compileNode(parse('aaa{foo}'), options))
-          .toBe('f("aaa",a(foo))');
+          .toBe('f("aaa",a(locale,foo))');
     });
   });
 
@@ -159,12 +159,12 @@ describe('compileNode', () => {
 
     test('compiles an element with an argument attr', () => {
       expect(compileNode(parse('<b rrr="{foo}"></b>'), options))
-          .toBe('e("b",{rrr:a(foo)})');
+          .toBe('e("b",{rrr:a(locale,foo)})');
     });
 
     test('compiles an element with a fragment attr', () => {
       expect(compileNode(parse('<b rrr="aaa{foo}"></b>'), options))
-          .toBe('e("b",{rrr:f("aaa",a(foo))})');
+          .toBe('e("b",{rrr:f("aaa",a(locale,foo))})');
     });
 
     test('compiles an element with multiple attrs', () => {
@@ -174,17 +174,17 @@ describe('compileNode', () => {
 
     test('compiles an element with a single child', () => {
       expect(compileNode(parse('<b>{foo}</b>'), options))
-          .toBe('e("b",null,a(foo))');
+          .toBe('e("b",null,a(locale,foo))');
     });
 
     test('compiles an element with multiple children', () => {
       expect(compileNode(parse('<b>aaa{foo}</b>'), options))
-          .toBe('e("b",null,"aaa",a(foo))');
+          .toBe('e("b",null,"aaa",a(locale,foo))');
     });
 
     test('compiles an element with an attr and a child', () => {
       expect(compileNode(parse('<b rrr="www">aaa{foo}</b>'), options))
-          .toBe('e("b",{rrr:"www"},"aaa",a(foo))');
+          .toBe('e("b",{rrr:"www"},"aaa",a(locale,foo))');
     });
 
     test('compiles nested elements', () => {
@@ -194,7 +194,7 @@ describe('compileNode', () => {
 
     test('compiles elements mixed in a fragment', () => {
       expect(compileNode(parse('aaa<b>bbb{foo}ccc</b>ddd<i>eee{foo}fff</i>'), options))
-          .toBe('f("aaa",e("b",null,"bbb",a(foo),"ccc"),"ddd",e("i",null,"eee",a(foo),"fff"))');
+          .toBe('f("aaa",e("b",null,"bbb",a(locale,foo),"ccc"),"ddd",e("i",null,"eee",a(locale,foo),"fff"))');
     });
   });
 
@@ -202,27 +202,27 @@ describe('compileNode', () => {
 
     test('compiles a function', () => {
       expect(compileNode(parse('{foo,www}'), options))
-          .toBe('c("www",foo)');
+          .toBe('c(locale,"www",foo)');
     });
 
     test('compiles a function with an string child', () => {
       expect(compileNode(parse('{foo,www,aaa}'), options))
-          .toBe('c("www",foo,"aaa")');
+          .toBe('c(locale,"www",foo,"aaa")');
     });
 
     test('compiles a function with an element child', () => {
       expect(compileNode(parse('{foo,www,<b></b>}'), options))
-          .toBe('c("www",foo,e("b",null))');
+          .toBe('c(locale,"www",foo,e("b",null))');
     });
 
     test('compiles a function with a fragment child', () => {
       expect(compileNode(parse('{foo,www,aaa<b></b>}'), options))
-          .toBe('c("www",foo,f("aaa",e("b",null)))');
+          .toBe('c(locale,"www",foo,f("aaa",e("b",null)))');
     });
 
     test('compiles a function with an argument child', () => {
       expect(compileNode(parse('{foo,www,{bar}}'), options))
-          .toBe('c("www",foo,a(bar))');
+          .toBe('c(locale,"www",foo,a(locale,bar))');
     });
 
     test('invokes function callbacks', () => {

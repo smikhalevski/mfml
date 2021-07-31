@@ -1,7 +1,7 @@
 import {compileEmptyFragment, compileNode, INodeCompilerOptions} from './compileNode';
 import {isBlankNode, Node} from '../parser';
 import {RuntimeMethod} from 'mfml-runtime';
-import {jsonStringify} from '../misc';
+import {jsonStringify, objectCopy} from '../misc';
 
 /**
  * The mapping from a locale to an AST node.
@@ -19,17 +19,26 @@ export interface ILocaleNodeMapCompilerOptions extends Pick<INodeCompilerOptions
     | 'onRuntimeMethodUsed'> {
 
   /**
-   * The name of the variable that holds the current locale.
-   */
-  localeVarName: string;
-
-  /**
    * The default locale from {@link locales}.
    */
   defaultLocale: string;
 
   /**
+   * The name of the variable that holds the default locale or a source code of a literal default locale string. By
+   * default, the serialized {@link defaultLocale} is used.
+   */
+  defaultLocaleSrc?: string;
+
+  /**
+   * The name of the variable that holds the locale passed to the message function.
+   */
+  localeVarName: string;
+
+  /**
    * The list of all supported locales stored in {@link localesVarName}.
+   *
+   * The attentive reader might ask why not use the keys from the `localeNodeMap`. The reason is to preserve the same
+   * order of locales between different messages.
    */
   locales: Array<string>;
 
@@ -48,21 +57,21 @@ export interface ILocaleNodeMapCompilerOptions extends Pick<INodeCompilerOptions
 export function compileLocaleNodeMap(localeNodeMap: ILocaleNodeMap, options: Readonly<ILocaleNodeMapCompilerOptions>): string {
 
   const {
-    localeVarName,
     indexVarName,
     defaultLocale,
+    defaultLocaleSrc = jsonStringify(defaultLocale),
+    localeVarName,
     locales,
     localesVarName,
     onRuntimeMethodUsed,
   } = options;
 
   const blankIndices: Array<number> = [];
+  const nodeCompilerOptions: INodeCompilerOptions = objectCopy(options, {localeSrc: localeVarName});
 
   let defaultSrc = '';
   let childrenSrc = '';
   let childrenCount = 0;
-
-  const nodeCompilerOptions: INodeCompilerOptions = Object.assign({localeSrc: localeVarName}, options);
 
   for (let i = 0; i < locales.length; ++i) {
     const locale = locales[i];
@@ -74,8 +83,7 @@ export function compileLocaleNodeMap(localeNodeMap: ILocaleNodeMap, options: Rea
     }
     if (locale === defaultLocale) {
       // The default translation
-      nodeCompilerOptions.localeSrc = jsonStringify(locale);
-      defaultSrc = compileNode(node, nodeCompilerOptions);
+      defaultSrc = compileNode(node, objectCopy(options, {localeSrc: defaultLocaleSrc}));
       continue;
     }
     if (isBlankNode(node)) {
@@ -87,7 +95,6 @@ export function compileLocaleNodeMap(localeNodeMap: ILocaleNodeMap, options: Rea
       childrenSrc += ':' + indexVarName;
     }
 
-    nodeCompilerOptions.localeSrc = localeVarName;
     childrenSrc += '===' + i + '?' + compileNode(node, nodeCompilerOptions);
     childrenCount++;
   }

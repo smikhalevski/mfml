@@ -28,7 +28,7 @@ export interface INodeCompilerOptions {
   indexVarName: string;
 
   /**
-   * The locale var name or a source code of a literal locale string.
+   * The name of the variable that holds a locale or a source code of a literal locale string.
    */
   localeSrc: string;
 
@@ -70,6 +70,7 @@ export interface INodeCompilerOptions {
 export function compileNode(node: Node, options: Readonly<INodeCompilerOptions>): string {
 
   const {
+    localeSrc,
     otherSelectCaseKey = 'other',
     provideArgumentVarName,
     onFunctionUsed,
@@ -164,7 +165,7 @@ export function compileNode(node: Node, options: Readonly<INodeCompilerOptions>)
       enterChild();
 
       onRuntimeMethodUsed?.(RuntimeMethod.ARGUMENT, false);
-      src += RuntimeMethod.ARGUMENT + `(${provideArgumentVarName(node.name)})`;
+      src += RuntimeMethod.ARGUMENT + `(${localeSrc},${provideArgumentVarName(node.name)})`;
     },
 
     function(node, next) {
@@ -172,7 +173,7 @@ export function compileNode(node: Node, options: Readonly<INodeCompilerOptions>)
 
       onFunctionUsed?.(node);
       onRuntimeMethodUsed?.(RuntimeMethod.FUNCTION, false);
-      src += RuntimeMethod.FUNCTION + `(${jsonStringify(node.name)},${provideArgumentVarName(node.argumentName)}`;
+      src += RuntimeMethod.FUNCTION + `(${localeSrc},${jsonStringify(node.name)},${provideArgumentVarName(node.argumentName)}`;
 
       compileFragment(node, next);
       src += ')';
@@ -203,7 +204,7 @@ export function compileNode(node: Node, options: Readonly<INodeCompilerOptions>)
         enterChild();
 
         onRuntimeMethodUsed?.(RuntimeMethod.ARGUMENT, false);
-        src += RuntimeMethod.ARGUMENT + `(${provideArgumentVarName(selectNode.argumentName)})`;
+        src += RuntimeMethod.ARGUMENT + `(${localeSrc},${provideArgumentVarName(selectNode.argumentName)})`;
       } else {
         die('Octothorpe must be nested in a select');
       }
