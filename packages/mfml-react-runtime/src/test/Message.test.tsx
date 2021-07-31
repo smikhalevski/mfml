@@ -1,16 +1,16 @@
 import {render, screen} from '@testing-library/react';
 import React from 'react';
-import {MessageFunction, RuntimeMethod} from 'mfml-runtime';
-import {LocaleProvider, Message} from '../main/Message';
+import {MessageFunction} from 'mfml-runtime';
+import {LocaleProvider, Message, useMessage} from '../main/Message';
 
 describe('Message', () => {
 
-  const aaaBbb: MessageFunction = (runtime, locale) => {
-    return runtime[RuntimeMethod.LOCALE](locale, ['en', 'ru']) === 1 ? runtime[RuntimeMethod.FRAGMENT]('ппп', 'ттт') : runtime[RuntimeMethod.FRAGMENT]('aaa', 'bbb');
+  const aaaBbb: MessageFunction<void> = (r, locale) => {
+    return r.l(locale, ['en', 'ru']) === 1 ? r.f('ппп', 'ттт') : r.f('aaa', 'bbb');
   };
 
-  const aaaBbbCcc: MessageFunction<{ ccc: string }> = (runtime, locale, values) => {
-    return runtime[RuntimeMethod.FRAGMENT]('aaa', runtime[RuntimeMethod.ARGUMENT](values.ccc), 'bbb');
+  const aaaBbbCcc: MessageFunction<{ ccc: string }> = (r, locale, values) => {
+    return r.f('aaa', r.a(locale, values.ccc), 'bbb');
   };
 
   test('renders a message', () => {
@@ -29,5 +29,12 @@ describe('Message', () => {
     render(<Message message={aaaBbbCcc} values={{ccc: 'CCC'}}/>);
 
     expect(screen.queryByText('aaaCCCbbb')).not.toBeNull();
+  });
+
+  test('renders a message with values', () => {
+    const t = useMessage();
+
+    t(aaaBbb);
+    t(aaaBbbCcc, {ccc: ''});
   });
 });

@@ -2,8 +2,8 @@ import {program} from 'commander';
 import fs from 'fs';
 import path from 'path';
 import glob from 'glob';
-import {CliAdapter, ICliConfig} from './cli-types';
-import {compileModule, createMfmlParser, IMessageModule} from 'mfml-compiler';
+import {Adapter, IConfig} from './cli-types';
+import {compileModule, createMfmlParser, IMessage, IMessageModule} from 'mfml-compiler';
 
 const CONFIG_PATH = 'mfml.config.js';
 const ADAPTER_PATH = './adapters/localeFilesAdapter';
@@ -28,7 +28,7 @@ const outDir = path.resolve(dir, options.outDir);
 const rootDir = path.resolve(dir, options.rootDir);
 const configPath = path.join(dir, options.config);
 
-let config: ICliConfig = {};
+let config: IConfig = {};
 
 if (fs.existsSync(configPath)) {
   config = require(configPath);
@@ -50,10 +50,10 @@ const files = filePaths.reduce((files, filePath) => {
 }, {});
 
 const parseMfml = createMfmlParser(config);
-const moduleCompiler = (messageModule: IMessageModule) => compileModule(messageModule, parseMfml, config);
+const moduleCompiler = (messageModule: IMessageModule, onError?: (error: unknown, messageName: string, message: IMessage) => void) => compileModule(messageModule, parseMfml, Object.assign({}, config, {onError}));
 
 const adapterPath = config.adapterPath || ADAPTER_PATH;
-const adapter: CliAdapter<unknown> = require(adapterPath);
+const adapter: Adapter<unknown> = require(adapterPath);
 
 if (typeof adapter !== 'function') {
   console.log('error: Expected a function as a default export: ' + adapterPath);

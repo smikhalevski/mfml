@@ -1,53 +1,47 @@
 import {IMessage, IMessageModule} from 'mfml-compiler';
 import path from 'path';
-import {CliAdapter} from '../cli-types';
+import {Adapter} from '../cli-types';
 
 export interface ILocaleFilesAdapterOptions {
 
   /**
-   * The name of the index file that would re-export all message modules.
-   *
-   * @default `"./index.ts"`
+   * The name of the index file that exports all message modules.
    */
   digestFilePath?: string;
 
   /**
-   * If {@link digestFilePath} and {@link renameDigestNamespace} are provided then message functions from a module are
-   * exported under a namespace.
-   *
-   * @param filePath The module file path.
-   * @param messageModule The message module that is exported from the digest.
-   * @returns The name of the namespace that is exported from the digest and holds messages from the module.
+   * Returns a namespace under which the message must be exported.
    */
-  renameDigestNamespace?(filePath: string, messageModule: IMessageModule): string;
+  renameNamespace?(messageName: string, message: IMessage): string;
 
   /**
-   * Returns the relative file path with an extension where the message must be stored.
-   *
-   * @default `() => "./messages.ts"`
+   * Returns the name of the file where namespace must be output.
    */
-  rewriteFilePath?(messageName: string, message: IMessage): string;
+  rewriteFilePath?(namespace: string): string;
 }
 
 /**
  * Treats contents each file from `files` as a JSON object that maps a message name to a translation. The name of each
  * file is treated as a locale.
  */
-const localeFilesAdapter: CliAdapter<ILocaleFilesAdapterOptions | undefined | void> = (files, moduleCompiler, options = {}) => {
+const localeFilesAdapter: Adapter<ILocaleFilesAdapterOptions | null | undefined | void> = (includedFiles, moduleCompiler, options) => {
+
+  options ||= {};
 
   const {
     digestFilePath,
-    renameDigestNamespace,
-    rewriteFilePath = () => './messages.ts',
+    renameNamespace = () => 'messages',
+    rewriteFilePath = (namespace) => namespace + '.ts',
   } = options;
 
-  const messages: Record<string, IMessage> = Object.create(null);
-  const messageModules: Record<string, IMessageModule> = Object.create(null);
-  const outputFiles: Record<string, string> = {};
+  const messages = createMap<IMessage>();
+  const messageModules = createMap<IMessageModule>();
+  const namespaces = createMap<string>();
+  const outputFiles = createMap<string>();
 
-  // Collect messages
-  for (const [filePath, json] of Object.entries(files)) {
-    const locale = path.basename(filePath, '.json');
+  // Assemble messages
+  for (const [includedFilePath, json] of Object.entries(includedFiles)) {
+    const locale = path.basename(includedFilePath, '.json');
 
     for (const [messageName, messageSource] of Object.entries<string>(JSON.parse(json))) {
       const message = messages[messageName] ||= {translations: {}};
@@ -55,27 +49,41 @@ const localeFilesAdapter: CliAdapter<ILocaleFilesAdapterOptions | undefined | vo
     }
   }
 
-  // Assemble message modules
+  // Assemble modules
   for (const [messageName, message] of Object.entries(messages)) {
-    const messageModule = messageModules[rewriteFilePath(messageName, message)] ||= {messages: {}};
+    const namespace = renameNamespace(messageName, message);
+    const filePath = rewriteFilePath(namespace);
+
+    namespaces[filePath] ||= namespace;
+
+    const messageModule = messageModules[filePath] ||= {messages: {}};
     messageModule.messages[messageName] = message;
   }
 
   let digestSrc = '';
+  let failed = false;
 
-  // Compile message modules
+  const errors = createMap<unknown>();
+
+  const handleError = (error: unknown, messageName: string) => {
+    failed = true;
+    errors[messageName] = error;
+  };
+
+  // Compile modules
   for (const [filePath, messageModule] of Object.entries(messageModules)) {
-
-    // Assemble digest contents
     if (digestFilePath != null) {
-      if (renameDigestNamespace != null) {
-        digestSrc += `export*as ${renameDigestNamespace(filePath, messageModule)} from`;
-      } else {
-        digestSrc += 'export*from';
-      }
-      digestSrc += JSON.stringify(path.dirname(filePath) + path.sep + path.basename(filePath, '.ts')) + ';';
+      const modulePath = path.dirname(filePath) + path.sep + path.basename(filePath, '.ts');
+      digestSrc += `export*as ${namespaces[filePath]} from` + JSON.stringify(modulePath);
     }
-    outputFiles[filePath] = moduleCompiler(messageModule) + '\n';
+    outputFiles[filePath] = moduleCompiler(messageModule, handleError) + '\n';
+  }
+
+  if (failed) {
+    for (const [messageName, error] of Object.entries(errors)) {
+      console.log(messageName + '\n' + (error instanceof Error ? error.message : error));
+    }
+    return {};
   }
 
   if (digestFilePath != null && digestSrc !== '') {
@@ -86,3 +94,7 @@ const localeFilesAdapter: CliAdapter<ILocaleFilesAdapterOptions | undefined | vo
 };
 
 export default localeFilesAdapter;
+
+function createMap<T = any>(): Record<string, T> {
+  return Object.create(null);
+}

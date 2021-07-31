@@ -57,5 +57,5 @@ export function compileFunction(translations: Record<string, string>, mfmlParser
     defaultLocale,
   });
 
-  return new Function(VAR_NAME_RUNTIME, VAR_NAME_LOCALE, VAR_NAME_ARGS, bodySrc) as MessageFunction;
+  return new Function(VAR_NAME_RUNTIME, VAR_NAME_LOCALE, VAR_NAME_ARGS, bodySrc) as MessageFunction<any>;
 }

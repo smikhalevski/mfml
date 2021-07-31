@@ -1,4 +1,0 @@
-{
-  "login.say_hello": "Hello, <b>{name}</b>! {visit_count,plural,one{One visit} two{Two visits} many{A lot of visits}}",
-  "landing.title": "Very important page!"
-}

@@ -1,0 +1,15 @@
+{
+  "name": "example",
+  "version": "1.0.0",
+  "license": "MIT",
+  "scripts": {
+    "mfmlc": "node ../node_modules/mfml-cli/lib/mfmlc.js --rootDir ./src --outDir ./gen --includes './messages/*.json' --force"
+  },
+  "devDependencies": {
+    "mfml-cli": "^1.0.0",
+    "mfml-compiler": "^1.0.0"
+  },
+  "dependencies": {
+    "mfml-runtime": "^1.0.0"
+  }
+}

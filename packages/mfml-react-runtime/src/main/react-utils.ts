@@ -1,7 +1,7 @@
-import React from 'react';
+import {isValidElement, ReactNode} from 'react';
 
-export function isReactNode(value: unknown): value is React.ReactNode {
+export function isReactNode(value: unknown): value is ReactNode {
   return typeof value === 'string'
       || typeof value === 'number'
-      || typeof value === 'object' && React.isValidElement(value);
+      || typeof value === 'object' && isValidElement(value);
 }

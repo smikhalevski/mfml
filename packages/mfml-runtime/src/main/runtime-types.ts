@@ -1,4 +1,29 @@
+/**
+ * A function that renders a message.
+ *
+ * @template Values An object type that describes values of the message arguments or `void` if there's no  arguments.
+ *
+ * @param runtime The runtime that provides methods to render the message.
+ * @param locale The locale that defines what translation is used.
+ * @param values The ICU argument values.
+ * @returns The rendered message translation.
+ */
+export type MessageFunction<Values extends object | void> = <T>(runtime: IMessageRuntime<T>, locale: string, values: Values) => T | string;
+
+/**
+ * Options of the {@link IMessageRuntime}.
+ */
 export interface IMessageRuntimeOptions<T> {
+
+  dateTimeStyles?: {
+    [name: string]: Intl.DateTimeFormatOptions;
+    default: Intl.DateTimeFormatOptions;
+  };
+
+  numberStyles?: {
+    [name: string]: Intl.NumberFormatOptions;
+    default: Intl.NumberFormatOptions;
+  };
 
   /**
    * Renders an element.
@@ -17,26 +42,29 @@ export interface IMessageRuntimeOptions<T> {
   renderFragment(...children: Array<T | string>): T | string;
 
   /**
-   * Applies a function to an argument value.
+   * Renders an arbitrary argument passed to rendering function.
    *
+   * @param locale The locale passed to the message function or a default locale.
+   * @param value The argument value.
+   */
+  renderArgument?(locale: string, value: unknown): T | string;
+
+  /**
+   * Applies a function to an argument value. If omitted then a function argument is rendered using
+   * {@link renderArgument}.
+   *
+   * @param locale The locale passed to the message function or a default locale.
    * @param name The function name.
    * @param value An argument value.
    * @param param An optional additional param.
    */
-  renderFunction(name: string, value: unknown, param?: T | string): T | string;
-
-  /**
-   * Renders an arbitrary argument passed to rendering function.
-   *
-   * @param value The argument value.
-   */
-  renderArgument(value: unknown): T | string;
+  renderFunction?(locale: string, name: string, value: unknown, param?: T | string): T | string;
 
   /**
    * Returns an index of a locale from `locales` that best fits for `locale` or -1 to use the default locale available
    * in message.
    *
-   * @param locale The requested locale.
+   * @param locale The locale passed to the message function.
    * @param locales The list of locales supported by the message.
    *
    * @default {@link matchLocaleOrLanguage}
@@ -56,7 +84,7 @@ export interface IMessageRuntimeOptions<T> {
    * Returns the index of the plural category from {@link pluralCategories} that should be used for cardinal
    * pluralization of `value` in the given `locale`.
    *
-   * @param locale The locale for which pluralization is applied.
+   * @param locale The locale passed to the message function or a default locale.
    * @param value An argument value.
    */
   matchPlural?(locale: string, value: number): number;
@@ -65,7 +93,7 @@ export interface IMessageRuntimeOptions<T> {
    * Returns the index of the plural category from {@link pluralCategories} that should be used for ordinal
    * pluralization of `value` in the given `locale`.
    *
-   * @param locale The locale for which pluralization is applied.
+   * @param locale The locale passed to the message function or a default locale.
    * @param value An argument value.
    */
   matchSelectOrdinal?(locale: string, value: number): number;
@@ -89,17 +117,12 @@ export const enum RuntimeMethod {
  * The runtime that compiled messages use for rendering.
  */
 export interface IMessageRuntime<T> {
-  [RuntimeMethod.ELEMENT]: IMessageRuntimeOptions<T>['renderElement'];
-  [RuntimeMethod.FRAGMENT]: IMessageRuntimeOptions<T>['renderFragment'];
-  [RuntimeMethod.FUNCTION]: IMessageRuntimeOptions<T>['renderFunction'];
-  [RuntimeMethod.ARGUMENT]: IMessageRuntimeOptions<T>['renderArgument'];
+  [RuntimeMethod.ELEMENT]: IMessageRuntimeOptions<T>['renderElement'] & {};
+  [RuntimeMethod.FRAGMENT]: IMessageRuntimeOptions<T>['renderFragment'] & {};
+  [RuntimeMethod.ARGUMENT]: IMessageRuntimeOptions<T>['renderArgument'] & {};
+  [RuntimeMethod.FUNCTION]: IMessageRuntimeOptions<T>['renderFunction'] & {};
   [RuntimeMethod.LOCALE]: IMessageRuntimeOptions<T>['matchLocale'] & {};
   [RuntimeMethod.PLURAL]: IMessageRuntimeOptions<T>['matchPlural'] & {};
   [RuntimeMethod.SELECT]: IMessageRuntimeOptions<T>['matchSelect'] & {};
   [RuntimeMethod.SELECT_ORDINAL]: IMessageRuntimeOptions<T>['matchSelectOrdinal'] & {};
 }
-
-/**
- * A function that renders a message.
- */
-export type MessageFunction<Values extends object | void = void> = <T>(runtime: IMessageRuntime<T>, locale: string, values: Values) => T | string;

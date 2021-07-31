@@ -26,8 +26,8 @@ describe('createMessageRuntime', () => {
 
     runtime[RuntimeMethod.FRAGMENT]('abc');
     runtime[RuntimeMethod.ELEMENT]('foo', {aaa: 123}, 'abc');
-    runtime[RuntimeMethod.FUNCTION]('foo', 123, 'bar');
-    runtime[RuntimeMethod.ARGUMENT](123);
+    runtime[RuntimeMethod.FUNCTION]('en', 'foo', 123, 'bar');
+    runtime[RuntimeMethod.ARGUMENT]('en', 123);
     runtime[RuntimeMethod.LOCALE]('ru', ['en', 'ru']);
     runtime[RuntimeMethod.SELECT]('bbb', 'aaa', 'bbb', 'ccc');
     runtime[RuntimeMethod.PLURAL]('ru', 1);
@@ -44,8 +44,8 @@ describe('createMessageRuntime', () => {
 
     expect(renderFragmentMock).toHaveBeenCalledWith('abc');
     expect(renderElementMock).toHaveBeenCalledWith('foo', {aaa: 123}, 'abc');
-    expect(renderFunctionMock).toHaveBeenCalledWith('foo', 123, 'bar');
-    expect(renderArgumentMock).toHaveBeenCalledWith(123);
+    expect(renderFunctionMock).toHaveBeenCalledWith('en', 'foo', 123, 'bar');
+    expect(renderArgumentMock).toHaveBeenCalledWith('en', 123);
     expect(matchLocaleMock).toHaveBeenCalledWith('ru', ['en', 'ru']);
     expect(matchSelectMock).toHaveBeenCalledWith('bbb', 'aaa', 'bbb', 'ccc');
     expect(matchPluralMock).toHaveBeenCalledWith('ru', 1);

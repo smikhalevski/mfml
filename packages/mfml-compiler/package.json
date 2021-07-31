@@ -39,7 +39,14 @@
   },
   "homepage": "https://github.com/smikhalevski/mfml#readme",
   "jest": {
-    "preset": "ts-jest"
+    "preset": "ts-jest",
+    "globals": {
+      "ts-jest": {
+        "diagnostics": {
+          "ignoreCodes": [151001]
+        }
+      }
+    }
   },
   "devDependencies": {
     "@types/moo": "^0.5.4"

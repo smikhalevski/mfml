@@ -31,12 +31,12 @@ describe('localeFilesAdapter', () => {
           'import{MessageFunction}from"mfml-runtime";' +
           'const b=["en","es"];' +
 
-          'let aaa:MessageFunction=(runtime,locale)=>{' +
+          'let aaa:MessageFunction<void>=(runtime,locale)=>{' +
           'const{l}=runtime;' +
           'return l(locale,b)===1?"Hola!":"Hello!"' +
           '};' +
 
-          'let bbb:MessageFunction=(runtime,locale)=>{' +
+          'let bbb:MessageFunction<void>=(runtime,locale)=>{' +
           'const{l}=runtime;' +
           'return l(locale,b)===1?"Adiós!":"Bye!"' +
           '};' +
@@ -46,7 +46,7 @@ describe('localeFilesAdapter', () => {
   });
 
   test('compiles a digest', () => {
-    options.digestFilePath = './index.ts';
+    options.indexFilePath = './index.ts';
 
     expect(localeFilesAdapter(files, compileModuleMock, options)).toEqual({
       './index.ts': 'export*from"./messages";',
@@ -55,8 +55,8 @@ describe('localeFilesAdapter', () => {
   });
 
   test('compiles a digest with a namespace', () => {
-    options.digestFilePath = './index.ts';
-    options.renameDigestNamespace = (filePath) => path.basename(filePath, '.ts');
+    options.indexFilePath = './index.ts';
+    options.renameNamespace = (filePath) => path.basename(filePath, '.ts');
 
     expect(localeFilesAdapter(files, compileModuleMock, options)).toEqual({
       './index.ts': 'export*as messages from"./messages";',
@@ -69,7 +69,7 @@ describe('localeFilesAdapter', () => {
   });
 
   test('compiles an empty input map with digest', () => {
-    options.digestFilePath = './index.ts';
+    options.indexFilePath = './index.ts';
 
     expect(localeFilesAdapter({}, compileModuleMock, options)).toEqual({});
   });

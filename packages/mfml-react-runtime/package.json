@@ -40,7 +40,14 @@
   "homepage": "https://github.com/smikhalevski/mfml#readme",
   "jest": {
     "preset": "ts-jest",
-    "testEnvironment": "jsdom"
+    "testEnvironment": "jsdom",
+    "globals": {
+      "ts-jest": {
+        "diagnostics": {
+          "ignoreCodes": [151001]
+        }
+      }
+    }
   },
   "peerDependencies": {
     "mfml-runtime": "^1.0.0",

@@ -19,9 +19,10 @@ export interface ILocaleNodeMapCompilerOptions extends Pick<INodeCompilerOptions
     | 'onRuntimeMethodUsed'> {
 
   /**
-   * The default locale from {@link locales}.
+   * The default locale from {@link locales}. If omitted then an empty fragment would be returned if an unsupported
+   * locale is passed to a message function.
    */
-  defaultLocale: string;
+  defaultLocale?: string;
 
   /**
    * The name of the variable that holds the default locale or a source code of a literal default locale string. By
