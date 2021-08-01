@@ -17,7 +17,7 @@ export function jsonStringify(value: any): string {
 }
 
 /**
- * Creates a shallow copy of a plain object.
+ * Creates a shallow copy of an object.
  */
 export function objectCopy<A, B>(a: A, b?: B): {} & A & B {
   return Object.assign({}, a, b);

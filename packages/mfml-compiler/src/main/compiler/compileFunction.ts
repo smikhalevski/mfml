@@ -34,7 +34,7 @@ export interface IFunctionCompilerOptions {
  * @param mfmlParser The MFML parser instance.
  * @param options Compiler options.
  */
-export function compileFunction(translations: Record<string, string>, mfmlParser: MfmlParser, options: IFunctionCompilerOptions = {}): MessageFunction<any> {
+export function compileFunction<Values extends object | void>(translations: Record<string, string>, mfmlParser: MfmlParser, options: IFunctionCompilerOptions = {}): MessageFunction<Values> {
 
   const {
     otherSelectCaseKey = 'other',
@@ -57,5 +57,5 @@ export function compileFunction(translations: Record<string, string>, mfmlParser
     defaultLocale,
   });
 
-  return new Function(VAR_NAME_RUNTIME, VAR_NAME_LOCALE, VAR_NAME_ARGS, bodySrc) as MessageFunction<any>;
+  return new Function(VAR_NAME_RUNTIME, VAR_NAME_LOCALE, VAR_NAME_ARGS, bodySrc) as MessageFunction<Values>;
 }

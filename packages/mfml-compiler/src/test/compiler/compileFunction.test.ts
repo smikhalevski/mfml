@@ -1,16 +1,9 @@
 import {compileFunctionBody} from '../../main/compiler/compileFunctionBody';
 import {createMfmlParser} from '../../main/parser/createMfmlParser';
 import {compileFunction, IFunctionCompilerOptions} from '../../main/compiler/compileFunction';
-import {createMessageRuntime} from 'mfml-runtime';
+import {stringRuntime} from 'mfml-runtime';
 
 describe('compileFunctionBody', () => {
-
-  const runtime = createMessageRuntime<string>({
-    renderFragment: (...children) => children.join(''),
-    renderElement: (tagName, attributes, ...children) => children.join(''),
-    renderFunction: (name, value) => String(value),
-    renderArgument: (value) => String(value),
-  });
 
   const parse = createMfmlParser();
 
@@ -23,10 +16,17 @@ describe('compileFunctionBody', () => {
     };
   });
 
-  test('compiles a function body', () => {
-    const fn = compileFunction({en: 'foo', ru: 'bar'}, parse, options);
+  test('compiles a function', () => {
+    const message = compileFunction({en: 'foo', ru: 'bar'}, parse, options);
 
-    expect(fn(runtime, 'en', undefined)).toBe('foo');
-    expect(fn(runtime, 'ru', undefined)).toBe('bar');
+    expect(message(stringRuntime, 'en')).toBe('foo');
+    expect(message(stringRuntime, 'ru')).toBe('bar');
+  });
+
+  test('compiles a function with arguments', () => {
+    const message = compileFunction({en: 'foo {qux}', ru: 'bar'}, parse, options);
+
+    expect(message(stringRuntime, 'en', {qux: 'abc'})).toBe('foo abc');
+    expect(message(stringRuntime, 'ru', {})).toBe('bar');
   });
 });

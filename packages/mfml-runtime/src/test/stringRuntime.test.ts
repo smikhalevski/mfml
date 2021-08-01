@@ -8,7 +8,10 @@ describe('stringRuntime', () => {
   };
 
   test('renders a string', () => {
-    expect(message(stringRuntime, 'en', {aaa: new Date(), ccc: 123123}))
-        .toBe('7/31/2021__123,123');
+    expect(message(stringRuntime, 'en', {aaa: new Date(123456789), ccc: 123123.123}))
+        .toBe('1/2/1970__123,123.123');
+
+    expect(message(stringRuntime, 'ru', {aaa: new Date(123456789), ccc: 123123.123}))
+        .toBe('02.01.1970__123\u00a0123,123');
   });
 });
