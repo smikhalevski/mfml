@@ -1,7 +1,7 @@
 import {program} from 'commander';
-import fs from 'fs';
-import path from 'path';
-import glob from 'glob';
+import * as fs from 'fs';
+import * as path from 'path';
+import * as glob from 'glob';
 import {Adapter, IConfig} from './cli-types';
 import {compileModule, createMfmlParser, IMessage, IMessageModule} from 'mfml-compiler';
 

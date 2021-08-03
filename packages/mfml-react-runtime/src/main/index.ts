@@ -1,3 +1,3 @@
 export * from './createMessageComponent';
-export * from './createReactMessageRuntime';
+export * from './createReactRuntime';
 export * from './Message';

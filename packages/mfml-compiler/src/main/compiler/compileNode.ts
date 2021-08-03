@@ -173,8 +173,9 @@ export function compileNode(node: Node, options: Readonly<INodeCompilerOptions>)
 
       onFunctionUsed?.(node);
       onRuntimeMethodUsed?.(RuntimeMethod.FUNCTION, false);
-      src += RuntimeMethod.FUNCTION + `(${localeSrc},${jsonStringify(node.name)},${provideArgumentVarName(node.argumentName)}`;
+      src += RuntimeMethod.FUNCTION + `(${localeSrc},${provideArgumentVarName(node.argumentName)},${jsonStringify(node.name)}`;
 
+      // TODO Customize the compilation of ICU function options
       compileFragment(node, next);
       src += ')';
     },

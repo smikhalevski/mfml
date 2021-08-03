@@ -18,12 +18,12 @@ export interface IDynamicCompilerOptions extends IMfmlParserOptions, IFunctionCo
  * const compile = createDynamicCompiler();
  *
  * const message = compile({
- *   en: 'Hello, {name}!',
- *   ru: 'Привет, {name}!',
+ *   en: 'Bye, {name}!',
+ *   ru: 'Пока, {name}!',
  *   es: 'Adiós, {name}!',
  * });
  *
- * message(stringRuntime, 'en', {name: 'Karen'}); // → 'Hello, Karen!'
+ * message(stringRuntime, 'en', {name: 'Karen'}); // → 'Bye, Karen!'
  * ```
  *
  * @param options Compiler options.

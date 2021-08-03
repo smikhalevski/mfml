@@ -1,6 +1,6 @@
-import {createMessageRuntime} from './createMessageRuntime';
+import {createIntlRuntime} from './createIntlRuntime';
 
-export const stringRuntime = createMessageRuntime({
+export const stringRuntime = createIntlRuntime({
   renderFragment() {
     let str = '';
     for (let i = 0; i < arguments.length; ++i) {
@@ -14,5 +14,8 @@ export const stringRuntime = createMessageRuntime({
       str += arguments[i];
     }
     return str;
+  },
+  renderArgument(locale, value) {
+    return '' + value;
   },
 });

@@ -43,9 +43,14 @@
     "globals": {
       "ts-jest": {
         "diagnostics": {
-          "ignoreCodes": [151001]
+          "ignoreCodes": [
+            151001
+          ]
         }
       }
     }
+  },
+  "dependencies": {
+    "locale-matcher": "^1.0.0"
   }
 }

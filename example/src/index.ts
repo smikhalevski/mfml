@@ -1,7 +1,7 @@
 import {Landing, Login} from '../gen';
-import {createMessageRuntime} from 'mfml-runtime';
+import {createRuntime} from 'mfml-runtime';
 
-const runtime = createMessageRuntime<string>({
+const runtime = createRuntime<string>({
   renderFragment: (...children) => children.join(''),
   renderElement: (tagName, attributes, ...children) => children.join(''),
   renderFunction: (name, value) => String(value),

@@ -1,5 +1,5 @@
-import {createElement, Fragment, isValidElement, useContext} from 'react';
-import {IMessageRuntime, MessageFunction} from 'mfml-runtime';
+import {Context, createElement, Fragment, isValidElement, ReactElement, ReactNode, useContext} from 'react';
+import {IRuntime, MessageFunction} from 'mfml-runtime';
 
 interface IUnsafeMessageProps {
   message: MessageFunction<any>;
@@ -12,7 +12,7 @@ export type MessageProps<F extends MessageFunction<any>> =
 /**
  * The component that renders a message using a runtime available through the context.
  */
-export type MessageComponent = <F extends MessageFunction<any>>(props: MessageProps<F>) => React.ReactElement | null;
+export type MessageComponent = <F extends MessageFunction<any>>(props: MessageProps<F>) => ReactElement | null;
 
 /**
  * Creates a component that renders a message using a runtime provided through the `runtimeContext`.
@@ -21,7 +21,7 @@ export type MessageComponent = <F extends MessageFunction<any>>(props: MessagePr
  * @param localeContext The context that provides the current locale.
  * @see {@link Message}
  */
-export function createMessageComponent(runtimeContext: React.Context<IMessageRuntime<React.ReactNode>>, localeContext: React.Context<string>): MessageComponent {
+export function createMessageComponent(runtimeContext: Context<IRuntime<ReactNode>>, localeContext: Context<string>): MessageComponent {
   return (props: IUnsafeMessageProps) => {
     const {message, values} = props;
 

@@ -1,6 +1,7 @@
-import {createMessageRuntime, RuntimeMethod} from '../main';
+import {createRuntime} from '../main/createRuntime';
+import {RuntimeMethod} from '../main/runtime-types';
 
-describe('createMessageRuntime', () => {
+describe('createRuntime', () => {
 
   test('invokes methods from options', () => {
 
@@ -13,7 +14,7 @@ describe('createMessageRuntime', () => {
     const matchPluralMock = jest.fn();
     const matchSelectOrdinalMock = jest.fn();
 
-    const runtime = createMessageRuntime({
+    const runtime = createRuntime({
       renderFragment: renderFragmentMock,
       renderElement: renderElementMock,
       renderFunction: renderFunctionMock,
@@ -26,7 +27,7 @@ describe('createMessageRuntime', () => {
 
     runtime[RuntimeMethod.FRAGMENT]('abc');
     runtime[RuntimeMethod.ELEMENT]('foo', {aaa: 123}, 'abc');
-    runtime[RuntimeMethod.FUNCTION]('en', 'foo', 123, 'bar');
+    runtime[RuntimeMethod.FUNCTION]('en', 123, 'foo', 'bar');
     runtime[RuntimeMethod.ARGUMENT]('en', 123);
     runtime[RuntimeMethod.LOCALE]('ru', ['en', 'ru']);
     runtime[RuntimeMethod.SELECT]('bbb', 'aaa', 'bbb', 'ccc');
@@ -44,7 +45,7 @@ describe('createMessageRuntime', () => {
 
     expect(renderFragmentMock).toHaveBeenCalledWith('abc');
     expect(renderElementMock).toHaveBeenCalledWith('foo', {aaa: 123}, 'abc');
-    expect(renderFunctionMock).toHaveBeenCalledWith('en', 'foo', 123, 'bar');
+    expect(renderFunctionMock).toHaveBeenCalledWith('en', 123, 'foo', 'bar');
     expect(renderArgumentMock).toHaveBeenCalledWith('en', 123);
     expect(matchLocaleMock).toHaveBeenCalledWith('ru', ['en', 'ru']);
     expect(matchSelectMock).toHaveBeenCalledWith('bbb', 'aaa', 'bbb', 'ccc');

@@ -1,5 +1,5 @@
 import {IMessage, IMessageModule} from 'mfml-compiler';
-import path from 'path';
+import * as path from 'path';
 import {Adapter} from '../cli-types';
 
 export interface ILocaleFilesAdapterOptions {

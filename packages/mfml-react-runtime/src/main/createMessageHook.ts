@@ -1,5 +1,5 @@
-import {useContext, useCallback} from 'react';
-import {IMessageRuntime, MessageFunction} from 'mfml-runtime';
+import {Context, useCallback, useContext} from 'react';
+import {IRuntime, MessageFunction} from 'mfml-runtime';
 
 export interface IMessageRenderer<T> {
 
@@ -16,7 +16,7 @@ export interface IMessageRenderer<T> {
  * @param localeContext The context that provides the current locale.
  * @see {@link useMessage}
  */
-export function createMessageHook<T>(runtimeContext: React.Context<IMessageRuntime<T>>, localeContext: React.Context<string>): () => IMessageRenderer<T> {
+export function createMessageHook<T>(runtimeContext: Context<IRuntime<T>>, localeContext: Context<string>): () => IMessageRenderer<T> {
   return () => {
     const runtime = useContext(runtimeContext);
     const locale = useContext(localeContext);

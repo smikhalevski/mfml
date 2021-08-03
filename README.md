@@ -32,9 +32,9 @@ fs.writeFileSync('./messages.ts', source);
 Use messages in the application source:
 ```ts
 import {greeting} from './mesasges';
-import {createMessageRuntime} from 'mfml';
+import {createIntlRuntime} from 'mfml';
 
-const runtime = createMessageRuntime();
+const runtime = createIntlRuntime();
 
 console.log(greeting(runtime, 'en', {name: 'Karen'}));
 // → Hello, Karen!

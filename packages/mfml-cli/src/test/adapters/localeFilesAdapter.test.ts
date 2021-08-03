@@ -46,7 +46,7 @@ describe('localeFilesAdapter', () => {
   });
 
   test('compiles a digest', () => {
-    options.indexFilePath = './index.ts';
+    options.digestFilePath = './index.ts';
 
     expect(localeFilesAdapter(files, compileModuleMock, options)).toEqual({
       './index.ts': 'export*from"./messages";',
@@ -55,7 +55,7 @@ describe('localeFilesAdapter', () => {
   });
 
   test('compiles a digest with a namespace', () => {
-    options.indexFilePath = './index.ts';
+    options.digestFilePath = './index.ts';
     options.renameNamespace = (filePath) => path.basename(filePath, '.ts');
 
     expect(localeFilesAdapter(files, compileModuleMock, options)).toEqual({
@@ -69,7 +69,7 @@ describe('localeFilesAdapter', () => {
   });
 
   test('compiles an empty input map with digest', () => {
-    options.indexFilePath = './index.ts';
+    options.digestFilePath = './index.ts';
 
     expect(localeFilesAdapter({}, compileModuleMock, options)).toEqual({});
   });
