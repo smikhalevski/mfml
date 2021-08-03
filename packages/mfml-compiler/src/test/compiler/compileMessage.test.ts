@@ -58,7 +58,7 @@ describe('compileMessage', () => {
         + 'let ggg:MessageFunction<IGggValues>=(runtime,locale,values)=>{'
         + 'const{c}=runtime;'
         + 'const{foo:b}=values;'
-        + 'return c(defaultLocale,"aaa",b)'
+        + 'return c(defaultLocale,b,"aaa")'
         + '};',
     );
   });
@@ -73,7 +73,7 @@ describe('compileMessage', () => {
         + 'let ggg:MessageFunction<IGggValues>=(runtime,locale,values)=>{'
         + 'const{f,c}=runtime;'
         + 'const{foo:b}=values;'
-        + 'return f(c(defaultLocale,"aaa",b),c(defaultLocale,"bbb",b))'
+        + 'return f(c(defaultLocale,b,"aaa"),c(defaultLocale,b,"bbb"))'
         + '};',
     );
   });
@@ -88,7 +88,7 @@ describe('compileMessage', () => {
         + 'let ggg:MessageFunction<IGggValues>=(runtime,locale,values)=>{'
         + 'const{f,c}=runtime;'
         + 'const{foo:b}=values;'
-        + 'return f(c(defaultLocale,"aaa",b),c(defaultLocale,"bbb",b))'
+        + 'return f(c(defaultLocale,b,"aaa"),c(defaultLocale,b,"bbb"))'
         + '};',
     );
   });
@@ -103,7 +103,7 @@ describe('compileMessage', () => {
         + 'let ggg:MessageFunction<IGggValues>=(runtime,locale,values)=>{'
         + 'const{c}=runtime;'
         + 'const{foo:b}=values;'
-        + 'return c(defaultLocale,"aaa",b)'
+        + 'return c(defaultLocale,b,"aaa")'
         + '};',
     );
   });

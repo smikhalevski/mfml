@@ -1,5 +1,6 @@
 import {
   ContainerNode,
+  getSignificantSize,
   IFunctionNode,
   isBlankNode,
   ISelectCaseNode,
@@ -92,22 +93,16 @@ export function compileNode(node: Node, options: Readonly<INodeCompilerOptions>)
   };
 
   const compileFragment = (node: ContainerNode, next: () => void) => {
-    let childrenCount = 0;
-
-    for (const childNode of node.children) {
-      if (!isBlankNode(childNode) && ++childrenCount === 2) {
-        break;
-      }
-    }
-    if (childrenCount === 0) {
+    const size = getSignificantSize(node.children);
+    if (size === 0) {
       return;
     }
-    if (childrenCount === 1) {
+    if (size === 1) {
       next();
       return;
     }
     enterChild();
-    if (childrenCount > 1) {
+    if (size > 1) {
       onRuntimeMethodUsed?.(RuntimeMethod.FRAGMENT, false);
       src += RuntimeMethod.FRAGMENT + '(';
       enterBlock();
@@ -147,10 +142,14 @@ export function compileNode(node: Node, options: Readonly<INodeCompilerOptions>)
 
       if (node.children.length === 0) {
         src += 'true';
-      } else {
-        enterBlock();
-        compileFragment(node, next);
+        return;
       }
+      if (getSignificantSize(node.children) === 0) {
+        src += '""';
+        return;
+      }
+      enterBlock();
+      compileFragment(node, next);
     },
 
     text(node: ITextNode) {
@@ -175,7 +174,6 @@ export function compileNode(node: Node, options: Readonly<INodeCompilerOptions>)
       onRuntimeMethodUsed?.(RuntimeMethod.FUNCTION, false);
       src += RuntimeMethod.FUNCTION + `(${localeSrc},${provideArgumentVarName(node.argumentName)},${jsonStringify(node.name)}`;
 
-      // TODO Customize the compilation of ICU function options
       compileFragment(node, next);
       src += ')';
     },

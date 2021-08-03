@@ -28,3 +28,13 @@ export function isBlankNode(node: Node | null | undefined): boolean {
       || (isSelectNode(node) || node?.nodeType === NodeType.SELECT_CASE || node?.nodeType === NodeType.FRAGMENT) && node.children.every(isBlankNode)
       || isTextNode(node) && node.value === '';
 }
+
+export function getSignificantSize(nodes: Array<Node>): 0 | 1 | 2 {
+  let size = 0;
+  for (const node of nodes) {
+    if (!isBlankNode(node) && ++size === 2) {
+      break;
+    }
+  }
+  return size as 0 | 1 | 2;
+}

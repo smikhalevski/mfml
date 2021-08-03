@@ -157,6 +157,11 @@ describe('compileNode', () => {
           .toBe('e("b",{rrr:"www"})');
     });
 
+    test('compiles an element with an empty string attr', () => {
+      expect(compileNode(parse('<b rrr=""></b>'), options))
+          .toBe('e("b",{rrr:""})');
+    });
+
     test('compiles an element with an argument attr', () => {
       expect(compileNode(parse('<b rrr="{foo}"></b>'), options))
           .toBe('e("b",{rrr:a(locale,foo)})');
@@ -202,27 +207,27 @@ describe('compileNode', () => {
 
     test('compiles a function', () => {
       expect(compileNode(parse('{foo,www}'), options))
-          .toBe('c(locale,"www",foo)');
+          .toBe('c(locale,foo,"www")');
     });
 
     test('compiles a function with an string child', () => {
       expect(compileNode(parse('{foo,www,aaa}'), options))
-          .toBe('c(locale,"www",foo,"aaa")');
+          .toBe('c(locale,foo,"www","aaa")');
     });
 
     test('compiles a function with an element child', () => {
       expect(compileNode(parse('{foo,www,<b></b>}'), options))
-          .toBe('c(locale,"www",foo,e("b",null))');
+          .toBe('c(locale,foo,"www",e("b",null))');
     });
 
     test('compiles a function with a fragment child', () => {
       expect(compileNode(parse('{foo,www,aaa<b></b>}'), options))
-          .toBe('c(locale,"www",foo,f("aaa",e("b",null)))');
+          .toBe('c(locale,foo,"www",f("aaa",e("b",null)))');
     });
 
     test('compiles a function with an argument child', () => {
       expect(compileNode(parse('{foo,www,{bar}}'), options))
-          .toBe('c(locale,"www",foo,a(locale,bar))');
+          .toBe('c(locale,foo,"www",a(locale,bar))');
     });
 
     test('invokes function callbacks', () => {
