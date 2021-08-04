@@ -1,6 +1,6 @@
 import {compileMessage, IMessageCompilerOptions, IMessageMetadata} from './compileMessage';
 import {camelCase, createVarNameProvider, pascalCase} from '@smikhalevski/codegen';
-import {createMap, die, jsonStringify, Maybe} from '../misc';
+import {createMap, jsonStringify, Maybe} from '../misc';
 import {IMessage, IMessageModule} from './compiler-types';
 import {MfmlParser} from '../parser';
 import {ILocaleNodeMap} from './compileLocaleNodeMap';
@@ -119,8 +119,9 @@ export function compileModule(messageModule: IMessageModule, mfmlParser: MfmlPar
 
   let src = '';
 
-  for (const [messageName, message] of messageEntries) {
+  for (let i = 0; i < messageEntries.length; ++i) {
 
+    const [messageName, message] = messageEntries[i];
     const locales = Object.keys(message.translations).sort();
 
     if (locales.length === 0) {
@@ -130,51 +131,64 @@ export function compileModule(messageModule: IMessageModule, mfmlParser: MfmlPar
 
     const defaultLocale = provideDefaultLocale ? provideDefaultLocale(messageName, message) : locales[0];
     const defaultLocaleVarName = localeVarNameMap[defaultLocale] ||= varNameProvider.next();
-    const localesVarName = locales.length > 1 ? localesVarSrcMap[jsonStringify(locales)] ||= varNameProvider.next() : '';
 
-    if (localesVarName) {
+    if (!locales.includes(defaultLocale)) {
+      locales.push(defaultLocale);
+      locales.sort();
+    }
+
+    let localesVarName = '';
+
+    if (locales.length > 1) {
+      localesVarName = localesVarSrcMap[jsonStringify(locales)] ||= varNameProvider.next();
       localesMap[localesVarName] = locales;
     }
 
     // Maps locale to a parsed node
     const localeNodeMap: ILocaleNodeMap = {};
 
-    for (const locale of locales) {
-      let translation = message.translations[locale];
-
-      if (rewriteTranslation != null) {
-        // Apply preprocessors
-        translation = rewriteTranslation(translation, locale);
-      }
-      localeNodeMap[locale] = mfmlParser(translation);
-    }
-
-    const compilerOptions: IMessageCompilerOptions = {
-      typingsEnabled,
-      otherSelectCaseKey,
-      provideFunctionType,
-      renderMetadata: renderMetadata ? (metadata) => renderMetadata(metadata, messageName, message) : undefined,
-      interfaceName: renameInterface(messageName, message),
-      functionName: renameMessageFunction(messageName, message),
-      localeVarName: VAR_NAME_LOCALE,
-      runtimeVarName: VAR_NAME_RUNTIME,
-      argsVarName: VAR_NAME_ARGS,
-      indexVarName: VAR_NAME_INDEX,
-      comment: extractComment?.(messageName, message),
-      defaultLocale,
-      defaultLocaleVarName,
-      localesVarName,
-      locales,
-    };
-
     try {
-      src += compileMessage(localeNodeMap, compilerOptions);
-    } catch (error) {
-      if (onError) {
-        onError(error, messageName, message);
-      } else {
-        die('Message compilation failed: ' + messageName);
+
+      for (const locale of locales) {
+        let translation = message.translations[locale];
+        if (translation == null) {
+          continue;
+        }
+        // Apply preprocessors
+        if (rewriteTranslation != null) {
+          translation = rewriteTranslation(translation, locale);
+        }
+        localeNodeMap[locale] = mfmlParser(translation);
       }
+
+      const compilerOptions: IMessageCompilerOptions = {
+        typingsEnabled,
+        otherSelectCaseKey,
+        provideFunctionType,
+        renderMetadata: renderMetadata ? (metadata) => renderMetadata(metadata, messageName, message) : undefined,
+        interfaceName: renameInterface(messageName, message),
+        functionName: functionNames[i],
+        localeVarName: VAR_NAME_LOCALE,
+        runtimeVarName: VAR_NAME_RUNTIME,
+        argsVarName: VAR_NAME_ARGS,
+        indexVarName: VAR_NAME_INDEX,
+        comment: extractComment?.(messageName, message),
+        defaultLocale,
+        defaultLocaleVarName,
+        localesVarName,
+        locales,
+      };
+
+      src += compileMessage(localeNodeMap, compilerOptions);
+
+    } catch (error) {
+      if (!onError) {
+        throw error;
+      }
+
+      src += `let ${functionNames[i]}=/*ERROR*/undefined;`;
+
+      onError(error, messageName, message);
     }
   }
 

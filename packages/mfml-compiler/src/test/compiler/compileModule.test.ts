@@ -1,14 +1,14 @@
-import {createMfmlParser} from '../../main/parser/createMfmlParser';
+import {createMfmlParser, MfmlParser} from '../../main/parser/createMfmlParser';
 import {compileModule, IModuleCompilerOptions} from '../../main/compiler/compileModule';
 import {IMessageModule} from '../../main/compiler/compiler-types';
 
 describe('compileModule', () => {
 
-  const parse = createMfmlParser();
-
+  let parse: MfmlParser;
   let options: IModuleCompilerOptions;
 
   beforeEach(() => {
+    parse = createMfmlParser();
     options = {typingsEnabled: true};
   });
 
@@ -168,6 +168,66 @@ describe('compileModule', () => {
         + '};'
         + 'export{a};',
     );
+  });
+
+  test('compiles message with a single non-default locale', () => {
+    const messageModule: IMessageModule = {
+      messages: {
+        a: {
+          translations: {
+            ru: 'aaa',
+          },
+        },
+      },
+    };
+
+    options.provideDefaultLocale = () => 'en';
+
+    expect(compileModule(messageModule, parse, options)).toBe(
+        'import{MessageFunction}from"mfml-runtime";'
+        + 'const b="en";'
+        + 'const d=[b,"ru"];'
+        + 'let a:MessageFunction<void>=(runtime,locale)=>{'
+        + 'const{l,f}=runtime;'
+        + 'return l(locale,d)===1?"aaa":f()'
+        + '};'
+        + 'export{a};',
+    );
+  });
+
+  test('captures errors during compilation', () => {
+    const messageModule: IMessageModule = {
+      messages: {
+        a: {
+          translations: {en: '{aaa}'},
+        },
+        b: {
+          translations: {en: '{bbb}'},
+        },
+      },
+    };
+
+    const onErrorMock = jest.fn();
+
+    options.onError = onErrorMock;
+
+    parse = createMfmlParser({
+      renameArgument() {
+        throw new Error('wow');
+      },
+    });
+
+    expect(compileModule(messageModule, parse, options)).toBe(
+        'import{MessageFunction}from"mfml-runtime";' +
+        'const d="en";' +
+        'let a=/*ERROR*/undefined;' +
+        'let b=/*ERROR*/undefined;' +
+        'export{a,b};',
+    );
+
+    expect(onErrorMock).toHaveBeenCalledTimes(2);
+    expect(onErrorMock).toHaveBeenNthCalledWith(1, expect.any(Error), 'a', {translations: {en: '{aaa}'}})
+    expect(onErrorMock).toHaveBeenNthCalledWith(2, expect.any(Error), 'b', {translations: {en: '{bbb}'}})
   });
 
 });
