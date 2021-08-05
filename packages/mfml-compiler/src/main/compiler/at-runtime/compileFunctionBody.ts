@@ -1,7 +1,7 @@
 import {compilePropertyAccessor, createVarNameProvider} from '@smikhalevski/codegen';
-import {compileLocaleNodeMap, ILocaleNodeMap, ILocaleNodeMapCompilerOptions} from './compileLocaleNodeMap';
-import {createMap} from '../misc';
-import {runtimeMethods} from './runtimeMethods';
+import {compileLocaleNodeMap, ILocaleNodeMap, ILocaleNodeMapCompilerOptions} from '../compileLocaleNodeMap';
+import {createMap} from '../../misc';
+import {runtimeMethods} from '../runtimeMethods';
 
 export interface IFunctionBodyCompilerOptions extends Pick<ILocaleNodeMapCompilerOptions,
     | 'localeVarName'

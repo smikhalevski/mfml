@@ -1,8 +1,8 @@
 import {MessageFunction} from 'mfml-runtime';
 import {compileFunctionBody} from './compileFunctionBody';
-import {ILocaleNodeMap} from './compileLocaleNodeMap';
-import {createMap} from '../misc';
-import {MfmlParser} from '../parser';
+import {ILocaleNodeMap} from '../compileLocaleNodeMap';
+import {createMap} from '../../misc';
+import {MfmlParser} from '../../parser';
 
 const VAR_NAME_RUNTIME = 'runtime';
 const VAR_NAME_LOCALES = 'locales';

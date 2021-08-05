@@ -100,8 +100,11 @@ export type SelectOrdinalMatcher = (locale: string, value: number) => number;
 export const enum RuntimeMethod {
   ELEMENT = 'e',
   FRAGMENT = 'f',
-  FUNCTION = 'c',
   ARGUMENT = 'a',
+  FUNCTION = 'c',
+  ATTRIBUTE_FRAGMENT = 'F',
+  ATTRIBUTE_ARGUMENT = 'A',
+  ATTRIBUTE_FUNCTION = 'C',
   LOCALE = 'l',
   PLURAL = 'p',
   SELECT = 's',
@@ -118,6 +121,9 @@ export interface IRuntime<Result> {
   [RuntimeMethod.FRAGMENT]: FragmentRenderer<Result | string>;
   [RuntimeMethod.ARGUMENT]: ArgumentRenderer<Result | string>;
   [RuntimeMethod.FUNCTION]: FunctionRenderer<Result | string>;
+  [RuntimeMethod.ATTRIBUTE_FRAGMENT]: FragmentRenderer<Result | string>;
+  [RuntimeMethod.ATTRIBUTE_ARGUMENT]: ArgumentRenderer<Result | string>;
+  [RuntimeMethod.ATTRIBUTE_FUNCTION]: FunctionRenderer<Result | string>;
   [RuntimeMethod.LOCALE]: LocaleMatcher;
   [RuntimeMethod.PLURAL]: PluralMatcher;
   [RuntimeMethod.SELECT]: SelectMatcher;

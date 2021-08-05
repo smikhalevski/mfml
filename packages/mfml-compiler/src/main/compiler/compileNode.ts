@@ -67,8 +67,9 @@ export interface INodeCompilerOptions {
  *
  * @param node The node to compile.
  * @param options The compiler options.
+ * @param [attributeMode = false] If `true` then attribute runtime methods are used.
  */
-export function compileNode(node: Node, options: Readonly<INodeCompilerOptions>): string {
+export function compileNode(node: Node, options: Readonly<INodeCompilerOptions>, attributeMode = false): string {
 
   const {
     localeSrc,
@@ -103,8 +104,12 @@ export function compileNode(node: Node, options: Readonly<INodeCompilerOptions>)
     }
     enterChild();
     if (size > 1) {
-      onRuntimeMethodUsed?.(RuntimeMethod.FRAGMENT, false);
-      src += RuntimeMethod.FRAGMENT + '(';
+
+      const runtimeMethod = attributeMode ? RuntimeMethod.ATTRIBUTE_FRAGMENT : RuntimeMethod.FRAGMENT;
+
+      onRuntimeMethodUsed?.(runtimeMethod, false);
+      src += runtimeMethod + '(';
+
       enterBlock();
       next();
       src += ')';
@@ -125,7 +130,11 @@ export function compileNode(node: Node, options: Readonly<INodeCompilerOptions>)
       if (node.attributes.length > 0) {
         src += ',{';
         enterBlock();
+
+        attributeMode = true;
         nextAttributes();
+        attributeMode = false;
+
         src += '}';
       } else {
         src += ',null';
@@ -163,16 +172,20 @@ export function compileNode(node: Node, options: Readonly<INodeCompilerOptions>)
     argument(node) {
       enterChild();
 
-      onRuntimeMethodUsed?.(RuntimeMethod.ARGUMENT, false);
-      src += RuntimeMethod.ARGUMENT + `(${localeSrc},${provideArgumentVarName(node.name)})`;
+      const runtimeMethod = attributeMode ? RuntimeMethod.ATTRIBUTE_ARGUMENT : RuntimeMethod.ARGUMENT;
+
+      onRuntimeMethodUsed?.(runtimeMethod, false);
+      src += runtimeMethod + `(${localeSrc},${provideArgumentVarName(node.name)})`;
     },
 
     function(node, next) {
       enterChild();
 
+      const runtimeMethod = attributeMode ? RuntimeMethod.ATTRIBUTE_FUNCTION : RuntimeMethod.FUNCTION;
+
       onFunctionUsed?.(node);
-      onRuntimeMethodUsed?.(RuntimeMethod.FUNCTION, false);
-      src += RuntimeMethod.FUNCTION + `(${localeSrc},${provideArgumentVarName(node.argumentName)},${jsonStringify(node.name)}`;
+      onRuntimeMethodUsed?.(runtimeMethod, false);
+      src += runtimeMethod + `(${localeSrc},${provideArgumentVarName(node.argumentName)},${jsonStringify(node.name)}`;
 
       compileFragment(node, next);
       src += ')';
@@ -180,17 +193,17 @@ export function compileNode(node: Node, options: Readonly<INodeCompilerOptions>)
 
     plural(node) {
       enterChild();
-      src += compileSelect(node, RuntimeMethod.PLURAL, PluralCategory.OTHER, true, options);
+      src += compileSelect(node, RuntimeMethod.PLURAL, attributeMode, PluralCategory.OTHER, true, options);
     },
 
     selectOrdinal(node) {
       enterChild();
-      src += compileSelect(node, RuntimeMethod.SELECT_ORDINAL, PluralCategory.OTHER, true, options);
+      src += compileSelect(node, RuntimeMethod.SELECT_ORDINAL, attributeMode, PluralCategory.OTHER, true, options);
     },
 
     select(node) {
       enterChild();
-      src += compileSelect(node, RuntimeMethod.SELECT, otherSelectCaseKey, false, options);
+      src += compileSelect(node, RuntimeMethod.SELECT, attributeMode, otherSelectCaseKey, false, options);
     },
 
     octothorpe(node) {
@@ -218,6 +231,7 @@ export function compileNode(node: Node, options: Readonly<INodeCompilerOptions>)
  *
  * @param node The select node to compile.
  * @param runtimeMethod The runtime method name that is used to resolve what case to use.
+ * @param attributeMode If `true` then attribute runtime methods are used.
  * @param otherSelectCaseKey The case key that would be a default.
  * @param plural If `true` then runtime method call is formatted like plural.
  * @param options The node compiler options.
@@ -227,6 +241,7 @@ export function compileNode(node: Node, options: Readonly<INodeCompilerOptions>)
 function compileSelect(
     node: ISelectNode,
     runtimeMethod: RuntimeMethod,
+    attributeMode: boolean,
     otherSelectCaseKey: string,
     plural: boolean,
     options: Readonly<INodeCompilerOptions>,
@@ -270,7 +285,7 @@ function compileSelect(
       if (childrenCount > 0) {
         childrenSrc += ':' + indexVarName;
       }
-      childrenSrc += `===${i}?` + compileNode(childNode, options);
+      childrenSrc += `===${i}?` + compileNode(childNode, options, attributeMode);
       ++childrenCount;
     }
   }
@@ -279,7 +294,7 @@ function compileSelect(
 
   let src = '';
   if (childrenCount === 0) {
-    return otherNode ? compileNode(otherNode, options) : src;
+    return otherNode ? compileNode(otherNode, options, attributeMode) : src;
   }
   if (childrenCount > 1) {
     src += `(${indexVarName}=`;
@@ -296,7 +311,7 @@ function compileSelect(
   let otherSrc;
 
   if (otherNode != null) {
-    otherSrc = compileNode(otherNode, options);
+    otherSrc = compileNode(otherNode, options, attributeMode);
   } else {
     otherSrc = compileEmptyFragment(onRuntimeMethodUsed);
   }

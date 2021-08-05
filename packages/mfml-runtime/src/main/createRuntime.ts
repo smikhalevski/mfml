@@ -20,9 +20,30 @@ export interface IRuntimeOptions<Result> {
   renderArgument: ArgumentRenderer<Result | string>;
 
   /**
-   * If omitted then {@link renderArgument} is used.
+   * By default, {@link renderArgument} is used.
    */
   renderFunction?: FunctionRenderer<Result | string>;
+
+  /**
+   * Renders a fragment nested inside an attribute.
+   *
+   * By default, {@link renderFragment} is used.
+   */
+  renderAttributeFragment?: FragmentRenderer<Result | string>;
+
+  /**
+   * Renders an argument nested inside an attribute.
+   *
+   * By default, {@link renderArgument} is used.
+   */
+  renderAttributeArgument?: ArgumentRenderer<Result | string>;
+
+  /**
+   * Renders an argument value formatted using a function inside an attribute.
+   *
+   * By default, {@link renderFunction} is used.
+   */
+  renderAttributeFunction?: FunctionRenderer<Result | string>;
 
   /**
    * By default, [`locale-matcher`](https://github.com/smikhalevski/locale-matcher) is used.
@@ -49,13 +70,16 @@ export interface IRuntimeOptions<Result> {
  * Creates the new runtime.
  */
 export function createRuntime<Result>(options: IRuntimeOptions<Result>): IRuntime<Result> {
-  const {renderArgument} = options;
+  const {renderFragment, renderFunction, renderArgument} = options;
 
   return {
     [RuntimeMethod.ELEMENT]: options.renderElement,
     [RuntimeMethod.FRAGMENT]: options.renderFragment,
     [RuntimeMethod.ARGUMENT]: renderArgument,
-    [RuntimeMethod.FUNCTION]: options.renderFunction || renderArgument,
+    [RuntimeMethod.FUNCTION]: renderFunction || renderArgument,
+    [RuntimeMethod.ATTRIBUTE_FRAGMENT]: options.renderAttributeFragment || renderFragment,
+    [RuntimeMethod.ATTRIBUTE_ARGUMENT]: options.renderAttributeArgument || renderArgument,
+    [RuntimeMethod.ATTRIBUTE_FUNCTION]: options.renderAttributeFunction || renderFunction || renderArgument,
     [RuntimeMethod.LOCALE]: options.matchLocale || matchLocale,
     [RuntimeMethod.SELECT]: options.matchSelect || selectMatcher,
     [RuntimeMethod.PLURAL]: options.matchPlural || createPluralMatcher('cardinal'),

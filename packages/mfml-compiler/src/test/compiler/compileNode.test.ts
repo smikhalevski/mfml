@@ -164,12 +164,17 @@ describe('compileNode', () => {
 
     test('compiles an element with an argument attr', () => {
       expect(compileNode(parse('<b rrr="{foo}"></b>'), options))
-          .toBe('e("b",{rrr:a(locale,foo)})');
+          .toBe('e("b",{rrr:A(locale,foo)})');
     });
 
     test('compiles an element with a fragment attr', () => {
       expect(compileNode(parse('<b rrr="aaa{foo}"></b>'), options))
-          .toBe('e("b",{rrr:f("aaa",a(locale,foo))})');
+          .toBe('e("b",{rrr:F("aaa",A(locale,foo))})');
+    });
+
+    test('compiles an element with a function attr', () => {
+      expect(compileNode(parse('<b rrr="{foo,bar}"></b>'), options))
+          .toBe('e("b",{rrr:C(locale,foo,"bar")})');
     });
 
     test('compiles an element with multiple attrs', () => {

@@ -9,11 +9,11 @@
     "lib"
   ],
   "scripts": {
-    "build": "tsc --project tsconfig.build.json && npm run rollup && npm run rollup-dynamic && npm run terser && npm run terser-dynamic",
+    "build": "tsc --project tsconfig.build.json && npm run rollup && npm run rollup-at-runtime && npm run terser && npm run terser-at-runtime",
     "rollup": "rollup --external mfml-runtime,@messageformat/parser,@smikhalevski/codegen,tag-soup --input ./lib/index.js --file ./lib/index-cjs.js --format cjs --plugin @rollup/plugin-node-resolve",
-    "rollup-dynamic": "rollup --external mfml-runtime,@messageformat/parser,@smikhalevski/codegen,tag-soup --input ./lib/dynamic.js --file ./lib/dynamic.js --format cjs --plugin @rollup/plugin-node-resolve",
+    "rollup-at-runtime": "rollup --external mfml-runtime,@messageformat/parser,@smikhalevski/codegen,tag-soup --input ./lib/at-runtime.js --file ./lib/at-runtime.js --format cjs --plugin @rollup/plugin-node-resolve",
     "terser": "terser --compress --mangle toplevel --output ./lib/index-cjs.js -- ./lib/index-cjs.js",
-    "terser-dynamic": "terser --compress --mangle toplevel --output ./lib/dynamic.js -- ./lib/dynamic.js",
+    "terser-at-runtime": "terser --compress --mangle toplevel --output ./lib/at-runtime.js -- ./lib/at-runtime.js",
     "clean": "rm -rf ./lib",
     "test": "jest --detectOpenHandles"
   },

@@ -1,5 +1,5 @@
-import {compileFunctionBody, IFunctionBodyCompilerOptions} from '../../main/compiler/compileFunctionBody';
-import {createMfmlParser} from '../../main/parser/createMfmlParser';
+import {compileFunctionBody, IFunctionBodyCompilerOptions} from '../../../main/compiler/at-runtime/compileFunctionBody';
+import {createMfmlParser} from '../../../main/parser/createMfmlParser';
 
 describe('compileFunctionBody', () => {
 
@@ -22,11 +22,14 @@ describe('compileFunctionBody', () => {
   test('compiles a function body', () => {
     expect(compileFunctionBody({en: parse('foo'), ru: parse('bar')}, options)).toBe(
         'var i,' +
-        'l=runtime.l,' +
+        'e=runtime.e,' +
         'f=runtime.f,' +
         'a=runtime.a,' +
-        'e=runtime.e,' +
         'c=runtime.c,' +
+        'F=runtime.F,' +
+        'A=runtime.A,' +
+        'C=runtime.C,' +
+        'l=runtime.l,' +
         'p=runtime.p,' +
         's=runtime.s,' +
         'o=runtime.o,' +
