@@ -144,7 +144,7 @@ describe('compileNode', () => {
 
     test('compiles an element without attrs and without children', () => {
       expect(compileNode(parse('<b></b>'), options))
-          .toBe('e("b",null)');
+          .toBe('e("b")');
     });
 
     test('compiles an element with a boolean attr', () => {
@@ -222,12 +222,12 @@ describe('compileNode', () => {
 
     test('compiles a function with an element child', () => {
       expect(compileNode(parse('{foo,www,<b></b>}'), options))
-          .toBe('c(locale,foo,"www",e("b",null))');
+          .toBe('c(locale,foo,"www",e("b"))');
     });
 
     test('compiles a function with a fragment child', () => {
       expect(compileNode(parse('{foo,www,aaa<b></b>}'), options))
-          .toBe('c(locale,foo,"www",f("aaa",e("b",null)))');
+          .toBe('c(locale,foo,"www",f("aaa",e("b")))');
     });
 
     test('compiles a function with an argument child', () => {

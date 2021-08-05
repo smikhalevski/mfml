@@ -29,12 +29,17 @@ export function isBlankNode(node: Node | null | undefined): boolean {
       || isTextNode(node) && node.value === '';
 }
 
-export function getSignificantSize(nodes: Array<Node>): 0 | 1 | 2 {
-  let size = 0;
+/**
+ * - 0 if there's no nodes or all of them are blank;
+ * - 1 if there's only one non-blank node;
+ * - 2 if there's more than one non-blank node.
+ */
+export function countNodes(nodes: Array<Node>): 0 | 1 | 2 {
+  let count = 0;
   for (const node of nodes) {
-    if (!isBlankNode(node) && ++size === 2) {
+    if (!isBlankNode(node) && ++count === 2) {
       break;
     }
   }
-  return size as 0 | 1 | 2;
+  return count as 0 | 1 | 2;
 }

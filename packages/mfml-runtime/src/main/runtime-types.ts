@@ -21,7 +21,7 @@ export type MessageFunction<Values extends object | void> = <Result>(runtime: IR
  * @param children The element children varargs.
  * @returns The rendered element.
  */
-export type ElementRenderer<Result> = (tagName: string, attributes: Record<string, Result> | null, ...children: Array<Result>) => Result;
+export type ElementRenderer<Result> = (tagName: string, attributes?: Record<string, Result> | null, ...children: Array<Result>) => Result;
 
 /**
  * Renders a fragment.

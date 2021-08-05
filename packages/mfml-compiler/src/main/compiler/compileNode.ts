@@ -1,6 +1,6 @@
 import {
   ContainerNode,
-  getSignificantSize,
+  countNodes,
   IFunctionNode,
   isBlankNode,
   ISelectCaseNode,
@@ -94,16 +94,16 @@ export function compileNode(node: Node, options: Readonly<INodeCompilerOptions>,
   };
 
   const compileFragment = (node: ContainerNode, next: () => void) => {
-    const size = getSignificantSize(node.children);
-    if (size === 0) {
+    const count = countNodes(node.children);
+    if (count === 0) {
       return;
     }
-    if (size === 1) {
+    if (count === 1) {
       next();
       return;
     }
     enterChild();
-    if (size > 1) {
+    if (count === 2) {
 
       const runtimeMethod = attributeMode ? RuntimeMethod.ATTRIBUTE_FRAGMENT : RuntimeMethod.FRAGMENT;
 
@@ -136,7 +136,8 @@ export function compileNode(node: Node, options: Readonly<INodeCompilerOptions>,
         attributeMode = false;
 
         src += '}';
-      } else {
+
+      } else if (countNodes(node.children) !== 0) {
         src += ',null';
       }
 
@@ -153,7 +154,7 @@ export function compileNode(node: Node, options: Readonly<INodeCompilerOptions>,
         src += 'true';
         return;
       }
-      if (getSignificantSize(node.children) === 0) {
+      if (countNodes(node.children) === 0) {
         src += '""';
         return;
       }
