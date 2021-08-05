@@ -9,7 +9,7 @@
  * @param values The ICU argument values.
  * @returns The rendered message translation.
  */
-export type MessageFunction<Values extends object | void> = <T>(runtime: IRuntime<T>, locale: string, values: Values) => T | string;
+export type MessageFunction<Values extends object | void> = <Result>(runtime: IRuntime<Result>, locale: string, values: Values) => Result | string;
 
 /**
  * Renders an element by `tagName`.
@@ -21,7 +21,7 @@ export type MessageFunction<Values extends object | void> = <T>(runtime: IRuntim
  * @param children The element children varargs.
  * @returns The rendered element.
  */
-export type ElementRenderer<T> = (tagName: string, attributes: Record<string, T> | null, ...children: Array<T>) => T;
+export type ElementRenderer<Result> = (tagName: string, attributes: Record<string, Result> | null, ...children: Array<Result>) => Result;
 
 /**
  * Renders a fragment.
@@ -31,7 +31,7 @@ export type ElementRenderer<T> = (tagName: string, attributes: Record<string, T>
  * @param children The fragment children varargs.
  * @returns A rendered fragment.
  */
-export type FragmentRenderer<T> = (...children: Array<T>) => T;
+export type FragmentRenderer<Result> = (...children: Array<Result>) => Result;
 
 /**
  * Renders an arbitrary argument value.
@@ -42,7 +42,7 @@ export type FragmentRenderer<T> = (...children: Array<T>) => T;
  * @param value The argument value.
  * @returns The formatted argument.
  */
-export type ArgumentRenderer<T> = (locale: string, value: unknown) => T;
+export type ArgumentRenderer<Result> = (locale: string, value: unknown) => Result;
 
 /**
  * Renders an argument value formatted using a function.
@@ -55,7 +55,7 @@ export type ArgumentRenderer<T> = (locale: string, value: unknown) => T;
  * @param param An optional additional param.
  * @returns The formatted argument.
  */
-export type FunctionRenderer<T> = (locale: string, value: unknown, name: string, param?: T) => T;
+export type FunctionRenderer<Result> = (locale: string, value: unknown, name: string, param?: Result) => Result;
 
 /**
  * Looks up a locale among `locales` that best fits `locale`.
@@ -113,11 +113,11 @@ export const enum RuntimeMethod {
  *
  * @template Result The type of the rendering result.
  */
-export interface IRuntime<T> {
-  [RuntimeMethod.ELEMENT]: ElementRenderer<T | string>;
-  [RuntimeMethod.FRAGMENT]: FragmentRenderer<T | string>;
-  [RuntimeMethod.ARGUMENT]: ArgumentRenderer<T | string>;
-  [RuntimeMethod.FUNCTION]: FunctionRenderer<T | string>;
+export interface IRuntime<Result> {
+  [RuntimeMethod.ELEMENT]: ElementRenderer<Result | string>;
+  [RuntimeMethod.FRAGMENT]: FragmentRenderer<Result | string>;
+  [RuntimeMethod.ARGUMENT]: ArgumentRenderer<Result | string>;
+  [RuntimeMethod.FUNCTION]: FunctionRenderer<Result | string>;
   [RuntimeMethod.LOCALE]: LocaleMatcher;
   [RuntimeMethod.PLURAL]: PluralMatcher;
   [RuntimeMethod.SELECT]: SelectMatcher;

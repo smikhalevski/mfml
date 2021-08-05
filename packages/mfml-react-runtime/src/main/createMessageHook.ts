@@ -1,11 +1,11 @@
 import {Context, useCallback, useContext} from 'react';
 import {IRuntime, MessageFunction} from 'mfml-runtime';
 
-export interface IMessageRenderer<T> {
+export interface IMessageRenderer<Result> {
 
-  <F extends MessageFunction<void>>(message: F): T | string;
+  <F extends MessageFunction<void>>(message: F): Result | string;
 
-  <F extends MessageFunction<any>>(message: F, values: F extends MessageFunction<infer Values> ? Values : never): T | string;
+  <F extends MessageFunction<any>>(message: F, values: F extends MessageFunction<infer Values> ? Values : never): Result | string;
 }
 
 /**
@@ -13,13 +13,14 @@ export interface IMessageRenderer<T> {
  * `runtimeContext`.
  *
  * @param runtimeContext The context that provides a runtime to render a message.
- * @param localeContext The context that provides the current locale.
+ * @param i18nContext The context that holds i18n related data.
+ * @param localeSelector The callback that returns a locale from i18n context value.
  * @see {@link useMessage}
  */
-export function createMessageHook<T>(runtimeContext: Context<IRuntime<T>>, localeContext: Context<string>): () => IMessageRenderer<T> {
+export function createMessageHook<Result, I18n>(runtimeContext: Context<IRuntime<Result>>, i18nContext: Context<I18n>, localeSelector: (i18n: I18n) => string): () => IMessageRenderer<Result> {
   return () => {
     const runtime = useContext(runtimeContext);
-    const locale = useContext(localeContext);
+    const locale = localeSelector(useContext(i18nContext));
 
     return useCallback((message, values) => message(runtime, locale, values), [runtime, locale]);
   };

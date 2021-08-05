@@ -2,7 +2,7 @@ import {ITextNode, Node, NodeType} from './parser-types';
 import {IMessageFormatParserOptions, parseMessageFormat} from './parseMessageFormat';
 import {createSaxParser, IParserOptions} from 'tag-soup';
 import {isContainerNode, isTextNode} from './node-utils';
-import {dieSyntax} from '../misc';
+import {dieSyntax, objectCopy} from '../misc';
 
 export interface IMfmlParserOptions extends IMessageFormatParserOptions, IParserOptions {
 }
@@ -17,7 +17,7 @@ export function createMfmlParser(options: IMfmlParserOptions = {}): MfmlParser {
   const {decodeText, decodeAttribute} = options;
 
   // MFML parser handles the HTML decoding
-  const saxParserOptions: IParserOptions = Object.assign({}, options, {
+  const saxParserOptions: IParserOptions = objectCopy(options, {
     decodeText: undefined,
     decodeAttribute: undefined,
   });

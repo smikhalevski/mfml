@@ -1,6 +1,7 @@
 import {render, screen} from '@testing-library/react';
 import {MessageFunction} from 'mfml-runtime';
-import {LocaleProvider, Message} from '../main/Message';
+import {LocaleProvider} from '../main/LocaleProvider';
+import {Message} from '../main/Message';
 
 describe('Message', () => {
 
@@ -9,8 +10,7 @@ describe('Message', () => {
   };
 
   const aaaBbbCcc: MessageFunction<{ ccc: string }> = (r, locale, values) => {
-    const x = r.f('aaa', r.a(locale, values.ccc), 'bbb');
-    return x;
+    return r.f('aaa', r.a(locale, values.ccc), 'bbb');
   };
 
   test('renders a message', () => {
@@ -20,7 +20,7 @@ describe('Message', () => {
   });
 
   test('renders a message with locale', () => {
-    render(<LocaleProvider value={'ru'}><Message message={aaaBbb}/></LocaleProvider>);
+    render(<LocaleProvider initialLocale="ru"><Message message={aaaBbb}/></LocaleProvider>);
 
     expect(screen.queryByText('пппттт')).not.toBeNull();
   });
@@ -30,11 +30,4 @@ describe('Message', () => {
 
     expect(screen.queryByText('aaaCCCbbb')).not.toBeNull();
   });
-
-  // test('renders a message with values', () => {
-  //   const t = useMessage();
-  //
-  //   t(aaaBbb);
-  //   t(aaaBbbCcc, {ccc: ''});
-  // });
 });
