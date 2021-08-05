@@ -1,6 +1,14 @@
 import {createElement, Fragment, ReactNode} from 'react';
 import {isReactNode} from './react-utils';
-import {ArgumentRenderer, createRuntime, FragmentRenderer, IRuntime, IRuntimeOptions} from 'mfml-runtime';
+import {
+  ArgumentRenderer,
+  createRuntime,
+  FragmentRenderer,
+  IRuntime,
+  IRuntimeOptions,
+  stringArgumentRenderer,
+  stringFragmentRenderer,
+} from 'mfml-runtime';
 
 /**
  * Creates a runtime that renders messages using React components.
@@ -10,26 +18,17 @@ import {ArgumentRenderer, createRuntime, FragmentRenderer, IRuntime, IRuntimeOpt
  * @param options Runtime options.
  */
 export function createReactRuntime(options: Partial<IRuntimeOptions<ReactNode>> = {}): IRuntime<ReactNode> {
-  return createRuntime(Object.assign({}, options, {
+  return createRuntime({
+    ...options,
     renderElement: options.renderElement || createElement,
     renderFragment: options.renderFragment || reactFragmentRenderer,
     renderArgument: options.renderArgument || reactArgumentRenderer,
     renderAttributeFragment: options.renderAttributeFragment || stringFragmentRenderer,
     renderAttributeArgument: options.renderAttributeArgument || stringArgumentRenderer,
     renderAttributeFunction: options.renderAttributeFunction || stringArgumentRenderer,
-  }));
+  });
 }
 
-const reactFragmentRenderer: FragmentRenderer<ReactNode> = createElement.bind(undefined, Fragment, null);
+export const reactFragmentRenderer: FragmentRenderer<ReactNode> = createElement.bind(undefined, Fragment, null);
 
-const reactArgumentRenderer: ArgumentRenderer<ReactNode> = (locale, value) => isReactNode(value) ? value : null;
-
-const stringFragmentRenderer: FragmentRenderer<string> = function () {
-  let str = '';
-  for (let i = 0; i < arguments.length; ++i) {
-    str += arguments[i];
-  }
-  return str;
-};
-
-const stringArgumentRenderer: ArgumentRenderer<string> = (locale, value) => '' + value;
+export const reactArgumentRenderer: ArgumentRenderer<ReactNode> = (locale, value) => isReactNode(value) ? value : null;

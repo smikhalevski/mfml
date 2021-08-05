@@ -7,14 +7,15 @@ import {ArgumentRenderer, ElementRenderer, FragmentRenderer, IRuntime} from './r
  * @param options Runtime options.
  */
 export function createStringRuntime(options: Partial<IRuntimeOptions<string>> = {}): IRuntime<string> {
-  return createRuntime(Object.assign({}, options, {
+  return createRuntime({
+    ...options,
     renderElement: options.renderElement || stringElementRenderer,
     renderFragment: options.renderFragment || stringFragmentRenderer,
     renderArgument: options.renderArgument || stringArgumentRenderer,
-  }));
+  });
 }
 
-const stringElementRenderer: ElementRenderer<string> = function () {
+export const stringElementRenderer: ElementRenderer<any> = function () {
   let str = '';
   for (let i = 2; i < arguments.length; ++i) {
     str += arguments[i];
@@ -22,7 +23,7 @@ const stringElementRenderer: ElementRenderer<string> = function () {
   return str;
 };
 
-const stringFragmentRenderer: FragmentRenderer<string> = function () {
+export const stringFragmentRenderer: FragmentRenderer<any> = function () {
   let str = '';
   for (let i = 0; i < arguments.length; ++i) {
     str += arguments[i];
@@ -30,4 +31,4 @@ const stringFragmentRenderer: FragmentRenderer<string> = function () {
   return str;
 };
 
-const stringArgumentRenderer: ArgumentRenderer<string> = (locale, value) => '' + value;
+export const stringArgumentRenderer: ArgumentRenderer<any> = (locale, value) => '' + value;

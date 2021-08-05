@@ -50,7 +50,7 @@ const files = filePaths.reduce((files, filePath) => {
 }, {});
 
 const parseMfml = createMfmlParser(config);
-const moduleCompiler = (messageModule: IMessageModule, onError?: (error: unknown, messageName: string, message: IMessage) => void) => compileModule(messageModule, parseMfml, Object.assign({}, config, {onError}));
+const moduleCompiler = (messageModule: IMessageModule, onError?: (error: unknown, messageName: string, message: IMessage) => void) => compileModule(messageModule, parseMfml, {...config, onError});
 
 const adapterPath = config.adapterPath || ADAPTER_PATH;
 const adapter: Adapter<unknown> = require(adapterPath);

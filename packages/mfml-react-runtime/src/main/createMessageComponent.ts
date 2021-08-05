@@ -33,7 +33,6 @@ export function createMessageComponent<I18n>(runtimeContext: Context<IRuntime<Re
 
     const runtime = useContext(runtimeContext);
     const locale = localeSelector(useContext(i18nContext));
-
     const node = message(runtime, locale, values);
 
     return node === null || isValidElement(node) ? node : createElement(Fragment, null, node);

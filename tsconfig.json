@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "importHelpers": true,
     "moduleResolution": "Node",
     "strict": true,
     "target": "ES5",

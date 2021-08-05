@@ -1,7 +1,7 @@
 import {compileEmptyFragment, compileNode, INodeCompilerOptions} from './compileNode';
 import {isBlankNode, Node} from '../parser';
 import {RuntimeMethod} from 'mfml-runtime';
-import {jsonStringify, objectCopy} from '../misc';
+import {jsonStringify} from '../misc';
 
 /**
  * The mapping from a locale to an AST node.
@@ -68,7 +68,7 @@ export function compileLocaleNodeMap(localeNodeMap: ILocaleNodeMap, options: Rea
   } = options;
 
   const blankIndices: Array<number> = [];
-  const nodeCompilerOptions: INodeCompilerOptions = objectCopy(options, {localeSrc: localeVarName});
+  const nodeCompilerOptions: INodeCompilerOptions = {...options, localeSrc: localeVarName};
 
   let defaultSrc = '';
   let childrenSrc = '';
@@ -84,7 +84,7 @@ export function compileLocaleNodeMap(localeNodeMap: ILocaleNodeMap, options: Rea
     }
     if (locale === defaultLocale) {
       // The default translation
-      defaultSrc = compileNode(node, objectCopy(options, {localeSrc: defaultLocaleSrc}));
+      defaultSrc = compileNode(node, {...options, localeSrc: defaultLocaleSrc});
       continue;
     }
     if (isBlankNode(node)) {
