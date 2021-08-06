@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "license": "MIT",
   "scripts": {
-    "mfmlc": "node ../node_modules/mfml-cli/lib/mfmlc.js --rootDir ./src --outDir ./gen --includes './messages/*.json' --force"
+    "mfmlc": "mfmlc --rootDir ./src --outDir ./gen --include './messages/*.json' --adapter localeFilesAdapter"
   },
   "devDependencies": {
     "mfml-cli": "^1.0.0",

@@ -1,6 +1,7 @@
 {
   "compilerOptions": {
     "importHelpers": true,
+    "allowSyntheticDefaultImports": true,
     "moduleResolution": "Node",
     "strict": true,
     "target": "ES5",

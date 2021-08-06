@@ -10,8 +10,8 @@
   },
   "scripts": {
     "build": "tsc --project tsconfig.build.json && npm run rollup && npm run rollup-adapters",
-    "rollup": "rollup --external commander,glob,mfml-compiler --input ./lib/mfmlc.js --file ./lib/mfmlc.js --format cjs --plugin @rollup/plugin-node-resolve",
-    "rollup-adapters": "for p in $(ls ./lib/adapters); do rollup --exports default --external mfml-compiler --input ./lib/adapters/$p --file ./lib/adapters/$p --format cjs --plugin @rollup/plugin-node-resolve || exit 1; done",
+    "rollup": "rollup --external commander,glob,chalk,mfml-compiler --banner '#!/usr/bin/env node' --input ./lib/mfmlc.js --file ./lib/mfmlc.js --format cjs --plugin @rollup/plugin-node-resolve && chmod +x ./lib/mfmlc.js",
+    "rollup-adapters": "for p in $(ls ./lib/adapters); do rollup --exports default --external chalk,mfml-compiler --input ./lib/adapters/$p --file ./lib/adapters/$p --format cjs --plugin @rollup/plugin-node-resolve || exit 1; done",
     "clean": "rm -rf ./lib",
     "test": "jest --detectOpenHandles"
   },
@@ -39,9 +39,17 @@
   },
   "homepage": "https://github.com/smikhalevski/mfml#readme",
   "jest": {
-    "preset": "ts-jest"
+    "preset": "ts-jest",
+    "globals": {
+      "ts-jest": {
+        "diagnostics": {
+          "ignoreCodes": [151001]
+        }
+      }
+    }
   },
   "dependencies": {
+    "chalk": "^4.1.2",
     "commander": "^8.1.0",
     "glob": "^7.1.7"
   },

@@ -4,19 +4,7 @@ var path = require('path');
 
 // https://smikhalevski.github.io/mfml/interfaces/ICliConfig.html
 module.exports = {
-
-  adapterPath: 'mfml-cli/lib/adapters/localeFilesAdapter',
-
-  // https://smikhalevski.github.io/mfml/interfaces/ILocaleFilesAdapterOptions.html
-  adapterOptions: {
-    digestFilePath: './index.ts',
-    rewriteFilePath: function (messageName) {
-      return './' + codegen.pascalCase(messageName.substr(0, messageName.indexOf('.'))) + '.ts';
-    },
-    renameDigestNamespace: function (filePath) {
-      return codegen.pascalCase(path.basename(filePath, '.ts'));
-    },
-  },
+  typingsEnabled: true,
 
   decodeText: speedyEntities.decodeHtml,
   decodeAttribute: speedyEntities.decodeHtml,
@@ -27,5 +15,16 @@ module.exports = {
   },
   renameInterface: function (messageName) {
     return codegen.pascalCase(messageName.substr(messageName.indexOf('.') + 1)) + 'Args';
+  },
+
+  adapter: 'mfml-cli/lib/adapters/localeFilesAdapter',
+
+  // https://smikhalevski.github.io/mfml/interfaces/ILocaleFilesAdapterOptions.html
+  digestFilePath: './index.ts',
+  renameNamespace: function (messageName) {
+    return codegen.pascalCase(messageName.substr(0, messageName.indexOf('.')));
+  },
+  rewriteFilePath: function (namespace) {
+    return './' + namespace;
   },
 };

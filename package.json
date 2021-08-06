@@ -2,6 +2,7 @@
   "name": "mfml",
   "private": true,
   "scripts": {
+    "preinstall": "cd ./packages/mfml-cli && mkdir -p ./lib && touch ./lib/mfmlc.js",
     "build": "npm run build --workspaces",
     "clean": "npm run clean --workspaces",
     "test": "npm run test --workspaces",

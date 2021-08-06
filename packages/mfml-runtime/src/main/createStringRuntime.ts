@@ -15,7 +15,7 @@ export function createStringRuntime(options: Partial<IRuntimeOptions<string>> = 
   });
 }
 
-export const stringElementRenderer: ElementRenderer<any> = function () {
+const stringElementRenderer: ElementRenderer<any> = function () {
   let str = '';
   for (let i = 2; i < arguments.length; ++i) {
     str += arguments[i];
@@ -23,7 +23,7 @@ export const stringElementRenderer: ElementRenderer<any> = function () {
   return str;
 };
 
-export const stringFragmentRenderer: FragmentRenderer<any> = function () {
+const stringFragmentRenderer: FragmentRenderer<any> = function () {
   let str = '';
   for (let i = 0; i < arguments.length; ++i) {
     str += arguments[i];
@@ -31,4 +31,4 @@ export const stringFragmentRenderer: FragmentRenderer<any> = function () {
   return str;
 };
 
-export const stringArgumentRenderer: ArgumentRenderer<any> = (locale, value) => '' + value;
+const stringArgumentRenderer: ArgumentRenderer<any> = (locale, value) => '' + value;

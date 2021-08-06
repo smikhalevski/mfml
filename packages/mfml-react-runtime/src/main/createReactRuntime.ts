@@ -1,14 +1,6 @@
 import {createElement, Fragment, ReactNode} from 'react';
 import {isReactNode} from './react-utils';
-import {
-  ArgumentRenderer,
-  createRuntime,
-  FragmentRenderer,
-  IRuntime,
-  IRuntimeOptions,
-  stringArgumentRenderer,
-  stringFragmentRenderer,
-} from 'mfml-runtime';
+import {ArgumentRenderer, createRuntime, FragmentRenderer, IRuntime, IRuntimeOptions} from 'mfml-runtime';
 
 /**
  * Creates a runtime that renders messages using React components.
@@ -29,6 +21,16 @@ export function createReactRuntime(options: Partial<IRuntimeOptions<ReactNode>> 
   });
 }
 
-export const reactFragmentRenderer: FragmentRenderer<ReactNode> = createElement.bind(undefined, Fragment, null);
+const reactFragmentRenderer: FragmentRenderer<ReactNode> = createElement.bind(undefined, Fragment, null);
 
-export const reactArgumentRenderer: ArgumentRenderer<ReactNode> = (locale, value) => isReactNode(value) ? value : null;
+const reactArgumentRenderer: ArgumentRenderer<ReactNode> = (locale, value) => isReactNode(value) ? value : null;
+
+const stringFragmentRenderer: FragmentRenderer<any> = function () {
+  let str = '';
+  for (let i = 0; i < arguments.length; ++i) {
+    str += arguments[i];
+  }
+  return str;
+};
+
+const stringArgumentRenderer: ArgumentRenderer<any> = (locale, value) => '' + value;
