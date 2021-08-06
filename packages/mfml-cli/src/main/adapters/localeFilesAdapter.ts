@@ -69,7 +69,7 @@ const localeFilesAdapter: Adapter<ILocaleFilesAdapterOptions> = (config) => {
     ...config,
 
     onError(error, messageName, message) {
-      errorMessages.push(bold(messageName) + '\n' + errorMessage(error));
+      errorMessages.push(`Message ${bold(messageName)}\n${errorMessage(error)}`);
       onError?.(error, messageName, message);
     },
   };

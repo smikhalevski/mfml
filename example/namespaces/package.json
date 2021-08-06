@@ -1,9 +1,8 @@
 {
   "name": "example",
-  "version": "1.0.0",
-  "license": "MIT",
+  "private": true,
   "scripts": {
-    "mfmlc": "mfmlc --rootDir ./src --outDir ./gen --include './messages/*.json' --adapter localeFilesAdapter"
+    "mfmlc": "mfmlc --rootDir src --outDir ./gen --include './messages/*.json'"
   },
   "devDependencies": {
     "mfml-cli": "^1.0.0",

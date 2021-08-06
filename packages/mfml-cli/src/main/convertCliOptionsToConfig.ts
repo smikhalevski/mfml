@@ -15,7 +15,7 @@ export function convertCliOptionsToConfig(cliOptions: ICliOptions): IConfig {
     include: cliOptions[CliOptionKey.INCLUDE],
     presets: cliOptions[CliOptionKey.PRESET],
     adapter: cliOptions[CliOptionKey.ADAPTER],
-    typingsEnabled: cliOptions[CliOptionKey.TYPINGS],
+    typingsEnabled: cliOptions[CliOptionKey.TS],
     provideDefaultLocale: defaultLocale ? () => defaultLocale : undefined,
   };
 }

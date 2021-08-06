@@ -18,7 +18,7 @@ export function createProgram(): Command {
   program.option(`-d, --${CliOptionKey.ROOT_DIR} <dir>`, 'the root folder from which included file paths are resolved');
   program.option(`-p, --${CliOptionKey.PRESET} <path...>`, 'the path of a configuration preset');
   program.option(`-a, --${CliOptionKey.ADAPTER} <path>`, 'the path to a compilation adapter');
-  program.option(`-t, --${CliOptionKey.TYPINGS}`, 'produce TypeScript typings for message functions');
+  program.option(`-t, --${CliOptionKey.TS}`, 'produce TypeScript typings for message functions');
 
   program.exitOverride(logError);
 

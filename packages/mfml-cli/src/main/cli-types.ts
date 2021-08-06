@@ -7,7 +7,7 @@ export const enum CliOptionKey {
   ROOT_DIR = 'rootDir',
   PRESET = 'preset',
   ADAPTER = 'adapter',
-  TYPINGS = 'typings',
+  TS = 'ts',
   DEFAULT_LOCALE = 'defaultLocale',
 }
 
@@ -21,7 +21,7 @@ export interface ICliOptions {
   [CliOptionKey.INCLUDE]?: Array<string>;
   [CliOptionKey.PRESET]?: Array<string>;
   [CliOptionKey.ADAPTER]?: string;
-  [CliOptionKey.TYPINGS]?: boolean;
+  [CliOptionKey.TS]?: boolean;
   [CliOptionKey.DEFAULT_LOCALE]?: string;
 }
 
