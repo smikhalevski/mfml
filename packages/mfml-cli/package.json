@@ -9,9 +9,10 @@
     "mfmlc": "./lib/mfmlc.js"
   },
   "scripts": {
-    "build": "tsc --project tsconfig.build.json && npm run rollup && npm run rollup-adapters",
+    "build": "tsc --project tsconfig.build.json && npm run rollup && npm run rollup-adapters && npm run rollup-presets",
     "rollup": "rollup --external commander,glob,chalk,mfml-compiler --banner '#!/usr/bin/env node' --input ./lib/mfmlc.js --file ./lib/mfmlc.js --format cjs --plugin @rollup/plugin-node-resolve && chmod +x ./lib/mfmlc.js",
     "rollup-adapters": "for p in $(ls ./lib/adapters); do rollup --exports default --external chalk,mfml-compiler --input ./lib/adapters/$p --file ./lib/adapters/$p --format cjs --plugin @rollup/plugin-node-resolve || exit 1; done",
+    "rollup-presets": "for p in $(ls ./lib/presets); do rollup --exports default --external 'speedy-entities,tag-soup' --input ./lib/presets/$p --file ./lib/presets/$p --format cjs --plugin @rollup/plugin-node-resolve || exit 1; done",
     "clean": "rm -rf ./lib",
     "test": "jest --detectOpenHandles"
   },

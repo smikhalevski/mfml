@@ -12,6 +12,9 @@ import {
   resolvePathOrDie,
 } from './misc';
 import path from 'path';
+import {logInfo} from './log-utils';
+
+const presetsDir = path.resolve(__dirname, './presets');
 
 /**
  * Loads presets and applies them to the `config`.
@@ -22,7 +25,7 @@ import path from 'path';
  * @param baseDir The absolute directory from which preset paths are resolved.
  * @param configPath The path from which `config` was read.
  */
-export function applyPresets(config: IConfig, baseDir: string, configPath = '<root>'): void {
+export function applyPresets(config: IConfig, baseDir: string, configPath?: string): void {
   const presets = config.presets;
 
   if (presets == null) {
@@ -38,7 +41,7 @@ export function applyPresets(config: IConfig, baseDir: string, configPath = '<ro
     let presetPath = configPath;
 
     if (isString(preset)) {
-      presetPath = resolvePathOrDie(preset, [baseDir], `Cannot find preset ${bold(preset)} in ${formatFilePath(baseDir)}`);
+      presetPath = resolvePathOrDie(preset, [presetsDir, baseDir], `Cannot find preset ${bold(preset)} in ${formatFilePath(baseDir)}`);
       baseDir = path.dirname(presetPath);
       preset = requireOrDie(presetPath, `Failed to load preset ${formatFilePath(presetPath)}`);
     }
@@ -46,6 +49,10 @@ export function applyPresets(config: IConfig, baseDir: string, configPath = '<ro
     if (isObject(preset)) {
       applyPresets(preset, baseDir, presetPath);
       defaults(config, preset);
+
+      if (presetPath) {
+        logInfo(`Applied preset ${formatFilePath(presetPath)}`);
+      }
       continue;
     }
 
