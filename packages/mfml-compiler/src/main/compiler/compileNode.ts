@@ -219,7 +219,7 @@ export function compileNode(node: Node, options: Readonly<INodeCompilerOptions>,
         onRuntimeMethodUsed?.(RuntimeMethod.ARGUMENT, false);
         src += RuntimeMethod.ARGUMENT + `(${localeSrc},${provideArgumentVarName(selectNode.argumentName)})`;
       } else {
-        die('Octothorpe must be nested in a select');
+        die('Octothorpe must be nested in a select', node.start);
       }
     },
   });

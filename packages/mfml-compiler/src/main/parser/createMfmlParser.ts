@@ -1,8 +1,14 @@
-import {ITextNode, Node, NodeType} from './parser-types';
+import {IElementNode, ITextNode, Node, NodeType} from './parser-types';
 import {IMessageFormatParserOptions, parseMessageFormat} from './parseMessageFormat';
 import {createSaxParser, IParserOptions} from 'tag-soup';
 import {isContainerNode, isTextNode} from './node-utils';
-import {dieSyntax} from '../misc';
+import {die} from '../misc';
+
+interface IArrayLike<T> {
+  [index: number]: T;
+
+  length: number;
+}
 
 export interface IMfmlParserOptions extends IMessageFormatParserOptions, IParserOptions {
 }
@@ -16,15 +22,22 @@ export function createMfmlParser(options: IMfmlParserOptions = {}): MfmlParser {
 
   const {decodeText, decodeAttribute} = options;
 
-  // MFML parser handles the HTML decoding
   const saxParserOptions: IParserOptions = {
     ...options,
     decodeText: undefined,
     decodeAttribute: undefined,
   };
 
+  // The stack of nested element nodes
+  let ancestorNodes: IArrayLike<IElementNode> = {length: 0};
+
+  // The children of the root node
   let rootChildren: Array<Node>;
+
+  // The list of all nodes in parent-first order
   let linearNodes: Array<Node>;
+
+  // The index of the next node among all nodes that must be parsed
   let linearIndex = 0;
 
   const saxParser = createSaxParser({
@@ -34,13 +47,14 @@ export function createMfmlParser(options: IMfmlParserOptions = {}): MfmlParser {
       const tagStart = token.start;
       const tagEnd = token.end;
 
+      // Lookup a text node that includes the start tag markup
       linearIndex = findNodeIndex(linearNodes, linearIndex, tagStart, token.nameEnd);
 
       // The text node that contains the start tag name
       const textNode = linearNodes[linearIndex];
 
       if (!isTextNode(textNode)) {
-        dieSyntax(tagStart);
+        die('Unexpected start tag', tagStart);
       }
 
       const elementNode: Node = {
@@ -53,8 +67,10 @@ export function createMfmlParser(options: IMfmlParserOptions = {}): MfmlParser {
         end: tagEnd,
       };
 
-      const splitEnd = Math.min(textNode.end, tagEnd);
+      // Put an element on stack
+      ancestorNodes[ancestorNodes.length++] = elementNode;
 
+      const splitEnd = Math.min(textNode.end, tagEnd);
       const siblingNodes = textNode.parent?.children || rootChildren;
 
       let siblingIndex = siblingNodes.indexOf(textNode);
@@ -156,7 +172,7 @@ export function createMfmlParser(options: IMfmlParserOptions = {}): MfmlParser {
             break;
           }
 
-          dieSyntax(nodeStart);
+          die('Unexpected attribute syntax', nodeStart);
         }
 
         if (decodeAttribute != null) {
@@ -183,7 +199,7 @@ export function createMfmlParser(options: IMfmlParserOptions = {}): MfmlParser {
         return;
       }
 
-      dieSyntax(tailNode.start);
+      die('Incorrect attribute syntax', tailNode.start);
     },
 
     endTag(token) {
@@ -193,69 +209,68 @@ export function createMfmlParser(options: IMfmlParserOptions = {}): MfmlParser {
 
       linearIndex = findNodeIndex(linearNodes, linearIndex, tagStart, tagEnd);
 
-      let siblingNodes;
-      let siblingIndex;
+      if (linearIndex === -1) {
+        if (tagStart !== tagEnd) {
+          die('Incorrect end tag syntax', tagStart);
+        }
+        linearIndex = linearNodes.length;
+      }
 
-      // The text node that fully contains the end tag
-      const textNode = linearNodes[linearIndex];
+      // The node after which the end tag must be inserted
+      const anchorNode = linearNodes[linearIndex];
 
-      if (isTextNode(textNode)) {
+      // The element node that was created when the start tag was read
+      const elementNode = ancestorNodes[ancestorNodes.length - 1];
+      const siblingNodes = elementNode.parent?.children || rootChildren;
+      const elementIndex = siblingNodes.indexOf(elementNode);
 
-        siblingNodes = textNode.parent?.children || rootChildren;
-        siblingIndex = siblingNodes.indexOf(textNode);
+      if (elementIndex === -1) {
+        die('Unexpected syntax', tagStart);
+      }
+
+      let siblingIndex = anchorNode != null ? siblingNodes.indexOf(anchorNode) : -1;
+
+      // Truncate ancestor stack as the element was closed
+      --ancestorNodes.length;
+
+      elementNode.end = tagEnd;
+
+      if (isTextNode(anchorNode)) {
+
+        if (siblingIndex === -1) {
+          die('End tag is nested incorrectly', tagStart);
+        }
 
         // Remove end tag markup from the text node
-        const offset = splitTextNode(linearNodes, linearIndex, siblingNodes, siblingIndex, textNode, tagStart, tagEnd, null);
+        const offset = splitTextNode(linearNodes, linearIndex, siblingNodes, siblingIndex, anchorNode, tagStart, tagEnd, null);
 
         siblingIndex += offset;
         linearIndex += offset;
 
       } else if (tagStart === tagEnd) {
+        siblingIndex = anchorNode != null ? siblingIndex : siblingNodes.length;
 
-        if (linearIndex === -1) {
-          linearIndex = linearNodes.length;
-        }
-
-        // The end tag doesn't exist in the markup and was injected by the forgiving SAX parser
-        const siblingNode = linearNodes[linearIndex - 1];
-
-        siblingNodes = siblingNode.parent?.children || rootChildren;
-        siblingIndex = siblingNodes.indexOf(siblingNode) + 1;
-
-      } else {
-        dieSyntax(tagStart);
-      }
-
-      // Lookup an element node that is terminated by the end tag
-      let elementNode;
-      let elementIndex = siblingIndex;
-
-      while (elementIndex > 0) {
-        const node = siblingNodes[--elementIndex];
-
-        if (node.nodeType === NodeType.ELEMENT && node.tagName === token.name) {
-          elementNode = node;
-          break;
+        if (siblingIndex === -1) {
+          die('Unexpected syntax', tagStart);
         }
       }
 
-      if (!elementNode) {
-        dieSyntax(tagStart);
+      const childrenCount = siblingIndex - elementIndex - 1;
+
+      if (childrenCount === 0) {
+        return;
       }
+      const children = elementNode.children = siblingNodes.splice(elementIndex + 1, childrenCount);
 
-      const elementChildren = siblingNodes.splice(elementIndex + 1, siblingIndex - elementIndex - 1);
-
-      elementNode.end = tagEnd;
-      elementNode.children = elementChildren;
-
-      for (let i = 0; i < elementChildren.length; ++i) {
-        elementChildren[i].parent = elementNode;
+      for (let i = 0; i < children.length; ++i) {
+        children[i].parent = elementNode;
       }
     },
 
   }, saxParserOptions);
 
   return (input) => {
+
     rootChildren = parseMessageFormat(input, options);
     linearNodes = [];
     linearIndex = 0;
@@ -263,7 +278,13 @@ export function createMfmlParser(options: IMfmlParserOptions = {}): MfmlParser {
     linearizeNodes(rootChildren, linearNodes);
 
     saxParser.reset();
-    saxParser.parse(input);
+
+    try {
+      saxParser.parse(input);
+    } finally {
+      ancestorNodes = {length: 0};
+      linearNodes.length = 0;
+    }
 
     if (decodeText != null) {
       decodeTextNodes(rootChildren, decodeText);

@@ -19,7 +19,7 @@ describe('createMfmlParser', () => {
   });
 
   test('parses text', () => {
-    expect(parse('aaa')).toEqual(<Node>{
+    expect(parse('aaa')).toEqual<Node>({
       nodeType: NodeType.TEXT,
       value: 'aaa',
       parent: null,
@@ -29,7 +29,7 @@ describe('createMfmlParser', () => {
   });
 
   test('parses an argument', () => {
-    expect(parse('{foo}')).toEqual(<Node>{
+    expect(parse('{foo}')).toEqual<Node>({
       nodeType: NodeType.ARGUMENT,
       name: 'foo',
       parent: null,
@@ -39,7 +39,7 @@ describe('createMfmlParser', () => {
   });
 
   test('parses a function', () => {
-    expect(parse('{foo,number}')).toEqual(<Node>{
+    expect(parse('{foo,number}')).toEqual<Node>({
       nodeType: NodeType.FUNCTION,
       name: 'number',
       argumentName: 'foo',
@@ -212,7 +212,7 @@ describe('createMfmlParser', () => {
   });
 
   test('parses a container element', () => {
-    expect(parse('<foo></foo>')).toEqual(<Node>{
+    expect(parse('<foo></foo>')).toEqual<Node>({
       nodeType: NodeType.ELEMENT,
       tagName: 'foo',
       attributes: [],
@@ -228,7 +228,7 @@ describe('createMfmlParser', () => {
       selfClosingEnabled: true,
     });
 
-    expect(parse('<foo/>')).toEqual(<Node>{
+    expect(parse('<foo/>')).toEqual<Node>({
       nodeType: NodeType.ELEMENT,
       tagName: 'foo',
       attributes: [],
@@ -240,7 +240,7 @@ describe('createMfmlParser', () => {
   });
 
   test('parses non-closed tag', () => {
-    expect(parse('<foo>')).toEqual(<Node>{
+    expect(parse('<foo>')).toEqual<Node>({
       nodeType: NodeType.ELEMENT,
       tagName: 'foo',
       attributes: [],
@@ -251,7 +251,31 @@ describe('createMfmlParser', () => {
     });
   });
 
-  test('parses nested non-closed tag', () => {
+  test('parses non-closed tag with text content', () => {
+    const rootNode: Node = {
+      nodeType: NodeType.ELEMENT,
+      tagName: 'foo',
+      attributes: [],
+      children: [
+        {
+          nodeType: NodeType.TEXT,
+          value: 'aaa',
+          parent: null,
+          start: 5,
+          end: 8,
+        },
+      ],
+      parent: null,
+      start: 0,
+      end: 8,
+    };
+
+    rootNode.children[0].parent = rootNode;
+
+    expect(parse('<foo>aaa')).toEqual(rootNode);
+  });
+
+  test('parses nested non-closed tags', () => {
     const rootNode: Node = {
       nodeType: NodeType.ELEMENT,
       tagName: 'foo',
@@ -275,6 +299,92 @@ describe('createMfmlParser', () => {
     rootNode.children[0].parent = rootNode;
 
     expect(parse('<foo><bar>')).toEqual(rootNode);
+  });
+
+  test('parses nested non-closed tags with text content', () => {
+    const rootNode: Node = {
+      nodeType: NodeType.ELEMENT,
+      tagName: 'foo',
+      attributes: [],
+      children: [
+        {
+          nodeType: NodeType.TEXT,
+          value: 'aaa',
+          parent: null,
+          start: 5,
+          end: 8,
+        },
+        {
+          nodeType: NodeType.ELEMENT,
+          tagName: 'bar',
+          attributes: [],
+          children: [
+            {
+              nodeType: NodeType.TEXT,
+              value: 'bbb',
+              parent: null,
+              start: 13,
+              end: 16,
+            },
+          ],
+          parent: null,
+          start: 8,
+          end: 16,
+        },
+      ],
+      parent: null,
+      start: 0,
+      end: 16,
+    };
+
+    rootNode.children[0].parent = rootNode;
+    rootNode.children[1].parent = rootNode;
+    (rootNode.children[1] as ContainerNode).children[0].parent = rootNode.children[1] as ContainerNode;
+
+    expect(parse('<foo>aaa<bar>bbb')).toEqual(rootNode);
+  });
+
+  test('parses nested non-closed tags with same name with text content', () => {
+    const rootNode: Node = {
+      nodeType: NodeType.ELEMENT,
+      tagName: 'foo',
+      attributes: [],
+      children: [
+        {
+          nodeType: NodeType.TEXT,
+          value: 'aaa',
+          parent: null,
+          start: 5,
+          end: 8,
+        },
+        {
+          nodeType: NodeType.ELEMENT,
+          tagName: 'foo',
+          attributes: [],
+          children: [
+            {
+              nodeType: NodeType.TEXT,
+              value: 'bbb',
+              parent: null,
+              start: 13,
+              end: 16,
+            },
+          ],
+          parent: null,
+          start: 8,
+          end: 16,
+        },
+      ],
+      parent: null,
+      start: 0,
+      end: 16,
+    };
+
+    rootNode.children[0].parent = rootNode;
+    rootNode.children[1].parent = rootNode;
+    (rootNode.children[1] as ContainerNode).children[0].parent = rootNode.children[1] as ContainerNode;
+
+    expect(parse('<foo>aaa<foo>bbb')).toEqual(rootNode);
   });
 
   test('parses implicitly closed tags', () => {
@@ -829,12 +939,16 @@ describe('createMfmlParser', () => {
     expect(parse('<foo bar="{www,select,aaa{<bar></bar>}}"></foo>')).toEqual(rootNode);
   });
 
-  test('throws on unexpected argument in start tag', () => {
-    expect(() => parse('<foo {baz}></foo>')).toThrow(new SyntaxError('Unexpected token at 5'));
+  test('throws on unexpected argument syntax in start tag', () => {
+    expect(() => parse('<foo {baz}></foo>')).toThrow(new SyntaxError('Incorrect attribute syntax at 5'));
+  });
+
+  test('throws on incorrect end tag nesting', () => {
+    expect(() => parse('<foo>{bar,plural,one{</foo>}}')).toThrow(new SyntaxError('End tag is nested incorrectly at 21'));
   });
 
   test('throws on unexpected argument in end tag', () => {
-    expect(() => parse('<foo></foo {baz}>')).toThrow(new SyntaxError('Unexpected token at 5'));
+    expect(() => parse('<foo></foo {baz}>')).toThrow(new SyntaxError('Incorrect end tag syntax at 5'));
   });
 
   test('throws on unclosed argument', () => {
