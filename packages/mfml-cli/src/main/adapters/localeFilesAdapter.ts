@@ -100,7 +100,7 @@ const localeFilesAdapter: Adapter<ILocaleFilesAdapterOptions> = (config) => {
 
     assert(isString(namespace) && namespace.length !== 0, `The namespace for message ${bold(messageName)} was expected`);
 
-    const filePath = (rewriteFilePath ? withoutExtension(rewriteFilePath(namespace)) : namespace) + (typingsEnabled ? '.ts' : '.js');
+    const filePath = (rewriteFilePath ? withoutExtension(rewriteFilePath(namespace)) : '.' + path.sep + namespace) + (typingsEnabled ? '.ts' : '.js');
 
     namespaces[filePath] ||= namespace;
 
@@ -132,7 +132,7 @@ const localeFilesAdapter: Adapter<ILocaleFilesAdapterOptions> = (config) => {
 
   const outputFilePaths = Object.keys(outputFiles);
 
-  logInfo(`Output ${bold(outputFilePaths.length)} files to ${formatFilePath(outDir)}:\n${outputFilePaths.join('\n')}`);
+  logInfo(`Output ${bold(outputFilePaths.length)} files to ${formatFilePath(outDir)}:\n${outputFilePaths.join('\n')}\n`);
 };
 
 export default localeFilesAdapter;

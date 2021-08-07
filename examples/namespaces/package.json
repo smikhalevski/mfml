@@ -2,9 +2,10 @@
   "name": "example",
   "private": true,
   "scripts": {
-    "mfmlc": "mfmlc --rootDir src --outDir ./gen --include './messages/*.json'"
+    "mfmlc": "mfmlc --include './src/messages/*.json' --outDir ./src/gen"
   },
   "devDependencies": {
+    "lodash": "^4.17.21",
     "mfml-cli": "^1.0.0",
     "mfml-compiler": "^1.0.0"
   },

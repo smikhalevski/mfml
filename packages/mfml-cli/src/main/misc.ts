@@ -7,8 +7,8 @@ export const errorMessage = (error: unknown): unknown => error instanceof Error 
 export const bold = (message: keyof any): string => chalk.bold(message);
 
 export const formatFilePath = (filePath: string): string => {
-  filePath = path.relative(process.cwd(), filePath);
-  return bold(path.isAbsolute(filePath) ? filePath : '.' + path.sep + filePath);
+  const relativeFilePath = path.relative(process.cwd(), filePath);
+  return bold(path.isAbsolute(relativeFilePath) || relativeFilePath.charAt(0) === '.' ? filePath : '.' + path.sep + relativeFilePath);
 };
 
 export const fieldMessage = (name: keyof any, message: string) => bold(name) + ' ' + message;

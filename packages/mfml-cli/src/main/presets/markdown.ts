@@ -1,9 +1,9 @@
 import {IConfig} from '../cli-types';
 import marked from 'marked';
 
-const markdownConfig: IConfig = {
+const config: IConfig = {
   presets: ['html'],
   rewriteTranslation: (translation) => marked(translation),
 };
 
-export default markdownConfig;
+export default config;

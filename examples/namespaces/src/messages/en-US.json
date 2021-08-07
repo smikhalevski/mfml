@@ -1,0 +1,7 @@
+{
+  "login.title": "Hello, <strong>{user_name}</strong>!",
+  "login.visit_counter": "You visited us {visit_count, plural, one {<strong>one</strong> time} other {<strong>#</strong> times}}",
+  "login.button": "Login",
+  "landing.title": "Buy <abbr title=\"More than {user_count} users trust us!\">our product</abbr>, it's cheap and handy!",
+  "landing.cta": "Buy now"
+}

@@ -1,7 +1,0 @@
-{
-  "login.title": "Привет, <strong>{user_name}</strong>",
-  "login.visit_counter": "Вы поситили нас {visit_count, plural, one {<strong>один</strong> раз} few {<strong>#</strong> раза} other {<strong>#</strong> раз}}",
-  "login.button": "Войти",
-  "landing.title": "Купите <abbr title=\"Более {user_count} пользователей доверяют нам\">наш товар</abbr>, он недорогой и удобный!",
-  "landing.cta": "Купить сейчас"
-}

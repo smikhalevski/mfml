@@ -1,4 +1,5 @@
 lib
+target
 gen
 docs
 *.tgz

@@ -1,0 +1,3 @@
+{
+  "hello": "<abbr title=\"Your name is {name}, isn't it?\">Hello, <strong>{name}</strong></abbr>!"
+}
