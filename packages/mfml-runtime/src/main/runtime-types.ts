@@ -9,7 +9,12 @@
  * @param values The ICU argument values.
  * @returns The rendered message translation.
  */
-export type MessageFunction<Values extends object | void> = <Result>(runtime: IRuntime<Result>, locale: string, values: Values) => Result | string;
+export interface MessageFunction<Values extends object | void> {
+
+  <Result>(runtime: IRuntime<Result>, locale: string, values: Values): Result | string;
+
+  displayName?: string | undefined;
+}
 
 /**
  * Renders an element by `tagName`.
