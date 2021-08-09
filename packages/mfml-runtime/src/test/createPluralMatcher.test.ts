@@ -12,4 +12,10 @@ describe('createPluralMatcher', () => {
     expect(matcher('ru', 1)).toBe(pluralCategories.indexOf(PluralCategory.ONE));
     expect(matcher('ru', 3)).toBe(pluralCategories.indexOf(PluralCategory.FEW));
   });
+
+  test('accepts malformed locales', () => {
+    const matcher = createPluralMatcher('cardinal');
+
+    expect(matcher('en_US', 1)).toBe(pluralCategories.indexOf(PluralCategory.ONE));
+  });
 });
