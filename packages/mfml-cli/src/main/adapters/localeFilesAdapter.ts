@@ -23,7 +23,14 @@ export interface ILocaleFilesAdapterOptions {
   /**
    * The name of the index file that exports all message modules.
    */
-  digestFilePath?: string;
+  digestModulePath?: string;
+
+  /**
+   * The file name suffix added to a namespace file. This file re-exports all message functions under a namespace.
+   *
+   * @default "-namespace"
+   */
+  namespaceModuleSuffix?: string;
 
   /**
    * Returns a namespace under which the message must be exported.
@@ -33,7 +40,7 @@ export interface ILocaleFilesAdapterOptions {
   /**
    * Returns the name of the file where namespace must be output. Extension can be omitted.
    */
-  rewriteFilePath?(namespace: string): string;
+  rewriteModulePath?(namespace: string): string;
 }
 
 /**
@@ -47,21 +54,27 @@ const localeFilesAdapter: Adapter<ILocaleFilesAdapterOptions> = (config) => {
     include,
     rootDir,
     outDir,
+    digestModulePath,
     typingsEnabled,
-    digestFilePath,
     renameNamespace,
-    rewriteFilePath,
+    rewriteModulePath,
   } = config;
 
-  if (digestFilePath != null) {
-    assertString(digestFilePath, 'digestFilePath');
+  let {namespaceModuleSuffix} = config;
+
+  namespaceModuleSuffix ||= '-namespace';
+
+  if (digestModulePath != null) {
+    assertString(digestModulePath, 'digestModulePath');
   }
   if (renameNamespace != null) {
     assertFunction(renameNamespace, 'renameNamespace');
   }
-  if (rewriteFilePath != null) {
-    assertFunction(rewriteFilePath, 'rewriteFilePath');
+  if (rewriteModulePath != null) {
+    assertFunction(rewriteModulePath, 'rewriteModulePath');
   }
+
+  assertString(namespaceModuleSuffix, 'namespaceModuleSuffix');
 
   const errorMessages: Array<string> = [];
 
@@ -79,6 +92,7 @@ const localeFilesAdapter: Adapter<ILocaleFilesAdapterOptions> = (config) => {
   const messageModules = createMap<IMessageModule>();
   const namespaces = createMap<string>();
   const outputFiles = createMap<string>();
+  const moduleExtension = typingsEnabled ? '.ts' : '.js';
 
   // Assemble messages
   for (let filePath of include) {
@@ -100,34 +114,37 @@ const localeFilesAdapter: Adapter<ILocaleFilesAdapterOptions> = (config) => {
 
     assert(isString(namespace) && namespace.length !== 0, `The namespace for message ${bold(messageName)} was expected`);
 
-    const filePath = (rewriteFilePath ? withoutExtension(rewriteFilePath(namespace)) : '.' + path.sep + namespace) + (typingsEnabled ? '.ts' : '.js');
+    let modulePath = rewriteModulePath ? rewriteModulePath(namespace) : '.' + path.sep + namespace;
 
-    namespaces[filePath] ||= namespace;
+    // Ensure that relative paths start with dot
+    modulePath = path.dirname(modulePath) + path.sep + path.basename(modulePath);
 
-    (messageModules[filePath] ||= {messages: {}}).messages[messageName] = message;
+    namespaces[modulePath] ||= namespace;
+
+    (messageModules[modulePath] ||= {messages: {}}).messages[messageName] = message;
   }
 
-  let digestSrc = '';
+  for (const [modulePath, messageModule] of Object.entries(messageModules)) {
 
-  // Compile modules
-  for (const [filePath, messageModule] of Object.entries(messageModules)) {
-    if (digestFilePath != null) {
-      const modulePath = path.dirname(filePath) + path.sep + withoutExtension(path.basename(filePath));
-      digestSrc += `export*as ${namespaces[filePath]} from` + JSON.stringify(modulePath);
+    // Compile module
+    outputFiles[modulePath] = compileModule(messageModule, parse, config) + '\n';
+
+    // Compile namespace module
+    if (digestModulePath != null) {
+      outputFiles[modulePath + namespaceModuleSuffix] = `export*as ${namespaces[modulePath]} from${JSON.stringify(modulePath)};`;
     }
-    outputFiles[filePath] = compileModule(messageModule, parse, config) + '\n';
   }
 
   if (errorMessages.length !== 0) {
     die('Compilation failed\n\n' + errorMessages.join('\n\n'));
   }
 
-  if (digestFilePath != null && digestSrc !== '') {
-    outputFiles[digestFilePath] = digestSrc;
+  if (digestModulePath != null) {
+    outputFiles[digestModulePath] = Object.keys(messageModules).map((modulePath) => `export*from${JSON.stringify(modulePath + namespaceModuleSuffix)};`).join('');
   }
 
-  for (const [outputFilePath, source] of Object.entries(outputFiles)) {
-    writeFileOrDie(path.resolve(outDir, outputFilePath), source, `Failed to write ${formatFilePath(outputFilePath)}`);
+  for (const [modulePath, source] of Object.entries(outputFiles)) {
+    writeFileOrDie(path.resolve(outDir, modulePath + moduleExtension), source, `Failed to write ${formatFilePath(modulePath)}`);
   }
 
   const outputFilePaths = Object.keys(outputFiles);

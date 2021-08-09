@@ -13,4 +13,5 @@ try {
   logSuccess(`Compiled ${bold(config.include.length)} files`);
 } catch (error) {
   logError(error);
+  process.exit(1);
 }
