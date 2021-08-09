@@ -14,7 +14,7 @@
     "rollup-at-runtime": "rollup --external mfml-runtime,@messageformat/parser,@smikhalevski/codegen,tag-soup --input ./lib/at-runtime.js --file ./lib/at-runtime.js --format cjs --plugin @rollup/plugin-node-resolve",
     "terser": "terser --compress --mangle toplevel --output ./lib/index-cjs.js -- ./lib/index-cjs.js",
     "terser-at-runtime": "terser --compress --mangle toplevel --output ./lib/at-runtime.js -- ./lib/at-runtime.js",
-    "clean": "rm -rf ./lib",
+    "clean": "rimraf ./lib",
     "test": "jest --detectOpenHandles"
   },
   "repository": {
