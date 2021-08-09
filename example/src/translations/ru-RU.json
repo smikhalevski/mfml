@@ -1,0 +1,4 @@
+{
+  "app/say_hello": "<abbr title=\"Вас зовут {user_name}, не так ли?\">Привет, <red-button><strong>{user_name}</strong></red-button></abbr>!",
+  "app/visit_counter": "Вы поситили это приложение {visit_count, plural, one {один раз} few {# раза} many {# paз} other {# раз}}. Последнее посещение состоялось {visit_date, date, YYYY-MM-DD}."
+}

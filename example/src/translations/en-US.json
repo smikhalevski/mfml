@@ -1,0 +1,5 @@
+{
+  "app/say_hello": "<abbr title=\"Your name is {user_name}, isn't it?\">Hello, <red-button><strong>{user_name}</strong></red-button></abbr>!",
+  "app/visit_counter": "You visited this app {visit_count, plural, one {one time} other {# times}}. Last visit was on {visit_date, date, DD/MM/YYYY}.",
+  "red_button/alert_content": "<strong>This message is available only in <code>en-US</code> locale.</strong> Formatting isn't supported by <code>alert</code> so tags are ignored thanks to string runtime."
+}
