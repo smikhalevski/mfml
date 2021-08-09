@@ -110,15 +110,75 @@ Messages.hello(stringRuntime, 'en-US', {name: 'Karen'}) // → "Hello, Karen!"
 
 Have a look at https://github.com/smikhalevski/mfml/tree/master/examples for real-world use-cases implementation.
 
-<!--
 # Configuration
 
-# Presets
+Configurations have the following priorities from highest to lowest:
 
-# Adapters
+- CLI parameters;
+- Options from `mfml.config.js` or other configuration file provided through `--config` CLI parameter;
+- Options from presets.
+
+## CLI parameters
+
+##### `-h`/`--help`
+
+Print the help document.
+
+##### `-V`/`--version`
+
+Print the installed version number.
+
+##### `-c <file>`, `--config <file>`
+
+The config path. By default, compiler looks up for a `mfml.config.js` in the current directory.
+
+##### `-i <pattern>`, `--include <pattern>`
+
+The pattern of file paths that must be included in the compilation. This option is required and must present either
+among CLI options or in the configuration file.
+
+##### `-o <dir>`, `--outDir <dir>`
+
+The output folder for all emitted files. This option is required and must present either among CLI options or in the
+configuration file.
+
+##### `-d <dir>`, `--rootDir <dir>`
+
+The root folder from which included file paths are resolved.
+
+##### `-p <preset>`, `--preset <preset>`
+
+The path of a configuration preset.
+
+##### `-a <adapter>`, `--adapter <adapter>`
+
+The path to a compilation adapter.
+
+##### `-l <locale>`, `--defaultLocale <locale>`
+
+The default locale.
+
+##### `-t`/`--ts`
+
+Produce TypeScript typings for message functions.
+
+## Presets
+
+Preset is a configuration file that provides defaults for your configuration. There are two built-in presets: `html`
+and `markdown`.
+
+## Adapters
+
+An adapter is the central part of the CLI utility. It is a function that receives a fully resolved config and compiled
+files outputs files.
+
+```ts
+type Adapter<Options> = (config: IResolvedConfig & Partial<Options>) => void;
+```
+
+By default, [`localeFilesAdapter`](./packages/mfml-cli/src/main/adapters/localeFilesAdapter.ts) is used.
 
 # React integration
--->
 
 # ICU considerations
 
