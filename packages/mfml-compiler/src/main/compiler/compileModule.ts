@@ -81,7 +81,7 @@ export function compileModule(messageModule: IMessageModule, mfmlParser: MfmlPar
   const {
     typingsEnabled,
     runtimeImportPath = 'mfml-runtime',
-    renameInterface = pascalCase,
+    renameInterface = renameValuesInterface,
     renameMessageFunction = camelCase,
     otherSelectCaseKey,
     provideFunctionType,
@@ -207,4 +207,8 @@ export function compileModule(messageModule: IMessageModule, mfmlParser: MfmlPar
       + localesSrc
       + src
       + `export{${functionNames.join(',')}};`;
+}
+
+function renameValuesInterface(messageName: string): string {
+  return pascalCase(messageName) + 'Values';
 }
