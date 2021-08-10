@@ -1,9 +1,15 @@
+# MFML example
+
 The full-functional example that shows how to use MFML.
 
-Uses TypeScript, Rollup, MFML and dynamic imports.
+Uses TypeScript, Webpack, React and MFML.
 
-Use `npm ci && npm run watch` to start the example watcher.
+Install modules with `npm ci`.
 
-**Note:** Rollup doesn't watch https://github.com/smikhalevski/mfml/blob/master/example/src/translations/en-US.json
-and https://github.com/smikhalevski/mfml/blob/master/example/src/translations/en-US.json, so you would need to restart
-the watcher to recompile translations with MFML. 
+Use `npm run watch` to start the dev server.
+
+Use `npm run build` to build the project to `./target` directory.
+
+**Note:** Webpack doesn't watch [`./src/translations/en-US.json`](./src/translations/en-US.json)
+and [`./src/translations/ru-RU.json`](./src/translations/ru-RU.json), so you would need
+to run `npm run mfmlc` to recompile translations with MFML. 

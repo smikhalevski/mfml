@@ -16,7 +16,6 @@ import {
   withoutExtension,
   writeFileOrDie,
 } from '../misc';
-import {logInfo} from '../log-utils';
 
 export interface ILocaleFilesAdapterOptions {
 
@@ -24,13 +23,6 @@ export interface ILocaleFilesAdapterOptions {
    * The name of the index file that exports all message modules.
    */
   digestModulePath?: string;
-
-  /**
-   * The file name suffix added to a namespace file. This file re-exports all message functions under a namespace.
-   *
-   * @default "-namespace"
-   */
-  namespaceModuleSuffix?: string;
 
   /**
    * Returns a namespace under which the message must be exported.
@@ -60,10 +52,6 @@ const localeFilesAdapter: Adapter<ILocaleFilesAdapterOptions> = (config) => {
     rewriteModulePath,
   } = config;
 
-  let {namespaceModuleSuffix} = config;
-
-  namespaceModuleSuffix ||= '-namespace';
-
   if (digestModulePath != null) {
     assertString(digestModulePath, 'digestModulePath');
   }
@@ -73,8 +61,6 @@ const localeFilesAdapter: Adapter<ILocaleFilesAdapterOptions> = (config) => {
   if (rewriteModulePath != null) {
     assertFunction(rewriteModulePath, 'rewriteModulePath');
   }
-
-  assertString(namespaceModuleSuffix, 'namespaceModuleSuffix');
 
   const errorMessages: Array<string> = [];
 
@@ -124,15 +110,9 @@ const localeFilesAdapter: Adapter<ILocaleFilesAdapterOptions> = (config) => {
     (messageModules[modulePath] ||= {messages: {}}).messages[messageName] = message;
   }
 
+  // Compile output files
   for (const [modulePath, messageModule] of Object.entries(messageModules)) {
-
-    // Compile module
     outputFiles[modulePath] = compileModule(messageModule, parse, config) + '\n';
-
-    // Compile namespace module
-    if (digestModulePath != null) {
-      outputFiles[modulePath + namespaceModuleSuffix] = `export*as ${namespaces[modulePath]} from${JSON.stringify(modulePath)};`;
-    }
   }
 
   if (errorMessages.length !== 0) {
@@ -140,16 +120,12 @@ const localeFilesAdapter: Adapter<ILocaleFilesAdapterOptions> = (config) => {
   }
 
   if (digestModulePath != null) {
-    outputFiles[digestModulePath] = Object.keys(messageModules).map((modulePath) => `export*from${JSON.stringify(modulePath + namespaceModuleSuffix)};`).join('');
+    outputFiles[digestModulePath] = Object.keys(messageModules).map((modulePath) => `export*as ${namespaces[modulePath]} from${JSON.stringify(modulePath)};`).join('');
   }
 
   for (const [modulePath, source] of Object.entries(outputFiles)) {
     writeFileOrDie(path.resolve(outDir, modulePath + moduleExtension), source, `Failed to write ${formatFilePath(modulePath)}`);
   }
-
-  const outputFilePaths = Object.keys(outputFiles);
-
-  logInfo(`Output ${bold(outputFilePaths.length)} files to ${formatFilePath(outDir)}:\n${outputFilePaths.join('\n')}\n`);
 };
 
 export default localeFilesAdapter;

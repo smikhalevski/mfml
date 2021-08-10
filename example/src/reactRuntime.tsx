@@ -14,10 +14,9 @@ export const reactRuntime = createReactRuntime({
     // Render a custom element
     if (tagName === 'red-button') {
       return (
-          <Suspense fallback={'Loading…'}>
-            <LazyRedButton>
-              {children}
-            </LazyRedButton>
+          <Suspense fallback={'Loading'}>
+            {/* React elements in children don't have keys */}
+            {createElement(LazyRedButton, null, ...children)}
           </Suspense>
       );
     }

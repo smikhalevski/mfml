@@ -10,8 +10,8 @@
   ],
   "scripts": {
     "build": "tsc --project ./tsconfig.build.json && npm run rollup && npm run terser",
-    "rollup": "rollup --input ./lib/index.js --file ./lib/index-cjs.js --format cjs --plugin @rollup/plugin-node-resolve",
-    "terser": "terser --compress --mangle toplevel --output ./lib/index-cjs.js -- ./lib/index-cjs.js",
+    "rollup": "rollup --external locale-matcher --input ./lib/index.js --file ./lib/index-cjs.js --format cjs --plugin @rollup/plugin-node-resolve",
+    "terser": "terser --compress --comments false --mangle toplevel --output ./lib/index-cjs.js -- ./lib/index-cjs.js",
     "clean": "rimraf ./lib",
     "test": "jest --detectOpenHandles"
   },
@@ -30,7 +30,8 @@
     "icu",
     "l10n",
     "intl",
-    "tms"
+    "tms",
+    "message-format"
   ],
   "author": "Savva Mikhalevski <smikhalevski@gmail.com>",
   "license": "MIT",
