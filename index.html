@@ -1,0 +1,541 @@
+<!doctype html>
+<html class="default no-js">
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<title>mfml</title>
+	<meta name="description" content="Documentation for mfml">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="stylesheet" href="assets/css/main.css">
+	<script async src="assets/js/search.js" id="search-script"></script>
+</head>
+<body>
+<header>
+	<div class="tsd-page-toolbar">
+		<div class="container">
+			<div class="table-wrap">
+				<div class="table-cell" id="tsd-search" data-index="assets/js/search.json" data-base=".">
+					<div class="field">
+						<label for="tsd-search-field" class="tsd-widget search no-caption">Search</label>
+						<input id="tsd-search-field" type="text" />
+					</div>
+					<ul class="results">
+						<li class="state loading">Preparing search index...</li>
+						<li class="state failure">The search index is not available</li>
+					</ul>
+					<a href="index.html" class="title">mfml</a>
+				</div>
+				<div class="table-cell" id="tsd-widgets">
+					<div id="tsd-filter">
+						<a href="#" class="tsd-widget options no-caption" data-toggle="options">Options</a>
+						<div class="tsd-filter-group">
+							<div class="tsd-select" id="tsd-filter-visibility">
+								<span class="tsd-select-label">All</span>
+								<ul class="tsd-select-list">
+									<li data-value="public">Public</li>
+									<li data-value="protected">Public/Protected</li>
+									<li data-value="private" class="selected">All</li>
+								</ul>
+							</div>
+							<input type="checkbox" id="tsd-filter-inherited" checked />
+							<label class="tsd-widget" for="tsd-filter-inherited">Inherited</label>
+							<input type="checkbox" id="tsd-filter-externals" checked />
+							<label class="tsd-widget" for="tsd-filter-externals">Externals</label>
+						</div>
+					</div>
+					<a href="#" class="tsd-widget menu no-caption" data-toggle="menu">Menu</a>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div class="tsd-page-title">
+		<div class="container">
+			<h1>mfml</h1>
+		</div>
+	</div>
+</header>
+<div class="container container-main">
+	<div class="row">
+		<div class="col-8 col-content">
+			<div class="tsd-panel tsd-typography">
+				<a href="#mfml-" id="mfml-" style="color: inherit; text-decoration: none;">
+					<h1>mfml <a href="https://github.com/smikhalevski/mfml/actions/workflows/master.yml"><img src="https://github.com/smikhalevski/mfml/actions/workflows/master.yml/badge.svg?branch=master&event=push" alt="build"></a></h1>
+				</a>
+				<p>The ICU MessageFormat + XML/HTML compiler and runtime that makes your translations tree-shakeable.</p>
+				<a href="#motivation" id="motivation" style="color: inherit; text-decoration: none;">
+					<h1>Motivation</h1>
+				</a>
+				<p>Splitting the app code into chunks and loading those chunks at runtime is usually handled by a bundler. Modern i18n
+					tools, such as <code>i18next</code>, rely on JSON files that are baked into an application bundle or loaded asynchronously. This
+				approach has several downsides:</p>
+				<ul>
+					<li>You have to somehow split your translations into separate JSON files before bundling. Otherwise, your clients would
+					have to download all translations at application start;</li>
+					<li>You have to load translations manually when they are needed;</li>
+					<li>Non-used translations are still bundled and loaded unless you manually delete them;</li>
+					<li>Errors, such as missed interpolation parameters and illegal parameter types, are thrown at runtime.</li>
+				</ul>
+				<p>All the above is highly error-prone due to the human factor.</p>
+				<p>MFML compiles translations into message functions that you can import as a module into your code. This approach provides
+				multiple benefits:</p>
+				<ul>
+					<li>Message functions are bundled and loaded along with your code. So you don&#39;t have to manage the translation loading
+					process manually;</li>
+					<li>Message functions are tree-shakeable, so chunks assembled by a bundler would contain only used translations;</li>
+					<li>Message functions can be type-checked at compile time. So you won&#39;t forget that translation required a parameter, or a
+						parameter must be of a particular type. Change in the translation key would require changes in modules that import a
+						corresponding message function. Otherwise, a type checker, or a bundler would signal you that the imported function is
+					missing;</li>
+					<li>Message functions use a runtime to render the translation. Runtimes can produce React elements, plain strings, or any
+					other output you need.</li>
+				</ul>
+				<p>MFML supports ICU MessageFormat and XML/HTML markup. The compiler is highly customizable, and the runtime
+				is <a href="https://bundlephobia.com/result?p=mfml-runtime">just 3 kB gzipped</a>.</p>
+				<a href="#usage-example" id="usage-example" style="color: inherit; text-decoration: none;">
+					<h1>Usage example</h1>
+				</a>
+				<p>Install compiler, CLI utility and runtime libraries.</p>
+				<pre><code class="language-shell"><span style="color: #000000">npm install --save-dev mfml-compiler mfml-cli </span>
+
+<span style="color: #000000">npm install --save-prod mfml-runtime </span>
+</code></pre>
+				<p>Create files that hold your translations. File names must be locale names. By default, locales are matched
+					using <a href="https://github.com/smikhalevski/locale-matcher"><code>locale-matcher</code></a>, so <code>en-US</code>, <code>en_us</code>, <code>en</code>, and
+				even <code>HE/il-u-ca-hebrew+tz/jeruslm</code> are all valid locale names.</p>
+				<pre><code class="language-json5">// ./translations/en-US.json
+
+{
+  &quot;sayHello&quot;: &quot;Hello, &lt;strong&gt;{name}&lt;/strong&gt;&quot;
+}
+</code></pre>
+				<pre><code class="language-json5">// ./translations/ru-RU.json
+
+{
+  &quot;sayHello&quot;: &quot;Привет, &lt;strong&gt;{name}&lt;/strong&gt;&quot;
+}
+</code></pre>
+				<p>Compile these files with <code>mfmlc</code> to TypeScript. Or remove <code>--ts</code> flag to disable typings.</p>
+				<pre><code class="language-shell"><span style="color: #000000">mfmlc --include </span><span style="color: #A31515">&#039;./translations/*.json&#039;</span><span style="color: #000000"> --outDir </span><span style="color: #A31515">&#039;./gen&#039;</span><span style="color: #000000"> --ts;</span>
+</code></pre>
+				<p>This command would output <code>./gen/messages.ts</code> file with message functions and corresponding TypeScript interfaces.</p>
+				<details>
+					<summary>The content of <code>./gen/messages.ts</code></summary>
+					<p>
+						<pre><code class="language-ts"><span style="color: #AF00DB">import</span><span style="color: #000000"> {</span><span style="color: #001080">MessageFunction</span><span style="color: #000000">} </span><span style="color: #AF00DB">from</span><span style="color: #000000"> </span><span style="color: #A31515">&#039;mfml-runtime&#039;</span><span style="color: #000000">;</span>
+
+<span style="color: #0000FF">const</span><span style="color: #000000"> </span><span style="color: #0070C1">b</span><span style="color: #000000"> = </span><span style="color: #A31515">&#039;en-US&#039;</span><span style="color: #000000">;</span>
+<span style="color: #0000FF">const</span><span style="color: #000000"> </span><span style="color: #0070C1">d</span><span style="color: #000000"> = [</span><span style="color: #001080">b</span><span style="color: #000000">, </span><span style="color: #A31515">&#039;ru-RU&#039;</span><span style="color: #000000">];</span>
+
+<span style="color: #AF00DB">export</span><span style="color: #000000"> </span><span style="color: #0000FF">interface</span><span style="color: #000000"> </span><span style="color: #267F99">SayHelloValues</span><span style="color: #000000"> {</span>
+<span style="color: #000000">  </span><span style="color: #001080">name</span><span style="color: #000000">: </span><span style="color: #267F99">unknown</span><span style="color: #000000">;</span>
+<span style="color: #000000">}</span>
+
+<span style="color: #0000FF">let</span><span style="color: #000000"> </span><span style="color: #795E26">sayHello</span><span style="color: #000000">: </span><span style="color: #267F99">MessageFunction</span><span style="color: #000000">&lt;</span><span style="color: #267F99">SayHelloValues</span><span style="color: #000000">&gt; = (</span><span style="color: #001080">runtime</span><span style="color: #000000">, </span><span style="color: #001080">locale</span><span style="color: #000000">, </span><span style="color: #001080">values</span><span style="color: #000000">) </span><span style="color: #0000FF">=&gt;</span><span style="color: #000000"> {</span>
+<span style="color: #000000">  </span><span style="color: #0000FF">const</span><span style="color: #000000"> {</span><span style="color: #0070C1">f</span><span style="color: #000000">, </span><span style="color: #0070C1">e</span><span style="color: #000000">, </span><span style="color: #0070C1">a</span><span style="color: #000000">, </span><span style="color: #0070C1">l</span><span style="color: #000000">} = </span><span style="color: #001080">runtime</span><span style="color: #000000">;</span>
+<span style="color: #000000">  </span><span style="color: #0000FF">const</span><span style="color: #000000"> {</span><span style="color: #001080">name</span><span style="color: #000000">: </span><span style="color: #0070C1">g</span><span style="color: #000000">} = </span><span style="color: #001080">values</span><span style="color: #000000">;</span>
+<span style="color: #000000">  </span><span style="color: #AF00DB">return</span><span style="color: #000000"> </span><span style="color: #795E26">l</span><span style="color: #000000">(</span><span style="color: #001080">locale</span><span style="color: #000000">, </span><span style="color: #001080">d</span><span style="color: #000000">) === </span><span style="color: #098658">1</span>
+<span style="color: #000000">      ? </span><span style="color: #795E26">f</span><span style="color: #000000">(</span><span style="color: #A31515">&#039;Привет, &#039;</span><span style="color: #000000">, </span><span style="color: #795E26">e</span><span style="color: #000000">(</span><span style="color: #A31515">&#039;strong&#039;</span><span style="color: #000000">, </span><span style="color: #0000FF">null</span><span style="color: #000000">, </span><span style="color: #795E26">a</span><span style="color: #000000">(</span><span style="color: #001080">locale</span><span style="color: #000000">, </span><span style="color: #001080">g</span><span style="color: #000000">)))</span>
+<span style="color: #000000">      : </span><span style="color: #795E26">f</span><span style="color: #000000">(</span><span style="color: #A31515">&#039;Hello, &#039;</span><span style="color: #000000">, </span><span style="color: #795E26">e</span><span style="color: #000000">(</span><span style="color: #A31515">&#039;strong&#039;</span><span style="color: #000000">, </span><span style="color: #0000FF">null</span><span style="color: #000000">, </span><span style="color: #795E26">a</span><span style="color: #000000">(</span><span style="color: #001080">b</span><span style="color: #000000">, </span><span style="color: #001080">g</span><span style="color: #000000">)));</span>
+<span style="color: #000000">};</span>
+
+<span style="color: #AF00DB">export</span><span style="color: #000000"> {</span><span style="color: #001080">sayHello</span><span style="color: #000000">};</span>
+</code></pre>
+					</p>
+				</details>
+				<p>Import compiled message functions in your code.</p>
+				<pre><code class="language-ts"><span style="color: #AF00DB">import</span><span style="color: #000000"> {</span><span style="color: #001080">sayHello</span><span style="color: #000000">} </span><span style="color: #AF00DB">from</span><span style="color: #000000"> </span><span style="color: #A31515">&#039;./gen/messages&#039;</span><span style="color: #000000">;</span>
+<span style="color: #AF00DB">import</span><span style="color: #000000"> {</span><span style="color: #001080">createStringRuntime</span><span style="color: #000000">} </span><span style="color: #AF00DB">from</span><span style="color: #000000"> </span><span style="color: #A31515">&#039;mfml-runtime&#039;</span><span style="color: #000000">;</span>
+
+<span style="color: #0000FF">const</span><span style="color: #000000"> </span><span style="color: #0070C1">stringRuntime</span><span style="color: #000000"> = </span><span style="color: #795E26">createStringRuntime</span><span style="color: #000000">();</span>
+
+<span style="color: #001080">console</span><span style="color: #000000">.</span><span style="color: #795E26">log</span><span style="color: #000000">(</span><span style="color: #795E26">sayHello</span><span style="color: #000000">(</span><span style="color: #001080">stringRuntime</span><span style="color: #000000">, </span><span style="color: #A31515">&#039;en-US&#039;</span><span style="color: #000000">, {</span><span style="color: #001080">name:</span><span style="color: #000000"> </span><span style="color: #A31515">&#039;Karen&#039;</span><span style="color: #000000">})); </span><span style="color: #008000">// → &quot;Hello, Karen!&quot;</span>
+</code></pre>
+				<p>Have a look at <a href="https://github.com/smikhalevski/mfml/tree/master/example">https://github.com/smikhalevski/mfml/tree/master/example</a> for real-world use-case implementation.</p>
+				<a href="#configuration" id="configuration" style="color: inherit; text-decoration: none;">
+					<h1>Configuration</h1>
+				</a>
+				<p>Configurations have the following priorities from highest to lowest:</p>
+				<ul>
+					<li>CLI parameters;</li>
+					<li>Options from <code>mfml.config.js</code> or other configuration file provided through <code>--config</code> CLI parameter;</li>
+					<li>Options from presets.</li>
+				</ul>
+				<a href="#cli-parameters" id="cli-parameters" style="color: inherit; text-decoration: none;">
+					<h2>CLI parameters</h2>
+				</a>
+				<a href="#-h--help" id="-h--help" style="color: inherit; text-decoration: none;">
+					<h5><code>-h</code>/<code>--help</code></h5>
+				</a>
+				<p>Print the help document.</p>
+				<a href="#-v--version" id="-v--version" style="color: inherit; text-decoration: none;">
+					<h5><code>-V</code>/<code>--version</code></h5>
+				</a>
+				<p>Print the installed version number.</p>
+				<a href="#-c-ltfilegt---config-ltfilegt" id="-c-ltfilegt---config-ltfilegt" style="color: inherit; text-decoration: none;">
+					<h5><code>-c &lt;file&gt;</code>, <code>--config &lt;file&gt;</code></h5>
+				</a>
+				<p>The configuration file path. By default, <code>mfmlc</code> looks up for a <code>mfml.config.js</code> in the current directory.</p>
+				<a href="#-i-ltpatterngt---include-ltpatterngt" id="-i-ltpatterngt---include-ltpatterngt" style="color: inherit; text-decoration: none;">
+					<h5><code>-i &lt;pattern&gt;</code>, <code>--include &lt;pattern&gt;</code></h5>
+				</a>
+				<p>The file paths&#39; pattern that must be included in the compilation.
+				Supports <a href="https://github.com/isaacs/node-glob">glob expressions</a>.</p>
+				<p>This option can be specified multiple times.</p>
+				<p>This option is required and must present either among CLI options or in a configuration file.</p>
+				<a href="#-o-ltdirgt---outdir-ltdirgt" id="-o-ltdirgt---outdir-ltdirgt" style="color: inherit; text-decoration: none;">
+					<h5><code>-o &lt;dir&gt;</code>, <code>--outDir &lt;dir&gt;</code></h5>
+				</a>
+				<p>The output folder for all emitted files. This option is required and must present either among CLI options or in a
+				configuration file.</p>
+				<a href="#-d-ltdirgt---rootdir-ltdirgt" id="-d-ltdirgt---rootdir-ltdirgt" style="color: inherit; text-decoration: none;">
+					<h5><code>-d &lt;dir&gt;</code>, <code>--rootDir &lt;dir&gt;</code></h5>
+				</a>
+				<p>The root folder from which included file paths are resolved.</p>
+				<a href="#-p-ltpresetgt---preset-ltpresetgt" id="-p-ltpresetgt---preset-ltpresetgt" style="color: inherit; text-decoration: none;">
+					<h5><code>-p &lt;preset&gt;</code>, <code>--preset &lt;preset&gt;</code></h5>
+				</a>
+				<p>The name of the built-in preset (<a href="./packages/mfml-cli/src/main/presets/xml.ts"><code>xml</code></a>,
+					<a href="./packages/mfml-cli/src/main/presets/html.ts"><code>html</code></a> and
+				<a href="packages/mfml-cli/src/main/presets/markdown.ts"><code>markdown</code></a>) or path to a module that exports a configuration.</p>
+				<pre><code class="language-shell"><span style="color: #000000">mfmlc --inlcude </span><span style="color: #A31515">&#039;./translations/*.json&#039;</span><span style="color: #000000"> --outDir </span><span style="color: #A31515">&#039;./gen&#039;</span><span style="color: #000000"> --preset html</span>
+</code></pre>
+				<p>This option can be specified multiple times.</p>
+				<a href="#-a-ltadaptergt---adapter-ltadaptergt" id="-a-ltadaptergt---adapter-ltadaptergt" style="color: inherit; text-decoration: none;">
+					<h5><code>-a &lt;adapter&gt;</code>, <code>--adapter &lt;adapter&gt;</code></h5>
+				</a>
+				<p>The name of the built-in adapter (<a href="./packages/mfml-cli/src/main/adapters/localeFilesAdapter.ts"><code>localeFilesAdapter</code></a>)
+				or a path to a module that exports the adapter function.</p>
+				<a href="#-l-ltlocalegt---defaultlocale-ltlocalegt" id="-l-ltlocalegt---defaultlocale-ltlocalegt" style="color: inherit; text-decoration: none;">
+					<h5><code>-l &lt;locale&gt;</code>, <code>--defaultLocale &lt;locale&gt;</code></h5>
+				</a>
+				<p>The default locale. If omitted then the first locale in message would be used as a default.</p>
+				<a href="#-t--ts" id="-t--ts" style="color: inherit; text-decoration: none;">
+					<h5><code>-t</code>/<code>--ts</code></h5>
+				</a>
+				<p>Produce TypeScript typings for message functions.</p>
+				<a href="#configuration-files" id="configuration-files" style="color: inherit; text-decoration: none;">
+					<h2>Configuration files</h2>
+				</a>
+				<p><a href="https://smikhalevski.github.io/mfml/interfaces/IConfig.html">The full list of options supported in a configuration file.</a></p>
+				<a href="#react-integration" id="react-integration" style="color: inherit; text-decoration: none;">
+					<h1>React integration</h1>
+				</a>
+				<p>The <code>mfml-react-runtime</code> provides the runtime that renders translations as React nodes and a couple of handy components
+				and utilities.</p>
+				<p>Let&#39;s assume we&#39;ve compiled translations from <a href="#usage-example">the original example</a>. Then we can use then im React
+				markup like this:</p>
+				<pre><code class="language-tsx"><span style="color: #AF00DB">import</span><span style="color: #000000"> {</span><span style="color: #001080">sayHello</span><span style="color: #000000">} </span><span style="color: #AF00DB">from</span><span style="color: #000000"> </span><span style="color: #A31515">&#039;./gen/messages&#039;</span><span style="color: #000000">;</span>
+
+<span style="color: #800000">&lt;</span><span style="color: #267F99">Message</span>
+<span style="color: #000000">    </span><span style="color: #FF0000">message</span><span style="color: #000000">=</span><span style="color: #0000FF">{</span><span style="color: #001080">sayHello</span><span style="color: #0000FF">}</span>
+<span style="color: #000000">    </span><span style="color: #FF0000">values</span><span style="color: #000000">=</span><span style="color: #0000FF">{</span><span style="color: #000000FF">{</span><span style="color: #001080">name:</span><span style="color: #000000FF"> </span><span style="color: #A31515">&#039;Karen&#039;</span><span style="color: #000000FF">}</span><span style="color: #0000FF">}</span>
+<span style="color: #800000">/&gt;</span>
+</code></pre>
+				<p>You can use a hook to render a message:</p>
+				<pre><code class="language-ts"><span style="color: #AF00DB">import</span><span style="color: #000000"> {</span><span style="color: #001080">useEffect</span><span style="color: #000000">} </span><span style="color: #AF00DB">from</span><span style="color: #000000"> </span><span style="color: #A31515">&#039;react&#039;</span><span style="color: #000000">;</span>
+<span style="color: #AF00DB">import</span><span style="color: #000000"> {</span><span style="color: #001080">useMessage</span><span style="color: #000000">} </span><span style="color: #AF00DB">from</span><span style="color: #000000"> </span><span style="color: #A31515">&#039;mfml-react-runtime&#039;</span><span style="color: #000000">;</span>
+<span style="color: #AF00DB">import</span><span style="color: #000000"> {</span><span style="color: #001080">sayHello</span><span style="color: #000000">} </span><span style="color: #AF00DB">from</span><span style="color: #000000"> </span><span style="color: #A31515">&#039;./gen/messages&#039;</span><span style="color: #000000">;</span>
+
+<span style="color: #0000FF">const</span><span style="color: #000000"> </span><span style="color: #795E26">MyAlert</span><span style="color: #000000"> = () </span><span style="color: #0000FF">=&gt;</span><span style="color: #000000"> {</span>
+<span style="color: #000000">  </span><span style="color: #0000FF">const</span><span style="color: #000000"> </span><span style="color: #0070C1">t</span><span style="color: #000000"> = </span><span style="color: #795E26">useMessage</span><span style="color: #000000">();</span>
+
+<span style="color: #000000">  </span><span style="color: #795E26">useEffect</span><span style="color: #000000">(() </span><span style="color: #0000FF">=&gt;</span><span style="color: #000000"> {</span>
+<span style="color: #000000">    </span><span style="color: #795E26">alert</span><span style="color: #000000">(</span><span style="color: #795E26">t</span><span style="color: #000000">(</span><span style="color: #001080">sayHello</span><span style="color: #000000">, {</span><span style="color: #001080">name:</span><span style="color: #000000"> </span><span style="color: #A31515">&#039;Karen&#039;</span><span style="color: #000000">}));</span>
+<span style="color: #000000">  }, []);</span>
+
+<span style="color: #000000">  </span><span style="color: #AF00DB">return</span><span style="color: #000000"> </span><span style="color: #0000FF">null</span><span style="color: #000000">;</span>
+<span style="color: #000000">};</span>
+</code></pre>
+				<p>Have a look at <a href="https://github.com/smikhalevski/mfml/tree/master/example">https://github.com/smikhalevski/mfml/tree/master/example</a> for real-world use-case implementation.</p>
+				<a href="#icu-considerations" id="icu-considerations" style="color: inherit; text-decoration: none;">
+					<h1>ICU considerations</h1>
+				</a>
+				<p>By default, the parser uses the
+					default <code>DOUBLE_OPTIONAL</code> <a href="http://site.icu-project.org/design/formatting/messageformat/newsyntax">apostrophe mode</a>, in
+					which a single apostrophe only starts quoted literal text if it immediately precedes a curly brace <code>{}</code>, or a pound
+					symbol <code>#</code> if inside a plural format. A literal apostrophe <code>&#39;</code> is represented by either a single <code>&#39;</code> or a doubled <code>&#39;&#39;</code>
+				apostrophe character.</p>
+			</div>
+		</div>
+		<div class="col-4 col-menu menu-sticky-wrap menu-highlight">
+			<nav class="tsd-navigation primary">
+				<ul>
+					<li class=" ">
+						<a href="modules.html">Exports</a>
+					</li>
+					<li class=" tsd-kind-namespace">
+						<a href="modules/LocaleProvider.html">Locale<wbr>Provider</a>
+					</li>
+				</ul>
+			</nav>
+			<nav class="tsd-navigation secondary menu-sticky">
+				<ul class="before-current">
+					<li class=" tsd-kind-enum">
+						<a href="enums/CliOptionKey.html" class="tsd-kind-icon">Cli<wbr>Option<wbr>Key</a>
+					</li>
+					<li class=" tsd-kind-enum">
+						<a href="enums/NodeType.html" class="tsd-kind-icon">Node<wbr>Type</a>
+					</li>
+					<li class=" tsd-kind-enum">
+						<a href="enums/PluralCategory.html" class="tsd-kind-icon">Plural<wbr>Category</a>
+					</li>
+					<li class=" tsd-kind-enum">
+						<a href="enums/RuntimeMethod.html" class="tsd-kind-icon">Runtime<wbr>Method</a>
+					</li>
+					<li class=" tsd-kind-interface">
+						<a href="interfaces/IArgumentNode.html" class="tsd-kind-icon">IArgument<wbr>Node</a>
+					</li>
+					<li class=" tsd-kind-interface">
+						<a href="interfaces/IAtRuntimeCompilerOptions.html" class="tsd-kind-icon">IAt<wbr>Runtime<wbr>Compiler<wbr>Options</a>
+					</li>
+					<li class=" tsd-kind-interface">
+						<a href="interfaces/IAttributeNode.html" class="tsd-kind-icon">IAttribute<wbr>Node</a>
+					</li>
+					<li class=" tsd-kind-interface">
+						<a href="interfaces/ICliOptions.html" class="tsd-kind-icon">ICli<wbr>Options</a>
+					</li>
+					<li class=" tsd-kind-interface">
+						<a href="interfaces/ICompilationOptions.html" class="tsd-kind-icon">ICompilation<wbr>Options</a>
+					</li>
+					<li class=" tsd-kind-interface">
+						<a href="interfaces/IConfig.html" class="tsd-kind-icon">IConfig</a>
+					</li>
+					<li class=" tsd-kind-interface">
+						<a href="interfaces/IContainerNode.html" class="tsd-kind-icon">IContainer<wbr>Node</a>
+					</li>
+					<li class=" tsd-kind-interface">
+						<a href="interfaces/IElementNode.html" class="tsd-kind-icon">IElement<wbr>Node</a>
+					</li>
+					<li class=" tsd-kind-interface">
+						<a href="interfaces/IFragmentNode.html" class="tsd-kind-icon">IFragment<wbr>Node</a>
+					</li>
+					<li class=" tsd-kind-interface">
+						<a href="interfaces/IFunctionBodyCompilerOptions.html" class="tsd-kind-icon">IFunction<wbr>Body<wbr>Compiler<wbr>Options</a>
+					</li>
+					<li class=" tsd-kind-interface">
+						<a href="interfaces/IFunctionCompilerOptions.html" class="tsd-kind-icon">IFunction<wbr>Compiler<wbr>Options</a>
+					</li>
+					<li class=" tsd-kind-interface">
+						<a href="interfaces/IFunctionNode.html" class="tsd-kind-icon">IFunction<wbr>Node</a>
+					</li>
+					<li class=" tsd-kind-interface">
+						<a href="interfaces/ILocaleFilesAdapterOptions.html" class="tsd-kind-icon">ILocale<wbr>Files<wbr>Adapter<wbr>Options</a>
+					</li>
+					<li class=" tsd-kind-interface">
+						<a href="interfaces/ILocaleNodeMap.html" class="tsd-kind-icon">ILocale<wbr>Node<wbr>Map</a>
+					</li>
+					<li class=" tsd-kind-interface">
+						<a href="interfaces/ILocaleNodeMapCompilerOptions.html" class="tsd-kind-icon">ILocale<wbr>Node<wbr>Map<wbr>Compiler<wbr>Options</a>
+					</li>
+					<li class=" tsd-kind-interface">
+						<a href="interfaces/ILocaleProviderProps.html" class="tsd-kind-icon">ILocale<wbr>Provider<wbr>Props</a>
+					</li>
+					<li class=" tsd-kind-interface">
+						<a href="interfaces/IMessage.html" class="tsd-kind-icon">IMessage</a>
+					</li>
+					<li class=" tsd-kind-interface">
+						<a href="interfaces/IMessageCompilerOptions.html" class="tsd-kind-icon">IMessage<wbr>Compiler<wbr>Options</a>
+					</li>
+					<li class=" tsd-kind-interface">
+						<a href="interfaces/IMessageMetadata.html" class="tsd-kind-icon">IMessage<wbr>Metadata</a>
+					</li>
+					<li class=" tsd-kind-interface">
+						<a href="interfaces/IMessageModule.html" class="tsd-kind-icon">IMessage<wbr>Module</a>
+					</li>
+					<li class=" tsd-kind-interface tsd-has-type-parameter">
+						<a href="interfaces/IMessageRenderer.html" class="tsd-kind-icon">IMessage<wbr>Renderer</a>
+					</li>
+					<li class=" tsd-kind-interface">
+						<a href="interfaces/IMfmlParserOptions.html" class="tsd-kind-icon">IMfml<wbr>Parser<wbr>Options</a>
+					</li>
+					<li class=" tsd-kind-interface">
+						<a href="interfaces/IModuleCompilerOptions.html" class="tsd-kind-icon">IModule<wbr>Compiler<wbr>Options</a>
+					</li>
+					<li class=" tsd-kind-interface">
+						<a href="interfaces/INode.html" class="tsd-kind-icon">INode</a>
+					</li>
+					<li class=" tsd-kind-interface">
+						<a href="interfaces/INodeCompilerOptions.html" class="tsd-kind-icon">INode<wbr>Compiler<wbr>Options</a>
+					</li>
+					<li class=" tsd-kind-interface">
+						<a href="interfaces/INodeVisitor.html" class="tsd-kind-icon">INode<wbr>Visitor</a>
+					</li>
+					<li class=" tsd-kind-interface">
+						<a href="interfaces/IOctothorpeNode.html" class="tsd-kind-icon">IOctothorpe<wbr>Node</a>
+					</li>
+					<li class=" tsd-kind-interface">
+						<a href="interfaces/IResolvedConfig.html" class="tsd-kind-icon">IResolved<wbr>Config</a>
+					</li>
+					<li class=" tsd-kind-interface tsd-has-type-parameter">
+						<a href="interfaces/IRuntime.html" class="tsd-kind-icon">IRuntime</a>
+					</li>
+					<li class=" tsd-kind-interface tsd-has-type-parameter">
+						<a href="interfaces/IRuntimeOptions.html" class="tsd-kind-icon">IRuntime<wbr>Options</a>
+					</li>
+					<li class=" tsd-kind-interface">
+						<a href="interfaces/ISelectCaseNode.html" class="tsd-kind-icon">ISelect<wbr>Case<wbr>Node</a>
+					</li>
+					<li class=" tsd-kind-interface">
+						<a href="interfaces/ISelectNode.html" class="tsd-kind-icon">ISelect<wbr>Node</a>
+					</li>
+					<li class=" tsd-kind-interface">
+						<a href="interfaces/ITextNode.html" class="tsd-kind-icon">IText<wbr>Node</a>
+					</li>
+					<li class=" tsd-kind-interface tsd-has-type-parameter">
+						<a href="interfaces/MessageComponent.html" class="tsd-kind-icon">Message<wbr>Component</a>
+					</li>
+					<li class=" tsd-kind-interface tsd-has-type-parameter">
+						<a href="interfaces/MessageFunction.html" class="tsd-kind-icon">Message<wbr>Function</a>
+					</li>
+					<li class=" tsd-kind-type-alias tsd-has-type-parameter">
+						<a href="modules.html#Adapter" class="tsd-kind-icon">Adapter</a>
+					</li>
+					<li class=" tsd-kind-type-alias tsd-has-type-parameter">
+						<a href="modules.html#ArgumentRenderer" class="tsd-kind-icon">Argument<wbr>Renderer</a>
+					</li>
+					<li class=" tsd-kind-type-alias">
+						<a href="modules.html#ContainerNode" class="tsd-kind-icon">Container<wbr>Node</a>
+					</li>
+					<li class=" tsd-kind-type-alias tsd-has-type-parameter">
+						<a href="modules.html#ElementRenderer" class="tsd-kind-icon">Element<wbr>Renderer</a>
+					</li>
+					<li class=" tsd-kind-type-alias tsd-has-type-parameter">
+						<a href="modules.html#FragmentRenderer" class="tsd-kind-icon">Fragment<wbr>Renderer</a>
+					</li>
+					<li class=" tsd-kind-type-alias tsd-has-type-parameter">
+						<a href="modules.html#FunctionRenderer" class="tsd-kind-icon">Function<wbr>Renderer</a>
+					</li>
+					<li class=" tsd-kind-type-alias">
+						<a href="modules.html#LocaleMatcher" class="tsd-kind-icon">Locale<wbr>Matcher</a>
+					</li>
+					<li class=" tsd-kind-type-alias tsd-has-type-parameter">
+						<a href="modules.html#MessageProps" class="tsd-kind-icon">Message<wbr>Props</a>
+					</li>
+					<li class=" tsd-kind-type-alias">
+						<a href="modules.html#MfmlParser" class="tsd-kind-icon">Mfml<wbr>Parser</a>
+					</li>
+					<li class=" tsd-kind-type-alias">
+						<a href="modules.html#Node" class="tsd-kind-icon">Node</a>
+					</li>
+					<li class=" tsd-kind-type-alias">
+						<a href="modules.html#PluralMatcher" class="tsd-kind-icon">Plural<wbr>Matcher</a>
+					</li>
+					<li class=" tsd-kind-type-alias">
+						<a href="modules.html#SelectMatcher" class="tsd-kind-icon">Select<wbr>Matcher</a>
+					</li>
+					<li class=" tsd-kind-type-alias">
+						<a href="modules.html#SelectOrdinalMatcher" class="tsd-kind-icon">Select<wbr>Ordinal<wbr>Matcher</a>
+					</li>
+					<li class=" tsd-kind-variable">
+						<a href="modules.html#LocaleContext" class="tsd-kind-icon">Locale<wbr>Context</a>
+					</li>
+					<li class=" tsd-kind-variable">
+						<a href="modules.html#LocaleProvider" class="tsd-kind-icon">Locale<wbr>Provider</a>
+					</li>
+					<li class=" tsd-kind-variable">
+						<a href="modules.html#Message" class="tsd-kind-icon">Message</a>
+					</li>
+					<li class=" tsd-kind-variable">
+						<a href="modules.html#RuntimeContext" class="tsd-kind-icon">Runtime<wbr>Context</a>
+					</li>
+					<li class=" tsd-kind-variable">
+						<a href="modules.html#RuntimeProvider" class="tsd-kind-icon">Runtime<wbr>Provider</a>
+					</li>
+					<li class=" tsd-kind-variable">
+						<a href="modules.html#pluralCategories" class="tsd-kind-icon">plural<wbr>Categories</a>
+					</li>
+					<li class=" tsd-kind-function">
+						<a href="modules.html#compileEmptyFragment" class="tsd-kind-icon">compile<wbr>Empty<wbr>Fragment</a>
+					</li>
+					<li class=" tsd-kind-function tsd-has-type-parameter">
+						<a href="modules.html#compileFunction" class="tsd-kind-icon">compile<wbr>Function</a>
+					</li>
+					<li class=" tsd-kind-function">
+						<a href="modules.html#compileFunctionBody" class="tsd-kind-icon">compile<wbr>Function<wbr>Body</a>
+					</li>
+					<li class=" tsd-kind-function">
+						<a href="modules.html#compileLocaleNodeMap" class="tsd-kind-icon">compile<wbr>Locale<wbr>Node<wbr>Map</a>
+					</li>
+					<li class=" tsd-kind-function">
+						<a href="modules.html#compileMessage" class="tsd-kind-icon">compile<wbr>Message</a>
+					</li>
+					<li class=" tsd-kind-function">
+						<a href="modules.html#compileModule" class="tsd-kind-icon">compile<wbr>Module</a>
+					</li>
+					<li class=" tsd-kind-function">
+						<a href="modules.html#compileNode" class="tsd-kind-icon">compile<wbr>Node</a>
+					</li>
+					<li class=" tsd-kind-function">
+						<a href="modules.html#countNodes" class="tsd-kind-icon">count<wbr>Nodes</a>
+					</li>
+					<li class=" tsd-kind-function tsd-has-type-parameter">
+						<a href="modules.html#createAtRuntimeCompiler" class="tsd-kind-icon">create<wbr>AtRuntime<wbr>Compiler</a>
+					</li>
+					<li class=" tsd-kind-function tsd-has-type-parameter">
+						<a href="modules.html#createMessageComponent" class="tsd-kind-icon">create<wbr>Message<wbr>Component</a>
+					</li>
+					<li class=" tsd-kind-function tsd-has-type-parameter">
+						<a href="modules.html#createMessageHook" class="tsd-kind-icon">create<wbr>Message<wbr>Hook</a>
+					</li>
+					<li class=" tsd-kind-function">
+						<a href="modules.html#createMfmlParser" class="tsd-kind-icon">create<wbr>Mfml<wbr>Parser</a>
+					</li>
+					<li class=" tsd-kind-function">
+						<a href="modules.html#createPluralMatcher" class="tsd-kind-icon">create<wbr>Plural<wbr>Matcher</a>
+					</li>
+					<li class=" tsd-kind-function">
+						<a href="modules.html#createReactRuntime" class="tsd-kind-icon">create<wbr>React<wbr>Runtime</a>
+					</li>
+					<li class=" tsd-kind-function tsd-has-type-parameter">
+						<a href="modules.html#createRuntime" class="tsd-kind-icon">create<wbr>Runtime</a>
+					</li>
+					<li class=" tsd-kind-function">
+						<a href="modules.html#createStringRuntime" class="tsd-kind-icon">create<wbr>String<wbr>Runtime</a>
+					</li>
+					<li class=" tsd-kind-function">
+						<a href="modules.html#isBlankNode" class="tsd-kind-icon">is<wbr>Blank<wbr>Node</a>
+					</li>
+					<li class=" tsd-kind-function">
+						<a href="modules.html#isContainerNode" class="tsd-kind-icon">is<wbr>Container<wbr>Node</a>
+					</li>
+					<li class=" tsd-kind-function">
+						<a href="modules.html#isSelectNode" class="tsd-kind-icon">is<wbr>Select<wbr>Node</a>
+					</li>
+					<li class=" tsd-kind-function">
+						<a href="modules.html#isTextNode" class="tsd-kind-icon">is<wbr>Text<wbr>Node</a>
+					</li>
+					<li class=" tsd-kind-function">
+						<a href="modules.html#selectMatcher" class="tsd-kind-icon">select<wbr>Matcher</a>
+					</li>
+					<li class=" tsd-kind-function">
+						<a href="modules.html#useLocale" class="tsd-kind-icon">use<wbr>Locale</a>
+					</li>
+					<li class=" tsd-kind-function">
+						<a href="modules.html#useMessage" class="tsd-kind-icon">use<wbr>Message</a>
+					</li>
+					<li class=" tsd-kind-function">
+						<a href="modules.html#visitNode" class="tsd-kind-icon">visit<wbr>Node</a>
+					</li>
+				</ul>
+			</nav>
+		</div>
+	</div>
+</div>
+<footer class="with-border-bottom">
+	<div class="container">
+		<h2>Legend</h2>
+		<div class="tsd-legend-group">
+			<ul class="tsd-legend">
+				<li class="tsd-kind-property tsd-parent-kind-interface"><span class="tsd-kind-icon">Property</span></li>
+				<li class="tsd-kind-method tsd-parent-kind-interface"><span class="tsd-kind-icon">Method</span></li>
+			</ul>
+		</div>
+	</div>
+</footer>
+<div class="container tsd-generator">
+	<p>Generated using <a href="https://typedoc.org/" target="_blank">TypeDoc</a></p>
+</div>
+<div class="overlay"></div>
+<script src="assets/js/main.js"></script>
+</body>
+</html>
