@@ -2,6 +2,7 @@
   "name": "mfml-cli",
   "version": "1.0.0",
   "description": "MFML command-line interface.",
+  "sideEffects": false,
   "files": [
     "lib"
   ],
