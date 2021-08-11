@@ -1,10 +1,11 @@
 import {compileMessage, IMessageCompilerOptions, IMessageMetadata} from './compileMessage';
-import {camelCase, createVarNameProvider, pascalCase} from '@smikhalevski/codegen';
+import {createVarNameProvider} from '@smikhalevski/codegen';
 import {createMap, jsonStringify, Maybe} from '../misc';
 import {IMessage, IMessageModule} from './compiler-types';
 import {MfmlParser} from '../parser';
 import {ILocaleNodeMap} from './compileLocaleNodeMap';
 import {runtimeMethods} from './runtimeMethods';
+import {camelCase, upperFirst} from 'lodash-es';
 
 const VAR_NAME_RUNTIME = 'runtime';
 const VAR_NAME_LOCALE = 'locale';
@@ -210,5 +211,5 @@ export function compileModule(messageModule: IMessageModule, mfmlParser: MfmlPar
 }
 
 function renameValuesInterface(messageName: string): string {
-  return pascalCase(messageName) + 'Values';
+  return upperFirst(camelCase(messageName)) + 'Values';
 }

@@ -52,6 +52,6 @@
     }
   },
   "dependencies": {
-    "locale-matcher": "^1.0.0"
+    "locale-matcher": "^2.0.0"
   }
 }

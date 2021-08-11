@@ -4,7 +4,7 @@
   "scripts": {
     "preinstall": "cd ./packages/mfml-cli && mkdir -p ./lib && touch ./lib/mfmlc.js",
     "build": "npm run build --workspaces",
-    "clean": "npm run clean --workspaces",
+    "clean": "rimraf ./docs && npm run clean --workspaces",
     "test": "npm run test --workspaces",
     "docs": "typedoc ./index.typedoc.ts",
     "publish-docs": "[ -d ./docs ] && [[ ! $(git status --porcelain) ]] && branch=$(git rev-parse --abbrev-ref HEAD) && sha=$(git rev-parse --short HEAD) && t=$(mktemp -d) && cp -R ./docs/ $t && git checkout ghpages && ls -A | grep -wv .git | xargs rm -rf && cp -R $t/ . && git add . && git commit -m \"Updated docs ($sha)\" && git push && git checkout $branch",

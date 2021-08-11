@@ -43,24 +43,31 @@
   "homepage": "https://github.com/smikhalevski/mfml#readme",
   "jest": {
     "preset": "ts-jest",
+    "moduleNameMapper": {
+      "lodash-es": "lodash"
+    },
     "globals": {
       "ts-jest": {
         "diagnostics": {
-          "ignoreCodes": [151001]
+          "ignoreCodes": [
+            151001
+          ]
         }
       }
     }
   },
-  "devDependencies": {
-    "@types/moo": "^0.5.4"
-  },
   "dependencies": {
     "@messageformat/parser": "^5.0.0",
-    "@smikhalevski/codegen": "^1.0.0",
-    "speedy-entities": "^1.1.0",
-    "tag-soup": "^1.0.0-next.0"
+    "@smikhalevski/codegen": "^2.0.0",
+    "lodash-es": "^4.17.21",
+    "tag-soup": "^1.0.0-next.3"
   },
   "peerDependencies": {
     "mfml-runtime": "^1.0.0"
+  },
+  "devDependencies": {
+    "@types/lodash-es": "^4.17.4",
+    "@types/moo": "^0.5.4",
+    "lodash": "^4.17.21"
   }
 }
