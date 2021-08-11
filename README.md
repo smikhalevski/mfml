@@ -1,4 +1,4 @@
-# mfml
+# mfml [![build](https://github.com/smikhalevski/mfml/actions/workflows/master.yml/badge.svg?branch=master&event=push)](https://github.com/smikhalevski/mfml/actions/workflows/master.yml)
 
 The ICU MessageFormat + XML/HTML compiler and runtime that makes your translations tree-shakeable.
 
