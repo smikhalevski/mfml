@@ -10,7 +10,7 @@
   ],
   "scripts": {
     "build": "tsc --project ./tsconfig.build.json && npm run rollup && npm run terser",
-    "rollup": "rollup --external mfml-runtime,react --input ./lib/index.js --file ./lib/index-cjs.js --format cjs --plugin @rollup/plugin-node-resolve",
+    "rollup": "rollup --external tslib,mfml-runtime,react --input ./lib/index.js --file ./lib/index-cjs.js --format cjs --plugin @rollup/plugin-node-resolve",
     "terser": "terser --compress --mangle toplevel --output ./lib/index-cjs.js -- ./lib/index-cjs.js",
     "clean": "rimraf ./lib",
     "test": "jest --detectOpenHandles"
@@ -45,14 +45,19 @@
     "globals": {
       "ts-jest": {
         "diagnostics": {
-          "ignoreCodes": [151001]
+          "ignoreCodes": [
+            151001
+          ]
         }
       }
     }
   },
+  "dependencies": {
+    "tslib": "^2.3.0"
+  },
   "peerDependencies": {
-    "mfml-runtime": "^1.0.0",
-    "react": ">=16.8.0"
+    "react": ">=16.8.0",
+    "mfml-runtime": "^1.0.0"
   },
   "devDependencies": {
     "@testing-library/react": "^12.0.0",

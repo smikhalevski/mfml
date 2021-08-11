@@ -10,8 +10,8 @@
   ],
   "scripts": {
     "build": "tsc --project ./tsconfig.build.json && npm run rollup && npm run terser",
-    "rollup": "rollup --external locale-matcher --input ./lib/index.js --file ./lib/index-cjs.js --format cjs --plugin @rollup/plugin-node-resolve",
-    "terser": "terser --compress --comments false --mangle toplevel --output ./lib/index-cjs.js -- ./lib/index-cjs.js",
+    "rollup": "rollup --external tslib,locale-matcher --input ./lib/index.js --file ./lib/index-cjs.js --format cjs --plugin @rollup/plugin-node-resolve",
+    "terser": "terser --compress --mangle toplevel --output ./lib/index-cjs.js -- ./lib/index-cjs.js",
     "clean": "rimraf ./lib",
     "test": "jest --detectOpenHandles"
   },
@@ -52,6 +52,7 @@
     }
   },
   "dependencies": {
-    "locale-matcher": "^2.0.0"
+    "locale-matcher": "^2.0.0",
+    "tslib": "^2.3.0"
   }
 }
