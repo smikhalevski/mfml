@@ -17,12 +17,37 @@ import {
   writeFileOrDie,
 } from '../misc';
 
+export const enum DigestExportFlavor {
+
+  /**
+   * ```ts
+   * export * as …;
+   * ```
+   */
+  EXPORT_AS = 'exportAs',
+
+  /**
+   * ```ts
+   * import * as …;
+   * export {…};
+   * ```
+   */
+  IMPORT_EXPORT = 'importExport',
+}
+
 export interface ILocaleFilesAdapterOptions {
 
   /**
    * The name of the index file that exports all message modules.
    */
   digestModulePath?: string;
+
+  /**
+   * The format of exports used in digest file.
+   *
+   * @default {@link DigestExportFlavor.EXPORT_AS}
+   */
+  digestExportFlavor?: DigestExportFlavor;
 
   /**
    * Returns a namespace under which the message must be exported.
@@ -47,6 +72,7 @@ const localeFilesAdapter: Adapter<ILocaleFilesAdapterOptions> = (config) => {
     rootDir,
     outDir,
     digestModulePath,
+    digestExportFlavor,
     typingsEnabled,
     renameNamespace,
     rewriteModulePath,
@@ -120,7 +146,17 @@ const localeFilesAdapter: Adapter<ILocaleFilesAdapterOptions> = (config) => {
   }
 
   if (digestModulePath != null) {
-    outputFiles[digestModulePath] = Object.keys(messageModules).map((modulePath) => `export*as ${namespaces[modulePath]} from${JSON.stringify(modulePath)};`).join('');
+    const modulePaths = Object.keys(messageModules);
+
+    if (modulePaths.length !== 0) {
+
+      if (digestExportFlavor === DigestExportFlavor.IMPORT_EXPORT) {
+        outputFiles[digestModulePath] = modulePaths.map((modulePath) => `import*as ${namespaces[modulePath]} from${JSON.stringify(modulePath)};`).join('')
+            + 'export{' + modulePaths.map((modulePath) => namespaces[modulePath]).join(',') + '};';
+      } else {
+        outputFiles[digestModulePath] = modulePaths.map((modulePath) => `export*as ${namespaces[modulePath]} from${JSON.stringify(modulePath)};`).join('');
+      }
+    }
   }
 
   for (const [modulePath, source] of Object.entries(outputFiles)) {
