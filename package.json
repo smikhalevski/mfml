@@ -1,8 +1,7 @@
 {
-  "name": "mfml",
   "private": true,
   "scripts": {
-    "preinstall": "cd ./packages/mfml-cli && mkdir -p ./lib && touch ./lib/mfmlc.js",
+    "preinstall": "cd ./packages/cli && mkdir -p ./lib && touch ./lib/mfmlc.js",
     "build": "npm run build --workspaces",
     "clean": "rimraf ./docs && npm run clean --workspaces",
     "test": "npm run test --workspaces",
@@ -11,10 +10,10 @@
     "release-docs": "npm run clean && npm run docs && npm run publish-docs"
   },
   "workspaces": [
-    "./packages/mfml-runtime",
-    "./packages/mfml-compiler",
-    "./packages/mfml-cli",
-    "./packages/mfml-react-runtime"
+    "./packages/runtime",
+    "./packages/compiler",
+    "./packages/cli",
+    "./packages/react-runtime"
   ],
   "devDependencies": {
     "@rollup/plugin-node-resolve": "^13.0.0",

@@ -1,0 +1,59 @@
+{
+  "name": "@mfml/runtime",
+  "version": "1.0.0",
+  "description": "MFML generic runtime.",
+  "main": "./lib/index-cjs.js",
+  "module": "./lib/index.js",
+  "types": "./lib/index.d.ts",
+  "sideEffects": false,
+  "files": [
+    "lib"
+  ],
+  "scripts": {
+    "build": "tsc --project ./tsconfig.build.json && npm run rollup && npm run terser",
+    "rollup": "rollup --external tslib,locale-matcher --input ./lib/index.js --file ./lib/index-cjs.js --format cjs --plugin @rollup/plugin-node-resolve",
+    "terser": "terser --compress --mangle toplevel --output ./lib/index-cjs.js -- ./lib/index-cjs.js",
+    "clean": "rimraf ./lib",
+    "test": "jest --detectOpenHandles"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/smikhalevski/mfml.git"
+  },
+  "keywords": [
+    "i18n",
+    "html",
+    "language",
+    "parser",
+    "translation",
+    "compiler",
+    "xml",
+    "icu",
+    "l10n",
+    "intl",
+    "tms",
+    "message-format"
+  ],
+  "author": "Savva Mikhalevski <smikhalevski@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/smikhalevski/mfml/issues"
+  },
+  "homepage": "https://github.com/smikhalevski/mfml#readme",
+  "jest": {
+    "preset": "ts-jest",
+    "globals": {
+      "ts-jest": {
+        "diagnostics": {
+          "ignoreCodes": [
+            151001
+          ]
+        }
+      }
+    }
+  },
+  "dependencies": {
+    "locale-matcher": "^2.0.0",
+    "tslib": "^2.3.0"
+  }
+}

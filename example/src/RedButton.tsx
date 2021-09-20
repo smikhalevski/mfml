@@ -1,6 +1,6 @@
 import {createContext, FunctionComponent} from 'react';
-import {createMessageHook, LocaleContext} from 'mfml-react-runtime';
-import {createStringRuntime} from 'mfml-runtime';
+import {createMessageHook, LocaleContext} from '@mfml/react-runtime';
+import {createStringRuntime} from '@mfml/runtime';
 import {RedButtonMessages} from './gen';
 
 // A context that would propagate a string runtime to underlying children.

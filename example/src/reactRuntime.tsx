@@ -1,5 +1,5 @@
 import {createElement, lazy, Suspense} from 'react';
-import {createReactRuntime} from 'mfml-react-runtime';
+import {createReactRuntime} from '@mfml/react-runtime';
 import dayjs from 'dayjs';
 
 // Split `RedButton` to a separate chunk.

@@ -1,11 +1,11 @@
 import {render} from 'react-dom';
 import {FunctionComponent} from 'react';
-import {LocaleProvider, Message, RuntimeProvider, useLocale} from 'mfml-react-runtime';
+import {LocaleProvider, Message, RuntimeProvider, useLocale} from '@mfml/react-runtime';
 import {AppMessages} from './gen';
 import {reactRuntime} from './reactRuntime';
 
 const LocaleSelect: FunctionComponent = () => {
-  // The `useLocale` hook from `mfml-react-runtime` returns the locale provided by `LocaleProvider`.
+  // The `useLocale` hook from `@mfml/react-runtime` returns the locale provided by `LocaleProvider`.
   const [locale, setLocale] = useLocale();
   return (
       <select
