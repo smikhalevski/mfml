@@ -1,4 +1,5 @@
 {
+  "name": "mfml",
   "private": true,
   "scripts": {
     "preinstall": "cd ./packages/cli && mkdir -p ./lib && touch ./lib/mfmlc.js",
