@@ -10,7 +10,7 @@
     "jsx": "react-jsx",
     "baseUrl": ".",
     "paths": {
-      "*": [
+      "@mfml/*": [
         "./packages/*/src/main"
       ]
     }
