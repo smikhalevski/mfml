@@ -30,16 +30,16 @@ multiple benefits:
   other output you need.
 
 MFML supports ICU MessageFormat and XML/HTML markup. The compiler is highly customizable, and the runtime
-is [just 3 kB gzipped](https://bundlephobia.com/result?p=mfml-runtime).
+is [just 3 kB gzipped](https://bundlephobia.com/result?p=@mfml/runtime).
 
 # Usage example
 
 Install compiler, CLI utility and runtime libraries.
 
 ```shell
-npm install --save-dev mfml-compiler mfml-cli 
+npm install --save-dev @mfml/compiler @mfml/cli 
 
-npm install --save-prod mfml-runtime 
+npm install --save-prod @mfml/runtime 
 ```
 
 Create files that hold your translations. File names must be locale names. By default, locales are matched
@@ -75,7 +75,7 @@ This command would output `./gen/messages.ts` file with message functions and co
 <p>
 
 ```ts
-import {MessageFunction} from 'mfml-runtime';
+import {MessageFunction} from '@mfml/runtime';
 
 const b = 'en-US';
 const d = [b, 'ru-RU'];
@@ -102,7 +102,7 @@ Import compiled message functions in your code.
 
 ```ts
 import {sayHello} from './gen/messages';
-import {createStringRuntime} from 'mfml-runtime';
+import {createStringRuntime} from '@mfml/runtime';
 
 const stringRuntime = createStringRuntime();
 
@@ -153,9 +153,9 @@ The root folder from which included file paths are resolved.
 
 ##### `-p <preset>`, `--preset <preset>`
 
-The name of the built-in preset ([`xml`](./packages/mfml-cli/src/main/presets/xml.ts),
-[`html`](./packages/mfml-cli/src/main/presets/html.ts) and
-[`markdown`](packages/mfml-cli/src/main/presets/markdown.ts)) or path to a module that exports a configuration.
+The name of the built-in preset ([`xml`](./packages/cli/src/main/presets/xml.ts),
+[`html`](./packages/cli/src/main/presets/html.ts) and
+[`markdown`](./packages/cli/src/main/presets/markdown.ts)) or path to a module that exports a configuration.
 
 ```shell
 mfmlc --inlcude './translations/*.json' --outDir './gen' --preset html
@@ -165,7 +165,7 @@ This option can be specified multiple times.
 
 ##### `-a <adapter>`, `--adapter <adapter>`
 
-The name of the built-in adapter ([`localeFilesAdapter`](./packages/mfml-cli/src/main/adapters/localeFilesAdapter.ts))
+The name of the built-in adapter ([`localeFilesAdapter`](./packages/cli/src/main/adapters/localeFilesAdapter.ts))
 or a path to a module that exports the adapter function.
 
 ##### `-l <locale>`, `--defaultLocale <locale>`
@@ -182,7 +182,7 @@ Produce TypeScript typings for message functions.
 
 # React integration
 
-The `mfml-react-runtime` provides the runtime that renders translations as React nodes and a couple of handy components
+The `@mfml/react-runtime` provides the runtime that renders translations as React nodes and a couple of handy components
 and utilities.
 
 Let's assume we've compiled translations from [the original example](#usage-example). Then we can use then im React
@@ -201,7 +201,7 @@ You can use a hook to render a message:
 
 ```ts
 import {useEffect} from 'react';
-import {useMessage} from 'mfml-react-runtime';
+import {useMessage} from '@mfml/react-runtime';
 import {sayHello} from './gen/messages';
 
 const MyAlert = () => {
