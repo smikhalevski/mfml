@@ -37,9 +37,9 @@ is [just 3 kB gzipped](https://bundlephobia.com/result?p=@mfml/runtime).
 Install compiler, CLI utility and runtime libraries.
 
 ```shell
-npm install --save-dev @mfml/compiler @mfml/cli 
-
 npm install --save-prod @mfml/runtime 
+
+npm install --save-dev @mfml/compiler @mfml/cli 
 ```
 
 Create files that hold your translations. File names must be locale names. By default, locales are matched
