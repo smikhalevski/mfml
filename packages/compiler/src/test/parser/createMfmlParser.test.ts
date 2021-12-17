@@ -50,6 +50,18 @@ describe('createMfmlParser', () => {
     });
   });
 
+  test('ignores \\n and \\s in a function', () => {
+    expect(parse('{  \n  foo  \n  ,  \n  number  \n  }')).toEqual<Node>({
+      nodeType: NodeType.FUNCTION,
+      name: 'number',
+      argumentName: 'foo',
+      children: [],
+      parent: null,
+      start: 0,
+      end: 32,
+    });
+  });
+
   test('parses a function with a param', () => {
     const rootNode: Node = {
       nodeType: NodeType.FUNCTION,
@@ -149,6 +161,59 @@ describe('createMfmlParser', () => {
     (rootNode.children[1] as ContainerNode).children[0].parent = rootNode.children[1] as ContainerNode;
 
     expect(parse('{foo, select, aaa {AAA} bbb {BBB} }')).toEqual(rootNode);
+  });
+
+  test('ignores \\n and \\s in a select node', () => {
+    const rootNode: Node = {
+      nodeType: NodeType.SELECT,
+      argumentName: 'foo',
+      pluralOffset: undefined,
+      children: [
+        {
+          nodeType: NodeType.SELECT_CASE,
+          key: 'aaa',
+          children: [
+            {
+              nodeType: NodeType.TEXT,
+              value: 'AAA',
+              parent: null,
+              start: 46,
+              end: 49,
+            },
+          ],
+          parent: null,
+          start: 37,
+          end: 50,
+        },
+        {
+          nodeType: NodeType.SELECT_CASE,
+          key: 'bbb',
+          children: [
+            {
+              nodeType: NodeType.TEXT,
+              value: 'BBB',
+              parent: null,
+              start: 64,
+              end: 67,
+            },
+          ],
+          parent: null,
+          start: 50,
+          end: 68,
+        },
+      ],
+      parent: null,
+      start: 0,
+      end: 69,
+    };
+
+    rootNode.children[0].parent = rootNode;
+    rootNode.children[1].parent = rootNode;
+
+    (rootNode.children[0] as ContainerNode).children[0].parent = rootNode.children[0] as ContainerNode;
+    (rootNode.children[1] as ContainerNode).children[0].parent = rootNode.children[1] as ContainerNode;
+
+    expect(parse('{  \n  foo  \n  ,  \n  select  \n  ,  \n  aaa  \n  {AAA}  \n  bbb  \n  {BBB}  \n  }')).toEqual(rootNode);
   });
 
   test('parses a plural node', () => {
@@ -1025,5 +1090,57 @@ describe('createMfmlParser', () => {
     const node = parse('{foo,eee}');
 
     expect((node as IFunctionNode).name).toBe('EEE');
+  });
+
+  test('does not treat self-closing elements as ancestors', () => {
+    const rootNode: Node = {
+      nodeType: NodeType.ELEMENT,
+      tagName: 'p',
+      attributes: [],
+      children: [
+        {
+          nodeType: NodeType.SELECT,
+          argumentName: 'foo',
+          children: [
+            {
+              nodeType: NodeType.SELECT_CASE,
+              key: 'aaa',
+              children: [
+                {
+                  nodeType: NodeType.ELEMENT,
+                  tagName: 'br',
+                  attributes: [],
+                  children: [],
+                  parent: null,
+                  start: 22,
+                  end: 27,
+                },
+              ],
+              parent: null,
+              start: 17,
+              end: 28,
+            },
+          ],
+          parent: null,
+          start: 3,
+          end: 29,
+        },
+      ],
+      parent: null,
+      end: 33,
+      start: 0,
+    };
+
+    rootNode.children[0].parent = rootNode;
+
+    (rootNode.children[0] as ContainerNode).children[0].parent = rootNode.children[0] as ContainerNode;
+
+    ((rootNode.children[0] as ContainerNode).children[0] as ContainerNode).children[0].parent = (rootNode.children[0] as ContainerNode).children[0] as ContainerNode;
+
+    parse = createMfmlParser({
+      selfClosingEnabled: true,
+    });
+
+    expect(parse('<p>{foo, select, aaa {<br/>}}</p>')).toEqual(rootNode);
   });
 });

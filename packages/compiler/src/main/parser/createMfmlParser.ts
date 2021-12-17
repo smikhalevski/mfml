@@ -67,8 +67,10 @@ export function createMfmlParser(options: IMfmlParserOptions = {}): MfmlParser {
         end: tagEnd,
       };
 
-      // Put an element on stack
-      ancestorNodes[ancestorNodes.length++] = elementNode;
+      // Put a container element on stack
+      if (!token.selfClosing) {
+        ancestorNodes[ancestorNodes.length++] = elementNode;
+      }
 
       const splitEnd = Math.min(textNode.end, tagEnd);
       const siblingNodes = textNode.parent?.children || rootChildren;
