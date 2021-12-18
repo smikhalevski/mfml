@@ -124,7 +124,7 @@ describe('compileMessage', () => {
   test('compiles select argument', () => {
     expect(compileMessage({en: parse('{foo,select,AAA{okay}}')}, options)).toBe(
         'export interface IGggValues{'
-        + 'foo:number;'
+        + 'foo:number|string;'
         + '}'
         + 'let ggg:MessageFunction<IGggValues>=(runtime,locale,values)=>{'
         + 'const{s,f}=runtime;'
@@ -137,7 +137,7 @@ describe('compileMessage', () => {
   test('compiles an interface for unused var', () => {
     expect(compileMessage({en: parse('{foo,select,}')}, options)).toBe(
         'export interface IGggValues{'
-        + 'foo:number;'
+        + 'foo:number|string;'
         + '}'
         + 'let ggg:MessageFunction<IGggValues>=(runtime,locale,values)=>{'
         + 'const{f}=runtime;'

@@ -3,6 +3,7 @@ import {createMap, Maybe} from '../misc';
 import {compileDocComment, compilePropertyName, createVarNameProvider} from '@smikhalevski/codegen';
 import {compileLocaleNodeMap, ILocaleNodeMap, ILocaleNodeMapCompilerOptions} from './compileLocaleNodeMap';
 import {runtimeMethods} from './runtimeMethods';
+import {NodeType} from '@mfml/compiler';
 
 export interface IMessageMetadata {
 
@@ -147,7 +148,7 @@ export function compileMessage(localeNodeMap: ILocaleNodeMap, options: Readonly<
     },
 
     onSelectUsed(node) {
-      pushArgType(node.argumentName, 'number');
+      pushArgType(node.argumentName, node.nodeType === NodeType.SELECT ? 'number|string' : 'number');
     },
 
     onRuntimeMethodUsed(runtimeMethod, varUsed) {
