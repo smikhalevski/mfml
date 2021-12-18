@@ -25,6 +25,9 @@ export interface MessageComponent {
  * @param runtimeContext The context that provides a runtime to render a message.
  * @param i18nContext The context that holds i18n related data.
  * @param localeSelector The callback that returns a locale from i18n context value.
+ *
+ * @template I18n The type of the context that carries i18n data and provides the current locale.
+ *
  * @see {@link Message}
  */
 export function createMessageComponent<I18n>(runtimeContext: Context<IRuntime<ReactNode>>, i18nContext: Context<I18n>, localeSelector: (i18n: I18n) => string): MessageComponent {
