@@ -64,7 +64,6 @@
     "@types/marked": "^2.0.4"
   },
   "peerDependencies": {
-    "marked": "^2.1.3",
     "@mfml/compiler": "^1.0.0"
   }
 }

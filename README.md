@@ -153,9 +153,8 @@ The root folder from which included file paths are resolved.
 
 ##### `-p <preset>`, `--preset <preset>`
 
-The name of the built-in preset ([`xml`](./packages/cli/src/main/presets/xml.ts),
-[`html`](./packages/cli/src/main/presets/html.ts) and
-[`markdown`](./packages/cli/src/main/presets/markdown.ts)) or path to a module that exports a configuration.
+The name of the built-in preset ([`xml`](./packages/cli/src/main/presets/xml.ts) and
+[`html`](./packages/cli/src/main/presets/html.ts)) or path to a module that exports a configuration.
 
 ```shell
 mfmlc --inlcude './translations/*.json' --outDir './gen' --preset html
