@@ -1,6 +1,6 @@
 {
   "name": "@mfml/compiler",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "MFML parser and compiler.",
   "main": "./lib/index-cjs.js",
   "module": "./lib/index.js",
