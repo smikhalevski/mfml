@@ -4,12 +4,6 @@ import {createSaxParser, IParserOptions} from 'tag-soup';
 import {isContainerNode, isTextNode} from './node-utils';
 import {die} from '../misc';
 
-interface IArrayLike<T> {
-  [index: number]: T;
-
-  length: number;
-}
-
 export interface IMfmlParserOptions extends IMessageFormatParserOptions, IParserOptions {
 }
 
@@ -29,7 +23,8 @@ export function createMfmlParser(options: IMfmlParserOptions = {}): MfmlParser {
   };
 
   // The stack of nested element nodes
-  let ancestorNodes: IArrayLike<IElementNode> = {length: 0};
+  let ancestorNodesCount = 0;
+  let ancestorNodes: Array<IElementNode> = [];
 
   // The children of the root node
   let rootChildren: Array<Node>;
@@ -69,7 +64,7 @@ export function createMfmlParser(options: IMfmlParserOptions = {}): MfmlParser {
 
       // Put a container element on stack
       if (!token.selfClosing) {
-        ancestorNodes[ancestorNodes.length++] = elementNode;
+        ancestorNodes[ancestorNodesCount++] = elementNode;
       }
 
       const splitEnd = Math.min(textNode.end, tagEnd);
@@ -222,7 +217,7 @@ export function createMfmlParser(options: IMfmlParserOptions = {}): MfmlParser {
       const anchorNode = linearNodes[linearIndex];
 
       // The element node that was created when the start tag was read
-      const elementNode = ancestorNodes[ancestorNodes.length - 1];
+      const elementNode = ancestorNodes[ancestorNodesCount - 1];
       const siblingNodes = elementNode.parent?.children || rootChildren;
       const elementIndex = siblingNodes.indexOf(elementNode);
 
@@ -233,7 +228,7 @@ export function createMfmlParser(options: IMfmlParserOptions = {}): MfmlParser {
       let siblingIndex = anchorNode != null ? siblingNodes.indexOf(anchorNode) : -1;
 
       // Truncate ancestor stack as the element was closed
-      --ancestorNodes.length;
+      --ancestorNodesCount;
 
       elementNode.end = tagEnd;
 
@@ -284,7 +279,8 @@ export function createMfmlParser(options: IMfmlParserOptions = {}): MfmlParser {
     try {
       saxParser.parse(input);
     } finally {
-      ancestorNodes = {length: 0};
+      ancestorNodesCount = 0;
+      ancestorNodes.length = 0;
       linearNodes.length = 0;
     }
 
