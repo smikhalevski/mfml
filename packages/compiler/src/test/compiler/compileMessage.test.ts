@@ -134,6 +134,20 @@ describe('compileMessage', () => {
     );
   });
 
+  test('compiles selectordinal argument', () => {
+    expect(compileMessage({en: parse('{foo,selectordinal,zero{okay}many{nope}}')}, options)).toBe(
+        'export interface IGggValues{'
+        + 'foo:number;'
+        + '}'
+        + 'let ggg:MessageFunction<IGggValues>=(runtime,locale,values)=>{'
+        + 'let i;'
+        + 'const{o,f}=runtime;'
+        + 'const{foo:b}=values;'
+        + 'return (i=o(defaultLocale,b),i===0?"okay":i===4?"nope":f())'
+        + '};',
+    );
+  });
+
   test('compiles an interface for unused var', () => {
     expect(compileMessage({en: parse('{foo,select,}')}, options)).toBe(
         'export interface IGggValues{'
