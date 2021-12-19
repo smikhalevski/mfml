@@ -3,7 +3,7 @@ import {createMap, Maybe} from '../misc';
 import {compileDocComment, compilePropertyName, createVarNameProvider} from '@smikhalevski/codegen';
 import {compileLocaleNodeMap, ILocaleNodeMap, ILocaleNodeMapCompilerOptions} from './compileLocaleNodeMap';
 import {runtimeMethods} from './runtimeMethods';
-import {NodeType} from '@mfml/compiler';
+import {NodeType} from '../parser';
 
 export interface IMessageMetadata {
 
