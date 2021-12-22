@@ -61,7 +61,7 @@
     "@messageformat/parser": "^5.0.0",
     "@smikhalevski/codegen": "^2.0.0",
     "lodash-es": "^4.17.21",
-    "tag-soup": "^1.0.0",
+    "tag-soup": "^1.1.1-next.0",
     "tslib": "^2.3.0"
   },
   "peerDependencies": {
