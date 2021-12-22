@@ -1,6 +1,6 @@
 {
   "name": "@mfml/runtime",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "MFML generic runtime.",
   "main": "./lib/index-cjs.js",
   "module": "./lib/index.js",
