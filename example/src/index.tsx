@@ -1,6 +1,6 @@
 import {render} from 'react-dom';
 import {FC} from 'react';
-import {LocaleProvider, Message, RuntimeProvider, useLocale} from '@mfml/react-runtime';
+import {LocaleProvider, Message, RuntimeContext, useLocale} from '@mfml/react-runtime';
 import {AppMessages} from './gen';
 import {reactRuntime} from './reactRuntime';
 
@@ -22,7 +22,7 @@ const App: FC = () => (
 
     // RuntimeProvider is optional. The default runtime renders all tags using createElement. Since there's a custom
     // element `<red-button>` in translations, a runtime that can handle that element must be provided.
-    <RuntimeProvider value={reactRuntime}>
+    <RuntimeContext.Provider value={reactRuntime}>
 
       {/* LocaleProvider is optional. By default it provides "en" locale to underlying children. */}
       <LocaleProvider initialLocale={'en-US'}>
@@ -41,7 +41,7 @@ const App: FC = () => (
         <hr/>
         <LocaleSelect/>
       </LocaleProvider>
-    </RuntimeProvider>
+    </RuntimeContext.Provider>
 );
 
 render(<App/>, document.body.appendChild(document.createElement('div')));
