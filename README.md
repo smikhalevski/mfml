@@ -177,7 +177,7 @@ Produce TypeScript typings for message functions.
 
 ## Configuration files
 
-[The full list of options supported in a configuration file.](https://smikhalevski.github.io/mfml/interfaces/IConfig.html)
+[The full list of options supported in a configuration file.](https://smikhalevski.github.io/mfml/interfaces/cli_src_main.IConfig.html)
 
 # React integration
 
