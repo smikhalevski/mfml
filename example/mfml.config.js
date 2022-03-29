@@ -1,36 +1,36 @@
-const _ = require('lodash');
+const {camelCase, pascalCase} = require('change-case');
 
 const NAMESPACE_SEPARATOR = '/';
 
 // Refer to https://smikhalevski.github.io/mfml/interfaces/IConfig.html for the list of available options.
 module.exports = {
 
-  renameArgument: _.camelCase,
+  renameArgument: camelCase,
 
-  renameMessageFunction: function (messageName) {
-    return _.camelCase(messageName.split(NAMESPACE_SEPARATOR)[1]);
+  renameMessageFunction(messageName) {
+    return camelCase(messageName.split(NAMESPACE_SEPARATOR)[1]);
   },
 
-  renameInterface: function (messageName) {
-    return _.upperFirst(_.camelCase(messageName.split(NAMESPACE_SEPARATOR)[1])) + 'Values';
+  renameInterface(messageName) {
+    return pascalCase(messageName.split(NAMESPACE_SEPARATOR)[1]) + 'Values';
   },
 
   // Returns the TypeScript type that is required for a function.
   // The code below would make `my_argument` in `{my_argument,date,YYYY-MM-DD}` to be `Date` or `number`.
-  provideFunctionType: function (functionName) {
+  provideFunctionType(functionName) {
     if (functionName === 'date') {
       return 'Date|number';
     }
   },
 
   // Add a doc comment to each message function.
-  extractComment: function (messageName, message) {
+  extractComment(messageName, message) {
     return 'Message name: ' + messageName;
   },
 
   // Render additional code for each message function.
   // This example would add a display name.
-  renderMetadata: function (metadata, messageName, message) {
+  renderMetadata(metadata, messageName, message) {
     return metadata.functionName + '.displayName=' + JSON.stringify(messageName) + ';';
   },
 
@@ -38,11 +38,11 @@ module.exports = {
 
   digestModulePath: './index',
 
-  renameNamespace: function (messageName) {
-    return _.upperFirst(_.camelCase(messageName.split(NAMESPACE_SEPARATOR)[0])) + 'Messages';
+  renameNamespace(messageName) {
+    return pascalCase(messageName.split(NAMESPACE_SEPARATOR)[0]) + 'Messages';
   },
 
-  rewriteModulePath: function (namespace) {
+  rewriteModulePath(namespace) {
     return './' + namespace;
   },
 };

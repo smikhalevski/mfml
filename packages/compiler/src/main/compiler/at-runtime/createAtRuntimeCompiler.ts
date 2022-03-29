@@ -9,7 +9,7 @@ export interface IAtRuntimeCompilerOptions extends IMfmlParserOptions, IFunction
  * Creates a compiler that produces message functions.
  *
  * ```ts
- * import {createAtRuntimeCompiler} from '@mfml/compiler/lib/dynamic';
+ * import {createAtRuntimeCompiler} from '@mfml/compiler/lib/at-runtime';
  * import {stringRuntime} from '@mfml/runtime';
  *
  * const compile = createAtRuntimeCompiler();

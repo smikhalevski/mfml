@@ -1,6 +1,6 @@
 {
   "name": "@mfml/cli",
-  "version": "1.0.0",
+  "version": "1.1.1",
   "description": "MFML command-line interface.",
   "sideEffects": false,
   "files": [
@@ -11,9 +11,9 @@
   },
   "scripts": {
     "build": "tsc --project ./tsconfig.build.json && npm run rollup && npm run rollup-adapters && npm run rollup-presets",
-    "rollup": "rollup --external tslib,chalk,commander,glob,@mfml/compiler --banner '#!/usr/bin/env node' --input ./lib/mfmlc.js --file ./lib/mfmlc.js --format cjs --plugin @rollup/plugin-node-resolve && chmod +x ./lib/mfmlc.js",
-    "rollup-adapters": "for p in $(ls ./lib/adapters); do rollup --exports default --external tslib,chalk,@mfml/compiler --input ./lib/adapters/$p --file ./lib/adapters/$p --format cjs --plugin @rollup/plugin-node-resolve || exit 1; done",
-    "rollup-presets": "for p in $(ls ./lib/presets); do rollup --exports default --external tslib,tag-soup,marked --input ./lib/presets/$p --file ./lib/presets/$p --format cjs --plugin @rollup/plugin-node-resolve || exit 1; done",
+    "rollup": "rollup --external @mfml/compiler,chalk,commander,glob,speedy-entities,tslib --banner '#!/usr/bin/env node' --input ./lib/mfmlc.js --file ./lib/mfmlc.js --format cjs --plugin @rollup/plugin-node-resolve && chmod +x ./lib/mfmlc.js",
+    "rollup-adapters": "for p in $(ls ./lib/adapters); do rollup --exports default --external @mfml/compiler,chalk --input ./lib/adapters/$p --file ./lib/adapters/$p --format cjs --plugin @rollup/plugin-node-resolve || exit 1; done",
+    "rollup-presets": "for p in $(ls ./lib/presets); do rollup --exports default --external tag-soup --input ./lib/presets/$p --file ./lib/presets/$p --format cjs --plugin @rollup/plugin-node-resolve || exit 1; done",
     "clean": "rimraf ./lib",
     "test": "jest --detectOpenHandles"
   },
@@ -57,14 +57,14 @@
     "chalk": "^4.1.2",
     "commander": "^8.1.0",
     "glob": "^7.1.7",
+    "speedy-entities": "^1.1.2",
     "tslib": "^2.3.0"
   },
   "devDependencies": {
-    "@types/glob": "^7.1.4",
-    "@types/marked": "^2.0.4"
+    "@types/glob": "^7.1.4"
   },
   "peerDependencies": {
-    "marked": "^2.1.3",
-    "@mfml/compiler": "^1.0.0"
+    "@mfml/compiler": "^1.0.0",
+    "tag-soup": "^1.1.1-next.0"
   }
 }

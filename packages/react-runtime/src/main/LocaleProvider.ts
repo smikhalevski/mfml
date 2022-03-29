@@ -1,19 +1,11 @@
-import {createContext, createElement, Dispatch, FunctionComponent, SetStateAction, useContext, useState} from 'react';
-
-const DEFAULT_LOCALE = 'en';
-
-export const LocaleContext = createContext<[string, Dispatch<SetStateAction<string>>]>([DEFAULT_LOCALE, () => {
-  throw new Error('Expected LocaleContext to be rendered');
-}]);
-
-LocaleContext.displayName = 'LocaleContext';
+import {createElement, FC, useMemo, useState} from 'react';
+import {LocaleContext, LocaleProtocol} from './LocaleContext';
+import {useLocale} from './useLocale';
 
 export interface ILocaleProviderProps {
 
   /**
    * The initial locale value.
-   *
-   * @default "en"
    */
   initialLocale?: string;
 }
@@ -21,19 +13,14 @@ export interface ILocaleProviderProps {
 /**
  * Provides a locale value and setter to underlying children.
  */
-export const LocaleProvider: FunctionComponent<ILocaleProviderProps> = (props) => {
-  const {initialLocale = DEFAULT_LOCALE, children} = props;
+export const LocaleProvider: FC<ILocaleProviderProps> = (props) => {
+  const [defaultLocale] = useLocale();
+  const {initialLocale = defaultLocale, children} = props;
 
   const [locale, setLocale] = useState(initialLocale);
+  const value = useMemo<LocaleProtocol>(() => [locale, setLocale], [locale]);
 
-  return createElement(LocaleContext.Provider, {value: [locale, setLocale]}, children);
+  return createElement(LocaleContext.Provider, {value}, children);
 };
 
 LocaleProvider.displayName = 'LocaleProvider';
-
-/**
- * Returns the locale value and setter.
- */
-export function useLocale(): [string, Dispatch<SetStateAction<string>>] {
-  return useContext(LocaleContext);
-}

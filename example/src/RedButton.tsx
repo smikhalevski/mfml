@@ -1,4 +1,4 @@
-import {createContext, FunctionComponent} from 'react';
+import {createContext, FC} from 'react';
 import {createMessageHook, LocaleContext} from '@mfml/react-runtime';
 import {createStringRuntime} from '@mfml/runtime';
 import {RedButtonMessages} from './gen';
@@ -10,7 +10,7 @@ const StringRuntimeContext = createContext(createStringRuntime());
 // to render messages. The last argument describes how locale should be retrieved from the `LocaleContext` value.
 const useStringMessage = createMessageHook(StringRuntimeContext, LocaleContext, ([locale]) => locale);
 
-const RedButton: FunctionComponent = ({children}) => {
+const RedButton: FC = ({children}) => {
   const t = useStringMessage();
   return (
       <button

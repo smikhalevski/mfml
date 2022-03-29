@@ -5,7 +5,7 @@ import {SelectMatcher} from './runtime-types';
  */
 export const selectMatcher: SelectMatcher = function (value) {
   for (let i = 1; i < arguments.length; ++i) {
-    if (arguments[i] === value) {
+    if (arguments[i] == value) {
       return i - 1;
     }
   }

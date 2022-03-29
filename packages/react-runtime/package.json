@@ -1,6 +1,6 @@
 {
   "name": "@mfml/react-runtime",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "MFML React runtime.",
   "main": "./lib/index-cjs.js",
   "module": "./lib/index.js",
@@ -11,7 +11,7 @@
   ],
   "scripts": {
     "build": "tsc --project ./tsconfig.build.json && npm run rollup && npm run terser",
-    "rollup": "rollup --external tslib,@mfml/runtime,react --input ./lib/index.js --file ./lib/index-cjs.js --format cjs --plugin @rollup/plugin-node-resolve",
+    "rollup": "rollup --external @mfml/runtime,react,tslib --input ./lib/index.js --file ./lib/index-cjs.js --format cjs --plugin @rollup/plugin-node-resolve",
     "terser": "terser --compress --mangle toplevel --output ./lib/index-cjs.js -- ./lib/index-cjs.js",
     "clean": "rimraf ./lib",
     "test": "jest --detectOpenHandles"

@@ -2,10 +2,10 @@ import {compileMessage, IMessageCompilerOptions, IMessageMetadata} from './compi
 import {createVarNameProvider} from '@smikhalevski/codegen';
 import {createMap, jsonStringify, Maybe} from '../misc';
 import {IMessage, IMessageModule} from './compiler-types';
-import {MfmlParser} from '../parser';
+import {MfmlParser, Node} from '../parser';
 import {ILocaleNodeMap} from './compileLocaleNodeMap';
 import {runtimeMethods} from './runtimeMethods';
-import {camelCase, upperFirst} from 'lodash-es';
+import {camelCase, pascalCase} from 'change-case';
 
 const VAR_NAME_RUNTIME = 'runtime';
 const VAR_NAME_LOCALE = 'locale';
@@ -33,6 +33,17 @@ export interface IModuleCompilerOptions extends Pick<IMessageCompilerOptions,
    * @param locale The translation locale.
    */
   rewriteTranslation?(translation: string, locale: string): string;
+
+  /**
+   * Transforms a translation node before it is compiled.
+   *
+   * @param node The node that represents the parsed translation.
+   * @param locale The translation locale.
+   * @param messageName The name of the message.
+   * @param message The message that contains the translation.
+   * @returns The transformed node. If undefined is returned then `node` would be used for compilation.
+   */
+  transformTranslationNode?(node: Node, locale: string, messageName: string, message: IMessage): Node | void;
 
   /**
    * Returns the default locale for a message. If omitted then the first locale from `message.translations` is used as
@@ -87,6 +98,7 @@ export function compileModule(messageModule: IMessageModule, mfmlParser: MfmlPar
     otherSelectCaseKey,
     provideFunctionType,
     rewriteTranslation,
+    transformTranslationNode,
     provideDefaultLocale,
     extractComment,
     renderMetadata,
@@ -159,7 +171,8 @@ export function compileModule(messageModule: IMessageModule, mfmlParser: MfmlPar
         if (rewriteTranslation != null) {
           translation = rewriteTranslation(translation, locale);
         }
-        localeNodeMap[locale] = mfmlParser(translation);
+        const node = mfmlParser(translation);
+        localeNodeMap[locale] = transformTranslationNode?.(node, locale, messageName, message) || node;
       }
 
       const compilerOptions: IMessageCompilerOptions = {
@@ -211,5 +224,5 @@ export function compileModule(messageModule: IMessageModule, mfmlParser: MfmlPar
 }
 
 function renameValuesInterface(messageName: string): string {
-  return upperFirst(camelCase(messageName)) + 'Values';
+  return pascalCase(messageName) + 'Values';
 }
