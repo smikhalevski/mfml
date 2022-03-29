@@ -95,9 +95,9 @@
 					<h1>Usage example</h1>
 				</a>
 				<p>Install compiler, CLI utility and runtime libraries.</p>
-				<pre><code class="language-shell"><span style="color: #000000">npm install --save-dev @mfml/compiler @mfml/cli </span>
+				<pre><code class="language-shell"><span style="color: #000000">npm install --save-prod @mfml/runtime </span>
 
-<span style="color: #000000">npm install --save-prod @mfml/runtime </span>
+<span style="color: #000000">npm install --save-dev @mfml/compiler @mfml/cli </span>
 </code></pre>
 				<p>Create files that hold your translations. File names must be locale names. By default, locales are matched
 					using <a href="https://github.com/smikhalevski/locale-matcher"><code>locale-matcher</code></a>, so <code>en-US</code>, <code>en_us</code>, <code>en</code>, and
@@ -194,9 +194,8 @@
 				<a href="#-p-ltpresetgt---preset-ltpresetgt" id="-p-ltpresetgt---preset-ltpresetgt" style="color: inherit; text-decoration: none;">
 					<h5><code>-p &lt;preset&gt;</code>, <code>--preset &lt;preset&gt;</code></h5>
 				</a>
-				<p>The name of the built-in preset (<a href="./packages/cli/src/main/presets/xml.ts"><code>xml</code></a>,
-					<a href="./packages/cli/src/main/presets/html.ts"><code>html</code></a> and
-				<a href="./packages/cli/src/main/presets/markdown.ts"><code>markdown</code></a>) or path to a module that exports a configuration.</p>
+				<p>The name of the built-in preset (<a href="./packages/cli/src/main/presets/xml.ts"><code>xml</code></a> and
+				<a href="./packages/cli/src/main/presets/html.ts"><code>html</code></a>) or path to a module that exports a configuration.</p>
 				<pre><code class="language-shell"><span style="color: #000000">mfmlc --inlcude </span><span style="color: #A31515">&#039;./translations/*.json&#039;</span><span style="color: #000000"> --outDir </span><span style="color: #A31515">&#039;./gen&#039;</span><span style="color: #000000"> --preset html</span>
 </code></pre>
 				<p>This option can be specified multiple times.</p>
@@ -216,7 +215,7 @@
 				<a href="#configuration-files" id="configuration-files" style="color: inherit; text-decoration: none;">
 					<h2>Configuration files</h2>
 				</a>
-				<p><a href="https://smikhalevski.github.io/mfml/interfaces/IConfig.html">The full list of options supported in a configuration file.</a></p>
+				<p><a href="https://smikhalevski.github.io/mfml/interfaces/cli_src_main.IConfig.html">The full list of options supported in a configuration file.</a></p>
 				<a href="#react-integration" id="react-integration" style="color: inherit; text-decoration: none;">
 					<h1>React integration</h1>
 				</a>
@@ -261,264 +260,24 @@
 			<nav class="tsd-navigation primary">
 				<ul>
 					<li class=" ">
-						<a href="modules.html">Exports</a>
+						<a href="modules.html">Modules</a>
 					</li>
-					<li class=" tsd-kind-namespace">
-						<a href="modules/LocaleProvider.html">Locale<wbr>Provider</a>
+					<li class=" tsd-kind-module">
+						<a href="modules/cli_src_main.html">cli/src/main</a>
+					</li>
+					<li class=" tsd-kind-module">
+						<a href="modules/compiler_src_main.html">compiler/src/main</a>
+					</li>
+					<li class=" tsd-kind-module">
+						<a href="modules/react_runtime_src_main.html">react-<wbr>runtime/src/main</a>
+					</li>
+					<li class=" tsd-kind-module">
+						<a href="modules/runtime_src_main.html">runtime/src/main</a>
 					</li>
 				</ul>
 			</nav>
 			<nav class="tsd-navigation secondary menu-sticky">
 				<ul class="before-current">
-					<li class=" tsd-kind-enum">
-						<a href="enums/CliOptionKey.html" class="tsd-kind-icon">Cli<wbr>Option<wbr>Key</a>
-					</li>
-					<li class=" tsd-kind-enum">
-						<a href="enums/DigestExportFlavor.html" class="tsd-kind-icon">Digest<wbr>Export<wbr>Flavor</a>
-					</li>
-					<li class=" tsd-kind-enum">
-						<a href="enums/NodeType.html" class="tsd-kind-icon">Node<wbr>Type</a>
-					</li>
-					<li class=" tsd-kind-enum">
-						<a href="enums/PluralCategory.html" class="tsd-kind-icon">Plural<wbr>Category</a>
-					</li>
-					<li class=" tsd-kind-enum">
-						<a href="enums/RuntimeMethod.html" class="tsd-kind-icon">Runtime<wbr>Method</a>
-					</li>
-					<li class=" tsd-kind-interface">
-						<a href="interfaces/IArgumentNode.html" class="tsd-kind-icon">IArgument<wbr>Node</a>
-					</li>
-					<li class=" tsd-kind-interface">
-						<a href="interfaces/IAtRuntimeCompilerOptions.html" class="tsd-kind-icon">IAt<wbr>Runtime<wbr>Compiler<wbr>Options</a>
-					</li>
-					<li class=" tsd-kind-interface">
-						<a href="interfaces/IAttributeNode.html" class="tsd-kind-icon">IAttribute<wbr>Node</a>
-					</li>
-					<li class=" tsd-kind-interface">
-						<a href="interfaces/ICliOptions.html" class="tsd-kind-icon">ICli<wbr>Options</a>
-					</li>
-					<li class=" tsd-kind-interface">
-						<a href="interfaces/ICompilationOptions.html" class="tsd-kind-icon">ICompilation<wbr>Options</a>
-					</li>
-					<li class=" tsd-kind-interface">
-						<a href="interfaces/IConfig.html" class="tsd-kind-icon">IConfig</a>
-					</li>
-					<li class=" tsd-kind-interface">
-						<a href="interfaces/IContainerNode.html" class="tsd-kind-icon">IContainer<wbr>Node</a>
-					</li>
-					<li class=" tsd-kind-interface">
-						<a href="interfaces/IElementNode.html" class="tsd-kind-icon">IElement<wbr>Node</a>
-					</li>
-					<li class=" tsd-kind-interface">
-						<a href="interfaces/IFragmentNode.html" class="tsd-kind-icon">IFragment<wbr>Node</a>
-					</li>
-					<li class=" tsd-kind-interface">
-						<a href="interfaces/IFunctionBodyCompilerOptions.html" class="tsd-kind-icon">IFunction<wbr>Body<wbr>Compiler<wbr>Options</a>
-					</li>
-					<li class=" tsd-kind-interface">
-						<a href="interfaces/IFunctionCompilerOptions.html" class="tsd-kind-icon">IFunction<wbr>Compiler<wbr>Options</a>
-					</li>
-					<li class=" tsd-kind-interface">
-						<a href="interfaces/IFunctionNode.html" class="tsd-kind-icon">IFunction<wbr>Node</a>
-					</li>
-					<li class=" tsd-kind-interface">
-						<a href="interfaces/ILocaleFilesAdapterOptions.html" class="tsd-kind-icon">ILocale<wbr>Files<wbr>Adapter<wbr>Options</a>
-					</li>
-					<li class=" tsd-kind-interface">
-						<a href="interfaces/ILocaleNodeMap.html" class="tsd-kind-icon">ILocale<wbr>Node<wbr>Map</a>
-					</li>
-					<li class=" tsd-kind-interface">
-						<a href="interfaces/ILocaleNodeMapCompilerOptions.html" class="tsd-kind-icon">ILocale<wbr>Node<wbr>Map<wbr>Compiler<wbr>Options</a>
-					</li>
-					<li class=" tsd-kind-interface">
-						<a href="interfaces/ILocaleProviderProps.html" class="tsd-kind-icon">ILocale<wbr>Provider<wbr>Props</a>
-					</li>
-					<li class=" tsd-kind-interface">
-						<a href="interfaces/IMessage.html" class="tsd-kind-icon">IMessage</a>
-					</li>
-					<li class=" tsd-kind-interface">
-						<a href="interfaces/IMessageCompilerOptions.html" class="tsd-kind-icon">IMessage<wbr>Compiler<wbr>Options</a>
-					</li>
-					<li class=" tsd-kind-interface">
-						<a href="interfaces/IMessageMetadata.html" class="tsd-kind-icon">IMessage<wbr>Metadata</a>
-					</li>
-					<li class=" tsd-kind-interface">
-						<a href="interfaces/IMessageModule.html" class="tsd-kind-icon">IMessage<wbr>Module</a>
-					</li>
-					<li class=" tsd-kind-interface tsd-has-type-parameter">
-						<a href="interfaces/IMessageRenderer.html" class="tsd-kind-icon">IMessage<wbr>Renderer</a>
-					</li>
-					<li class=" tsd-kind-interface">
-						<a href="interfaces/IMfmlParserOptions.html" class="tsd-kind-icon">IMfml<wbr>Parser<wbr>Options</a>
-					</li>
-					<li class=" tsd-kind-interface">
-						<a href="interfaces/IModuleCompilerOptions.html" class="tsd-kind-icon">IModule<wbr>Compiler<wbr>Options</a>
-					</li>
-					<li class=" tsd-kind-interface">
-						<a href="interfaces/INode.html" class="tsd-kind-icon">INode</a>
-					</li>
-					<li class=" tsd-kind-interface">
-						<a href="interfaces/INodeCompilerOptions.html" class="tsd-kind-icon">INode<wbr>Compiler<wbr>Options</a>
-					</li>
-					<li class=" tsd-kind-interface">
-						<a href="interfaces/INodeVisitor.html" class="tsd-kind-icon">INode<wbr>Visitor</a>
-					</li>
-					<li class=" tsd-kind-interface">
-						<a href="interfaces/IOctothorpeNode.html" class="tsd-kind-icon">IOctothorpe<wbr>Node</a>
-					</li>
-					<li class=" tsd-kind-interface">
-						<a href="interfaces/IResolvedConfig.html" class="tsd-kind-icon">IResolved<wbr>Config</a>
-					</li>
-					<li class=" tsd-kind-interface tsd-has-type-parameter">
-						<a href="interfaces/IRuntime.html" class="tsd-kind-icon">IRuntime</a>
-					</li>
-					<li class=" tsd-kind-interface tsd-has-type-parameter">
-						<a href="interfaces/IRuntimeOptions.html" class="tsd-kind-icon">IRuntime<wbr>Options</a>
-					</li>
-					<li class=" tsd-kind-interface">
-						<a href="interfaces/ISelectCaseNode.html" class="tsd-kind-icon">ISelect<wbr>Case<wbr>Node</a>
-					</li>
-					<li class=" tsd-kind-interface">
-						<a href="interfaces/ISelectNode.html" class="tsd-kind-icon">ISelect<wbr>Node</a>
-					</li>
-					<li class=" tsd-kind-interface">
-						<a href="interfaces/ITextNode.html" class="tsd-kind-icon">IText<wbr>Node</a>
-					</li>
-					<li class=" tsd-kind-interface tsd-has-type-parameter">
-						<a href="interfaces/MessageComponent.html" class="tsd-kind-icon">Message<wbr>Component</a>
-					</li>
-					<li class=" tsd-kind-interface tsd-has-type-parameter">
-						<a href="interfaces/MessageFunction.html" class="tsd-kind-icon">Message<wbr>Function</a>
-					</li>
-					<li class=" tsd-kind-type-alias tsd-has-type-parameter">
-						<a href="modules.html#Adapter" class="tsd-kind-icon">Adapter</a>
-					</li>
-					<li class=" tsd-kind-type-alias tsd-has-type-parameter">
-						<a href="modules.html#ArgumentRenderer" class="tsd-kind-icon">Argument<wbr>Renderer</a>
-					</li>
-					<li class=" tsd-kind-type-alias">
-						<a href="modules.html#ContainerNode" class="tsd-kind-icon">Container<wbr>Node</a>
-					</li>
-					<li class=" tsd-kind-type-alias tsd-has-type-parameter">
-						<a href="modules.html#ElementRenderer" class="tsd-kind-icon">Element<wbr>Renderer</a>
-					</li>
-					<li class=" tsd-kind-type-alias tsd-has-type-parameter">
-						<a href="modules.html#FragmentRenderer" class="tsd-kind-icon">Fragment<wbr>Renderer</a>
-					</li>
-					<li class=" tsd-kind-type-alias tsd-has-type-parameter">
-						<a href="modules.html#FunctionRenderer" class="tsd-kind-icon">Function<wbr>Renderer</a>
-					</li>
-					<li class=" tsd-kind-type-alias">
-						<a href="modules.html#LocaleMatcher" class="tsd-kind-icon">Locale<wbr>Matcher</a>
-					</li>
-					<li class=" tsd-kind-type-alias tsd-has-type-parameter">
-						<a href="modules.html#MessageProps" class="tsd-kind-icon">Message<wbr>Props</a>
-					</li>
-					<li class=" tsd-kind-type-alias">
-						<a href="modules.html#MfmlParser" class="tsd-kind-icon">Mfml<wbr>Parser</a>
-					</li>
-					<li class=" tsd-kind-type-alias">
-						<a href="modules.html#Node" class="tsd-kind-icon">Node</a>
-					</li>
-					<li class=" tsd-kind-type-alias">
-						<a href="modules.html#PluralMatcher" class="tsd-kind-icon">Plural<wbr>Matcher</a>
-					</li>
-					<li class=" tsd-kind-type-alias">
-						<a href="modules.html#SelectMatcher" class="tsd-kind-icon">Select<wbr>Matcher</a>
-					</li>
-					<li class=" tsd-kind-type-alias">
-						<a href="modules.html#SelectOrdinalMatcher" class="tsd-kind-icon">Select<wbr>Ordinal<wbr>Matcher</a>
-					</li>
-					<li class=" tsd-kind-variable">
-						<a href="modules.html#LocaleContext" class="tsd-kind-icon">Locale<wbr>Context</a>
-					</li>
-					<li class=" tsd-kind-variable">
-						<a href="modules.html#LocaleProvider" class="tsd-kind-icon">Locale<wbr>Provider</a>
-					</li>
-					<li class=" tsd-kind-variable">
-						<a href="modules.html#Message" class="tsd-kind-icon">Message</a>
-					</li>
-					<li class=" tsd-kind-variable">
-						<a href="modules.html#RuntimeContext" class="tsd-kind-icon">Runtime<wbr>Context</a>
-					</li>
-					<li class=" tsd-kind-variable">
-						<a href="modules.html#RuntimeProvider" class="tsd-kind-icon">Runtime<wbr>Provider</a>
-					</li>
-					<li class=" tsd-kind-variable">
-						<a href="modules.html#pluralCategories" class="tsd-kind-icon">plural<wbr>Categories</a>
-					</li>
-					<li class=" tsd-kind-function">
-						<a href="modules.html#compileEmptyFragment" class="tsd-kind-icon">compile<wbr>Empty<wbr>Fragment</a>
-					</li>
-					<li class=" tsd-kind-function tsd-has-type-parameter">
-						<a href="modules.html#compileFunction" class="tsd-kind-icon">compile<wbr>Function</a>
-					</li>
-					<li class=" tsd-kind-function">
-						<a href="modules.html#compileFunctionBody" class="tsd-kind-icon">compile<wbr>Function<wbr>Body</a>
-					</li>
-					<li class=" tsd-kind-function">
-						<a href="modules.html#compileLocaleNodeMap" class="tsd-kind-icon">compile<wbr>Locale<wbr>Node<wbr>Map</a>
-					</li>
-					<li class=" tsd-kind-function">
-						<a href="modules.html#compileMessage" class="tsd-kind-icon">compile<wbr>Message</a>
-					</li>
-					<li class=" tsd-kind-function">
-						<a href="modules.html#compileModule" class="tsd-kind-icon">compile<wbr>Module</a>
-					</li>
-					<li class=" tsd-kind-function">
-						<a href="modules.html#compileNode" class="tsd-kind-icon">compile<wbr>Node</a>
-					</li>
-					<li class=" tsd-kind-function">
-						<a href="modules.html#countNodes" class="tsd-kind-icon">count<wbr>Nodes</a>
-					</li>
-					<li class=" tsd-kind-function tsd-has-type-parameter">
-						<a href="modules.html#createAtRuntimeCompiler" class="tsd-kind-icon">create<wbr>AtRuntime<wbr>Compiler</a>
-					</li>
-					<li class=" tsd-kind-function tsd-has-type-parameter">
-						<a href="modules.html#createMessageComponent" class="tsd-kind-icon">create<wbr>Message<wbr>Component</a>
-					</li>
-					<li class=" tsd-kind-function tsd-has-type-parameter">
-						<a href="modules.html#createMessageHook" class="tsd-kind-icon">create<wbr>Message<wbr>Hook</a>
-					</li>
-					<li class=" tsd-kind-function">
-						<a href="modules.html#createMfmlParser" class="tsd-kind-icon">create<wbr>Mfml<wbr>Parser</a>
-					</li>
-					<li class=" tsd-kind-function">
-						<a href="modules.html#createPluralMatcher" class="tsd-kind-icon">create<wbr>Plural<wbr>Matcher</a>
-					</li>
-					<li class=" tsd-kind-function">
-						<a href="modules.html#createReactRuntime" class="tsd-kind-icon">create<wbr>React<wbr>Runtime</a>
-					</li>
-					<li class=" tsd-kind-function tsd-has-type-parameter">
-						<a href="modules.html#createRuntime" class="tsd-kind-icon">create<wbr>Runtime</a>
-					</li>
-					<li class=" tsd-kind-function">
-						<a href="modules.html#createStringRuntime" class="tsd-kind-icon">create<wbr>String<wbr>Runtime</a>
-					</li>
-					<li class=" tsd-kind-function">
-						<a href="modules.html#isBlankNode" class="tsd-kind-icon">is<wbr>Blank<wbr>Node</a>
-					</li>
-					<li class=" tsd-kind-function">
-						<a href="modules.html#isContainerNode" class="tsd-kind-icon">is<wbr>Container<wbr>Node</a>
-					</li>
-					<li class=" tsd-kind-function">
-						<a href="modules.html#isSelectNode" class="tsd-kind-icon">is<wbr>Select<wbr>Node</a>
-					</li>
-					<li class=" tsd-kind-function">
-						<a href="modules.html#isTextNode" class="tsd-kind-icon">is<wbr>Text<wbr>Node</a>
-					</li>
-					<li class=" tsd-kind-function">
-						<a href="modules.html#selectMatcher" class="tsd-kind-icon">select<wbr>Matcher</a>
-					</li>
-					<li class=" tsd-kind-function">
-						<a href="modules.html#useLocale" class="tsd-kind-icon">use<wbr>Locale</a>
-					</li>
-					<li class=" tsd-kind-function">
-						<a href="modules.html#useMessage" class="tsd-kind-icon">use<wbr>Message</a>
-					</li>
-					<li class=" tsd-kind-function">
-						<a href="modules.html#visitNode" class="tsd-kind-icon">visit<wbr>Node</a>
-					</li>
 				</ul>
 			</nav>
 		</div>
@@ -529,8 +288,19 @@
 		<h2>Legend</h2>
 		<div class="tsd-legend-group">
 			<ul class="tsd-legend">
-				<li class="tsd-kind-property tsd-parent-kind-interface"><span class="tsd-kind-icon">Property</span></li>
-				<li class="tsd-kind-method tsd-parent-kind-interface"><span class="tsd-kind-icon">Method</span></li>
+				<li class="tsd-kind-namespace"><span class="tsd-kind-icon">Namespace</span></li>
+				<li class="tsd-kind-variable"><span class="tsd-kind-icon">Variable</span></li>
+				<li class="tsd-kind-function"><span class="tsd-kind-icon">Function</span></li>
+				<li class="tsd-kind-function tsd-has-type-parameter"><span class="tsd-kind-icon">Function with type parameter</span></li>
+				<li class="tsd-kind-type-alias"><span class="tsd-kind-icon">Type alias</span></li>
+				<li class="tsd-kind-type-alias tsd-has-type-parameter"><span class="tsd-kind-icon">Type alias with type parameter</span></li>
+			</ul>
+			<ul class="tsd-legend">
+				<li class="tsd-kind-interface"><span class="tsd-kind-icon">Interface</span></li>
+				<li class="tsd-kind-interface tsd-has-type-parameter"><span class="tsd-kind-icon">Interface with type parameter</span></li>
+			</ul>
+			<ul class="tsd-legend">
+				<li class="tsd-kind-enum"><span class="tsd-kind-icon">Enumeration</span></li>
 			</ul>
 		</div>
 	</div>

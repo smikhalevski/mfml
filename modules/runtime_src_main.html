@@ -1,0 +1,832 @@
+<!doctype html>
+<html class="default no-js">
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<title>runtime/src/main | mfml</title>
+	<meta name="description" content="Documentation for mfml">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="stylesheet" href="../assets/css/main.css">
+	<script async src="../assets/js/search.js" id="search-script"></script>
+</head>
+<body>
+<header>
+	<div class="tsd-page-toolbar">
+		<div class="container">
+			<div class="table-wrap">
+				<div class="table-cell" id="tsd-search" data-index="../assets/js/search.json" data-base="..">
+					<div class="field">
+						<label for="tsd-search-field" class="tsd-widget search no-caption">Search</label>
+						<input id="tsd-search-field" type="text" />
+					</div>
+					<ul class="results">
+						<li class="state loading">Preparing search index...</li>
+						<li class="state failure">The search index is not available</li>
+					</ul>
+					<a href="../index.html" class="title">mfml</a>
+				</div>
+				<div class="table-cell" id="tsd-widgets">
+					<div id="tsd-filter">
+						<a href="#" class="tsd-widget options no-caption" data-toggle="options">Options</a>
+						<div class="tsd-filter-group">
+							<div class="tsd-select" id="tsd-filter-visibility">
+								<span class="tsd-select-label">All</span>
+								<ul class="tsd-select-list">
+									<li data-value="public">Public</li>
+									<li data-value="protected">Public/Protected</li>
+									<li data-value="private" class="selected">All</li>
+								</ul>
+							</div>
+							<input type="checkbox" id="tsd-filter-inherited" checked />
+							<label class="tsd-widget" for="tsd-filter-inherited">Inherited</label>
+							<input type="checkbox" id="tsd-filter-externals" checked />
+							<label class="tsd-widget" for="tsd-filter-externals">Externals</label>
+						</div>
+					</div>
+					<a href="#" class="tsd-widget menu no-caption" data-toggle="menu">Menu</a>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div class="tsd-page-title">
+		<div class="container">
+			<ul class="tsd-breadcrumb">
+				<li>
+					<a href="../modules.html">mfml</a>
+				</li>
+				<li>
+					<a href="runtime_src_main.html">runtime/src/main</a>
+				</li>
+			</ul>
+			<h1>Module runtime/src/main</h1>
+		</div>
+	</div>
+</header>
+<div class="container container-main">
+	<div class="row">
+		<div class="col-8 col-content">
+			<section class="tsd-panel-group tsd-index-group">
+				<h2>Index</h2>
+				<section class="tsd-panel tsd-index-panel">
+					<div class="tsd-index-content">
+						<section class="tsd-index-section ">
+							<h3>Enumerations</h3>
+							<ul class="tsd-index-list">
+								<li class="tsd-kind-enum tsd-parent-kind-module"><a href="../enums/runtime_src_main.PluralCategory.html" class="tsd-kind-icon">Plural<wbr>Category</a></li>
+								<li class="tsd-kind-enum tsd-parent-kind-module"><a href="../enums/runtime_src_main.RuntimeMethod.html" class="tsd-kind-icon">Runtime<wbr>Method</a></li>
+							</ul>
+						</section>
+						<section class="tsd-index-section ">
+							<h3>Interfaces</h3>
+							<ul class="tsd-index-list">
+								<li class="tsd-kind-interface tsd-parent-kind-module tsd-has-type-parameter"><a href="../interfaces/runtime_src_main.IRuntime.html" class="tsd-kind-icon">IRuntime</a></li>
+								<li class="tsd-kind-interface tsd-parent-kind-module tsd-has-type-parameter"><a href="../interfaces/runtime_src_main.IRuntimeOptions.html" class="tsd-kind-icon">IRuntime<wbr>Options</a></li>
+								<li class="tsd-kind-interface tsd-parent-kind-module tsd-has-type-parameter"><a href="../interfaces/runtime_src_main.MessageFunction.html" class="tsd-kind-icon">Message<wbr>Function</a></li>
+							</ul>
+						</section>
+						<section class="tsd-index-section ">
+							<h3>Type aliases</h3>
+							<ul class="tsd-index-list">
+								<li class="tsd-kind-type-alias tsd-parent-kind-module tsd-has-type-parameter"><a href="runtime_src_main.html#ArgumentRenderer" class="tsd-kind-icon">Argument<wbr>Renderer</a></li>
+								<li class="tsd-kind-type-alias tsd-parent-kind-module tsd-has-type-parameter"><a href="runtime_src_main.html#ElementRenderer" class="tsd-kind-icon">Element<wbr>Renderer</a></li>
+								<li class="tsd-kind-type-alias tsd-parent-kind-module tsd-has-type-parameter"><a href="runtime_src_main.html#FragmentRenderer" class="tsd-kind-icon">Fragment<wbr>Renderer</a></li>
+								<li class="tsd-kind-type-alias tsd-parent-kind-module tsd-has-type-parameter"><a href="runtime_src_main.html#FunctionRenderer" class="tsd-kind-icon">Function<wbr>Renderer</a></li>
+								<li class="tsd-kind-type-alias tsd-parent-kind-module"><a href="runtime_src_main.html#LocaleMatcher" class="tsd-kind-icon">Locale<wbr>Matcher</a></li>
+								<li class="tsd-kind-type-alias tsd-parent-kind-module"><a href="runtime_src_main.html#PluralMatcher" class="tsd-kind-icon">Plural<wbr>Matcher</a></li>
+								<li class="tsd-kind-type-alias tsd-parent-kind-module"><a href="runtime_src_main.html#SelectMatcher" class="tsd-kind-icon">Select<wbr>Matcher</a></li>
+								<li class="tsd-kind-type-alias tsd-parent-kind-module"><a href="runtime_src_main.html#SelectOrdinalMatcher" class="tsd-kind-icon">Select<wbr>Ordinal<wbr>Matcher</a></li>
+							</ul>
+						</section>
+						<section class="tsd-index-section ">
+							<h3>Variables</h3>
+							<ul class="tsd-index-list">
+								<li class="tsd-kind-variable tsd-parent-kind-module"><a href="runtime_src_main.html#pluralCategories" class="tsd-kind-icon">plural<wbr>Categories</a></li>
+							</ul>
+						</section>
+						<section class="tsd-index-section ">
+							<h3>Functions</h3>
+							<ul class="tsd-index-list">
+								<li class="tsd-kind-function tsd-parent-kind-module"><a href="runtime_src_main.html#createPluralMatcher" class="tsd-kind-icon">create<wbr>Plural<wbr>Matcher</a></li>
+								<li class="tsd-kind-function tsd-parent-kind-module tsd-has-type-parameter"><a href="runtime_src_main.html#createRuntime" class="tsd-kind-icon">create<wbr>Runtime</a></li>
+								<li class="tsd-kind-function tsd-parent-kind-module"><a href="runtime_src_main.html#createStringRuntime" class="tsd-kind-icon">create<wbr>String<wbr>Runtime</a></li>
+								<li class="tsd-kind-function tsd-parent-kind-module"><a href="runtime_src_main.html#selectMatcher" class="tsd-kind-icon">select<wbr>Matcher</a></li>
+							</ul>
+						</section>
+					</div>
+				</section>
+			</section>
+			<section class="tsd-panel-group tsd-member-group ">
+				<h2>Type aliases</h2>
+				<section class="tsd-panel tsd-member tsd-kind-type-alias tsd-parent-kind-module tsd-has-type-parameter">
+					<a name="ArgumentRenderer" class="tsd-anchor"></a>
+					<h3>Argument<wbr>Renderer</h3>
+					<div class="tsd-signature tsd-kind-icon">Argument<wbr>Renderer&lt;Result&gt;<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">(</span>locale<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, value<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">unknown</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type">Result</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/smikhalevski/mfml/blob/c090a8f/packages/runtime/src/main/runtime-types.ts#L50">packages/runtime/src/main/runtime-types.ts:50</a></li>
+						</ul>
+					</aside>
+					<h4 class="tsd-type-parameters-title">Type parameters</h4>
+					<ul class="tsd-type-parameters">
+						<li>
+							<h4>Result</h4>
+							<div class="tsd-comment tsd-typography">
+								<p>The type of the rendering result.</p>
+							</div>
+						</li>
+					</ul>
+					<div class="tsd-type-declaration">
+						<h4>Type declaration</h4>
+						<ul class="tsd-parameters">
+							<li class="tsd-parameter-signature">
+								<ul class="tsd-signatures tsd-kind-type-literal tsd-parent-kind-type-alias">
+									<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">(</span>locale<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, value<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">unknown</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Result</span></li>
+								</ul>
+								<ul class="tsd-descriptions">
+									<li class="tsd-description">
+										<div class="tsd-comment tsd-typography">
+											<div class="lead">
+												<p>Renders an arbitrary argument value.</p>
+											</div>
+										</div>
+										<h4 class="tsd-parameters-title">Parameters</h4>
+										<ul class="tsd-parameters">
+											<li>
+												<h5>locale: <span class="tsd-signature-type">string</span></h5>
+												<div class="tsd-comment tsd-typography">
+													<div class="lead">
+														<p>The locale passed to the message function or a default locale.</p>
+													</div>
+												</div>
+											</li>
+											<li>
+												<h5>value: <span class="tsd-signature-type">unknown</span></h5>
+												<div class="tsd-comment tsd-typography">
+													<div class="lead">
+														<p>The argument value.</p>
+													</div>
+												</div>
+											</li>
+										</ul>
+										<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Result</span></h4>
+										<p>The formatted argument.</p>
+									</li>
+								</ul>
+							</li>
+						</ul>
+					</div>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-type-alias tsd-parent-kind-module tsd-has-type-parameter">
+					<a name="ElementRenderer" class="tsd-anchor"></a>
+					<h3>Element<wbr>Renderer</h3>
+					<div class="tsd-signature tsd-kind-icon">Element<wbr>Renderer&lt;Result&gt;<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">(</span>tagName<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, attributes<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">Record</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type">Result</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">null</span>, <span class="tsd-signature-symbol">...</span>children<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Result</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type">Result</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/smikhalevski/mfml/blob/c090a8f/packages/runtime/src/main/runtime-types.ts#L29">packages/runtime/src/main/runtime-types.ts:29</a></li>
+						</ul>
+					</aside>
+					<h4 class="tsd-type-parameters-title">Type parameters</h4>
+					<ul class="tsd-type-parameters">
+						<li>
+							<h4>Result</h4>
+							<div class="tsd-comment tsd-typography">
+								<p>The type of the rendering result.</p>
+							</div>
+						</li>
+					</ul>
+					<div class="tsd-type-declaration">
+						<h4>Type declaration</h4>
+						<ul class="tsd-parameters">
+							<li class="tsd-parameter-signature">
+								<ul class="tsd-signatures tsd-kind-type-literal tsd-parent-kind-type-alias">
+									<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">(</span>tagName<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, attributes<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">Record</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type">Result</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">null</span>, <span class="tsd-signature-symbol">...</span>children<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Result</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Result</span></li>
+								</ul>
+								<ul class="tsd-descriptions">
+									<li class="tsd-description">
+										<div class="tsd-comment tsd-typography">
+											<div class="lead">
+												<p>Renders an element by <code>tagName</code>.</p>
+											</div>
+										</div>
+										<h4 class="tsd-parameters-title">Parameters</h4>
+										<ul class="tsd-parameters">
+											<li>
+												<h5>tagName: <span class="tsd-signature-type">string</span></h5>
+												<div class="tsd-comment tsd-typography">
+													<div class="lead">
+														<p>The name of the tag to render.</p>
+													</div>
+												</div>
+											</li>
+											<li>
+												<h5><span class="tsd-flag ts-flagOptional">Optional</span> attributes: <span class="tsd-signature-type">Record</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type">Result</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">null</span></h5>
+												<div class="tsd-comment tsd-typography">
+													<div class="lead">
+														<p>The element attributes.</p>
+													</div>
+												</div>
+											</li>
+											<li>
+												<h5><span class="tsd-flag ts-flagRest">Rest</span> <span class="tsd-signature-symbol">...</span>children: <span class="tsd-signature-type">Result</span><span class="tsd-signature-symbol">[]</span></h5>
+												<div class="tsd-comment tsd-typography">
+													<div class="lead">
+														<p>The element children varargs.</p>
+													</div>
+												</div>
+											</li>
+										</ul>
+										<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Result</span></h4>
+										<p>The rendered element.</p>
+									</li>
+								</ul>
+							</li>
+						</ul>
+					</div>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-type-alias tsd-parent-kind-module tsd-has-type-parameter">
+					<a name="FragmentRenderer" class="tsd-anchor"></a>
+					<h3>Fragment<wbr>Renderer</h3>
+					<div class="tsd-signature tsd-kind-icon">Fragment<wbr>Renderer&lt;Result&gt;<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">...</span>children<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Result</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type">Result</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/smikhalevski/mfml/blob/c090a8f/packages/runtime/src/main/runtime-types.ts#L39">packages/runtime/src/main/runtime-types.ts:39</a></li>
+						</ul>
+					</aside>
+					<h4 class="tsd-type-parameters-title">Type parameters</h4>
+					<ul class="tsd-type-parameters">
+						<li>
+							<h4>Result</h4>
+							<div class="tsd-comment tsd-typography">
+								<p>The type of the rendering result.</p>
+							</div>
+						</li>
+					</ul>
+					<div class="tsd-type-declaration">
+						<h4>Type declaration</h4>
+						<ul class="tsd-parameters">
+							<li class="tsd-parameter-signature">
+								<ul class="tsd-signatures tsd-kind-type-literal tsd-parent-kind-type-alias">
+									<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">...</span>children<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Result</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Result</span></li>
+								</ul>
+								<ul class="tsd-descriptions">
+									<li class="tsd-description">
+										<div class="tsd-comment tsd-typography">
+											<div class="lead">
+												<p>Renders a fragment.</p>
+											</div>
+										</div>
+										<h4 class="tsd-parameters-title">Parameters</h4>
+										<ul class="tsd-parameters">
+											<li>
+												<h5><span class="tsd-flag ts-flagRest">Rest</span> <span class="tsd-signature-symbol">...</span>children: <span class="tsd-signature-type">Result</span><span class="tsd-signature-symbol">[]</span></h5>
+												<div class="tsd-comment tsd-typography">
+													<div class="lead">
+														<p>The fragment children varargs.</p>
+													</div>
+												</div>
+											</li>
+										</ul>
+										<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Result</span></h4>
+										<p>A rendered fragment.</p>
+									</li>
+								</ul>
+							</li>
+						</ul>
+					</div>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-type-alias tsd-parent-kind-module tsd-has-type-parameter">
+					<a name="FunctionRenderer" class="tsd-anchor"></a>
+					<h3>Function<wbr>Renderer</h3>
+					<div class="tsd-signature tsd-kind-icon">Function<wbr>Renderer&lt;Result&gt;<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">(</span>locale<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, value<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">unknown</span>, name<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, param<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">Result</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type">Result</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/smikhalevski/mfml/blob/c090a8f/packages/runtime/src/main/runtime-types.ts#L63">packages/runtime/src/main/runtime-types.ts:63</a></li>
+						</ul>
+					</aside>
+					<h4 class="tsd-type-parameters-title">Type parameters</h4>
+					<ul class="tsd-type-parameters">
+						<li>
+							<h4>Result</h4>
+							<div class="tsd-comment tsd-typography">
+								<p>The type of the rendering result.</p>
+							</div>
+						</li>
+					</ul>
+					<div class="tsd-type-declaration">
+						<h4>Type declaration</h4>
+						<ul class="tsd-parameters">
+							<li class="tsd-parameter-signature">
+								<ul class="tsd-signatures tsd-kind-type-literal tsd-parent-kind-type-alias">
+									<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">(</span>locale<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, value<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">unknown</span>, name<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, param<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">Result</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Result</span></li>
+								</ul>
+								<ul class="tsd-descriptions">
+									<li class="tsd-description">
+										<div class="tsd-comment tsd-typography">
+											<div class="lead">
+												<p>Renders an argument value formatted using a function.</p>
+											</div>
+										</div>
+										<h4 class="tsd-parameters-title">Parameters</h4>
+										<ul class="tsd-parameters">
+											<li>
+												<h5>locale: <span class="tsd-signature-type">string</span></h5>
+												<div class="tsd-comment tsd-typography">
+													<div class="lead">
+														<p>The locale passed to the message function or a default locale.</p>
+													</div>
+												</div>
+											</li>
+											<li>
+												<h5>value: <span class="tsd-signature-type">unknown</span></h5>
+												<div class="tsd-comment tsd-typography">
+													<div class="lead">
+														<p>An argument value.</p>
+													</div>
+												</div>
+											</li>
+											<li>
+												<h5>name: <span class="tsd-signature-type">string</span></h5>
+												<div class="tsd-comment tsd-typography">
+													<div class="lead">
+														<p>The formatter function name.</p>
+													</div>
+												</div>
+											</li>
+											<li>
+												<h5><span class="tsd-flag ts-flagOptional">Optional</span> param: <span class="tsd-signature-type">Result</span></h5>
+												<div class="tsd-comment tsd-typography">
+													<div class="lead">
+														<p>An optional additional param.</p>
+													</div>
+												</div>
+											</li>
+										</ul>
+										<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Result</span></h4>
+										<p>The formatted argument.</p>
+									</li>
+								</ul>
+							</li>
+						</ul>
+					</div>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-type-alias tsd-parent-kind-module">
+					<a name="LocaleMatcher" class="tsd-anchor"></a>
+					<h3>Locale<wbr>Matcher</h3>
+					<div class="tsd-signature tsd-kind-icon">Locale<wbr>Matcher<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">(</span>locale<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, locales<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type">number</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/smikhalevski/mfml/blob/c090a8f/packages/runtime/src/main/runtime-types.ts#L72">packages/runtime/src/main/runtime-types.ts:72</a></li>
+						</ul>
+					</aside>
+					<div class="tsd-type-declaration">
+						<h4>Type declaration</h4>
+						<ul class="tsd-parameters">
+							<li class="tsd-parameter-signature">
+								<ul class="tsd-signatures tsd-kind-type-literal tsd-parent-kind-type-alias">
+									<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">(</span>locale<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, locales<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span></li>
+								</ul>
+								<ul class="tsd-descriptions">
+									<li class="tsd-description">
+										<div class="tsd-comment tsd-typography">
+											<div class="lead">
+												<p>Looks up a locale among <code>locales</code> that best fits <code>locale</code>.</p>
+											</div>
+										</div>
+										<h4 class="tsd-parameters-title">Parameters</h4>
+										<ul class="tsd-parameters">
+											<li>
+												<h5>locale: <span class="tsd-signature-type">string</span></h5>
+												<div class="tsd-comment tsd-typography">
+													<div class="lead">
+														<p>The locale passed to the message function.</p>
+													</div>
+												</div>
+											</li>
+											<li>
+												<h5>locales: <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">[]</span></h5>
+												<div class="tsd-comment tsd-typography">
+													<div class="lead">
+														<p>The list of locales supported by the message.</p>
+													</div>
+												</div>
+											</li>
+										</ul>
+										<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">number</span></h4>
+										<p>The index of a locale from <code>locales</code> that matches <code>locale</code> or -1 to use the default locale.</p>
+									</li>
+								</ul>
+							</li>
+						</ul>
+					</div>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-type-alias tsd-parent-kind-module">
+					<a name="PluralMatcher" class="tsd-anchor"></a>
+					<h3>Plural<wbr>Matcher</h3>
+					<div class="tsd-signature tsd-kind-icon">Plural<wbr>Matcher<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">(</span>locale<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, value<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type">number</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/smikhalevski/mfml/blob/c090a8f/packages/runtime/src/main/runtime-types.ts#L81">packages/runtime/src/main/runtime-types.ts:81</a></li>
+						</ul>
+					</aside>
+					<div class="tsd-type-declaration">
+						<h4>Type declaration</h4>
+						<ul class="tsd-parameters">
+							<li class="tsd-parameter-signature">
+								<ul class="tsd-signatures tsd-kind-type-literal tsd-parent-kind-type-alias">
+									<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">(</span>locale<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, value<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span></li>
+								</ul>
+								<ul class="tsd-descriptions">
+									<li class="tsd-description">
+										<div class="tsd-comment tsd-typography">
+											<div class="lead">
+												<p>Detects the plural category that should be used for cardinal pluralization of <code>value</code> with the <code>locale</code>.</p>
+											</div>
+										</div>
+										<h4 class="tsd-parameters-title">Parameters</h4>
+										<ul class="tsd-parameters">
+											<li>
+												<h5>locale: <span class="tsd-signature-type">string</span></h5>
+												<div class="tsd-comment tsd-typography">
+													<div class="lead">
+														<p>The locale passed to the message function or a default locale.</p>
+													</div>
+												</div>
+											</li>
+											<li>
+												<h5>value: <span class="tsd-signature-type">number</span></h5>
+												<div class="tsd-comment tsd-typography">
+													<div class="lead">
+														<p>An argument value.</p>
+													</div>
+												</div>
+											</li>
+										</ul>
+										<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">number</span></h4>
+										<p>The index of the plural category from <a href="runtime_src_main.html#pluralCategories">pluralCategories</a>.</p>
+									</li>
+								</ul>
+							</li>
+						</ul>
+					</div>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-type-alias tsd-parent-kind-module">
+					<a name="SelectMatcher" class="tsd-anchor"></a>
+					<h3>Select<wbr>Matcher</h3>
+					<div class="tsd-signature tsd-kind-icon">Select<wbr>Matcher<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">(</span>value<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">unknown</span>, <span class="tsd-signature-symbol">...</span>caseKeys<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type">number</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/smikhalevski/mfml/blob/c090a8f/packages/runtime/src/main/runtime-types.ts#L91">packages/runtime/src/main/runtime-types.ts:91</a></li>
+						</ul>
+					</aside>
+					<div class="tsd-type-declaration">
+						<h4>Type declaration</h4>
+						<ul class="tsd-parameters">
+							<li class="tsd-parameter-signature">
+								<ul class="tsd-signatures tsd-kind-type-literal tsd-parent-kind-type-alias">
+									<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">(</span>value<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">unknown</span>, <span class="tsd-signature-symbol">...</span>caseKeys<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span></li>
+								</ul>
+								<ul class="tsd-descriptions">
+									<li class="tsd-description">
+										<div class="tsd-comment tsd-typography">
+											<div class="lead">
+												<p>Matches value with case keys.</p>
+											</div>
+										</div>
+										<h4 class="tsd-parameters-title">Parameters</h4>
+										<ul class="tsd-parameters">
+											<li>
+												<h5>value: <span class="tsd-signature-type">unknown</span></h5>
+												<div class="tsd-comment tsd-typography">
+													<div class="lead">
+														<p>An argument value.</p>
+													</div>
+												</div>
+											</li>
+											<li>
+												<h5><span class="tsd-flag ts-flagRest">Rest</span> <span class="tsd-signature-symbol">...</span>caseKeys: <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">[]</span></h5>
+												<div class="tsd-comment tsd-typography">
+													<div class="lead">
+														<p>Case keys varargs.</p>
+													</div>
+												</div>
+											</li>
+										</ul>
+										<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">number</span></h4>
+										<p>The index of a case key from <code>caseKeys</code> that matches <code>value</code> or -1 if no case was found. If -1 is returned
+										then the case with &quot;other&quot; key would be used if it was provided.</p>
+									</li>
+								</ul>
+							</li>
+						</ul>
+					</div>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-type-alias tsd-parent-kind-module">
+					<a name="SelectOrdinalMatcher" class="tsd-anchor"></a>
+					<h3>Select<wbr>Ordinal<wbr>Matcher</h3>
+					<div class="tsd-signature tsd-kind-icon">Select<wbr>Ordinal<wbr>Matcher<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">(</span>locale<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, value<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type">number</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/smikhalevski/mfml/blob/c090a8f/packages/runtime/src/main/runtime-types.ts#L100">packages/runtime/src/main/runtime-types.ts:100</a></li>
+						</ul>
+					</aside>
+					<div class="tsd-type-declaration">
+						<h4>Type declaration</h4>
+						<ul class="tsd-parameters">
+							<li class="tsd-parameter-signature">
+								<ul class="tsd-signatures tsd-kind-type-literal tsd-parent-kind-type-alias">
+									<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">(</span>locale<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, value<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span></li>
+								</ul>
+								<ul class="tsd-descriptions">
+									<li class="tsd-description">
+										<div class="tsd-comment tsd-typography">
+											<div class="lead">
+												<p>Detects the plural category that should be used for ordinal pluralization of <code>value</code> with the <code>locale</code>.</p>
+											</div>
+										</div>
+										<h4 class="tsd-parameters-title">Parameters</h4>
+										<ul class="tsd-parameters">
+											<li>
+												<h5>locale: <span class="tsd-signature-type">string</span></h5>
+												<div class="tsd-comment tsd-typography">
+													<div class="lead">
+														<p>The locale passed to the message function or a default locale.</p>
+													</div>
+												</div>
+											</li>
+											<li>
+												<h5>value: <span class="tsd-signature-type">number</span></h5>
+												<div class="tsd-comment tsd-typography">
+													<div class="lead">
+														<p>An argument value.</p>
+													</div>
+												</div>
+											</li>
+										</ul>
+										<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">number</span></h4>
+										<p>The index of the plural category from <a href="runtime_src_main.html#pluralCategories">pluralCategories</a>.</p>
+									</li>
+								</ul>
+							</li>
+						</ul>
+					</div>
+				</section>
+			</section>
+			<section class="tsd-panel-group tsd-member-group ">
+				<h2>Variables</h2>
+				<section class="tsd-panel tsd-member tsd-kind-variable tsd-parent-kind-module">
+					<a name="pluralCategories" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagConst">Const</span> plural<wbr>Categories</h3>
+					<div class="tsd-signature tsd-kind-icon">plural<wbr>Categories<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol"> = ...</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/smikhalevski/mfml/blob/c090a8f/packages/runtime/src/main/pluralCategories.ts#L13">packages/runtime/src/main/pluralCategories.ts:13</a></li>
+						</ul>
+					</aside>
+					<div class="tsd-comment tsd-typography">
+						<div class="lead">
+							<p>The ordered list of plural categories.</p>
+						</div>
+					</div>
+				</section>
+			</section>
+			<section class="tsd-panel-group tsd-member-group ">
+				<h2>Functions</h2>
+				<section class="tsd-panel tsd-member tsd-kind-function tsd-parent-kind-module">
+					<a name="createPluralMatcher" class="tsd-anchor"></a>
+					<h3>create<wbr>Plural<wbr>Matcher</h3>
+					<ul class="tsd-signatures tsd-kind-function tsd-parent-kind-module">
+						<li class="tsd-signature tsd-kind-icon">create<wbr>Plural<wbr>Matcher<span class="tsd-signature-symbol">(</span>type<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Intl.PluralRuleType</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="runtime_src_main.html#PluralMatcher" class="tsd-signature-type" data-tsd-kind="Type alias">PluralMatcher</a></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/smikhalevski/mfml/blob/c090a8f/packages/runtime/src/main/createPluralMatcher.ts#L10">packages/runtime/src/main/createPluralMatcher.ts:10</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Creates a <a href="runtime_src_main.html#PluralMatcher">PluralMatcher</a> instance that uses cached <code>Intl.PluralRules</code> to resolve plural category.</p>
+								</div>
+							</div>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>type: <span class="tsd-signature-type">Intl.PluralRuleType</span></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>The pluralization type.</p>
+									</div>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <a href="runtime_src_main.html#PluralMatcher" class="tsd-signature-type" data-tsd-kind="Type alias">PluralMatcher</a></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-function tsd-parent-kind-module tsd-has-type-parameter">
+					<a name="createRuntime" class="tsd-anchor"></a>
+					<h3>create<wbr>Runtime</h3>
+					<ul class="tsd-signatures tsd-kind-function tsd-parent-kind-module tsd-has-type-parameter">
+						<li class="tsd-signature tsd-kind-icon">create<wbr>Runtime&lt;Result&gt;<span class="tsd-signature-symbol">(</span>options<span class="tsd-signature-symbol">: </span><a href="../interfaces/runtime_src_main.IRuntimeOptions.html" class="tsd-signature-type" data-tsd-kind="Interface">IRuntimeOptions</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">Result</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="../interfaces/runtime_src_main.IRuntime.html" class="tsd-signature-type" data-tsd-kind="Interface">IRuntime</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">Result</span><span class="tsd-signature-symbol">&gt;</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/smikhalevski/mfml/blob/c090a8f/packages/runtime/src/main/createRuntime.ts#L72">packages/runtime/src/main/createRuntime.ts:72</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Creates the new runtime.</p>
+								</div>
+							</div>
+							<h4 class="tsd-type-parameters-title">Type parameters</h4>
+							<ul class="tsd-type-parameters">
+								<li>
+									<h4>Result</h4>
+								</li>
+							</ul>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>options: <a href="../interfaces/runtime_src_main.IRuntimeOptions.html" class="tsd-signature-type" data-tsd-kind="Interface">IRuntimeOptions</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">Result</span><span class="tsd-signature-symbol">&gt;</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <a href="../interfaces/runtime_src_main.IRuntime.html" class="tsd-signature-type" data-tsd-kind="Interface">IRuntime</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">Result</span><span class="tsd-signature-symbol">&gt;</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-function tsd-parent-kind-module">
+					<a name="createStringRuntime" class="tsd-anchor"></a>
+					<h3>create<wbr>String<wbr>Runtime</h3>
+					<ul class="tsd-signatures tsd-kind-function tsd-parent-kind-module">
+						<li class="tsd-signature tsd-kind-icon">create<wbr>String<wbr>Runtime<span class="tsd-signature-symbol">(</span>options<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">Partial</span><span class="tsd-signature-symbol">&lt;</span><a href="../interfaces/runtime_src_main.IRuntimeOptions.html" class="tsd-signature-type" data-tsd-kind="Interface">IRuntimeOptions</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="../interfaces/runtime_src_main.IRuntime.html" class="tsd-signature-type" data-tsd-kind="Interface">IRuntime</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">&gt;</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/smikhalevski/mfml/blob/c090a8f/packages/runtime/src/main/createStringRuntime.ts#L9">packages/runtime/src/main/createStringRuntime.ts:9</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Creates a runtime that renders a message as a string.</p>
+								</div>
+							</div>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>options: <span class="tsd-signature-type">Partial</span><span class="tsd-signature-symbol">&lt;</span><a href="../interfaces/runtime_src_main.IRuntimeOptions.html" class="tsd-signature-type" data-tsd-kind="Interface">IRuntimeOptions</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol"> = {}</span></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>Runtime options.</p>
+									</div>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <a href="../interfaces/runtime_src_main.IRuntime.html" class="tsd-signature-type" data-tsd-kind="Interface">IRuntime</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">&gt;</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-function tsd-parent-kind-module">
+					<a name="selectMatcher" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagConst">Const</span> select<wbr>Matcher</h3>
+					<ul class="tsd-signatures tsd-kind-function tsd-parent-kind-module">
+						<li class="tsd-signature tsd-kind-icon">select<wbr>Matcher<span class="tsd-signature-symbol">(</span>value<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">unknown</span>, <span class="tsd-signature-symbol">...</span>caseKeys<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/smikhalevski/mfml/blob/c090a8f/packages/runtime/src/main/selectMatcher.ts#L6">packages/runtime/src/main/selectMatcher.ts:6</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>The select matcher that compares <code>value</code> to select case keys via strict equal.</p>
+								</div>
+							</div>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>value: <span class="tsd-signature-type">unknown</span></h5>
+								</li>
+								<li>
+									<h5><span class="tsd-flag ts-flagRest">Rest</span> <span class="tsd-signature-symbol">...</span>caseKeys: <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">[]</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">number</span></h4>
+						</li>
+					</ul>
+				</section>
+			</section>
+		</div>
+		<div class="col-4 col-menu menu-sticky-wrap menu-highlight">
+			<nav class="tsd-navigation primary">
+				<ul>
+					<li class=" ">
+						<a href="../modules.html">Modules</a>
+					</li>
+					<li class=" tsd-kind-module">
+						<a href="cli_src_main.html">cli/src/main</a>
+					</li>
+					<li class=" tsd-kind-module">
+						<a href="compiler_src_main.html">compiler/src/main</a>
+					</li>
+					<li class=" tsd-kind-module">
+						<a href="react_runtime_src_main.html">react-<wbr>runtime/src/main</a>
+					</li>
+					<li class="current tsd-kind-module">
+						<a href="runtime_src_main.html">runtime/src/main</a>
+					</li>
+				</ul>
+			</nav>
+			<nav class="tsd-navigation secondary menu-sticky">
+				<ul class="before-current">
+					<li class=" tsd-kind-enum tsd-parent-kind-module">
+						<a href="../enums/runtime_src_main.PluralCategory.html" class="tsd-kind-icon">Plural<wbr>Category</a>
+					</li>
+					<li class=" tsd-kind-enum tsd-parent-kind-module">
+						<a href="../enums/runtime_src_main.RuntimeMethod.html" class="tsd-kind-icon">Runtime<wbr>Method</a>
+					</li>
+					<li class=" tsd-kind-interface tsd-parent-kind-module tsd-has-type-parameter">
+						<a href="../interfaces/runtime_src_main.IRuntime.html" class="tsd-kind-icon">IRuntime</a>
+					</li>
+					<li class=" tsd-kind-interface tsd-parent-kind-module tsd-has-type-parameter">
+						<a href="../interfaces/runtime_src_main.IRuntimeOptions.html" class="tsd-kind-icon">IRuntime<wbr>Options</a>
+					</li>
+					<li class=" tsd-kind-interface tsd-parent-kind-module tsd-has-type-parameter">
+						<a href="../interfaces/runtime_src_main.MessageFunction.html" class="tsd-kind-icon">Message<wbr>Function</a>
+					</li>
+					<li class=" tsd-kind-type-alias tsd-parent-kind-module tsd-has-type-parameter">
+						<a href="runtime_src_main.html#ArgumentRenderer" class="tsd-kind-icon">Argument<wbr>Renderer</a>
+					</li>
+					<li class=" tsd-kind-type-alias tsd-parent-kind-module tsd-has-type-parameter">
+						<a href="runtime_src_main.html#ElementRenderer" class="tsd-kind-icon">Element<wbr>Renderer</a>
+					</li>
+					<li class=" tsd-kind-type-alias tsd-parent-kind-module tsd-has-type-parameter">
+						<a href="runtime_src_main.html#FragmentRenderer" class="tsd-kind-icon">Fragment<wbr>Renderer</a>
+					</li>
+					<li class=" tsd-kind-type-alias tsd-parent-kind-module tsd-has-type-parameter">
+						<a href="runtime_src_main.html#FunctionRenderer" class="tsd-kind-icon">Function<wbr>Renderer</a>
+					</li>
+					<li class=" tsd-kind-type-alias tsd-parent-kind-module">
+						<a href="runtime_src_main.html#LocaleMatcher" class="tsd-kind-icon">Locale<wbr>Matcher</a>
+					</li>
+					<li class=" tsd-kind-type-alias tsd-parent-kind-module">
+						<a href="runtime_src_main.html#PluralMatcher" class="tsd-kind-icon">Plural<wbr>Matcher</a>
+					</li>
+					<li class=" tsd-kind-type-alias tsd-parent-kind-module">
+						<a href="runtime_src_main.html#SelectMatcher" class="tsd-kind-icon">Select<wbr>Matcher</a>
+					</li>
+					<li class=" tsd-kind-type-alias tsd-parent-kind-module">
+						<a href="runtime_src_main.html#SelectOrdinalMatcher" class="tsd-kind-icon">Select<wbr>Ordinal<wbr>Matcher</a>
+					</li>
+					<li class=" tsd-kind-variable tsd-parent-kind-module">
+						<a href="runtime_src_main.html#pluralCategories" class="tsd-kind-icon">plural<wbr>Categories</a>
+					</li>
+					<li class=" tsd-kind-function tsd-parent-kind-module">
+						<a href="runtime_src_main.html#createPluralMatcher" class="tsd-kind-icon">create<wbr>Plural<wbr>Matcher</a>
+					</li>
+					<li class=" tsd-kind-function tsd-parent-kind-module tsd-has-type-parameter">
+						<a href="runtime_src_main.html#createRuntime" class="tsd-kind-icon">create<wbr>Runtime</a>
+					</li>
+					<li class=" tsd-kind-function tsd-parent-kind-module">
+						<a href="runtime_src_main.html#createStringRuntime" class="tsd-kind-icon">create<wbr>String<wbr>Runtime</a>
+					</li>
+					<li class=" tsd-kind-function tsd-parent-kind-module">
+						<a href="runtime_src_main.html#selectMatcher" class="tsd-kind-icon">select<wbr>Matcher</a>
+					</li>
+				</ul>
+			</nav>
+		</div>
+	</div>
+</div>
+<footer class="with-border-bottom">
+	<div class="container">
+		<h2>Legend</h2>
+		<div class="tsd-legend-group">
+			<ul class="tsd-legend">
+				<li class="tsd-kind-namespace"><span class="tsd-kind-icon">Namespace</span></li>
+				<li class="tsd-kind-variable"><span class="tsd-kind-icon">Variable</span></li>
+				<li class="tsd-kind-function"><span class="tsd-kind-icon">Function</span></li>
+				<li class="tsd-kind-function tsd-has-type-parameter"><span class="tsd-kind-icon">Function with type parameter</span></li>
+				<li class="tsd-kind-type-alias"><span class="tsd-kind-icon">Type alias</span></li>
+				<li class="tsd-kind-type-alias tsd-has-type-parameter"><span class="tsd-kind-icon">Type alias with type parameter</span></li>
+			</ul>
+			<ul class="tsd-legend">
+				<li class="tsd-kind-interface"><span class="tsd-kind-icon">Interface</span></li>
+				<li class="tsd-kind-interface tsd-has-type-parameter"><span class="tsd-kind-icon">Interface with type parameter</span></li>
+			</ul>
+			<ul class="tsd-legend">
+				<li class="tsd-kind-enum"><span class="tsd-kind-icon">Enumeration</span></li>
+			</ul>
+		</div>
+	</div>
+</footer>
+<div class="container tsd-generator">
+	<p>Generated using <a href="https://typedoc.org/" target="_blank">TypeDoc</a></p>
+</div>
+<div class="overlay"></div>
+<script src="../assets/js/main.js"></script>
+</body>
+</html>
