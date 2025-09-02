@@ -1,30 +1,66 @@
 {
   "name": "mfml",
-  "private": true,
-  "scripts": {
-    "preinstall": "cd ./packages/cli && mkdir -p ./lib && touch ./lib/mfmlc.js",
-    "build": "npm run build --workspaces",
-    "clean": "rimraf ./docs && npm run clean --workspaces",
-    "test": "npm run test --workspaces",
-    "docs": "typedoc ./packages/*/src/main/index.ts",
-    "publish-docs": "[ -d ./docs ] && [[ ! $(git status --porcelain) ]] && branch=$(git rev-parse --abbrev-ref HEAD) && sha=$(git rev-parse --short HEAD) && t=$(mktemp -d) && cp -R ./docs/ $t && git checkout ghpages && ls -A | grep -wv .git | xargs rm -rf && cp -R $t/ . && git add . && git commit -m \"Updated docs ($sha)\" && git push && git checkout $branch",
-    "release-docs": "npm run clean && npm run docs && npm run publish-docs"
+  "version": "2.0.0",
+  "description": "The ICU MessageFormat + XML/HTML compiler and runtime that makes your translations tree-shakeable.",
+  "type": "module",
+  "main": "./index.js",
+  "types": "./index.d.ts",
+  "exports": {
+    ".": "./index.js",
+    "./package.json": "./package.json"
   },
-  "workspaces": [
-    "./packages/runtime",
-    "./packages/compiler",
-    "./packages/cli",
-    "./packages/react-runtime"
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsc --project tsconfig.build.json && cp package.json README.md LICENSE.txt lib/ && cd lib && npm pkg delete scripts devDependencies",
+    "clean": "rimraf lib docs coverage",
+    "test": "vitest run",
+    "test:definitions": "tsd --typings lib/index.d.ts --files src/main/global.d.ts --files 'src/test/**/*.test-d.ts'",
+    "perf": "toofast",
+    "docs": "typedoc"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/smikhalevski/mfml.git"
+  },
+  "keywords": [
+    "i18n",
+    "l10n",
+    "html",
+    "language",
+    "parser",
+    "translation",
+    "compiler",
+    "xml",
+    "icu",
+    "intl",
+    "tms",
+    "message-format"
   ],
+  "author": "Savva Mikhalevski <smikhalevski@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/smikhalevski/mfml/issues"
+  },
+  "homepage": "https://megastack.dev/mfml",
   "devDependencies": {
-    "@rollup/plugin-node-resolve": "^13.0.0",
-    "@types/jest": "^27.0.1",
-    "jest": "^27.0.2",
-    "rimraf": "^3.0.2",
-    "rollup": "^2.50.5",
-    "terser": "^5.7.0",
-    "ts-jest": "^27.0.2",
-    "typedoc": "^0.21.4",
-    "typescript": "^4.4.3"
+    "@testing-library/jest-dom": "^6.8.0",
+    "@testing-library/react": "^16.3.0",
+    "@types/node": "^24.3.0",
+    "@types/react": "^19.1.12",
+    "jsdom": "^26.1.0",
+    "prettier": "^3.6.2",
+    "rimraf": "^6.0.1",
+    "tsd": "^0.33.0",
+    "tslib": "^2.8.1",
+    "typedoc": "^0.28.12",
+    "typedoc-plugin-mdn-links": "^5.0.9",
+    "typescript": "^5.9.2",
+    "vitest": "^3.2.4"
+  },
+  "peerDependencies": {
+    "react": ">=18.0.0"
+  },
+  "dependencies": {
+    "parallel-universe": "^6.1.2"
   }
 }
