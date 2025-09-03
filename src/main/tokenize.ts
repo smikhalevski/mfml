@@ -1,20 +1,28 @@
 const TOKEN_XML_TEXT = 0;
 const TOKEN_XML_OPENING_TAG = 1;
 const TOKEN_XML_ATTRIBUTE = 2;
-const TOKEN_XML_SINGLE_QUOTED_ATTRIBUTE_VALUE = 3;
-const TOKEN_XML_DOUBLE_QUOTED_ATTRIBUTE_VALUE = 4;
-const TOKEN_XML_UNQUOTED_ATTRIBUTE_VALUE = 5;
+const TOKEN_XML_UNQUOTED_ATTRIBUTE_VALUE = 3;
+const TOKEN_JSX_CURLY_BRACES_ATTRIBUTE_VALUE = 4;
 
 export type TokenType =
   | 'TEXT'
   | 'OPENING_TAG_START'
   | 'OPENING_TAG_END'
-  | 'SELF_CLOSING_TAG'
+  | 'OPENING_TAG_SELF_CLOSE'
   | 'CLOSING_TAG'
   | 'ATTRIBUTE_START'
   | 'ATTRIBUTE_END';
 
-export function tokenize(text: string, callback: (tokenType: TokenType, startIndex: number, endIndex: number) => void) {
+export interface UncheckedTokenizeOptions {
+  enableJSXAttributes?: boolean;
+  enableSelfClosing?: boolean;
+}
+
+export type TokenizeCallback = (tokenType: TokenType, startIndex: number, endIndex: number) => void;
+
+export function uncheckedTokenize(text: string, callback: TokenizeCallback, options: UncheckedTokenizeOptions): void {
+  const { enableJSXAttributes = false, enableSelfClosing = false } = options;
+
   const tokenTypeStack = [TOKEN_XML_TEXT];
 
   let tokenTypeStackCursor = 0;
@@ -51,7 +59,11 @@ export function tokenize(text: string, callback: (tokenType: TokenType, startInd
       continue;
     }
 
-    if (charCode === /* < */ 60 && tokenTypeStack[tokenTypeStackCursor] !== TOKEN_XML_OPENING_TAG) {
+    if (
+      charCode === /* < */ 60 &&
+      tokenTypeStack[tokenTypeStackCursor] !== TOKEN_XML_OPENING_TAG &&
+      tokenTypeStack[tokenTypeStackCursor] !== TOKEN_XML_UNQUOTED_ATTRIBUTE_VALUE
+    ) {
       let tagNameStartIndex = ++nextIndex;
 
       // Closing tag
@@ -126,15 +138,16 @@ export function tokenize(text: string, callback: (tokenType: TokenType, startInd
       continue;
     }
 
+    // Self-closing tags
     if (charCode === /* / */ 47) {
-      // "/>"
       if (
+        enableSelfClosing &&
         tokenTypeStack[tokenTypeStackCursor] === TOKEN_XML_OPENING_TAG &&
         getCharCodeAt(text, index + 1) === /* > */ 62
       ) {
         nextIndex += 2;
 
-        callback('SELF_CLOSING_TAG', index, nextIndex);
+        callback('OPENING_TAG_SELF_CLOSE', index, nextIndex);
 
         --tokenTypeStackCursor;
         textStartIndex = nextIndex;
@@ -145,25 +158,22 @@ export function tokenize(text: string, callback: (tokenType: TokenType, startInd
       continue;
     }
 
-    if (charCode === /* " */ 34 || charCode === /* ' */ 39) {
-      if (
-        (charCode === /* " */ 34 && tokenTypeStack[tokenTypeStackCursor] === TOKEN_XML_DOUBLE_QUOTED_ATTRIBUTE_VALUE) ||
-        (charCode === /* ' */ 39 && tokenTypeStack[tokenTypeStackCursor] === TOKEN_XML_SINGLE_QUOTED_ATTRIBUTE_VALUE)
-      ) {
-        if (textStartIndex !== index) {
-          callback('TEXT', textStartIndex, index);
-        }
-
-        ++nextIndex;
-
-        callback('ATTRIBUTE_END', index, nextIndex);
-
-        --tokenTypeStackCursor;
-        nextIndex = skipChars(text, nextIndex, isSpaceChar);
-        continue;
+    // JSX attributes
+    if (
+      enableJSXAttributes &&
+      charCode === /* } */ 125 &&
+      tokenTypeStack[tokenTypeStackCursor] === TOKEN_JSX_CURLY_BRACES_ATTRIBUTE_VALUE
+    ) {
+      if (textStartIndex !== index) {
+        callback('TEXT', textStartIndex, index);
       }
 
       ++nextIndex;
+
+      callback('ATTRIBUTE_END', index, nextIndex);
+
+      --tokenTypeStackCursor;
+      nextIndex = skipChars(text, nextIndex, isSpaceChar);
       continue;
     }
 
@@ -173,17 +183,17 @@ export function tokenize(text: string, callback: (tokenType: TokenType, startInd
     if (tokenTypeStack[tokenTypeStackCursor] === TOKEN_XML_OPENING_TAG && isAttributeNameChar(charCode)) {
       nextIndex = skipChars(text, index + 1, isAttributeNameChar);
 
-      tokenTypeStack[++tokenTypeStackCursor] = TOKEN_XML_ATTRIBUTE;
-
       callback('ATTRIBUTE_START', index, nextIndex);
+
+      tokenTypeStack[++tokenTypeStackCursor] = TOKEN_XML_ATTRIBUTE;
 
       // Skip spaces after the attribute name
       nextIndex = skipChars(text, nextIndex, isSpaceChar);
 
       if (getCharCodeAt(text, nextIndex) !== /* = */ 61) {
         // No attribute value
-        --tokenTypeStackCursor;
         callback('ATTRIBUTE_END', nextIndex, nextIndex);
+        --tokenTypeStackCursor;
         continue;
       }
 
@@ -192,20 +202,41 @@ export function tokenize(text: string, callback: (tokenType: TokenType, startInd
 
       const quoteCharCode = getCharCodeAt(text, nextIndex);
 
-      if (quoteCharCode === /* " */ 34) {
-        // Double-quoted value
-        tokenTypeStack[tokenTypeStackCursor] = TOKEN_XML_DOUBLE_QUOTED_ATTRIBUTE_VALUE;
+      // Quoted attribute value
+      if (quoteCharCode === /* " */ 34 || quoteCharCode === /* ' */ 39) {
+        // Skip opening quote
+        textStartIndex = ++nextIndex;
+
+        // Lookup closing quote
+        nextIndex = text.indexOf(quoteCharCode === /* " */ 34 ? '"' : "'", nextIndex);
+
+        if (nextIndex === -1) {
+          // No closing quote
+          nextIndex = text.length;
+          continue;
+        }
+
+        if (textStartIndex !== nextIndex) {
+          callback('TEXT', textStartIndex, nextIndex);
+        }
+
+        callback('ATTRIBUTE_END', nextIndex, nextIndex + 1);
+
+        --tokenTypeStackCursor;
+
+        // Skip closing quote and space chars
+        textStartIndex = nextIndex = skipChars(text, ++nextIndex, isSpaceChar);
+        continue;
+      }
+
+      // JSX attribute
+      if (enableJSXAttributes && quoteCharCode === /* { */ 123) {
+        tokenTypeStack[tokenTypeStackCursor] = TOKEN_JSX_CURLY_BRACES_ATTRIBUTE_VALUE;
         textStartIndex = ++nextIndex;
         continue;
       }
 
-      if (quoteCharCode === /* ' */ 39) {
-        // Single-quoted value
-        tokenTypeStack[tokenTypeStackCursor] = TOKEN_XML_SINGLE_QUOTED_ATTRIBUTE_VALUE;
-        textStartIndex = ++nextIndex;
-        continue;
-      }
-
+      // Unquoted attribute
       tokenTypeStack[tokenTypeStackCursor] = TOKEN_XML_UNQUOTED_ATTRIBUTE_VALUE;
       textStartIndex = nextIndex;
       continue;
@@ -268,7 +299,7 @@ function getCharCodeAt(text: string, index: number): number {
 
 // https://www.w3.org/TR/xml/#NT-S
 function isSpaceChar(charCode: number): boolean {
-  return charCode == /* \s */ 32 || charCode === /* \t */ 9 || charCode === /* \r */ 13 || charCode === /* \n */ 10;
+  return charCode == /* \s */ 32 || charCode === /* \n */ 10 || charCode === /* \t */ 9 || charCode === /* \r */ 13;
 }
 
 function isAttributeNameChar(charCode: number): boolean {
