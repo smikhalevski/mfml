@@ -55,7 +55,16 @@ test('tokenizes the opening tag that starts with the weird char as a text', () =
   expect(callbackMock).toHaveBeenNthCalledWith(2, 'OPENING_TAG_END', 9, 10);
 });
 
-test('tokenizes the start tag in double brackets', () => {
+test('ignores bullshit in closing tags', () => {
+  const callbackMock = vi.fn();
+
+  tokenize('</xxx @#$%*/>', callbackMock);
+
+  expect(callbackMock).toHaveBeenCalledTimes(1);
+  expect(callbackMock).toHaveBeenNthCalledWith(1, 'CLOSING_TAG', 2, 5);
+});
+
+test('tokenizes the opening tag in double brackets', () => {
   const callbackMock = vi.fn();
 
   tokenize('<<xxx>>aaa</xxx>', callbackMock);
@@ -80,10 +89,48 @@ test('tokenizes empty tag names as text', () => {
 test('tokenizes non-alpha tag names as text', () => {
   const callbackMock = vi.fn();
 
-  tokenize('<12></12>', callbackMock);
+  tokenize('<111></111>', callbackMock);
 
   expect(callbackMock).toHaveBeenCalledTimes(1);
-  expect(callbackMock).toHaveBeenNthCalledWith(1, 'TEXT', 0, 9);
+  expect(callbackMock).toHaveBeenNthCalledWith(1, 'TEXT', 0, 11);
+});
+
+test('tokenizes the malformed closing tag as a text', () => {
+  const callbackMock = vi.fn();
+
+  tokenize('</ xxx>', callbackMock);
+
+  expect(callbackMock).toHaveBeenCalledTimes(1);
+  expect(callbackMock).toHaveBeenNthCalledWith(1, 'TEXT', 0, 7);
+});
+
+test('tokenizes unterminated opening tags', () => {
+  const callbackMock = vi.fn();
+
+  tokenize('<aaa', callbackMock);
+
+  expect(callbackMock).toHaveBeenCalledTimes(1);
+  expect(callbackMock).toHaveBeenNthCalledWith(1, 'OPENING_TAG_START', 1, 4);
+});
+
+test('tokenizes unterminated attributes', () => {
+  const callbackMock = vi.fn();
+
+  tokenize('<aaa xxx="zzz', callbackMock);
+
+  expect(callbackMock).toHaveBeenCalledTimes(3);
+  expect(callbackMock).toHaveBeenNthCalledWith(1, 'OPENING_TAG_START', 1, 4);
+  expect(callbackMock).toHaveBeenNthCalledWith(2, 'ATTRIBUTE_START', 5, 8);
+  expect(callbackMock).toHaveBeenNthCalledWith(3, 'TEXT', 10, 13);
+});
+
+test('tokenizes unterminated closing tags', () => {
+  const callbackMock = vi.fn();
+
+  tokenize('</aaa', callbackMock);
+
+  expect(callbackMock).toHaveBeenCalledTimes(1);
+  expect(callbackMock).toHaveBeenNthCalledWith(1, 'CLOSING_TAG', 2, 5);
 });
 
 test('tokenizes opening and closing tags', () => {
@@ -232,6 +279,64 @@ test('tokenizes entities in attributes', () => {
   expect(callbackMock).toHaveBeenNthCalledWith(11, 'ATTRIBUTE_START', 39, 42);
   expect(callbackMock).toHaveBeenNthCalledWith(12, 'ATTRIBUTE_END', 43, 43);
   expect(callbackMock).toHaveBeenNthCalledWith(13, 'OPENING_TAG_END', 43, 44);
+});
+
+test('ignores leading slash in an attribute name', () => {
+  const callbackMock = vi.fn();
+
+  tokenize('<aaa /xxx></xxx aaa>bbb', callbackMock);
+
+  expect(callbackMock).toHaveBeenCalledTimes(6);
+  expect(callbackMock).toHaveBeenNthCalledWith(1, 'OPENING_TAG_START', 1, 4);
+  expect(callbackMock).toHaveBeenNthCalledWith(2, 'ATTRIBUTE_START', 6, 9);
+  expect(callbackMock).toHaveBeenNthCalledWith(3, 'ATTRIBUTE_END', 9, 9);
+  expect(callbackMock).toHaveBeenNthCalledWith(4, 'OPENING_TAG_END', 9, 10);
+  expect(callbackMock).toHaveBeenNthCalledWith(5, 'CLOSING_TAG', 12, 15);
+  expect(callbackMock).toHaveBeenNthCalledWith(6, 'TEXT', 20, 23);
+});
+
+test('tokenizes bullshit attribute names', () => {
+  const callbackMock = vi.fn();
+
+  tokenize("<xxx < = '' fff>vvv</xxx>", callbackMock);
+
+  expect(callbackMock).toHaveBeenCalledTimes(8);
+  expect(callbackMock).toHaveBeenNthCalledWith(1, 'OPENING_TAG_START', 1, 4);
+  expect(callbackMock).toHaveBeenNthCalledWith(2, 'ATTRIBUTE_START', 5, 6);
+  expect(callbackMock).toHaveBeenNthCalledWith(3, 'ATTRIBUTE_END', 10, 11);
+  expect(callbackMock).toHaveBeenNthCalledWith(4, 'ATTRIBUTE_START', 12, 15);
+  expect(callbackMock).toHaveBeenNthCalledWith(5, 'ATTRIBUTE_END', 15, 15);
+  expect(callbackMock).toHaveBeenNthCalledWith(6, 'OPENING_TAG_END', 15, 16);
+  expect(callbackMock).toHaveBeenNthCalledWith(7, 'TEXT', 16, 19);
+  expect(callbackMock).toHaveBeenNthCalledWith(8, 'CLOSING_TAG', 21, 24);
+});
+
+test('tokenizes attributes with unbalanced end quotes', () => {
+  const callbackMock = vi.fn();
+
+  tokenize('<xxx yyy="aaa"bbb">', callbackMock);
+
+  expect(callbackMock).toHaveBeenCalledTimes(7);
+  expect(callbackMock).toHaveBeenNthCalledWith(1, 'OPENING_TAG_START', 1, 4);
+  expect(callbackMock).toHaveBeenNthCalledWith(2, 'ATTRIBUTE_START', 5, 8);
+  expect(callbackMock).toHaveBeenNthCalledWith(3, 'TEXT', 10, 13);
+  expect(callbackMock).toHaveBeenNthCalledWith(4, 'ATTRIBUTE_END', 13, 14);
+  expect(callbackMock).toHaveBeenNthCalledWith(5, 'ATTRIBUTE_START', 14, 18);
+  expect(callbackMock).toHaveBeenNthCalledWith(6, 'ATTRIBUTE_END', 18, 18);
+  expect(callbackMock).toHaveBeenNthCalledWith(7, 'OPENING_TAG_END', 18, 19);
+});
+
+test('does not tokenize self-closing tag with the unquoted attribute that ends with a slash', () => {
+  const callbackMock = vi.fn();
+
+  tokenize('<xxx aaa=bbb//>', callbackMock);
+
+  expect(callbackMock).toHaveBeenCalledTimes(5);
+  expect(callbackMock).toHaveBeenNthCalledWith(1, 'OPENING_TAG_START', 1, 4);
+  expect(callbackMock).toHaveBeenNthCalledWith(2, 'ATTRIBUTE_START', 5, 8);
+  expect(callbackMock).toHaveBeenNthCalledWith(3, 'TEXT', 9, 12);
+  expect(callbackMock).toHaveBeenNthCalledWith(4, 'ATTRIBUTE_END', 12, 12);
+  expect(callbackMock).toHaveBeenNthCalledWith(5, 'SELF_CLOSING_TAG', 13, 15);
 });
 
 test('ignores redundant spaces in attributes', () => {
