@@ -1,11 +1,88 @@
-import { MessageRenderer, MessageRendererOptions } from './types.js';
+/**
+ * Describes how elements of a message AST are rendered.
+ *
+ * @template Element The type of a rendered element.
+ * @group Renderer
+ */
+export interface Renderer<Element> {
+  /**
+   * Renders an element.
+   *
+   * @param locale The message locale.
+   * @param tagName The element tag name.
+   * @param attributes Attributes of an element.
+   * @param children Children of an element.
+   * @returns Rendering result.
+   */
+  renderElement(
+    locale: string,
+    tagName: string,
+    attributes: Record<string, string>,
+    children: Array<Element | string>
+  ): Element | string;
+
+  /**
+   * Formats argument value as a string.
+   *
+   * @param locale The message locale.
+   * @param value The value of an argument.
+   * @param type The type of an argument.
+   * @param style The formatting style to apply.
+   * @returns Formatted argument value.
+   */
+  formatArgument(locale: string, value: unknown, type: string | undefined, style: string | undefined): string;
+
+  /**
+   * Returns the select category name depending of an ICU argument value.
+   *
+   * @param locale The message locale.
+   * @param value The value of an argument.
+   * @param type The type of the select node ("plural", "selectordinal", "select")
+   * @param categories The array of categories available in the select node.
+   * @returns The selected category, or `undefined` if there's no matching category.
+   */
+  selectCategory(locale: string, value: unknown, type: string, categories: string[]): string | undefined;
+}
+
+/**
+ * Options of the {@link AbstractRenderer}.
+ *
+ * @group Renderer
+ */
+export interface AbstractRendererOptions {
+  /**
+   * Formatting styles used for "number" argument type.
+   */
+  numberStyles?: Record<string, Intl.NumberFormatOptions>;
+
+  /**
+   * Formatting styles used for "date" argument type.
+   */
+  dateStyles?: Record<string, Intl.DateTimeFormatOptions>;
+
+  /**
+   * Formatting styles used for "time" argument type.
+   */
+  timeStyles?: Record<string, Intl.DateTimeFormatOptions>;
+
+  /**
+   * Formatting styles used for "list" argument type.
+   */
+  listStyles?: Record<string, Intl.ListFormatOptions>;
+
+  /**
+   * Map from an attribute type to a custom formatter function.
+   */
+  formatters?: Record<string, (value: unknown, style: string | undefined) => string>;
+}
 
 /**
  * The message renderer the provides the default implementation of argument formatting and select matching.
  *
- * @template T The rendering result (string, `ReactNode`).
+ * @template Element The type of a rendered element.
+ * @group Renderer
  */
-export abstract class AbstractMessageRenderer<T> implements MessageRenderer<T> {
+export abstract class AbstractRenderer<Element> implements Renderer<Element> {
   /**
    * Formatting styles used for "number" argument type.
    */
@@ -32,11 +109,11 @@ export abstract class AbstractMessageRenderer<T> implements MessageRenderer<T> {
   formatters;
 
   /**
-   * Creates a new {@link AbstractMessageRenderer} instance.
+   * Creates a new {@link AbstractRenderer} instance.
    *
    * @param options Rendering options.
    */
-  constructor(options: MessageRendererOptions = {}) {
+  constructor(options: AbstractRendererOptions = {}) {
     const { numberStyles = {}, dateStyles = {}, timeStyles = {}, listStyles = {}, formatters = {} } = options;
 
     this.numberStyles = numberStyles;
@@ -46,7 +123,12 @@ export abstract class AbstractMessageRenderer<T> implements MessageRenderer<T> {
     this.formatters = formatters;
   }
 
-  abstract renderElement(locale: string, tagName: string, attributes: Record<string, string>, children: T[]): T;
+  abstract renderElement(
+    locale: string,
+    tagName: string,
+    attributes: Record<string, string>,
+    children: Array<Element | string>
+  ): Element | string;
 
   formatArgument(locale: string, value: unknown, type: string | undefined, style: string | undefined): string {
     if (type !== undefined && this.formatters.hasOwnProperty(type)) {
@@ -54,19 +136,19 @@ export abstract class AbstractMessageRenderer<T> implements MessageRenderer<T> {
     }
 
     if (type === 'number' && (typeof value === 'number' || typeof value === 'bigint')) {
-      return getCachedNumberFormat(locale, (style && this.numberStyles[style]) || defaultOptions).format(value);
+      return getCachedNumberFormat(locale, (style && this.numberStyles[style]) || emptyOptions).format(value);
     }
 
     if (type === 'date' && (typeof value === 'number' || value instanceof Date)) {
-      return getCachedDateTimeFormat(locale, (style && this.dateStyles[style]) || defaultOptions).format(value);
+      return getCachedDateTimeFormat(locale, (style && this.dateStyles[style]) || emptyOptions).format(value);
     }
 
     if (type === 'time' && (typeof value === 'number' || value instanceof Date)) {
-      return getCachedDateTimeFormat(locale, (style && this.timeStyles[style]) || defaultOptions).format(value);
+      return getCachedDateTimeFormat(locale, (style && this.timeStyles[style]) || emptyOptions).format(value);
     }
 
     if (type === 'list' && Array.isArray(value)) {
-      return getCachedListFormat(locale, (style && this.listStyles[style]) || defaultOptions).format(value);
+      return getCachedListFormat(locale, (style && this.listStyles[style]) || emptyOptions).format(value);
     }
 
     if (value === null || value === undefined || value !== value) {
@@ -95,7 +177,7 @@ export abstract class AbstractMessageRenderer<T> implements MessageRenderer<T> {
   }
 }
 
-const defaultOptions = {};
+const emptyOptions = {};
 
 const cardinalOptions: Intl.PluralRulesOptions = { type: 'cardinal' };
 
@@ -110,7 +192,7 @@ const getCachedListFormat = createCachedFactory((locale, options) => new Intl.Li
 const getCachedPluralRules = createCachedFactory((locale, options) => new Intl.PluralRules(locale, options));
 
 function createCachedFactory<O extends object, V>(
-  factory: (locale: string, options: O) => V
+  factory: (locale: string, options?: O) => V
 ): (locale: string, options: O) => V {
   const localeCache = new Map<string, WeakMap<O, V>>();
 

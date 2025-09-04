@@ -1,5 +1,7 @@
 /**
  * The child of a message node.
+ *
+ * @group AST
  */
 export type Child = ElementNode | ArgumentNode | SelectNode | string;
 
@@ -7,6 +9,7 @@ export type Child = ElementNode | ArgumentNode | SelectNode | string;
  * The root message node.
  *
  * @template Values ICU arguments type or `void` if message doesn't have any arguments.
+ * @group AST
  */
 export interface MessageNode<Values extends object | void = void> {
   nodeType: 'message';
@@ -31,6 +34,8 @@ export interface MessageNode<Values extends object | void = void> {
 
 /**
  * The node that describes an element.
+ *
+ * @group AST
  */
 export interface ElementNode {
   nodeType: 'element';
@@ -57,6 +62,8 @@ export interface ElementNode {
 
 /**
  * The ICU attribute node.
+ *
+ * @group AST
  */
 export interface ArgumentNode {
   nodeType: 'argument';
@@ -86,6 +93,8 @@ export interface ArgumentNode {
 
 /**
  * The node that describes a choice based on an ICU argument value.
+ *
+ * @group AST
  */
 export interface SelectNode {
   nodeType: 'select';
@@ -117,6 +126,7 @@ export interface SelectNode {
  *
  * @param locale The message locale.
  * @param children The child nodes.
+ * @group AST
  */
 export function createMessageNode(locale: string, ...children: Child[]): MessageNode<any>;
 
@@ -147,6 +157,7 @@ export function createMessageNode(locale: string): MessageNode {
  * @param tagName The name of the element tag.
  * @param attributes Mapping from an attribute name to children, or `null` if there are no attributes.
  * @param children The child nodes, or `null` if there are no children.
+ * @group AST
  */
 export function createElementNode(
   tagName: string,
@@ -184,6 +195,7 @@ export function createElementNode(
  * @param name The name of the ICU attribute.
  * @param type The data type of the argument.
  * @param style The style that should be used for argument formatting, varies depending on an argument type.
+ * @group AST
  */
 export function createArgumentNode(name: string, type?: string, style?: string): ArgumentNode {
   return { nodeType: 'argument', name, type, style };
@@ -196,6 +208,7 @@ export function createArgumentNode(name: string, type?: string, style?: string):
  * @param type The type of the select node.
  * @param categories Mapping from an argument value or a category name to children that should be rendered when
  * the category is matched.
+ * @group AST
  */
 export function createSelectNode(argumentName: string, type: string, categories: Record<string, Child[]>): SelectNode {
   return { nodeType: 'select', argumentName, type, categories };

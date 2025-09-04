@@ -115,7 +115,7 @@ export interface TokenizerOptions {
    *
    * @default false
    */
-  isArgumentsInRawTextTagsRecognized?: boolean;
+  isRawTextInterpolated?: boolean;
 }
 
 /**
@@ -127,6 +127,9 @@ export interface TokenizerOptions {
 export interface Tokenizer {
   /**
    * Reads tokens from text and returns them by invoking a callback.
+   *
+   * @param text The text string to read tokens from.
+   * @param callback The callback that is invoked when a token is read.
    */
   tokenize(text: string, callback: TokenCallback): void;
 }
@@ -159,12 +162,6 @@ export function createTokenizer(options: TokenizerOptions = {}): Tokenizer {
   const resolvedOptions = resolveTokenizerOptions(options);
 
   return {
-    /**
-     * Reads tokens from text and returns them by invoking a callback.
-     *
-     * @param text The text string to read tokens from.
-     * @param callback The callback that is invoked when a token is read.
-     */
     tokenize(text, callback) {
       return tokenizeMessage(text, callback, resolvedOptions);
     },
@@ -184,7 +181,7 @@ export function resolveTokenizerOptions(options: TokenizerOptions): ResolvedToke
     isSelfClosingTagsRecognized,
     isUnbalancedTagsImplicitlyClosed,
     isOrphanClosingTagsIgnored,
-    isArgumentsInRawTextTagsRecognized,
+    isRawTextInterpolated,
   } = options;
 
   const getHashCode = isCaseInsensitiveTags ? getCaseInsensitiveHashCode : getCaseSensitiveHashCode;
@@ -204,6 +201,6 @@ export function resolveTokenizerOptions(options: TokenizerOptions): ResolvedToke
     isSelfClosingTagsRecognized,
     isUnbalancedTagsImplicitlyClosed,
     isOrphanClosingTagsIgnored,
-    isArgumentsInRawTextTagsRecognized,
+    isRawTextInterpolated,
   };
 }

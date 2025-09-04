@@ -94,7 +94,7 @@ export const htmlTokenizerOptions: TokenizerOptions = {
   isSelfClosingTagsRecognized: false,
   isUnbalancedTagsImplicitlyClosed: true,
   isOrphanClosingTagsIgnored: true,
-  isArgumentsInRawTextTagsRecognized: true,
+  isRawTextInterpolated: true,
 };
 
 /**

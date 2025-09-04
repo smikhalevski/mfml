@@ -131,7 +131,7 @@ export interface ResolvedTokenizerOptions {
    *
    * @default false
    */
-  isArgumentsInRawTextTagsRecognized?: boolean;
+  isRawTextInterpolated?: boolean;
 }
 
 /**
@@ -370,7 +370,7 @@ export interface TokenReaderOptions {
   readTag?: (text: string, startIndex: number, endIndex: number) => number;
   rawTextTags?: Set<number>;
   isSelfClosingTagsRecognized?: boolean;
-  isArgumentsInRawTextTagsRecognized?: boolean;
+  isRawTextInterpolated?: boolean;
 }
 
 /**
@@ -383,7 +383,7 @@ export function readTokens(text: string, callback: TokenCallback, options: Token
     readTag = getCaseSensitiveHashCode,
     rawTextTags,
     isSelfClosingTagsRecognized = false,
-    isArgumentsInRawTextTagsRecognized = false,
+    isRawTextInterpolated = false,
   } = options;
 
   let scope = SCOPE_TEXT;
@@ -631,7 +631,7 @@ export function readTokens(text: string, callback: TokenCallback, options: Token
       continue;
     }
 
-    if (latestRawTextTag !== 0 && !isArgumentsInRawTextTagsRecognized) {
+    if (latestRawTextTag !== 0 && !isRawTextInterpolated) {
       // Disable ICU parsing in raw text tags
       ++nextIndex;
       continue;

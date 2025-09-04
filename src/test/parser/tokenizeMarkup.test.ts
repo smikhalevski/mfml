@@ -505,7 +505,7 @@ describe('readTokens', () => {
     readTokens(
       '<script>{aaa}</script>',
       callbackMock,
-      resolveTokenizerOptions({ rawTextTags: ['script'], isArgumentsInRawTextTagsRecognized: true })
+      resolveTokenizerOptions({ rawTextTags: ['script'], isRawTextInterpolated: true })
     );
 
     expect(callbackMock).toHaveBeenCalledTimes(5);
@@ -520,7 +520,7 @@ describe('readTokens', () => {
     readTokens(
       '<script aaa="{bbb}">{ccc}</script>',
       callbackMock,
-      resolveTokenizerOptions({ rawTextTags: ['script'], isArgumentsInRawTextTagsRecognized: true })
+      resolveTokenizerOptions({ rawTextTags: ['script'], isRawTextInterpolated: true })
     );
 
     expect(callbackMock).toHaveBeenCalledTimes(9);

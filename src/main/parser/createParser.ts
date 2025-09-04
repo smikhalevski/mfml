@@ -94,20 +94,40 @@ export interface ParserOptions {
 }
 
 /**
+ * Parses text message to an AST.
+ *
  * @group Parser
  */
 export interface Parser {
-  parse(text: string): MessageNode<any>;
+  /**
+   * Parses text message to an AST.
+   *
+   * @param locale The message locale.
+   * @param text The message text to parse.
+   * @returns The message node that describes the message contents.
+   */
+  parse(locale: string, text: string): MessageNode<any>;
 }
 
 /**
- * @param options
+ * Parses text message to an AST.
+ *
+ * @example
+ * import { createParser, createTokenizer, htmlTokenizerOptions } from 'mfml/parser';
+ *
+ * const tokenizer = createTokenizer(htmlTokenizerOptions);
+ *
+ * const parser = createParser({ tokenizer });
+ *
+ * parser.parse('en-US', 'Hello, <b>{name}</b>!');
+ *
+ * @param options Parser options.
  * @group Parser
  */
 export function createParser(options: ParserOptions): Parser {
   return {
-    parse(text) {
-      return parseMessage('', text, options);
+    parse(locale, text) {
+      return parseMessage(locale, text, options);
     },
   };
 }

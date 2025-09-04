@@ -1,4 +1,5 @@
 import { Child, MessageNode } from './ast.js';
+import { AbstractRendererOptions } from './AbstractRenderer.js';
 
 export function collectArgumentNames(node: MessageNode | Child | Child[], argumentNames: Set<string>): void {
   if (typeof node === 'string') {
@@ -43,7 +44,29 @@ export function collectArgumentNames(node: MessageNode | Child | Child[], argume
   }
 }
 
-const keywords = new Set([
+export function escapeIdentifier(str: string): string {
+  if (jsKeywords.has(str)) {
+    return '_' + str;
+  }
+
+  return str
+    .replace(/[^$_\p{Lu}\p{Ll}\p{Lt}\p{Lm}\p{Lo}\p{Nl}\u200C\u200D\p{Mn}\p{Mc}\p{Nd}\p{Pc}]/gu, '_')
+    .replace(/^[^$_\p{Lu}\p{Ll}\p{Lt}\p{Lm}\p{Lo}\p{Nl}]/u, '_$&');
+}
+
+export function isLowerCaseAlpha(str: string): boolean {
+  for (let i = 0; i < str.length; ++i) {
+    const charCode = str.charCodeAt(i);
+
+    if (charCode < /* a */ 97 || charCode > /* z */ 122) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+const jsKeywords = new Set([
   'break',
   'case',
   'catch',
@@ -91,24 +114,25 @@ const keywords = new Set([
   'public',
 ]);
 
-export function escapeIdentifier(str: string): string {
-  if (keywords.has(str)) {
-    return '_' + str;
-  }
-
-  return str
-    .replace(/[^$_\p{Lu}\p{Ll}\p{Lt}\p{Lm}\p{Lo}\p{Nl}\u200C\u200D\p{Mn}\p{Mc}\p{Nd}\p{Pc}]/gu, '_')
-    .replace(/^[^$_\p{Lu}\p{Ll}\p{Lt}\p{Lm}\p{Lo}\p{Nl}]/u, '_$&');
-}
-
-export function isLowerCaseAlpha(str: string): boolean {
-  for (let i = 0; i < str.length; ++i) {
-    const charCode = str.charCodeAt(i);
-
-    if (charCode < /* a */ 97 || charCode > /* z */ 122) {
-      return false;
-    }
-  }
-
-  return true;
-}
+export const defaultRendererOptions: AbstractRendererOptions = {
+  dateStyles: {
+    short: { dateStyle: 'short' },
+    full: { dateStyle: 'full' },
+    long: { dateStyle: 'long' },
+    medium: { dateStyle: 'medium' },
+  },
+  timeStyles: {
+    short: { timeStyle: 'short' },
+    full: { timeStyle: 'full' },
+    long: { timeStyle: 'long' },
+    medium: { timeStyle: 'medium' },
+  },
+  numberStyles: {
+    decimal: { style: 'decimal' },
+    percent: { style: 'percent' },
+  },
+  listStyles: {
+    conjunction: { type: 'conjunction' },
+    disjunction: { type: 'disjunction' },
+  },
+};

@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest';
-import { ReactNodeMessageRenderer } from '../../main/react/index.js';
+import { ReactRenderer } from '../../main/react/index.js';
 import React from 'react';
 
 declare module 'react' {
@@ -14,8 +14,8 @@ declare module 'react' {
 }
 
 test('renders element children', () => {
-  expect(new ReactNodeMessageRenderer().renderElement('en', 'xxx', {}, 'bbb')).toStrictEqual(<xxx>{'bbb'}</xxx>);
-  expect(new ReactNodeMessageRenderer().renderElement('en', 'xxx', {}, ['aaa', 'bbb'])).toStrictEqual(
+  expect(new ReactRenderer().renderElement('en', 'xxx', {}, 'bbb')).toStrictEqual(<xxx>{'bbb'}</xxx>);
+  expect(new ReactRenderer().renderElement('en', 'xxx', {}, ['aaa', 'bbb'])).toStrictEqual(
     <xxx>
       {'aaa'}
       {'bbb'}
@@ -24,13 +24,13 @@ test('renders element children', () => {
 });
 
 test('does not render unknown custom components', () => {
-  expect(new ReactNodeMessageRenderer().renderElement('en', 'Xxx', {}, 'bbb')).toBe(null);
+  expect(new ReactRenderer().renderElement('en', 'Xxx', {}, 'bbb')).toBe(null);
 });
 
 test('renders custom components', () => {
   const Xxx = () => 'zzz';
 
-  expect(new ReactNodeMessageRenderer({ components: { Xxx } }).renderElement('en', 'Xxx', {}, 'bbb')).toStrictEqual(
+  expect(new ReactRenderer({ components: { Xxx } }).renderElement('en', 'Xxx', {}, 'bbb')).toStrictEqual(
     <Xxx>{'bbb'}</Xxx>
   );
 });

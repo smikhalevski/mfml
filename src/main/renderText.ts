@@ -1,25 +1,9 @@
 import { Child, MessageNode } from './ast.js';
-import { StringMessageRenderer } from './StringMessageRenderer.js';
-import { MessageRenderer } from './types.js';
+import { StringRenderer } from './StringRenderer.js';
+import { defaultRendererOptions } from './utils.js';
+import { Renderer } from './AbstractRenderer.js';
 
-const defaultStringMessageRenderer = new StringMessageRenderer({
-  dateStyles: {
-    short: { dateStyle: 'short' },
-    full: { dateStyle: 'full' },
-    long: { dateStyle: 'long' },
-    medium: { dateStyle: 'medium' },
-  },
-  timeStyles: {
-    short: { timeStyle: 'short' },
-    full: { timeStyle: 'full' },
-    long: { timeStyle: 'long' },
-    medium: { timeStyle: 'medium' },
-  },
-  numberStyles: {
-    decimal: { style: 'decimal' },
-    percent: { style: 'percent' },
-  },
-});
+const defaultStringRenderer = new StringRenderer(defaultRendererOptions);
 
 /**
  * Renders message node as plain text string.
@@ -30,11 +14,12 @@ const defaultStringMessageRenderer = new StringMessageRenderer({
  * @param messageNode The message to render.
  * @param values Message argument values.
  * @param renderer The message renderer.
+ * @group Renderer
  */
 export function renderText<Values extends object | void>(
   messageNode: MessageNode<Values> | null,
   values: Values,
-  renderer: MessageRenderer<string> = defaultStringMessageRenderer
+  renderer: Renderer<string> = defaultStringRenderer
 ): string {
   if (messageNode === null) {
     return '';
@@ -47,7 +32,7 @@ export function renderChildrenAsString(
   locale: string,
   children: Child[] | string | null,
   values: any,
-  renderer: MessageRenderer<string>
+  renderer: Renderer<string>
 ): string[] {
   if (children === null) {
     return [];
@@ -62,7 +47,7 @@ export function renderChildrenAsString(
   return result;
 }
 
-function renderChild(locale: string, child: Child | string, values: any, renderer: MessageRenderer<string>): string {
+function renderChild(locale: string, child: Child | string, values: any, renderer: Renderer<string>): string {
   if (typeof child === 'string') {
     return child;
   }
@@ -96,9 +81,11 @@ function renderChild(locale: string, child: Child | string, values: any, rendere
       Object.keys(child.categories)
     );
 
-    return category === undefined
-      ? ''
-      : renderChildrenAsString(locale, child.categories[category], values, renderer).join('');
+    if (category === undefined) {
+      return '';
+    }
+
+    return renderChildrenAsString(locale, child.categories[category], values, renderer).join('');
   }
 
   return '';

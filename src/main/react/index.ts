@@ -5,4 +5,4 @@
  */
 
 export { Message, MessageRendererProvider, MessageLocaleProvider, type MessageProps } from './Message.js';
-export { ReactNodeMessageRenderer, type ReactNodeMessageRendererOptions } from './ReactNodeMessageRenderer.js';
+export { ReactRenderer, type ReactRendererOptions } from './ReactRenderer.js';

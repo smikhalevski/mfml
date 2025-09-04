@@ -4,12 +4,15 @@
 
 import { expect, test } from 'vitest';
 import { render } from '@testing-library/react';
-import { Message } from '../../main/react/index.js';
-import { parseMessage } from '../../main/parser/index.js';
+import { Message } from '../../main/react/Message.js';
 import React from 'react';
+import { parseMessage } from '../../main/parser/createParser.js';
+import { createTokenizer } from '../../main/parser/createTokenizer.js';
+
+const tokenizer = createTokenizer();
 
 test('renders a message node', () => {
-  const message = (locale: string) => parseMessage(locale, 'aaa{bbb}');
+  const message = (locale: string) => parseMessage(locale, 'aaa{bbb}', { tokenizer });
 
   const result = render(
     <Message
@@ -23,7 +26,7 @@ test('renders a message node', () => {
 });
 
 test('renders nested elements', () => {
-  const message = (locale: string) => parseMessage(locale, 'aaa<i><b>{bbb}</b></i>');
+  const message = (locale: string) => parseMessage(locale, 'aaa<i><b>{bbb}</b></i>', { tokenizer });
 
   const result = render(
     <Message
@@ -37,7 +40,7 @@ test('renders nested elements', () => {
 });
 
 test('re-renders nested elements when argument value is chaged', () => {
-  const message = (locale: string) => parseMessage(locale, 'aaa<i><b>{bbb}</b></i>');
+  const message = (locale: string) => parseMessage(locale, 'aaa<i><b>{bbb}</b></i>', { tokenizer });
 
   const result = render(
     <Message
@@ -58,7 +61,7 @@ test('re-renders nested elements when argument value is chaged', () => {
 });
 
 test('renders children array', () => {
-  const message = (locale: string) => parseMessage(locale, '<i>aaa</i><b>bbb</b>');
+  const message = (locale: string) => parseMessage(locale, '<i>aaa</i><b>bbb</b>', { tokenizer });
 
   const result = render(<Message message={message} />, { reactStrictMode: true });
 
@@ -66,7 +69,7 @@ test('renders children array', () => {
 });
 
 test('renders nested children array', () => {
-  const message = (locale: string) => parseMessage(locale, '<a><i>aaa</i><b>bbb</b></a>');
+  const message = (locale: string) => parseMessage(locale, '<a><i>aaa</i><b>bbb</b></a>', { tokenizer });
 
   const result = render(<Message message={message} />, { reactStrictMode: true });
 
@@ -74,7 +77,7 @@ test('renders nested children array', () => {
 });
 
 test('renders argument as a prop', () => {
-  const message = (locale: string) => parseMessage(locale, '<a title="xxx{bbb}"></a>');
+  const message = (locale: string) => parseMessage(locale, '<a title="xxx{bbb}"></a>', { tokenizer });
 
   const result = render(
     <Message
@@ -88,7 +91,7 @@ test('renders argument as a prop', () => {
 });
 
 test('re-renders an element if a props argument is changed', () => {
-  const message = (locale: string) => parseMessage(locale, '<a title="xxx{bbb}"></a>');
+  const message = (locale: string) => parseMessage(locale, '<a title="xxx{bbb}"></a>', { tokenizer });
 
   const result = render(
     <Message
