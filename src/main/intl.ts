@@ -1,16 +1,33 @@
-export const getListFormat = createCache(Intl.ListFormat);
-export const getNumberFormat = createCache(Intl.NumberFormat);
-export const getDateTimeFormat = createCache(Intl.DateTimeFormat);
-export const getPluralRules = createCache(Intl.PluralRules);
-export const getDisplayNames = createCache(Intl.DisplayNames);
+export function getListFormat(locale: string, options: Intl.ListFormatOptions): Intl.ListFormat {
+  return getOrCreate(Intl.ListFormat, locale, options);
+}
 
-function createCache<O, T>(constructor: new (locale: string, options: O) => T): (locale: string, options: O) => T {
-  const cache = new Map<string, WeakMap<any, T>>();
+export function getNumberFormat(locale: string, options: Intl.NumberFormatOptions): Intl.NumberFormat {
+  return getOrCreate(Intl.NumberFormat, locale, options);
+}
 
-  return (locale, options) => {
-    let values = cache.get(locale);
-    let value = (values || (cache.set(locale, (values = new WeakMap())), values)).get(options);
+export function getDateTimeFormat(locale: string, options: Intl.DateTimeFormatOptions): Intl.DateTimeFormat {
+  return getOrCreate(Intl.DateTimeFormat, locale, options);
+}
 
-    return value || (values.set(options, (value = new constructor(locale, options))), value);
-  };
+export function getPluralRules(locale: string, options: Intl.PluralRulesOptions): Intl.PluralRules {
+  return getOrCreate(Intl.PluralRules, locale, options);
+}
+
+export function getDisplayNames(locale: string, options: Intl.DisplayNamesOptions): Intl.DisplayNames {
+  return getOrCreate(Intl.DisplayNames, locale, options);
+}
+
+const cache = new Map<string, WeakMap<Function, WeakMap<object, any>>>();
+
+function getOrCreate<O, T>(constructor: new (locale: string, options: O) => T, locale: string, options: O): T {
+  let value;
+
+  value = cache.get(locale) || (cache.set(locale, (value = new WeakMap())), value);
+
+  value = value.get(constructor) || (value.set(constructor, (value = new WeakMap())), value);
+
+  value = value.get(options) || (value.set(options, (value = new constructor(locale, options))), value);
+
+  return value;
 }

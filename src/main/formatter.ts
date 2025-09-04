@@ -47,7 +47,7 @@ export type ArgumentFormatter = (params: ArgumentFormatterParams) => string | un
  *
  * @group Formatter
  */
-export const defaultArgumentFormatter = createWaterfallArgumentFormatter([
+export const defaultArgumentFormatter = combineArgumentFormatters([
   createNumberArgumentFormatter(null, null, { style: 'decimal' }),
   createNumberArgumentFormatter('number', null, { style: 'decimal' }),
   createNumberArgumentFormatter('number', 'decimal', { style: 'decimal' }),
@@ -85,13 +85,13 @@ export const defaultArgumentFormatter = createWaterfallArgumentFormatter([
  *
  * @param formatters The array of formatters to try.
  */
-export function createWaterfallArgumentFormatter(formatters: ArgumentFormatter[]): ArgumentFormatter {
+export function combineArgumentFormatters(formatters: ArgumentFormatter[]): ArgumentFormatter {
   return params => {
     for (const formatter of formatters) {
-      const formattedValue = formatter(params);
+      const value = formatter(params);
 
-      if (formattedValue !== undefined) {
-        return formattedValue;
+      if (value !== undefined) {
+        return value;
       }
     }
 
@@ -102,13 +102,13 @@ export function createWaterfallArgumentFormatter(formatters: ArgumentFormatter[]
 export function createNumberArgumentFormatter(
   type: string | null,
   style: string | null,
-  formatOptions: Intl.NumberFormatOptions
+  options: Intl.NumberFormatOptions
 ): ArgumentFormatter {
   return params => {
     const { value } = params;
 
     if (type === params.type && style === params.style && (typeof value === 'number' || typeof value === 'bigint')) {
-      return getNumberFormat(params.locale, mergeOptions(formatOptions, params.options)).format(value);
+      return getNumberFormat(params.locale, mergeOptions(options, params.options)).format(value);
     }
   };
 }
@@ -116,13 +116,13 @@ export function createNumberArgumentFormatter(
 export function createDateTimeArgumentFormatter(
   type: string | null,
   style: string | null,
-  formatOptions: Intl.DateTimeFormatOptions
+  options: Intl.DateTimeFormatOptions
 ): ArgumentFormatter {
   return params => {
     const { value } = params;
 
     if (type === params.type && style === params.style && (typeof value === 'number' || value instanceof Date)) {
-      return getDateTimeFormat(params.locale, mergeOptions(formatOptions, params.options)).format(value);
+      return getDateTimeFormat(params.locale, mergeOptions(options, params.options)).format(value);
     }
   };
 }
@@ -130,18 +130,13 @@ export function createDateTimeArgumentFormatter(
 export function createListArgumentFormatter(
   type: string | null,
   style: string | null,
-  formatOptions: Intl.ListFormatOptions
+  options: Intl.ListFormatOptions
 ): ArgumentFormatter {
   return params => {
     const { value } = params;
 
-    if (
-      type === params.type &&
-      style === params.style &&
-      Array.isArray(value) &&
-      value.every(v => typeof v === 'string')
-    ) {
-      return getListFormat(params.locale, mergeOptions(formatOptions, params.options)).format(value);
+    if (type === params.type && style === params.style && Array.isArray(value)) {
+      return getListFormat(params.locale, mergeOptions(options, params.options)).format(value.map(String));
     }
   };
 }
@@ -155,9 +150,7 @@ export function createDisplayNameArgumentFormatter(
     const { value } = params;
 
     if (type === params.type && style === params.style && typeof value === 'string') {
-      try {
-        return getDisplayNames(params.locale, mergeOptions(options, params.options)).of(value);
-      } catch {}
+      return getDisplayNames(params.locale, mergeOptions(options, params.options)).of(value);
     }
   };
 }
