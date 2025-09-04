@@ -174,7 +174,7 @@ export function parseMessage(locale: string, text: string, options: ParserOption
           pushChild(stack, stackCursor, decodeText(text.substring(startIndex, endIndex)));
           break;
 
-        case 'XML_OPENING_TAG_START':
+        case 'XML_OPENING_TAG_NAME':
           tagName = renameTag(text.substring(startIndex, endIndex));
           pushChild(stack, stackCursor, (stack[++stackCursor] = createElementNode(tagName)));
           break;
@@ -183,11 +183,11 @@ export function parseMessage(locale: string, text: string, options: ParserOption
           break;
 
         case 'XML_OPENING_TAG_SELF_CLOSE':
-        case 'XML_CLOSING_TAG':
+        case 'XML_CLOSING_TAG_NAME':
           --stackCursor;
           break;
 
-        case 'XML_ATTRIBUTE_START':
+        case 'XML_ATTRIBUTE_NAME':
           stack[++stackCursor] = renameAttribute(text.substring(startIndex, endIndex), tagName);
           pushChild(stack, stackCursor, '');
           break;
@@ -196,7 +196,7 @@ export function parseMessage(locale: string, text: string, options: ParserOption
           --stackCursor;
           break;
 
-        case 'ICU_ARGUMENT_START':
+        case 'ICU_ARGUMENT_NAME':
           argumentName = renameArgument(text.substring(startIndex, endIndex));
           rawArgumentType = undefined;
           rawArgumentStyle = undefined;
@@ -223,7 +223,7 @@ export function parseMessage(locale: string, text: string, options: ParserOption
           pushChild(stack, stackCursor, createArgumentNode(argumentName, argumentType, argumentStyle));
           break;
 
-        case 'ICU_CATEGORY_START':
+        case 'ICU_CATEGORY_NAME':
           const parent = stack[stackCursor];
 
           if (typeof parent === 'string' || parent.nodeType !== 'select') {

@@ -311,6 +311,6 @@ describe('parseMessage', () => {
           throw new Error('Expected');
         },
       })
-    ).toThrow(new ParserError('Failed to parse ICU_ARGUMENT_START: Error: Expected', '{aaa}', 1, 4));
+    ).toThrow(new ParserError('Failed to parse ICU_ARGUMENT_NAME: Error: Expected', '{aaa}', 1, 4));
   });
 });
