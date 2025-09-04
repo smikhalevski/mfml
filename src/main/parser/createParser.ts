@@ -86,9 +86,9 @@ export interface ParserOptions {
   renameSelectCategory?: (selectType: string, selectCategory: string) => string;
 
   /**
-   * Decode text content before it is pushed to a node. Use this method to decode HTML entities.
+   * Decode text content before it is pushed to an MFML AST node. Use this method to decode HTML entities.
    *
-   * @param text Text to rewrite.
+   * @param text Text to decode.
    */
   decodeText?: (text: string) => string;
 }

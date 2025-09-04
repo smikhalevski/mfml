@@ -1,7 +1,8 @@
 /**
- * Compiles MFML AST as a TypeScript source.
+ * Compiler that converts MFML to a source code.
  *
  * @module mfml/compiler
  */
 
-export { compileModule, type CompilerOptions } from './compileModule.js';
+export { createCompiler, type Compiler, type CompilerOptions } from './createCompiler.js';
+export { defineConfig, type Config, type ResolvedConfig } from './defineConfig.js';

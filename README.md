@@ -81,10 +81,10 @@ Create the build script in _build-messages.ts_:
 
 ```ts
 import fs from 'node:fs';
-import { compileModule } from 'mfml/compiler';
+import { compileFiles } from 'mfml/compiler';
 import messages from './messages.json' with { type: 'json' };
 
-fs.writeFileSync(import.meta.dirname + '/messages.ts', compileModule(messages));
+fs.writeFileSync(import.meta.dirname + '/messages.ts', compileFiles(messages));
 ```
 
 Build messages:
