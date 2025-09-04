@@ -1,12 +1,12 @@
 /**
- * MFML AST nodes and factories.
+ * MFML runtime.
  *
  * @module mfml
  */
 
 export {
   defaultFormatter,
-  combineFormatters,
+  createWaterfallFormatter,
   createNumberFormatter,
   createDateTimeFormatter,
   createListFormatter,
@@ -14,13 +14,7 @@ export {
   type Formatter,
   type FormatterParams,
 } from './formatter.js';
-export {
-  defaultCategorySelector,
-  type Renderer,
-  type ElementRenderer,
-  type CategorySelectorParams,
-  type CategorySelector,
-} from './renderer.js';
+export { defaultCategorySelector, type CategorySelector, type CategorySelectorParams } from './selector.js';
 export { renderToString, type RenderToStringOptions } from './renderToString.js';
 export type {
   Metadata,
@@ -39,3 +33,5 @@ export type {
   LiteralNode,
 } from './types.js';
 export { walkNode } from './utils.js';
+export { Renderer } from './types.js';
+export { ElementRenderer } from './types.js';

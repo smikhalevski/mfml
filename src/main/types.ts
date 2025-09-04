@@ -1,5 +1,55 @@
+import { Formatter } from './formatter.js';
+import { CategorySelector } from './selector.js';
+
+/**
+ * Renders elements and arguments.
+ *
+ * @template Element The rendered element.
+ * @group Renderer
+ */
+export interface Renderer<Element> {
+  /**
+   * Renders an element.
+   *
+   * @see {@link mfml/react!createReactDOMElementRenderer createReactDOMElementRenderer}
+   */
+  renderElement: ElementRenderer<Element>;
+
+  /**
+   * Formats argument value as a string.
+   *
+   * @see {@link defaultFormatter}
+   */
+  formatArgument: Formatter;
+
+  /**
+   * Returns the selected category depending of an argument value.
+   *
+   * @see {@link defaultCategorySelector}
+   */
+  selectCategory: CategorySelector;
+}
+
+/**
+ * Renders an element.
+ *
+ * @param tagName The element tag name.
+ * @param attributes Attributes of an element.
+ * @param children Children of an element.
+ * @returns Rendering result, or `undefined` if an element should not be rendered.
+ * @template Element The rendered element.
+ * @group Renderer
+ */
+export type ElementRenderer<Element> = (
+  tagName: string,
+  attributes: Record<string, string>,
+  children: Array<Element | string>
+) => Element | string | undefined;
+
 /**
  * The metadata exported from the compiled translations module.
+ *
+ * @group Other
  */
 export interface Metadata {
   /**

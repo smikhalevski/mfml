@@ -1,4 +1,4 @@
-import { getDateTimeFormat, getDisplayNames, getListFormat, getNumberFormat } from './utils.js';
+import { getDateTimeFormat, getDisplayNames, getListFormat, getNumberFormat, mergeOptions } from './utils.js';
 
 /**
  * Params provided to a {@link Formatter}.
@@ -7,14 +7,14 @@ import { getDateTimeFormat, getDisplayNames, getListFormat, getNumberFormat } fr
  */
 export interface FormatterParams {
   /**
+   * The value of an argument.
+   */
+  value: any;
+
+  /**
    * The message locale.
    */
   locale: string;
-
-  /**
-   * The value of an argument.
-   */
-  value: unknown;
 
   /**
    * The type of format to apply ("number", "date", "plural", "selectOrdinal", "select", etc.) or `null` if type
@@ -43,49 +43,13 @@ export interface FormatterParams {
 export type Formatter = (params: FormatterParams) => string | undefined;
 
 /**
- * The default formatter.
- *
- * @group Formatter
- */
-export const defaultFormatter = combineFormatters([
-  createNumberFormatter(null, null, { style: 'decimal' }),
-  createNumberFormatter('number', null, { style: 'decimal' }),
-  createNumberFormatter('number', 'decimal', { style: 'decimal' }),
-  createNumberFormatter('number', 'integer', { style: 'decimal', maximumFractionDigits: 0 }),
-  createNumberFormatter('number', 'percent', { style: 'percent' }),
-  createNumberFormatter('number', 'currency', { style: 'currency', currency: 'USD' }),
-
-  createDateTimeFormatter(null, null, { dateStyle: 'medium' }),
-  createDateTimeFormatter('date', null, { dateStyle: 'medium' }),
-  createDateTimeFormatter('date', 'short', { dateStyle: 'short' }),
-  createDateTimeFormatter('date', 'full', { dateStyle: 'full' }),
-  createDateTimeFormatter('date', 'long', { dateStyle: 'long' }),
-  createDateTimeFormatter('date', 'medium', { dateStyle: 'medium' }),
-
-  createDateTimeFormatter('time', null, { timeStyle: 'medium' }),
-  createDateTimeFormatter('time', 'short', { timeStyle: 'short' }),
-  createDateTimeFormatter('time', 'full', { timeStyle: 'full' }),
-  createDateTimeFormatter('time', 'long', { timeStyle: 'long' }),
-  createDateTimeFormatter('time', 'medium', { timeStyle: 'medium' }),
-
-  createListFormatter('conjunction', null, { type: 'conjunction', style: 'long' }),
-  createListFormatter('conjunction', 'long', { type: 'conjunction', style: 'long' }),
-  createListFormatter('conjunction', 'narrow', { type: 'conjunction', style: 'narrow' }),
-  createListFormatter('conjunction', 'short', { type: 'conjunction', style: 'short' }),
-
-  createListFormatter('disjunction', null, { type: 'disjunction', style: 'long' }),
-  createListFormatter('disjunction', 'long', { type: 'disjunction', style: 'long' }),
-  createListFormatter('disjunction', 'narrow', { type: 'disjunction', style: 'narrow' }),
-  createListFormatter('disjunction', 'short', { type: 'disjunction', style: 'short' }),
-]);
-
-/**
- * Creates an argument formatter that sequentially applies every formatter from formatters, until one of them returns a
- * formatted value. If non of the formatters returns a formatted value then a stringified value is returned.
+ * Creates an argument formatter that sequentially applies each formatter from the list of formatters until one returns
+ * a formatted value. If none of the formatters returns a formatted value, a stringified value is returned instead.
  *
  * @param formatters The array of formatters to try.
+ * @group Formatter
  */
-export function combineFormatters(formatters: Formatter[]): Formatter {
+export function createWaterfallFormatter(formatters: Formatter[]): Formatter {
   return params => {
     for (const formatter of formatters) {
       const value = formatter(params);
@@ -104,19 +68,21 @@ export function combineFormatters(formatters: Formatter[]): Formatter {
  *
  * @param type The required argument type, or `null` if type shouldn't be specified.
  * @param style The required argument style, or `null` if style shouldn't be specified.
- * @param options Default format options.
+ * @param options Number format options.
  * @group Formatter
  */
 export function createNumberFormatter(
   type: string | null,
   style: string | null,
-  options: Intl.NumberFormatOptions
+  options?: Intl.NumberFormatOptions
 ): Formatter {
   return params => {
-    const { value } = params;
-
-    if (type === params.type && style === params.style && (typeof value === 'number' || typeof value === 'bigint')) {
-      return getNumberFormat(params.locale, mergeOptions(options, params.options)).format(value);
+    if (
+      type === params.type &&
+      style === params.style &&
+      (typeof params.value === 'number' || typeof params.value === 'bigint')
+    ) {
+      return getNumberFormat(params.locale, mergeOptions(options, params.options)).format(params.value);
     }
   };
 }
@@ -126,19 +92,21 @@ export function createNumberFormatter(
  *
  * @param type The required argument type, or `null` if type shouldn't be specified.
  * @param style The required argument style, or `null` if style shouldn't be specified.
- * @param options Default format options.
+ * @param options Date-time format options.
  * @group Formatter
  */
 export function createDateTimeFormatter(
   type: string | null,
   style: string | null,
-  options: Intl.DateTimeFormatOptions
+  options?: Intl.DateTimeFormatOptions
 ): Formatter {
   return params => {
-    const { value } = params;
-
-    if (type === params.type && style === params.style && (typeof value === 'number' || value instanceof Date)) {
-      return getDateTimeFormat(params.locale, mergeOptions(options, params.options)).format(value);
+    if (
+      type === params.type &&
+      style === params.style &&
+      (typeof params.value === 'number' || params.value instanceof Date)
+    ) {
+      return getDateTimeFormat(params.locale, mergeOptions(options, params.options)).format(params.value);
     }
   };
 }
@@ -148,37 +116,75 @@ export function createDateTimeFormatter(
  *
  * @param type The required argument type, or `null` if type shouldn't be specified.
  * @param style The required argument style, or `null` if style shouldn't be specified.
- * @param options Default format options.
+ * @param options List format options.
  * @group Formatter
  */
 export function createListFormatter(
   type: string | null,
   style: string | null,
-  options: Intl.ListFormatOptions
+  options?: Intl.ListFormatOptions
 ): Formatter {
   return params => {
-    const { value } = params;
-
-    if (type === params.type && style === params.style && Array.isArray(value)) {
-      return getListFormat(params.locale, mergeOptions(options, params.options)).format(value.map(String));
+    if (type === params.type && style === params.style && Array.isArray(params.value)) {
+      return getListFormat(params.locale, mergeOptions(options, params.options)).format(params.value);
     }
   };
 }
 
+/**
+ * Creates a formatter that uses {@link Intl.DisplayNames} to format translations of language, region and script
+ * display names.
+ *
+ * @param type The required argument type, or `null` if type shouldn't be specified.
+ * @param style The required argument style, or `null` if style shouldn't be specified.
+ * @param options Display name format options.
+ * @group Formatter
+ */
 export function createDisplayNameFormatter(
   type: string | null,
   style: string | null,
   options: Intl.DisplayNamesOptions
 ): Formatter {
   return params => {
-    const { value } = params;
-
-    if (type === params.type && style === params.style && typeof value === 'string') {
-      return getDisplayNames(params.locale, mergeOptions(options, params.options)).of(value);
+    if (type === params.type && style === params.style && typeof params.value === 'string') {
+      return getDisplayNames(params.locale, mergeOptions(options, params.options)).of(params.value);
     }
   };
 }
 
-function mergeOptions<T>(formatOptions: T, argumentOptions: object | null): T {
-  return argumentOptions === null ? formatOptions : { ...formatOptions, ...argumentOptions };
-}
+/**
+ * The default formatter.
+ *
+ * @group Formatter
+ */
+export const defaultFormatter = createWaterfallFormatter([
+  createNumberFormatter(null, null),
+  createNumberFormatter('number', null),
+  createNumberFormatter('number', 'decimal'),
+  createNumberFormatter('number', 'integer', { maximumFractionDigits: 0 }),
+  createNumberFormatter('number', 'percent', { style: 'percent' }),
+  createNumberFormatter('number', 'currency', { style: 'currency', currency: 'USD' }),
+
+  createDateTimeFormatter(null, null),
+  createDateTimeFormatter('date', null),
+  createDateTimeFormatter('date', 'short', { dateStyle: 'short' }),
+  createDateTimeFormatter('date', 'full', { dateStyle: 'full' }),
+  createDateTimeFormatter('date', 'long', { dateStyle: 'long' }),
+  createDateTimeFormatter('date', 'medium', { dateStyle: 'medium' }),
+
+  createDateTimeFormatter('time', null),
+  createDateTimeFormatter('time', 'short', { timeStyle: 'short' }),
+  createDateTimeFormatter('time', 'full', { timeStyle: 'full' }),
+  createDateTimeFormatter('time', 'long', { timeStyle: 'long' }),
+  createDateTimeFormatter('time', 'medium', { timeStyle: 'medium' }),
+
+  createListFormatter('conjunction', null),
+  createListFormatter('conjunction', 'long', { type: 'conjunction', style: 'long' }),
+  createListFormatter('conjunction', 'narrow', { type: 'conjunction', style: 'narrow' }),
+  createListFormatter('conjunction', 'short', { type: 'conjunction', style: 'short' }),
+
+  createListFormatter('disjunction', null, { type: 'disjunction' }),
+  createListFormatter('disjunction', 'long', { type: 'disjunction', style: 'long' }),
+  createListFormatter('disjunction', 'narrow', { type: 'disjunction', style: 'narrow' }),
+  createListFormatter('disjunction', 'short', { type: 'disjunction', style: 'short' }),
+]);
