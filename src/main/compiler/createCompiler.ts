@@ -1,7 +1,7 @@
 import { Child, MessageNode } from '../ast.js';
 import { Parser } from '../parser/index.js';
 import { collectArgumentNames, escapeIdentifier } from '../utils.js';
-import { sha256, formatMessagePreview } from './utils.js';
+import { formatJSDocComment, formatMarkdownBold, formatMarkdownFence, hashCode, truncateMessage } from './utils.js';
 
 /**
  * Options of {@link createCompiler}.
@@ -107,28 +107,25 @@ export async function compileFiles(
 
   const localeVars: Record<string, string> = {};
 
-  let indexSrc = '';
-  let typingsSrc = 'import{MessageNode}from"mfml";\n';
-  let localesSrc = '';
+  let indexJs = '';
+  let indexTs = 'import{MessageNode}from"mfml";\n';
+  let localesJs = '';
 
   for (const locale of locales) {
     const localeVar = 'LOCALE_' + escapeIdentifier(locale).toUpperCase();
 
     localeVars[locale] = localeVar;
-    localesSrc += 'export const ' + localeVar + '=' + JSON.stringify(locale) + ';\n';
+    localesJs += 'export const ' + localeVar + '=' + JSON.stringify(locale) + ';\n';
   }
+
+  const localesJsImport = 'import{' + Object.values(localeVars).join(',') + '}from"./locales.js";';
 
   for (const messageKey of messageKeys) {
     const messageNodes: MessageNode[] = [];
     const argumentNames = new Set<string>();
 
-    let sourceCode =
-      'import{createMessageNode as M,createElementNode as E,createArgumentNode as A,createSelectNode as S}from"mfml";\n' +
-      'import{' +
-      Object.values(localeVars).join(',') +
-      '}from"./locales.js";\n';
-
-    const messageLocales: string[] = [];
+    let jsCode = 'export default function(locale){\nreturn ';
+    let jsDocComment = formatMarkdownBold('Message key') + '\n' + formatMarkdownFence(messageKey, 'text');
 
     for (const locale of locales) {
       let text = messages[locale][messageKey];
@@ -137,7 +134,7 @@ export async function compileFiles(
         continue;
       }
 
-      messageLocales.push(locale);
+      jsDocComment += '\n' + formatMarkdownBold(locale) + '\n' + formatMarkdownFence(truncateMessage(text), 'html');
 
       if (preprocessors !== undefined) {
         for (const preprocessor of preprocessors) {
@@ -162,50 +159,44 @@ export async function compileFiles(
       }
     }
 
-    sourceCode += '\nexport default function (locale){\nreturn ';
-
     for (const messageNode of messageNodes) {
       const localeVar = localeVars[messageNode.locale];
 
-      sourceCode += 'locale===' + localeVar + '?' + compileMessageNode(localeVar, messageNode) + ':';
+      jsCode += 'locale===' + localeVar + '?' + compileMessageNode(localeVar, messageNode) + ':';
     }
 
-    sourceCode += 'null;\n}\n';
+    jsCode += 'null;\n}\n';
 
+    jsDocComment = formatJSDocComment(jsDocComment);
+
+    jsCode =
+      'import{createMessageNode as M,createElementNode as E,createArgumentNode as A,createSelectNode as S}from"mfml";\n' +
+      localesJsImport +
+      '\n\n' +
+      jsDocComment +
+      '\n' +
+      jsCode;
+
+    const fileName = await hashCode(jsCode, 16);
     const functionName = renameMessageFunction(messageKey);
 
-    const hashCode = await sha256(sourceCode);
+    files[fileName + '.js'] = jsCode;
 
-    const fileName = '_' + hashCode.substring(0, 16) + '.js';
+    indexJs += 'export{default as ' + functionName + '}from"./' + fileName + '.js";\n';
 
-    files[fileName] = sourceCode;
-
-    indexSrc += 'export{default as ' + functionName + '}from"./' + fileName + '";\n';
-
-    const doc =
-      '**Message key**\n```\n' +
-      messageKey +
-      '\n```\n' +
-      messageLocales
-        .map(
-          locale =>
-            '**' +
-            locale +
-            '**\n```\n' +
-            formatMessagePreview(messages[locale][messageKey]).replace(/`/g, '\\&$') +
-            '\n```'
-        )
-        .join('\n');
-
-    const jsDoc = '\n/**\n *' + doc.replace(/\n/g, '\n * ') + '\n */';
-
-    typingsSrc +=
-      jsDoc + '\nexport function ' + functionName + '(locale:string):' + compileMessageType(argumentNames) + ';\n';
+    indexTs +=
+      '\n' +
+      jsDocComment +
+      '\nexport declare function ' +
+      functionName +
+      '(locale:string):' +
+      compileMessageType(argumentNames) +
+      ';\n';
   }
 
-  files['locales.js'] = localesSrc;
-  files['index.js'] = indexSrc;
-  files['index.d.ts'] = typingsSrc;
+  files['locales.js'] = localesJs;
+  files['index.js'] = indexJs;
+  files['index.d.ts'] = indexTs;
 
   return files;
 }

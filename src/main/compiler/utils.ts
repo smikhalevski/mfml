@@ -1,75 +1,49 @@
-export async function sha256(str: string): Promise<string> {
+export async function hashCode(str: string, charCount: number): Promise<string> {
   let hashCode = '';
 
   const bytes = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str)));
 
-  for (let i = 0; i < bytes.length; ++i) {
+  for (let i = 0; i < bytes.length && hashCode.length < charCount; ++i) {
     hashCode += bytes[i].toString(16).padStart(2, '0');
   }
 
   return hashCode;
 }
 
-export function formatMessagePreview(text: string, lineLength = 80, lineCount = 3, ellipsis = '…'): string {
-  const lines = [];
+export function formatMarkdownBold(text: string): string {
+  return '**' + text + '**';
+}
 
-  let startIndex = 0;
-  let endIndex = 0;
-  let nextStartIndex = 0;
-  let isTruncated = true;
+export function formatMarkdownFence(text: string, language = ''): string {
+  return '```' + language + '\n' + text.replace(/`/g, '\\&$') + '\n```';
+}
 
-  for (let i = 0, isPrevCharSpace = false; i < text.length && lines.length < lineCount; ++i) {
+export function formatJSDocComment(text: string): string {
+  return '/**\n * ' + text.replace(/\n/g, '\n * ') + '\n */';
+}
+
+export function truncateMessage(text: string, charCount = 300, ellipsis = '…'): string {
+  if (text.length < charCount) {
+    return text;
+  }
+
+  for (let i = 0, truncateIndex = 0, isPrevCharSignificant = false; i < text.length; ++i) {
     const charCode = text.charCodeAt(i);
 
-    // Line breaks
-    if (charCode === /* \n */ 10 || charCode === /* \r */ 13) {
-      lines.push(text.substring(startIndex, startIndex === endIndex ? i : endIndex));
-
-      startIndex = endIndex = nextStartIndex = i + 1;
-      isPrevCharSpace = false;
-      continue;
-    }
-
-    // Whitespaces
-    if (charCode === /* \s */ 32 || charCode === /* \t */ 9) {
-      if (startIndex === i) {
-        // Ignore spaces at the start of the line
-        startIndex = endIndex = i + 1;
-      } else if (!isPrevCharSpace) {
-        endIndex = i;
+    if (charCode == /* \s */ 32 || charCode === /* \n */ 10 || charCode === /* \t */ 9 || charCode === /* \r */ 13) {
+      if (isPrevCharSignificant) {
+        truncateIndex = i;
       }
-
-      nextStartIndex = i + 1;
-      isPrevCharSpace = true;
+      isPrevCharSignificant = false;
       continue;
     }
 
-    if (i - startIndex > lineLength) {
-      lines.push(text.substring(startIndex, endIndex));
-      startIndex = endIndex = nextStartIndex;
+    if (i > charCount && truncateIndex !== 0) {
+      return text.substring(0, truncateIndex) + ellipsis;
     }
 
-    isPrevCharSpace = false;
+    isPrevCharSignificant = true;
   }
 
-  if (lines.length < lineCount && startIndex !== endIndex) {
-    if (nextStartIndex === text.length) {
-      lines.push(text.substring(startIndex, endIndex));
-    } else {
-      lines.push(text.substring(startIndex));
-      nextStartIndex = text.length;
-    }
-    isTruncated = false;
-  }
-
-  if (lines.length < lineCount && nextStartIndex !== text.length) {
-    lines.push(text.substring(nextStartIndex));
-    isTruncated = false;
-  }
-
-  if (isTruncated) {
-    lines[lines.length - 1] += ellipsis;
-  }
-
-  return lines.join('\n');
+  return text;
 }

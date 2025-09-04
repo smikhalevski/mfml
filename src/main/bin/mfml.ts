@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { ResolvedConfig } from '../compiler/index.js';
@@ -17,22 +16,17 @@ async function build(config: ResolvedConfig): Promise<void> {
 
   const files = await compiler.compile(messages);
 
-  files['package.json'] = JSON.stringify(
-    {
-      name: packageName,
-      version: '0.0.0',
-      type: 'module',
-      main: './index.js',
-      types: './index.d.ts',
-      exports: {
-        '.': './index.js',
-        './package.json': './package.json',
-      },
-      sideEffects: false,
+  files['package.json'] = JSON.stringify({
+    name: packageName,
+    type: 'module',
+    main: './index.js',
+    types: './index.d.ts',
+    exports: {
+      '.': './index.js',
+      './package.json': './package.json',
     },
-    null,
-    2
-  );
+    sideEffects: false,
+  });
 
   const packageDir = path.join(process.cwd(), outDir, 'node_modules', packageName);
 
