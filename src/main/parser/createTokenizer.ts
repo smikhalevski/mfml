@@ -37,8 +37,8 @@ export interface TokenizerOptions {
    * For example, in HTML `p` and `h1` tags have the following semantics:
    *
    * ```html
-   * <p>foo<h1>bar → <p>foo</p><h1>bar</h1>
-   *                       ^^^^ p is implicitly closed
+   * <p><h1>  →  <p></p><h1></h1>
+   *                ^^^^ p is implicitly closed
    * ```
    *
    * To achieve this behavior, set this option to:
@@ -60,11 +60,11 @@ export interface TokenizerOptions {
    * For example, in HTML `p` and `br` tags follow this semantics:
    *
    * ```html
-   * </p>  → <p></p>
-   *         ^^^ p is implicitly opened
+   * </p>  →  <p></p>
+   *          ^^^ p is implicitly opened
    *
-   * </br> → <br/>
-   *            ^ br is implicitly opened
+   * </br>  →  <br/>
+   *              ^ br is implicitly opened
    * ```
    *
    * To achieve this behavior, set this option to:
@@ -97,8 +97,8 @@ export interface TokenizerOptions {
    * Use in conjunctions with {@link isUnbalancedEndTagsIgnored}.
    *
    * ```html
-   * <a><b></a></b> → <a><b></b></a></b>
-   *                        ^^^^ b is implicitly closed
+   * <a><b></a>  →  <a><b></b></a>
+   *                      ^^^^ b is implicitly closed
    * ```
    *
    * @default false

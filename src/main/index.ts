@@ -5,7 +5,7 @@
  */
 
 export { createRenderer, type Renderer } from './createRenderer.js';
-export { renderText, type RenderTextOptions } from './renderText.js';
+export { renderToString, type RenderToStringOptions } from './renderToString.js';
 export type {
   ChildNode,
   ParentNode,

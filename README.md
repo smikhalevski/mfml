@@ -110,10 +110,10 @@ return locale===LOCALE_EN_US?M(LOCALE_EN_US,"Hello, ",E("b",null,A("name")),"!'"
 Now, you can import functions exported from _messages.ts_ to produce text messages:
 
 ```ts
-import { renderText } from 'mfml';
+import { renderToString } from 'mfml';
 import { greeting } from './messages.js';
 
-renderText(greeting('en-US'), { name: 'Bob' });
+renderToString(greeting('en-US'), { name: 'Bob' });
 // ⮕ 'Hello, Bob!'
 ```
 
@@ -190,19 +190,19 @@ const messageNode = parseMessage('en-US', 'Hello, <b>{name}</b>!');
 # Render a message as plain text
 
 Message nodes can be rendered as plain text using
-[`renderText`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/mfml/interfaces/mfml.MessageNode.html):
+[`renderToString`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/mfml/interfaces/mfml.MessageNode.html):
 
 ```ts
 import { parseMessage } from 'mfml/parser';
-import { renderText } from 'mfml';
+import { renderToString } from 'mfml';
 
 const messageNode = parseMessage('en-US', 'Hello, <b>{name}</b>!');
 
-renderText(messageNode, { name: 'Bob' });
+renderToString(messageNode, { name: 'Bob' });
 // ⮕ 'Hello, Bob!'
 ```
 
-Note that `renderText` doesn't render tags.
+Note that `renderToString` doesn't render tags.
 
 # React integration
 
@@ -238,7 +238,7 @@ the actual value is cast to a string. Spaces around the argument name are ignore
 ```ts
 const messageNode = parseMessage('en', 'Hello, {   name   }!');
 
-renderText(messageNode, { name: 'Bill' });
+renderToString(messageNode, { name: 'Bill' });
 // ⮕ 'Hello, Bill!'
 ```
 
@@ -254,7 +254,7 @@ You have {count, number} messages.
 ```ts
 const messageNode = parseMessage('en', 'You have {count, number} messages.');
 
-renderText(messageNode, { count: 1024 });
+renderToString(messageNode, { count: 1024 });
 // ⮕ 'You have 1,024 messages.'
 ```
 
@@ -269,7 +269,7 @@ Here a `number` formatter is used with a `percent` style:
 ```ts
 const messageNode = parseMessage('en', 'Download {progress, number, percent} complete.');
 
-renderText(messageNode, { progress: 0.75 });
+renderToString(messageNode, { progress: 0.75 });
 // ⮕ 'Download 75% complete.'
 ```
 
@@ -302,7 +302,7 @@ is replaced with "He", if value is `"female"` then with "She", and for any other
 ```ts
 const messageNode = parseMessage('en', '{gender, select, =male {He} =female {She} other {They}} sent you a message.');
 
-renderText(messageNode, { gender: 'female' });
+renderToString(messageNode, { gender: 'female' });
 // ⮕ 'She sent you a message.'
 ```
 
@@ -313,7 +313,7 @@ category then argument placeholder is replaced with an empty string:
 ```ts
 const messageNode = parseMessage('en', '{gender, select, =male {He}} sent you a message.');
 
-renderText(messageNode, { gender: 'helicopter' });
+renderToString(messageNode, { gender: 'helicopter' });
 // ⮕ ' sent you a message.'
 ```
 
@@ -328,13 +328,13 @@ Use `plural` argument type for cardinal pluralization rules:
 ```ts
 const messageNode = parseMessage('en', 'You have {count, plural, one {one message} other {# messages}}.');
 
-renderText(messageNode, { count: 0 });
+renderToString(messageNode, { count: 0 });
 // ⮕ 'You have 0 messages.'
 
-renderText(messageNode, { count: 1 });
+renderToString(messageNode, { count: 1 });
 // ⮕ 'You have one message.'
 
-renderText(messageNode, { count: 75 });
+renderToString(messageNode, { count: 75 });
 // ⮕ 'You have 75 messages.'
 ```
 
@@ -395,7 +395,7 @@ const messageNode = parseMessage(
   'You have {count, plural, =0 {no messages} one {one message} other {# messages}}.'
 );
 
-renderText(messageNode, { count: 0 });
+renderToString(messageNode, { count: 0 });
 // ⮕ 'You have no messages.'
 ```
 
@@ -407,13 +407,13 @@ const messageNode = parseMessage(
   'You finished {position, selectordinal, one {#st} two {#nd} few {#rd} other {#th}}.'
 );
 
-renderText(messageNode, { count: 1 });
+renderToString(messageNode, { count: 1 });
 // ⮕ 'You finished 1st.'
 
-renderText(messageNode, { count: 3 });
+renderToString(messageNode, { count: 3 });
 // ⮕ 'You finished 3rd.'
 
-renderText(messageNode, { count: 100 });
+renderToString(messageNode, { count: 100 });
 // ⮕ 'You finished 100th.'
 ```
 

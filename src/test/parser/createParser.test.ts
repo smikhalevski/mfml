@@ -319,7 +319,7 @@ describe('parseMessage', () => {
     } satisfies MessageNode);
   });
 
-  test('parses an category with an octothorpe', () => {
+  test('parses a category with an octothorpe', () => {
     expect(parseMessage('en', '{   xxx   ,   yyy   ,   zzz   {   #   }   }', { tokenizer })).toStrictEqual({
       nodeType: 'message',
       parentNode: null,

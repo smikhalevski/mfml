@@ -691,7 +691,7 @@ export function readTokens(text: string, callback: TokenCallback, options: Token
       continue;
     }
 
-    // End of an category
+    // End of a category
     if (charCode === /* } */ 125 && scope === SCOPE_CATEGORY) {
       if (textStartIndex !== index) {
         callback(TOKEN_TEXT, textStartIndex, index);
@@ -717,10 +717,10 @@ export function readTokens(text: string, callback: TokenCallback, options: Token
       continue;
     }
 
-    // An category name or option
+    // A category name or option
     if (scope === SCOPE_ARGUMENT) {
       if (!isICUNameChar(charCode)) {
-        throw new ParserError('Expected an category name or option name.', text, nextIndex);
+        throw new ParserError('Expected a category name or an option name.', text, nextIndex);
       }
 
       nextIndex = readChars(text, index + 1, isICUNameChar);
@@ -729,7 +729,7 @@ export function readTokens(text: string, callback: TokenCallback, options: Token
 
       nextIndex = skipSpaces(text, nextIndex);
 
-      // Start of an category
+      // Start of a category
       if (getCharCodeAt(text, nextIndex) === /* { */ 123) {
         callback(TOKEN_CATEGORY_NAME, index, optionNameEndIndex);
 

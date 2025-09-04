@@ -8,7 +8,7 @@ import {
   toHashCode,
   truncateMessage,
 } from './utils.js';
-import { getOctothorpeArgument, walkNode } from '../utils.js';
+import { getArgumentByOctothorpe, walkNode } from '../utils.js';
 
 /**
  * The error thrown by a compiler if a message text cannot be processed.
@@ -240,7 +240,7 @@ export async function compileFiles(
     preprocessors,
     postprocessors,
     renameMessageFunction = escapeJsIdentifier,
-    getArgumentTsType = getArgumentNaturalTsType,
+    getArgumentTsType = getNaturalArgumentTsType,
   } = options;
 
   const errors: CompilerError[] = [];
@@ -427,14 +427,12 @@ export function collectArgumentTsTypes(
 ): void {
   walkNode(messageNode, node => {
     if (node.nodeType === 'octothorpe') {
-      node = getOctothorpeArgument(node)!;
+      node = getArgumentByOctothorpe(node)!;
     }
 
     if (node.nodeType !== 'argument') {
       return;
     }
-
-    const tsType = getArgumentTsType(node);
 
     let tsTypes = argumentTsTypes.get(node.name);
 
@@ -442,6 +440,8 @@ export function collectArgumentTsTypes(
       tsTypes = new Set();
       argumentTsTypes.set(node.name, tsTypes);
     }
+
+    const tsType = getArgumentTsType(node);
 
     if (tsType === undefined || tsType === null || tsType === '') {
       return;
@@ -451,7 +451,7 @@ export function collectArgumentTsTypes(
   });
 }
 
-export function getArgumentNaturalTsType(argumentNode: ArgumentNode): string | undefined {
+export function getNaturalArgumentTsType(argumentNode: ArgumentNode): string | undefined {
   switch (argumentNode.typeNode?.value) {
     case 'number':
       return 'number|bigint';
@@ -472,7 +472,7 @@ export function getArgumentNaturalTsType(argumentNode: ArgumentNode): string | u
         return 'string';
       }
 
-      const categoriesTsTypes = [];
+      const categoryTsTypes = [];
 
       let hasOtherCategory = false;
 
@@ -482,16 +482,16 @@ export function getArgumentNaturalTsType(argumentNode: ArgumentNode): string | u
           continue;
         }
 
-        categoriesTsTypes.push(
+        categoryTsTypes.push(
           JSON.stringify(categoryNode.name.charAt(0) === '=' ? categoryNode.name.substring(1) : categoryNode.name)
         );
       }
 
       if (hasOtherCategory) {
-        categoriesTsTypes.push('(string&{})');
+        categoryTsTypes.push('(string&{})');
       }
 
-      return categoriesTsTypes.join('|');
+      return categoryTsTypes.join('|');
   }
 }
 
@@ -508,18 +508,19 @@ export function compileMessageTsType(argumentTsTypes: Map<string, Set<string>>):
     tsTypes.delete('unknown');
 
     if (tsTypes.size === 0) {
-      tsCode += 'unknown';
+      tsCode += 'unknown;';
       continue;
     }
 
     if (tsTypes.size === 1) {
-      tsCode += tsTypes.values().next().value;
+      tsCode += tsTypes.values().next().value + ';';
       continue;
     }
 
-    tsCode += Array.from(tsTypes)
-      .map(tsType => '(' + tsType + ')')
-      .join('&');
+    tsCode +=
+      Array.from(tsTypes)
+        .map(tsType => '(' + tsType + ')')
+        .join('&') + ';';
   }
 
   return 'MessageNode<{' + tsCode + '}>|null';
@@ -528,7 +529,7 @@ export function compileMessageTsType(argumentTsTypes: Map<string, Set<string>>):
 export function compileNode(node: AnyNode): string {
   switch (node.nodeType) {
     case 'message':
-      return 'M(locale' + compileNodeArray(node.childNodes) + ')';
+      return 'M(locale' + compileNodes(node.childNodes) + ')';
 
     case 'text':
     case 'literal':
@@ -536,15 +537,11 @@ export function compileNode(node: AnyNode): string {
 
     case 'element':
       return (
-        'E(' +
-        JSON.stringify(node.tagName) +
-        compileNodeArray(node.attributeNodes) +
-        compileNodeArray(node.childNodes) +
-        ')'
+        'E(' + JSON.stringify(node.tagName) + compileNodes(node.attributeNodes) + compileNodes(node.childNodes) + ')'
       );
 
     case 'attribute':
-      return 'A(' + JSON.stringify(node.name) + compileNodeArray(node.childNodes) + ')';
+      return 'A(' + JSON.stringify(node.name) + compileNodes(node.childNodes) + ')';
 
     case 'argument':
       return (
@@ -552,8 +549,8 @@ export function compileNode(node: AnyNode): string {
         JSON.stringify(node.name) +
         compileOptionalNode(node.typeNode) +
         compileOptionalNode(node.styleNode) +
-        compileNodeArray(node.optionNodes) +
-        compileNodeArray(node.categoryNodes) +
+        compileNodes(node.optionNodes) +
+        compileNodes(node.categoryNodes) +
         ')'
       );
 
@@ -564,11 +561,11 @@ export function compileNode(node: AnyNode): string {
       return 'O(' + JSON.stringify(node.name) + compileOptionalNode(node.valueNode) + ')';
 
     case 'category':
-      return 'C(' + JSON.stringify(node.name) + compileNodeArray(node.childNodes) + ')';
+      return 'C(' + JSON.stringify(node.name) + compileNodes(node.childNodes) + ')';
   }
 }
 
-function compileNodeArray<T extends AnyNode[]>(nodes: T | null): string {
+function compileNodes<T extends AnyNode[]>(nodes: T | null): string {
   if (nodes === null) {
     return '';
   }

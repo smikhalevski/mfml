@@ -1,7 +1,7 @@
 import React, { createContext, createElement, Fragment, ReactNode, useContext, useMemo } from 'react';
 import { Renderer } from '../createRenderer.js';
 import { AnyNode, CategoryNode, ElementNode, MessageNode } from '../types.js';
-import { renderNodesAsString } from '../renderText.js';
+import { renderElementAttributes } from '../renderToString.js';
 
 const MessageLocaleContext = createContext('en');
 MessageLocaleContext.displayName = 'MessageLocaleContext';
@@ -56,19 +56,20 @@ export interface MessageProps<
   values?: Values;
 
   /**
-   * Renderer that should be used.
+   * The renderer to use.
    *
    * By default, a mapping provided by {@link MessageRendererProvider} is used.
    */
   renderer?: Renderer<ReactNode>;
 }
 
-type InferMessageProps<MessageFunction extends (locale: string) => MessageNode<object | void> | null> =
-  MessageFunction extends (locale: string) => MessageNode<infer Values> | null
-    ? Values extends void
-      ? MessageProps<MessageFunction, Values>
-      : MessageProps<MessageFunction, Values> & { values: Values }
-    : never;
+type InferMessageProps<MessageFunction extends (locale: string) => MessageNode | null> = MessageFunction extends (
+  locale: string
+) => MessageNode<infer Values> | null
+  ? Values extends void
+    ? MessageProps<MessageFunction, Values>
+    : MessageProps<MessageFunction, Values> & { values: Values }
+  : never;
 
 /**
  * Renders a message function.
@@ -76,7 +77,7 @@ type InferMessageProps<MessageFunction extends (locale: string) => MessageNode<o
  * @template MessageFunction The function that returns a message node for a given locale.
  * @group Message
  */
-export function Message<MessageFunction extends (locale: string) => MessageNode<object | void> | null>(
+export function Message<MessageFunction extends (locale: string) => MessageNode | null>(
   props: InferMessageProps<MessageFunction>
 ): ReactNode {
   const contextLocale = useContext(MessageLocaleContext);
@@ -237,18 +238,9 @@ function renderElement(
   values: any,
   renderer: Renderer<ReactNode>
 ): ReactNode {
-  const attributes: Record<string, string> = {};
-
-  if (elementNode.attributeNodes !== null) {
-    for (const attributeNode of elementNode.attributeNodes) {
-      attributes[attributeNode.name] = renderNodesAsString(
-        locale,
-        attributeNode.childNodes,
-        values,
-        renderer as Renderer<string>
-      ).join('');
-    }
-  }
-
-  return renderer.renderElement(elementNode.tagName, attributes, renderNodes(locale, elementNode.childNodes, renderer));
+  return renderer.renderElement(
+    elementNode.tagName,
+    renderElementAttributes(elementNode, locale, values, renderer as Renderer<string>),
+    renderNodes(locale, elementNode.childNodes, renderer)
+  );
 }

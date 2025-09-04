@@ -4,7 +4,7 @@ import {
   compileNode,
   compileMessageTsType,
   collectArgumentTsTypes,
-  getArgumentNaturalTsType,
+  getNaturalArgumentTsType,
 } from '../../main/compiler/createCompiler.js';
 import { createParser, parseMessage } from '../../main/parser/createParser.js';
 import { createTokenizer, htmlTokenizer } from '../../main/parser/index.js';
@@ -44,10 +44,10 @@ describe('compileNode', () => {
 describe('compileMessageTsType', () => {
   test('compiles message type', () => {
     expect(compileMessageTsType(new Map())).toBe('MessageNode<void>|null');
-    expect(compileMessageTsType(new Map().set('xxx', new Set()))).toBe('MessageNode<{"xxx":unknown}>|null');
-    expect(compileMessageTsType(new Map().set('xxx', new Set(['string'])))).toBe('MessageNode<{"xxx":string}>|null');
+    expect(compileMessageTsType(new Map().set('xxx', new Set()))).toBe('MessageNode<{"xxx":unknown;}>|null');
+    expect(compileMessageTsType(new Map().set('xxx', new Set(['string'])))).toBe('MessageNode<{"xxx":string;}>|null');
     expect(compileMessageTsType(new Map().set('xxx', new Set(['string', 'string|number'])))).toBe(
-      'MessageNode<{"xxx":(string)&(string|number)}>|null'
+      'MessageNode<{"xxx":(string)&(string|number);}>|null'
     );
   });
 });
@@ -57,7 +57,7 @@ describe('collectArgumentTsTypes', () => {
     const messageNode = parseMessage('en', '', { tokenizer: htmlTokenizer });
     const argumentTsTypes = new Map();
 
-    collectArgumentTsTypes(messageNode, getArgumentNaturalTsType, argumentTsTypes);
+    collectArgumentTsTypes(messageNode, getNaturalArgumentTsType, argumentTsTypes);
 
     expect(argumentTsTypes).toEqual(new Map());
   });
@@ -66,7 +66,7 @@ describe('collectArgumentTsTypes', () => {
     const messageNode = parseMessage('en', '{xxx}{yyy}', { tokenizer: htmlTokenizer });
     const argumentTsTypes = new Map();
 
-    collectArgumentTsTypes(messageNode, getArgumentNaturalTsType, argumentTsTypes);
+    collectArgumentTsTypes(messageNode, getNaturalArgumentTsType, argumentTsTypes);
 
     expect(argumentTsTypes).toEqual(
       new Map([
@@ -80,7 +80,7 @@ describe('collectArgumentTsTypes', () => {
     const messageNode = parseMessage('en', '{xxx,time}{xxx}', { tokenizer: htmlTokenizer });
     const argumentTsTypes = new Map();
 
-    collectArgumentTsTypes(messageNode, getArgumentNaturalTsType, argumentTsTypes);
+    collectArgumentTsTypes(messageNode, getNaturalArgumentTsType, argumentTsTypes);
 
     expect(argumentTsTypes).toEqual(new Map([['xxx', new Set(['number|Date'])]]));
   });
@@ -89,7 +89,7 @@ describe('collectArgumentTsTypes', () => {
     const messageNode = parseMessage('en', '{xxx,time}{xxx,number}', { tokenizer: htmlTokenizer });
     const argumentTsTypes = new Map();
 
-    collectArgumentTsTypes(messageNode, getArgumentNaturalTsType, argumentTsTypes);
+    collectArgumentTsTypes(messageNode, getNaturalArgumentTsType, argumentTsTypes);
 
     expect(argumentTsTypes).toEqual(new Map([['xxx', new Set(['number|Date', 'number|bigint'])]]));
   });
@@ -98,7 +98,7 @@ describe('collectArgumentTsTypes', () => {
     const messageNode = parseMessage('en', '<a title="{xxx,time}">', { tokenizer: htmlTokenizer });
     const argumentTsTypes = new Map();
 
-    collectArgumentTsTypes(messageNode, getArgumentNaturalTsType, argumentTsTypes);
+    collectArgumentTsTypes(messageNode, getNaturalArgumentTsType, argumentTsTypes);
 
     expect(argumentTsTypes).toEqual(new Map([['xxx', new Set(['number|Date'])]]));
   });
@@ -107,7 +107,7 @@ describe('collectArgumentTsTypes', () => {
     const messageNode = parseMessage('en', '<a>{xxx,time}', { tokenizer: htmlTokenizer });
     const argumentTsTypes = new Map();
 
-    collectArgumentTsTypes(messageNode, getArgumentNaturalTsType, argumentTsTypes);
+    collectArgumentTsTypes(messageNode, getNaturalArgumentTsType, argumentTsTypes);
 
     expect(argumentTsTypes).toEqual(new Map([['xxx', new Set(['number|Date'])]]));
   });
@@ -116,7 +116,7 @@ describe('collectArgumentTsTypes', () => {
     const messageNode = parseMessage('en', '{yyy,select,zzz{{xxx,time}} vvv{}}', { tokenizer: htmlTokenizer });
     const argumentTsTypes = new Map();
 
-    collectArgumentTsTypes(messageNode, getArgumentNaturalTsType, argumentTsTypes);
+    collectArgumentTsTypes(messageNode, getNaturalArgumentTsType, argumentTsTypes);
 
     expect(argumentTsTypes).toEqual(
       new Map([
@@ -130,7 +130,7 @@ describe('collectArgumentTsTypes', () => {
     const messageNode = parseMessage('en', '{yyy,select,zzz{{xxx,time}} vvv{} other{}}', { tokenizer: htmlTokenizer });
     const argumentTsTypes = new Map();
 
-    collectArgumentTsTypes(messageNode, getArgumentNaturalTsType, argumentTsTypes);
+    collectArgumentTsTypes(messageNode, getNaturalArgumentTsType, argumentTsTypes);
 
     expect(argumentTsTypes).toEqual(
       new Map([
@@ -226,7 +226,7 @@ describe('compileFiles', () => {
         ' * У вас <b>{count, number}</b> непрочитанных сообщений\n' +
         ' * ```\n' +
         ' */\n' +
-        'export declare function messageCount(locale:string):MessageNode<{"count":number|bigint}>|null;\n' +
+        'export declare function messageCount(locale:string):MessageNode<{"count":number|bigint;}>|null;\n' +
         '\n' +
         '/**\n' +
         ' * **Message key**\n' +
@@ -242,7 +242,7 @@ describe('compileFiles', () => {
         ' * {gender, select, male {Он отправил} female {Она отправила} other {Они отправили}} вам сообщение\n' +
         ' * ```\n' +
         ' */\n' +
-        'export declare function messageReceived(locale:string):MessageNode<{"gender":"male"|"female"|(string&{})}>|null;\n',
+        'export declare function messageReceived(locale:string):MessageNode<{"gender":"male"|"female"|(string&{});}>|null;\n',
 
       'metadata.js':
         'import{LOCALE_EN_US,LOCALE_RU_RU}from"./locales.js";\n' +
