@@ -12,6 +12,11 @@ export type ChildNode = TextNode | ElementNode | ArgumentNode | OctothorpeNode;
  */
 export type ParentNode = MessageNode | ElementNode | AttributeNode | CategoryNode;
 
+/**
+ * Any MFML AST node.
+ *
+ * @group AST
+ */
 export type AnyNode =
   | MessageNode
   | TextNode

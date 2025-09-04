@@ -1,5 +1,5 @@
-import { createRenderer, defaultFormatters, ElementRenderer, Renderer } from './createRenderer.js';
-import { AnyNode, AttributeNode, ChildNode, MessageNode } from './types.js';
+import { defaultFormatter, naturalCategorySelector, Renderer } from './createRenderer.js';
+import { AttributeNode, ChildNode, MessageNode } from './types.js';
 import {
   getArgumentByOctothorpe,
   getArgumentCategories,
@@ -7,16 +7,14 @@ import {
   getArgumentOptions,
   getArgumentStyle,
   getArgumentType,
+  isLowerCaseAlpha,
 } from './utils.js';
 
-const stringElementRenderer: ElementRenderer<string> = (_tagName, _attributes, _children) => {
-  return _children.join('');
+const defaultRenderer: Renderer<string> = {
+  elementRenderer: (tagName, _attributes, children) => (isLowerCaseAlpha(tagName) ? children.join('') : ''),
+  formatter: defaultFormatter,
+  categorySelector: naturalCategorySelector,
 };
-
-const defaultStringRenderer = createRenderer({
-  elementRenderers: [stringElementRenderer],
-  formatters: defaultFormatters,
-});
 
 /**
  * Options of {@link renderToString}.
@@ -74,7 +72,7 @@ type InferRenderToStringOptions<MessageFunction extends (locale: string) => Mess
 export function renderToString<MessageFunction extends (locale: string) => MessageNode | null>(
   options: InferRenderToStringOptions<MessageFunction>
 ): string {
-  const { message, locale, values, renderer = defaultStringRenderer } = options;
+  const { message, locale, values, renderer = defaultRenderer } = options;
 
   const messageNode = message(locale);
 
@@ -85,11 +83,14 @@ export function renderToString<MessageFunction extends (locale: string) => Messa
   return renderChildren(messageNode.childNodes, messageNode.locale, values, renderer).join('');
 }
 
+/**
+ * Renders attribute nodes to a dictionary.
+ */
 export function renderAttributes(
   attributeNodes: AttributeNode[] | null,
   locale: string,
   values: any,
-  renderer: Renderer<string>
+  renderer: Renderer<any>
 ): Record<string, string> {
   if (attributeNodes === null) {
     return {};
@@ -104,62 +105,6 @@ export function renderAttributes(
   return attributes;
 }
 
-function renderChild(node: AnyNode, locale: string, values: any, renderer: Renderer<string>): string {
-  switch (node.nodeType) {
-    case 'text':
-      return node.value;
-
-    case 'element':
-      return renderer.renderElement(
-        node.tagName,
-        renderAttributes(node.attributeNodes, locale, values, renderer),
-        renderChildren(node.childNodes, locale, values, renderer)
-      );
-
-    case 'argument':
-      const value = values[node.name];
-      const type = getArgumentType(node);
-      const style = getArgumentStyle(node);
-      const options = getArgumentOptions(node);
-      const categories = getArgumentCategories(node);
-
-      if (type === null || categories === null) {
-        return renderer.formatArgument({ locale, value, type, style, options });
-      }
-
-      const category = renderer.selectCategory({ locale, value, type, categories, options });
-
-      if (category === undefined) {
-        return '';
-      }
-
-      const categoryNode = getArgumentCategory(node, category);
-
-      if (categoryNode === null) {
-        return '';
-      }
-
-      return renderChildren(categoryNode.childNodes, locale, values, renderer).join('');
-
-    case 'octothorpe':
-      const argumentNode = getArgumentByOctothorpe(node);
-
-      if (argumentNode === null) {
-        return '';
-      }
-
-      return renderer.formatArgument({
-        locale,
-        value: values[argumentNode.name],
-        type: getArgumentType(argumentNode),
-        style: getArgumentStyle(argumentNode),
-        options: getArgumentOptions(argumentNode),
-      });
-  }
-
-  return '';
-}
-
 function renderChildren(nodes: ChildNode[] | null, locale: string, values: any, renderer: Renderer<string>): string[] {
   if (nodes === null) {
     return [];
@@ -172,4 +117,66 @@ function renderChildren(nodes: ChildNode[] | null, locale: string, values: any, 
   }
 
   return children;
+}
+
+function renderChild(node: ChildNode, locale: string, values: any, renderer: Renderer<string>): string {
+  if (node.nodeType === 'text') {
+    return node.value;
+  }
+
+  if (node.nodeType === 'element') {
+    return (
+      renderer.elementRenderer(
+        node.tagName,
+        renderAttributes(node.attributeNodes, locale, values, renderer),
+        renderChildren(node.childNodes, locale, values, renderer)
+      ) || ''
+    );
+  }
+
+  if (node.nodeType === 'argument') {
+    const value = values?.[node.name];
+    const type = getArgumentType(node);
+    const style = getArgumentStyle(node);
+    const options = getArgumentOptions(node);
+    const categories = getArgumentCategories(node);
+
+    if (type === null || categories === null) {
+      return renderer.formatter({ locale, value, type, style, options }) || '';
+    }
+
+    const category = renderer.categorySelector({ locale, value, type, categories, options });
+
+    if (category === undefined) {
+      return '';
+    }
+
+    const categoryNode = getArgumentCategory(node, category);
+
+    if (categoryNode === null) {
+      return '';
+    }
+
+    return renderChildren(categoryNode.childNodes, locale, values, renderer).join('');
+  }
+
+  if (node.nodeType === 'octothorpe') {
+    const argumentNode = getArgumentByOctothorpe(node);
+
+    if (argumentNode === null) {
+      return '';
+    }
+
+    return (
+      renderer.formatter({
+        locale,
+        value: values?.[argumentNode.name],
+        type: getArgumentType(argumentNode),
+        style: getArgumentStyle(argumentNode),
+        options: getArgumentOptions(argumentNode),
+      }) || ''
+    );
+  }
+
+  return '';
 }

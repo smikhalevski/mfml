@@ -4,4 +4,10 @@
  * @module mfml/react
  */
 
-export { Message, MessageLocaleProvider, MessageRendererProvider, type MessageProps } from './Message.js';
+export {
+  createReactDOMElementRenderer,
+  Message,
+  MessageLocaleProvider,
+  MessageRendererProvider,
+  type MessageProps,
+} from './Message.js';

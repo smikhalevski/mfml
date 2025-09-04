@@ -39,7 +39,7 @@ export function formatError(error: unknown): string {
     let message = error.message;
 
     if (error.startIndex !== -1) {
-      message += +'\n\n' + formatTextExcerpt(error.text, error.startIndex, Math.max(error.startIndex, error.endIndex));
+      message += '\n\n' + formatTextExcerpt(error.text, error.startIndex, Math.max(error.startIndex, error.endIndex));
     }
 
     return message;

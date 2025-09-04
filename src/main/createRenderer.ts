@@ -1,9 +1,24 @@
 /**
- * Params provided to a {@link Renderer.formatArgument}.
+ * Renders an element.
+ *
+ * @param tagName The element tag name.
+ * @param attributes Attributes of an element.
+ * @param children Children of an element.
+ * @returns Rendering result, or `undefined` if an element should not be rendered.
+ * @template Element The rendered element.
+ */
+export type ElementRenderer<Element> = (
+  tagName: string,
+  attributes: Record<string, string>,
+  children: Array<Element | string>
+) => Element | string | undefined;
+
+/**
+ * Params provided to a {@link Formatter}.
  *
  * @group Renderer
  */
-export interface FormatArgumentParams {
+export interface FormatterParams {
   /**
    * The message locale.
    */
@@ -31,11 +46,19 @@ export interface FormatArgumentParams {
 }
 
 /**
- * Params provided to a {@link Renderer.selectCategory}.
+ * Formats an argument value as a string.
+ *
+ * @param params The formatting params.
+ * @returns The formatted argument value, or `undefined` if an argument should not be rendered.
+ */
+export type Formatter = (params: FormatterParams) => string | undefined;
+
+/**
+ * Params provided to a {@link CategorySelector}.
  *
  * @group Renderer
  */
-export interface SelectCategoryParams {
+export interface CategorySelectorParams {
   /**
    * The message locale.
    */
@@ -63,6 +86,14 @@ export interface SelectCategoryParams {
 }
 
 /**
+ * Returns the selected category depending of an argument value.
+ *
+ * @param params The params use for category selection.
+ * @returns The selected category, or `undefined` if there's no matching category.
+ */
+export type CategorySelector = (params: CategorySelectorParams) => string | undefined;
+
+/**
  * Renders elements and arguments.
  *
  * @template Element The rendered element.
@@ -71,111 +102,29 @@ export interface SelectCategoryParams {
 export interface Renderer<Element> {
   /**
    * Renders an element.
-   *
-   * @param tagName The element tag name.
-   * @param attributes Attributes of an element.
-   * @param children Children of an element.
-   * @returns Rendering result.
    */
-  renderElement(
-    tagName: string,
-    attributes: Record<string, string>,
-    children: Array<Element | string>
-  ): Element | string;
+  elementRenderer: ElementRenderer<Element>;
 
   /**
    * Formats argument value as a string.
-   *
-   * @param params The params use for formatting.
-   * @returns Formatted argument value.
    */
-  formatArgument(params: FormatArgumentParams): string;
+  formatter: Formatter;
 
   /**
    * Returns the selected category depending of an argument value.
-   *
-   * @param params The params use for category selection.
-   * @returns The selected category, or `undefined` if there's no matching category.
    */
-  selectCategory(params: SelectCategoryParams): string | undefined;
+  categorySelector: CategorySelector;
 }
 
-/**
- * Renders an element.
- *
- * @param tagName The element tag name.
- * @param attributes Attributes of an element.
- * @param children Children of an element.
- * @returns Rendering result or `undefined` if renderer cannot render the requested element.
- * @group Renderer
- */
-export type ElementRenderer<Element> = (
-  tagName: string,
-  attributes: Record<string, string>,
-  children: Array<Element | string>
-) => Element | string | undefined;
+export function combineFormatters(formatters: Formatter[]): Formatter {
+  return params => {
+    for (const formatter of formatters) {
+      const formattedValue = formatter(params);
 
-/**
- * A callback that formats an argument value or returns `undefined` if value cannot be formatted.
- *
- * @param params Formatting params.
- * @group Renderer
- */
-export type Formatter = (params: FormatArgumentParams) => string | undefined;
-
-/**
- * Options of {@link createRenderer}.
- *
- * @template Element The rendered element.
- * @group Renderer
- */
-export interface RendererOptions<Element> {
-  /**
-   * Element renderers.
-   */
-  elementRenderers: ElementRenderer<Element>[];
-
-  /**
-   * Argument formatters.
-   */
-  formatters: Formatter[];
-}
-
-/**
- * Creates a new {@link Renderer}.
- *
- * @param options Renderer options.
- * @group Renderer
- */
-export function createRenderer<Element>(options: RendererOptions<Element>): Renderer<Element> {
-  const { elementRenderers, formatters } = options;
-
-  return {
-    renderElement(tagName, attributes, children) {
-      for (const elementRenderer of elementRenderers) {
-        const element = elementRenderer(tagName, attributes, children);
-
-        if (element !== undefined) {
-          return element;
-        }
+      if (formattedValue !== undefined) {
+        return formattedValue;
       }
-
-      return '';
-    },
-
-    formatArgument(params) {
-      for (const formatter of formatters) {
-        const formattedValue = formatter(params);
-
-        if (formattedValue !== undefined) {
-          return formattedValue;
-        }
-      }
-
-      return '' + params.value;
-    },
-
-    selectCategory,
+    }
   };
 }
 
@@ -185,7 +134,7 @@ export function createRenderer<Element>(options: RendererOptions<Element>): Rend
  * @param params The params use for category selection.
  * @returns The selected category, or `undefined` if there's no matching category.
  */
-export function selectCategory(params: SelectCategoryParams): string | undefined {
+export const naturalCategorySelector: CategorySelector = params => {
   const { value, type, locale, categories } = params;
 
   let selectedCategory = '=' + value;
@@ -195,7 +144,9 @@ export function selectCategory(params: SelectCategoryParams): string | undefined
   }
 
   if ((type === 'plural' || type === 'selectordinal') && typeof value === 'number') {
-    selectedCategory = getPluralRules(locale, type === 'plural' ? cardinalOptions : ordinalOptions).select(value);
+    const formatOptions = type === 'plural' ? cardinalOptions : ordinalOptions;
+
+    selectedCategory = getPluralRules(locale, combineOptions(formatOptions, params.options)).select(value);
   } else if (type === 'select') {
     selectedCategory = '' + value;
   } else {
@@ -203,13 +154,13 @@ export function selectCategory(params: SelectCategoryParams): string | undefined
   }
 
   return categories.includes(selectedCategory) ? selectedCategory : categories.includes('other') ? 'other' : undefined;
-}
+};
 
 const defaultOptions = {};
 
-export type IntlFactory<O, R> = (locale: string, options?: O) => R;
+type IntlFactory<O, R> = (locale: string, options?: O) => R;
 
-export function cacheIntlFactory<O extends object, R>(factory: IntlFactory<O, R>): IntlFactory<O, R> {
+function cacheIntlFactory<O extends object, R>(factory: IntlFactory<O, R>): IntlFactory<O, R> {
   const cache = new Map<string, WeakMap<O, R>>();
 
   return (locale, options = defaultOptions as O) => {
@@ -231,6 +182,10 @@ export function cacheIntlFactory<O extends object, R>(factory: IntlFactory<O, R>
   };
 }
 
+function combineOptions<T>(formatOptions: T, argumentOptions: T | null): T {
+  return argumentOptions === null ? formatOptions : { ...formatOptions, ...argumentOptions };
+}
+
 const cardinalOptions: Intl.PluralRulesOptions = { type: 'cardinal' };
 
 const ordinalOptions: Intl.PluralRulesOptions = { type: 'ordinal' };
@@ -245,80 +200,55 @@ const getListFormat = cacheIntlFactory((locale, options) => new Intl.ListFormat(
 
 export function createNumberFormatter(
   type: string,
-  style: string | null = null,
-  options?: Intl.NumberFormatOptions
+  style: string | null,
+  options: Intl.NumberFormatOptions
 ): Formatter {
   return params => {
     if (
-      // Unrelated type
-      type !== params.type ||
-      // Unrelated style
-      style !== params.style ||
-      // Unsupported value
-      (typeof params.value !== 'number' && typeof params.value !== 'bigint')
+      type === params.type &&
+      style === params.style &&
+      (typeof params.value === 'number' || typeof params.value === 'bigint')
     ) {
-      return;
+      return getNumberFormat(params.locale, combineOptions(options, params.options)).format(params.value);
     }
-
-    const formatOptions =
-      params.options === null ? options : options === undefined ? params.options : { ...options, ...params.options };
-
-    return getNumberFormat(params.locale, formatOptions).format(params.value);
   };
 }
 
 export function createDateTimeFormatter(
   type: string,
-  style: string | null = null,
-  options?: Intl.DateTimeFormatOptions
+  style: string | null,
+  options: Intl.DateTimeFormatOptions
 ): Formatter {
   return params => {
     if (
-      // Unrelated type
-      type !== params.type ||
-      // Unrelated style
-      style !== params.style ||
-      // Unsupported value
-      (typeof params.value !== 'number' && !(params.value instanceof Date))
+      type === params.type &&
+      style === params.style &&
+      (typeof params.value === 'number' || params.value instanceof Date)
     ) {
-      return;
+      return getDateTimeFormat(params.locale, combineOptions(options, params.options)).format(params.value);
     }
-
-    const formatOptions =
-      params.options === null ? options : options === undefined ? params.options : { ...options, ...params.options };
-
-    return getDateTimeFormat(params.locale, formatOptions).format(params.value);
   };
 }
 
-export function createListFormatter(
-  type: string,
-  style: string | null = null,
-  options?: Intl.ListFormatOptions
-): Formatter {
+export function createListFormatter(type: string, style: string | null, options: Intl.ListFormatOptions): Formatter {
   return params => {
-    if (
-      // Unrelated type
-      type !== params.type ||
-      // Unrelated style
-      style !== params.style ||
-      // Unsupported value
-      !Array.isArray(params.value)
-    ) {
-      return;
+    if (type === params.type && style === params.style && Array.isArray(params.value)) {
+      return getListFormat(params.locale, combineOptions(options, params.options)).format(params.value);
     }
-
-    const formatOptions =
-      params.options === null ? options : options === undefined ? params.options : { ...options, ...params.options };
-
-    return getListFormat(params.locale, formatOptions).format(params.value);
   };
 }
 
 export const defaultFormatters: Formatter[] = [
+  params => {
+    if (params.type === 'plural' || params.type === 'selectordinal') {
+      params.type = 'number';
+    }
+    return undefined;
+  },
+
   createNumberFormatter('number', 'decimal', { style: 'decimal' }),
   createNumberFormatter('number', 'percent', { style: 'percent' }),
-  createNumberFormatter('number'),
+  createNumberFormatter('number', null, { style: 'decimal' }),
 
   createDateTimeFormatter('date', 'short', { dateStyle: 'short' }),
   createDateTimeFormatter('date', 'full', { dateStyle: 'full' }),
@@ -334,4 +264,8 @@ export const defaultFormatters: Formatter[] = [
 
   createListFormatter('list', 'and', { type: 'conjunction' }),
   createListFormatter('list', 'or', { type: 'disjunction' }),
+
+  params => (params.value !== null && params.value !== undefined ? '' + params.value : ''),
 ];
+
+export const defaultFormatter = combineFormatters(defaultFormatters);

@@ -4,7 +4,19 @@
  * @module mfml
  */
 
-export { createRenderer, type Renderer } from './createRenderer.js';
+export {
+  createListFormatter,
+  createDateTimeFormatter,
+  createNumberFormatter,
+  combineFormatters,
+  naturalCategorySelector,
+  type Renderer,
+  type FormatterParams,
+  type CategorySelectorParams,
+  type Formatter,
+  type CategorySelector,
+  type ElementRenderer,
+} from './createRenderer.js';
 export { renderToString, type RenderToStringOptions } from './renderToString.js';
 export type {
   ChildNode,

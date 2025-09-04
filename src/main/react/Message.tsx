@@ -1,15 +1,70 @@
-import React, { createContext, createElement, Fragment, ReactNode, useContext, useMemo } from 'react';
-import { Renderer } from '../createRenderer.js';
-import { AnyNode, AttributeNode, CategoryNode, ChildNode, MessageNode } from '../types.js';
+import React, { ComponentType, createContext, createElement, Fragment, ReactNode, useContext, useMemo } from 'react';
+import { Renderer, naturalCategorySelector, ElementRenderer, defaultFormatter } from '../createRenderer.js';
+import { AttributeNode, ChildNode, MessageNode } from '../types.js';
 import { renderAttributes } from '../renderToString.js';
+import {
+  getArgumentByOctothorpe,
+  getArgumentCategories,
+  getArgumentCategory,
+  getArgumentOptions,
+  getArgumentStyle,
+  getArgumentType,
+  isLowerCaseAlpha,
+} from '../utils.js';
+
+/**
+ * Creates element renderer that produces React DOM elements if tag name is lower case alpha.
+ *
+ * @example
+ * function Tooltip(props) {
+ *   return <div title={props.title}>{props.children}</div>;
+ * }
+ *
+ * createReactDOMElementRenderer({
+ *   p: 'br'
+ *   abbr: Tooltip,
+ * });
+ *
+ * @param components A mapping from an element tag name to a component.
+ * @group Message
+ */
+export function createReactDOMElementRenderer(components?: {
+  [tagName: string]: ComponentType | string;
+}): ElementRenderer<ReactNode> {
+  return (tagName, attributes, children) => {
+    let component = components?.[tagName];
+
+    if (component === undefined) {
+      if (!isLowerCaseAlpha(tagName)) {
+        return null;
+      }
+
+      // React DOM element
+      component = tagName;
+    }
+
+    if ('class' in attributes) {
+      attributes.className = attributes.class;
+
+      delete attributes.class;
+    }
+
+    return createElement(component, attributes, ...children);
+  };
+}
 
 const MessageLocaleContext = createContext('en');
 MessageLocaleContext.displayName = 'MessageLocaleContext';
 
-const MessageRendererContext = createContext<Renderer<ReactNode>>(null!);
+const MessageRendererContext = createContext<Renderer<ReactNode>>({
+  elementRenderer: createReactDOMElementRenderer(),
+  formatter: defaultFormatter,
+  categorySelector: naturalCategorySelector,
+});
+
 MessageRendererContext.displayName = 'MessageRendererContext';
 
-const MessageValuesContext = createContext<Record<string, unknown> | undefined>(undefined);
+const MessageValuesContext = createContext<any>(undefined);
 MessageValuesContext.displayName = 'MessageValuesContext';
 
 /**
@@ -92,14 +147,10 @@ export function Message<MessageFunction extends (locale: string) => MessageNode 
       return null;
     }
 
-    return createElement(Fragment, null, ...renderChildren(messageNode.locale, messageNode.childNodes, renderer));
+    return normalizeChildren(renderChildren(messageNode.childNodes, messageNode.locale, renderer));
   }, [message, locale, renderer]);
 
-  return (
-    <MessageValuesContext.Provider value={values as Record<string, unknown> | undefined}>
-      {children}
-    </MessageValuesContext.Provider>
-  );
+  return <MessageValuesContext.Provider value={values}>{children}</MessageValuesContext.Provider>;
 }
 
 /**
@@ -121,26 +172,27 @@ function renderChildren(nodes: ChildNode[] | null, locale: string, renderer: Ren
   return children;
 }
 
-function renderChild(node: AnyNode, locale: string, renderer: Renderer<ReactNode>): ReactNode {
+function renderChild(node: ChildNode, locale: string, renderer: Renderer<ReactNode>): ReactNode {
   if (node.nodeType === 'text') {
     return node.value;
   }
 
   if (node.nodeType === 'element') {
-    if (!containsArguments(node.attributeNodes)) {
-      return renderer.renderElement(
+    if (!hasInterpolatedAttributes(node.attributeNodes)) {
+      return renderer.elementRenderer(
         node.tagName,
-        renderAttributes(node.attributeNodes, locale, undefined, renderer as Renderer<string>),
+        renderAttributes(node.attributeNodes, locale, undefined, renderer),
         renderChildren(node.childNodes, locale, renderer)
       );
     }
 
+    // Element attributes must be re-rendered every time argument values are changed
     return (
       <MessageValuesContext.Consumer>
         {values =>
-          renderer.renderElement(
+          renderer.elementRenderer(
             node.tagName,
-            renderAttributes(node, locale, values, renderer as Renderer<string>),
+            renderAttributes(node.attributeNodes, locale, values, renderer),
             renderChildren(node.childNodes, locale, renderer)
           )
         }
@@ -149,89 +201,75 @@ function renderChild(node: AnyNode, locale: string, renderer: Renderer<ReactNode
   }
 
   if (node.nodeType === 'argument') {
+    const name = node.name;
+    const type = getArgumentType(node);
+    const style = getArgumentStyle(node);
+    const options = getArgumentOptions(node);
+    const categories = getArgumentCategories(node);
+
+    return (
+      <MessageValuesContext.Consumer>
+        {values => {
+          const value = values?.[name];
+
+          if (type === null || categories === null) {
+            return renderer.formatter({ locale, value, type, style, options });
+          }
+
+          const category = renderer.categorySelector({ locale, value, type, categories, options });
+
+          if (category === undefined) {
+            return null;
+          }
+
+          const categoryNode = getArgumentCategory(node, category);
+
+          if (categoryNode === null) {
+            return null;
+          }
+
+          return normalizeChildren(renderChildren(categoryNode.childNodes, locale, renderer));
+        }}
+      </MessageValuesContext.Consumer>
+    );
   }
 
-  // switch (node.nodeType) {
-  //   case 'text':
-  //
-  //   case 'element':
-  //
-  //   case 'argument':
-  //     const { categoryNodes } = node;
-  //
-  //     let options: Record<string, string> | undefined;
-  //
-  //     if (node.optionNodes !== null) {
-  //       options = {};
-  //
-  //       for (const optionNode of node.optionNodes) {
-  //         options[optionNode.name] = optionNode.valueNode!.value;
-  //       }
-  //     }
-  //
-  //     if (categoryNodes === null) {
-  //       return (
-  //         <MessageValuesContext.Consumer>
-  //           {values =>
-  //             renderer.formatArgument(
-  //               locale,
-  //               values && values[node.name],
-  //               node.typeNode?.value,
-  //               node.styleNode?.value,
-  //               options
-  //             )
-  //           }
-  //         </MessageValuesContext.Consumer>
-  //       );
-  //     }
-  //
-  //     return (
-  //       <MessageValuesContext.Consumer>
-  //         {values => {
-  //           const categories = [];
-  //
-  //           let selectedCategoryNode: CategoryNode | undefined;
-  //
-  //           for (const categoryNode of categoryNodes) {
-  //             categories.push(categoryNode.name);
-  //
-  //             if (categoryNode.name === 'other') {
-  //               selectedCategoryNode = categoryNode;
-  //             }
-  //           }
-  //
-  //           const category = renderer.selectCategory({
-  //             locale: locale,
-  //             value: values && values[node.name],
-  //             type: node.typeNode!.value,
-  //             categories: categories,
-  //             options: options,
-  //           });
-  //
-  //           if (category !== undefined && categories.indexOf(category) !== -1) {
-  //             for (const categoryNode of categoryNodes) {
-  //               if (category === categoryNode.name) {
-  //                 selectedCategoryNode = categoryNode;
-  //                 break;
-  //               }
-  //             }
-  //           }
-  //
-  //           if (selectedCategoryNode !== undefined) {
-  //             return renderChildren(locale, selectedCategoryNode.childNodes, renderer);
-  //           }
-  //
-  //           return null;
-  //         }}
-  //       </MessageValuesContext.Consumer>
-  //     );
-  // }
+  if (node.nodeType === 'octothorpe') {
+    const argumentNode = getArgumentByOctothorpe(node);
+
+    if (argumentNode === null) {
+      return null;
+    }
+
+    const name = argumentNode.name;
+    const type = getArgumentType(argumentNode);
+    const style = getArgumentStyle(argumentNode);
+    const options = getArgumentOptions(argumentNode);
+
+    return (
+      <MessageValuesContext.Consumer>
+        {values => renderer.formatter({ locale, value: values?.[name], type, style, options })}
+      </MessageValuesContext.Consumer>
+    );
+  }
+}
+
+function normalizeChildren(children: ReactNode[]): ReactNode {
+  if (children.length === 0) {
+    return null;
+  }
+  if (children.length === 1) {
+    return children[0];
+  }
+
+  // Ensure all children have keys
+  return createElement(Fragment, null, ...children);
 }
 
 /**
  * Returns `true` if some of attributes contain arguments.
  */
-function containsArguments(attributeNodes: AttributeNode[] | null): boolean {
+function hasInterpolatedAttributes(attributeNodes: AttributeNode[] | null): boolean {
   if (attributeNodes === null) {
     return false;
   }
