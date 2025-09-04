@@ -1,5 +1,5 @@
-import React, { ComponentType, createContext, createElement, Fragment, ReactNode, useContext, useMemo } from 'react';
-import { Renderer, defaultCategorySelector, ElementRenderer, defaultArgumentFormatter } from '../renderer.js';
+import React, { createContext, createElement, Fragment, ReactNode, useContext, useMemo } from 'react';
+import { defaultArgumentFormatter, defaultCategorySelector, Renderer } from '../renderer.js';
 import { AttributeNode, ChildNode, MessageNode } from '../types.js';
 import { renderAttributes } from '../renderToString.js';
 import {
@@ -9,53 +9,8 @@ import {
   getArgumentOptions,
   getArgumentStyle,
   getArgumentType,
-  isLowerCaseAlpha,
 } from '../utils.js';
-
-/**
- * Creates element renderer that produces React DOM elements if tag name is lower case alpha.
- *
- * @example
- * function Tooltip(props) {
- *   return <div title={props.title}>{props.children}</div>;
- * }
- *
- * const coolRenderer = createReactDOMElementRenderer({
- *   p: 'div',
- *   Tooltip,
- * });
- *
- * <MessageRendererProvider value={coolRenderer}>
- *   {...}
- * </MessageRendererProvider>
- *
- * @param components A mapping from an element tag name to a component.
- * @group Message
- */
-export function createReactDOMElementRenderer(components?: {
-  [tagName: string]: ComponentType | string;
-}): ElementRenderer<ReactNode> {
-  return (tagName, attributes, children) => {
-    let component = components?.[tagName];
-
-    if (component === undefined) {
-      if (!isLowerCaseAlpha(tagName)) {
-        return null;
-      }
-
-      // React DOM element
-      component = tagName;
-    }
-
-    if ('class' in attributes) {
-      attributes.className = attributes.class;
-
-      delete attributes.class;
-    }
-
-    return createElement(component, attributes, ...children);
-  };
-}
+import { createReactDOMElementRenderer } from './createReactDOMElementRenderer.js';
 
 const MessageLocaleContext = createContext('en');
 MessageLocaleContext.displayName = 'MessageLocaleContext';
