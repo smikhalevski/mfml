@@ -2,13 +2,12 @@ import React, { createContext, createElement, Fragment, ReactNode, useContext, u
 import { Child, ElementNode, MessageNode } from '../ast.js';
 import { ReactRenderer } from './ReactRenderer.js';
 import { renderChildrenAsString } from '../renderText.js';
-import { defaultStyles } from '../utils.js';
 import { Renderer } from '../AbstractRenderer.js';
 
 const MessageLocaleContext = createContext('en');
 MessageLocaleContext.displayName = 'MessageLocaleContext';
 
-const MessageRendererContext = createContext<Renderer<ReactNode>>(new ReactRenderer(defaultStyles));
+const MessageRendererContext = createContext<Renderer<ReactNode>>(new ReactRenderer());
 MessageRendererContext.displayName = 'MessageRendererContext';
 
 const MessageValuesContext = createContext<Record<string, unknown> | undefined>(undefined);

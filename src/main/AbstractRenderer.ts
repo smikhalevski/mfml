@@ -85,21 +85,29 @@ export interface AbstractRendererOptions {
 export abstract class AbstractRenderer<Element> implements Renderer<Element> {
   /**
    * Formatting styles used for "number" argument type.
+   *
+   * By default, "decimal" and "percent" styles are supported.
    */
   numberStyles;
 
   /**
    * Formatting styles used for "date" argument type.
+   *
+   * By default, "short", "full", "long", and "medium" styles are supported.
    */
   dateStyles;
 
   /**
    * Formatting styles used for "time" argument type.
+   *
+   * By default, "short", "full", "long", and "medium" styles are supported.
    */
   timeStyles;
 
   /**
    * Formatting styles used for "list" argument type.
+   *
+   * By default, "and" and "or" styles are supported.
    */
   listStyles;
 
@@ -114,7 +122,13 @@ export abstract class AbstractRenderer<Element> implements Renderer<Element> {
    * @param options Rendering options.
    */
   constructor(options: AbstractRendererOptions = {}) {
-    const { numberStyles = {}, dateStyles = {}, timeStyles = {}, listStyles = {}, formatters = {} } = options;
+    const {
+      numberStyles = defaultNumberStyles,
+      dateStyles = defaultDateStyles,
+      timeStyles = defaultTimeStyles,
+      listStyles = defaultListStyles,
+      formatters = {},
+    } = options;
 
     this.numberStyles = numberStyles;
     this.dateStyles = dateStyles;
@@ -177,15 +191,6 @@ export abstract class AbstractRenderer<Element> implements Renderer<Element> {
   }
 }
 
-function getStyleOptions<T>(styles: Record<string, T>, style: string | undefined): T {
-  if (style !== undefined && styles.hasOwnProperty(style)) {
-    return styles[style];
-  }
-  return defaultStyleOptions as T;
-}
-
-const defaultStyleOptions = {};
-
 const cardinalOptions: Intl.PluralRulesOptions = { type: 'cardinal' };
 
 const ordinalOptions: Intl.PluralRulesOptions = { type: 'ordinal' };
@@ -221,3 +226,36 @@ function createCachedFactory<O extends object, V>(
     return result;
   };
 }
+
+function getStyleOptions<T>(styles: Record<string, T>, style: string | undefined): T {
+  if (style !== undefined && styles.hasOwnProperty(style)) {
+    return styles[style];
+  }
+  return defaultStyleOptions as T;
+}
+
+const defaultStyleOptions = {};
+
+const defaultNumberStyles: Record<string, Intl.NumberFormatOptions> = {
+  decimal: { style: 'decimal' },
+  percent: { style: 'percent' },
+};
+
+const defaultDateStyles: Record<string, Intl.DateTimeFormatOptions> = {
+  short: { dateStyle: 'short' },
+  full: { dateStyle: 'full' },
+  long: { dateStyle: 'long' },
+  medium: { dateStyle: 'medium' },
+};
+
+const defaultTimeStyles: Record<string, Intl.DateTimeFormatOptions> = {
+  short: { timeStyle: 'short' },
+  full: { timeStyle: 'full' },
+  long: { timeStyle: 'long' },
+  medium: { timeStyle: 'medium' },
+};
+
+const defaultListStyles: Record<string, Intl.ListFormatOptions> = {
+  and: { type: 'conjunction' },
+  or: { type: 'disjunction' },
+};

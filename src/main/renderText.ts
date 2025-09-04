@@ -1,9 +1,8 @@
 import { Child, MessageNode } from './ast.js';
 import { StringRenderer } from './StringRenderer.js';
-import { defaultStyles } from './utils.js';
 import { Renderer } from './AbstractRenderer.js';
 
-const defaultStringRenderer: Renderer<string> = new StringRenderer(defaultStyles);
+const defaultStringRenderer: Renderer<string> = new StringRenderer();
 
 /**
  * Options of {@link renderText}.
