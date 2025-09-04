@@ -22,6 +22,7 @@ The ICU MessageFormat + XML/HTML compiler and runtime that makes your i18n messa
 - Highly customizable.
 - First-class React support.
 - Zero dependencies.
+- XSS prone because due to no dangerous HTML rendering.
 - [Just 3 kB gzipped.](https://bundlephobia.com/result?p=mfml)
 
 <!--/OVERVIEW-->

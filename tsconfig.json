@@ -8,7 +8,7 @@
     "skipLibCheck": true,
     "target": "ES2020",
     "module": "NodeNext",
-    "lib": ["ES2020", "DOM", "ES2022.Error"],
+    "lib": ["ES2022", "DOM"],
     "outDir": "./lib",
     "jsx": "react"
   },

@@ -43,17 +43,27 @@ export interface MessageRenderer<T> {
  */
 export interface MessageRendererOptions {
   /**
-   * Number formatting styles.
+   * Formatting styles used for "number" argument type.
    */
   numberStyles?: Record<string, Intl.NumberFormatOptions>;
 
   /**
-   * Date formatting styles.
+   * Formatting styles used for "date" argument type.
    */
   dateStyles?: Record<string, Intl.DateTimeFormatOptions>;
 
   /**
-   * Time formatting styles.
+   * Formatting styles used for "time" argument type.
    */
   timeStyles?: Record<string, Intl.DateTimeFormatOptions>;
+
+  /**
+   * Formatting styles used for "list" argument type.
+   */
+  listStyles?: Record<string, Intl.ListFormatOptions>;
+
+  /**
+   * Map from an attribute type to a custom formatter function.
+   */
+  formatters?: Record<string, (value: unknown, style: string | undefined) => string>;
 }

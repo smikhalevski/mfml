@@ -7,19 +7,29 @@ import { MessageRenderer, MessageRendererOptions } from './types.js';
  */
 export abstract class AbstractMessageRenderer<T> implements MessageRenderer<T> {
   /**
-   * Number formatting styles.
+   * Formatting styles used for "number" argument type.
    */
-  numberStyles: Record<string, Intl.NumberFormatOptions>;
+  numberStyles;
 
   /**
-   * Date formatting styles.
+   * Formatting styles used for "date" argument type.
    */
-  dateStyles: Record<string, Intl.DateTimeFormatOptions>;
+  dateStyles;
 
   /**
-   * Time formatting styles.
+   * Formatting styles used for "time" argument type.
    */
-  timeStyles: Record<string, Intl.DateTimeFormatOptions>;
+  timeStyles;
+
+  /**
+   * Formatting styles used for "list" argument type.
+   */
+  listStyles;
+
+  /**
+   * Map from an attribute type to a custom formatter function.
+   */
+  formatters;
 
   /**
    * Creates a new {@link AbstractMessageRenderer} instance.
@@ -27,16 +37,22 @@ export abstract class AbstractMessageRenderer<T> implements MessageRenderer<T> {
    * @param options Rendering options.
    */
   constructor(options: MessageRendererOptions = {}) {
-    const { numberStyles = {}, dateStyles = {}, timeStyles = {} } = options;
+    const { numberStyles = {}, dateStyles = {}, timeStyles = {}, listStyles = {}, formatters = {} } = options;
 
     this.numberStyles = numberStyles;
     this.dateStyles = dateStyles;
     this.timeStyles = timeStyles;
+    this.listStyles = listStyles;
+    this.formatters = formatters;
   }
 
   abstract renderElement(locale: string, tagName: string, attributes: Record<string, string>, children: T[]): T;
 
   formatArgument(locale: string, value: unknown, type: string | undefined, style: string | undefined): string {
+    if (type !== undefined && this.formatters.hasOwnProperty(type)) {
+      return this.formatters[type](value, style);
+    }
+
     if (type === 'number' && (typeof value === 'number' || typeof value === 'bigint')) {
       return getCachedNumberFormat(locale, (style && this.numberStyles[style]) || defaultOptions).format(value);
     }
@@ -47,6 +63,10 @@ export abstract class AbstractMessageRenderer<T> implements MessageRenderer<T> {
 
     if (type === 'time' && (typeof value === 'number' || value instanceof Date)) {
       return getCachedDateTimeFormat(locale, (style && this.timeStyles[style]) || defaultOptions).format(value);
+    }
+
+    if (type === 'list' && Array.isArray(value)) {
+      return getCachedListFormat(locale, (style && this.listStyles[style]) || defaultOptions).format(value);
     }
 
     if (value === null || value === undefined || value !== value) {
@@ -84,6 +104,8 @@ const ordinalOptions: Intl.PluralRulesOptions = { type: 'ordinal' };
 const getCachedDateTimeFormat = createCachedFactory((locale, options) => new Intl.DateTimeFormat(locale, options));
 
 const getCachedNumberFormat = createCachedFactory((locale, options) => new Intl.NumberFormat(locale, options));
+
+const getCachedListFormat = createCachedFactory((locale, options) => new Intl.ListFormat(locale, options));
 
 const getCachedPluralRules = createCachedFactory((locale, options) => new Intl.PluralRules(locale, options));
 
