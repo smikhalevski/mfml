@@ -127,12 +127,16 @@ export async function compileFiles(
       Object.values(localeVars).join(',') +
       '}from"./locales.js";\n';
 
+    const messageLocales: string[] = [];
+
     for (const locale of locales) {
       let text = messages[locale][messageKey];
 
       if (text === undefined) {
         continue;
       }
+
+      messageLocales.push(locale);
 
       if (preprocessors !== undefined) {
         for (const preprocessor of preprocessors) {
@@ -177,8 +181,26 @@ export async function compileFiles(
 
     indexSrc += 'export{default as ' + functionName + '}from"./' + fileName + '";\n';
 
+    const jsDoc =
+      '\n/**' +
+      '\n * **Message key**&emsp;`' +
+      messageKey +
+      '`' +
+      '\n * ' +
+      '\n * ' +
+      messageLocales
+        .map(locale => '**' + locale + '**\n' + formatMessagePreview(messages[locale][messageKey]))
+        .join('\n\n')
+        .replace(/\n/g, '\n * ') +
+      '\n */';
+
     typingsSrc +=
-      '\nexport declare function ' + functionName + '(locale:string):' + compileMessageType(argumentNames) + ';\n';
+      jsDoc +
+      '\nexport declare function ' +
+      functionName +
+      '(locale:string):' +
+      compileMessageType(argumentNames) +
+      ';\n';
   }
 
   files['locales.js'] = localesSrc;
@@ -281,4 +303,40 @@ function compileChild(child: Child): string {
   }
 
   throw new Error('Unknown node type');
+}
+
+export function formatMessagePreview(text: string, lineLength = 80): string {
+  const lines = [];
+
+  let lineStart = 0;
+  let lineEnd = 0;
+
+  for (let i = 0; i < text.length; ++i) {
+    const charCode = text.charCodeAt(i);
+
+    // Line separator
+    if (charCode === /* \n */ 10 || charCode === /* \r */ 13) {
+      lines.push(text.substring(lineStart, lineEnd));
+      lineEnd = i + 1;
+      continue;
+    }
+
+    // Word separator
+    if (charCode == /* \s */ 32 || charCode === /* \t */ 9) {
+      // Word fits in a line
+      if (i - lineStart < lineLength) {
+        lineEnd = i;
+        continue;
+      }
+
+      lines.push(text.substring(lineStart, lineEnd));
+      lineEnd = i + 1;
+    }
+  }
+
+  if (lineStart !== lineEnd) {
+    lines.push(text.substring(lineStart, lineEnd));
+  }
+
+  return '```\n' + lines.join('\n').replace(/`/g, '\\&$') + '\n```';
 }

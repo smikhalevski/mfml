@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { compileMessageNode, compileFiles } from '../../main/compiler/createCompiler.js';
+import { compileMessageNode, compileFiles, formatMessagePreview } from '../../main/compiler/createCompiler.js';
 import { createParser, parseMessage } from '../../main/parser/createParser.js';
 import { createTokenizer, htmlTokenizer } from '../../main/parser/index.js';
 
@@ -70,5 +70,11 @@ describe('compileFiles', () => {
       'index.d.ts':
         'import{MessageNode}from"mfml";\n\nexport declare function messageCount(locale:string):MessageNode<{"count":unknown}>|null;\n\nexport declare function messageReceived(locale:string):MessageNode<{"gender":unknown}>|null;\n',
     });
+  });
+});
+
+describe('formatMessagePreview', () => {
+  test('', () => {
+    expect(formatMessagePreview('aaa bbb ccc', 5)).toBe('```\naaa\nbbb\nccc\n```');
   });
 });
