@@ -319,7 +319,7 @@ export async function compileFiles(
     const messageNodes: MessageNode[] = [];
     const argumentTsTypes = new Map<string, Set<string>>();
 
-    let jsCode = 'export default function(locale){\nreturn ';
+    let jsCode = '';
     let jsDocComment = formatMarkdownBold('Message key') + '\n' + formatMarkdownFence(messageKey, 'text');
 
     // Parse message text for each locale
@@ -373,31 +373,41 @@ export async function compileFiles(
     }
 
     // Return null from a message function for an unknown or unsupported locale
-    jsCode += 'null;\n}\n';
+    jsCode += 'null;';
 
-    jsDocComment = formatJSDocComment(jsDocComment);
-
-    jsCode = 'import{M,E,A,V,R,O,C}from"mfml/dsl";\n' + localesJsImport + '\n\n' + jsDocComment + '\n' + jsCode;
+    let fileName;
+    let functionName;
 
     try {
-      const fileName = await toHashCode(jsCode, 16);
-      const functionName = renameMessageFunction(messageKey);
-
-      files[fileName + '.js'] = jsCode;
-
-      indexJs += 'export{default as ' + functionName + '}from"./' + fileName + '.js";\n';
-
-      indexTs +=
-        '\n' +
-        jsDocComment +
-        '\nexport declare function ' +
-        functionName +
-        '(locale:string):' +
-        compileMessageTsType(argumentTsTypes) +
-        ';\n';
+      // Hash of a message function body
+      fileName = await toHashCode(jsCode, 16);
+      functionName = renameMessageFunction(messageKey);
     } catch (error) {
       errors.push(new CompilerError(messageKey, localeGroups[0][0], error));
+      continue;
     }
+
+    files[fileName + '.js'] =
+      'import{M,E,A,V,R,O,C}from"mfml/dsl";\n' +
+      localesJsImport +
+      '\n\n' +
+      formatJSDocComment(jsDocComment) +
+      '\nexport default function ' +
+      functionName +
+      '(locale){\nreturn ' +
+      jsCode +
+      '\n}\n';
+
+    indexJs += 'export{default as ' + functionName + '}from"./' + fileName + '.js";\n';
+
+    indexTs +=
+      '\n' +
+      formatJSDocComment(jsDocComment) +
+      '\nexport declare function ' +
+      functionName +
+      '(locale:string):' +
+      compileMessageTsType(argumentTsTypes) +
+      ';\n';
   }
 
   if (errors.length !== 0) {
