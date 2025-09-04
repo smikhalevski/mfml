@@ -74,5 +74,8 @@
     "react": {
       "optional": true
     }
+  },
+  "dependencies": {
+    "speedy-entities": "^3.1.0"
   }
 }

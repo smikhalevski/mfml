@@ -6,6 +6,7 @@ import {
   TokenizerOptions,
 } from '../parser/index.js';
 import { Compiler, CompilerOptions, createCompiler } from './createCompiler.js';
+import { decodeXML } from 'speedy-entities';
 
 /**
  * The user-facing compilation config.
@@ -74,10 +75,16 @@ export interface ResolvedConfig {
  * @group Config
  */
 export function defineConfig(config: Config): ResolvedConfig {
-  const { messages, packageName = '@mfml/messages', outDir = '.', tokenizerOptions = htmlTokenizerOptions } = config;
+  const {
+    messages,
+    packageName = '@mfml/messages',
+    outDir = '.',
+    tokenizerOptions = htmlTokenizerOptions,
+    decodeText = decodeXML,
+  } = config;
 
   const tokenizer = createTokenizer(tokenizerOptions);
-  const parser = createParser({ ...config, tokenizer });
+  const parser = createParser({ ...config, tokenizer, decodeText });
   const compiler = createCompiler({ ...config, parser });
 
   return {
