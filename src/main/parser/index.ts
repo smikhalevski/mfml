@@ -6,5 +6,5 @@
 
 export { createParser, type Parser, type ParserOptions } from './createParser.js';
 export { createTokenizer, type Tokenizer, type TokenizerOptions } from './createTokenizer.js';
-export { type Token, type TokenCallback } from './tokenizeMessage.js';
+export { ParserError, type Token, type TokenCallback } from './tokenizeMessage.js';
 export { htmlTokenizer, htmlTokenizerOptions } from './htmlTokenizer.js';

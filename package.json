@@ -12,6 +12,7 @@
     ".": "./index.js",
     "./compiler": "./compiler/index.js",
     "./parser": "./parser/index.js",
+    "./postprocessor/allowTags": "./postprocessor/allowTags.js",
     "./react": "./react/index.js",
     "./package.json": "./package.json"
   },

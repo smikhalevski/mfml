@@ -30,7 +30,13 @@ export function formatError(error: unknown): string {
   }
 
   if (error instanceof ParserError) {
-    return error.message + '\n\n' + formatTextExcerpt(error.text, error.startIndex, error.endIndex);
+    let message = error.message;
+
+    if (error.startIndex !== -1) {
+      message += +'\n\n' + formatTextExcerpt(error.text, error.startIndex, Math.max(error.startIndex, error.endIndex));
+    }
+
+    return message;
   }
 
   if (error instanceof Error) {

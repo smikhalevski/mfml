@@ -2,7 +2,7 @@ export class ParserError extends SyntaxError {
   constructor(
     message: string,
     readonly text: string,
-    readonly startIndex: number,
+    readonly startIndex = -1,
     readonly endIndex = startIndex
   ) {
     super(message);

@@ -21,6 +21,67 @@ export class CompilerError extends Error {
 }
 
 /**
+ * Options provided to the {@link Preprocessor} by the {@link Compiler}.
+ */
+export interface PreprocessorOptions {
+  /**
+   * The message text.
+   */
+  text: string;
+
+  /**
+   * The text locale.
+   */
+  locale: string;
+
+  /**
+   * The message key.
+   */
+  messageKey: string;
+}
+
+/**
+ * Options provided to the {@link Postprocessor} by the {@link Compiler}.
+ */
+export interface PostprocessorOptions {
+  /**
+   * The message text.
+   */
+  text: string;
+
+  /**
+   * The text locale.
+   */
+  locale: string;
+
+  /**
+   * The message key.
+   */
+  messageKey: string;
+
+  /**
+   * The parsed message node.
+   */
+  messageNode: MessageNode<any>;
+}
+
+/**
+ * Preprocessor that is run before the message text parsing begins.
+ *
+ * @param options Preprocessor options.
+ * @returns The transformed message text.
+ */
+export type Preprocessor = (options: PreprocessorOptions) => Promise<string> | string;
+
+/**
+ * Preprocessor that is run after the message text parsing.
+ *
+ * @param options Postprocessor options.
+ * @returns The transformed message node.
+ */
+export type Postprocessor = (options: PostprocessorOptions) => Promise<MessageNode<any>> | MessageNode<any>;
+
+/**
  * Options of {@link createCompiler}.
  *
  * @group Compiler
@@ -55,14 +116,12 @@ export interface CompilerOptions {
    *
    * For example, preprocessors can be used to transform Markdown messages to HTML.
    */
-  preprocessors?: Array<(text: string, locale: string, messageKey: string) => Promise<string> | string>;
+  preprocessors?: Array<Preprocessor>;
 
   /**
    * The array of callbacks that are run after the message was parsed as an MFML AST.
    */
-  postprocessors?: Array<
-    (messageNode: MessageNode<any>, messageKey: string) => Promise<MessageNode<any>> | MessageNode<any>
-  >;
+  postprocessors?: Array<Postprocessor>;
 
   /**
    * Returns the name of a message function for the given message key.
@@ -254,7 +313,7 @@ export async function compileFiles(
       try {
         if (preprocessors !== undefined) {
           for (const preprocessor of preprocessors) {
-            text = await preprocessor(text, baseLocale, messageKey);
+            text = await preprocessor({ messageKey, locale: baseLocale, text });
           }
         }
 
@@ -262,7 +321,7 @@ export async function compileFiles(
 
         if (postprocessors !== undefined) {
           for (const postprocessor of postprocessors) {
-            messageNode = await postprocessor(messageNode, messageKey);
+            messageNode = await postprocessor({ messageKey, messageNode, locale: baseLocale, text });
           }
         }
 
