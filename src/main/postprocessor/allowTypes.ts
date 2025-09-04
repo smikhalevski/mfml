@@ -6,7 +6,7 @@
  */
 
 import { Postprocessor } from '../compiler/index.js';
-import { walkNode } from '../utils-ast.js';
+import { walkNode } from '../utils.js';
 import { ParserError } from '../parser/index.js';
 
 /**
@@ -309,7 +309,197 @@ export default function allowTypes(allowedTypes: { [type: string]: TypeRequireme
 
 /**
  * Allowed types that can be passed to {@link allowTypes} preprocessor to match
- * the {@link mfml!defaultArgumentFormatter defaultArgumentFormatter} setup.
+ * the {@link mfml!defaultFormatter defaultFormatter} setup.
+ *
+ * <dl>
+ *
+ * <dt><code>number</code></dt>
+ * <dd>
+ *
+ * Formats argument as a number.
+ *
+ * Allowed style:
+ * - `decimal`
+ * - `integer`
+ * - `percent`
+ * - `currency`
+ *
+ * Allowed options:
+ * - [`style`](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Intl/NumberFormat/NumberFormat#style)
+ * - [`currency`](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Intl/NumberFormat/NumberFormat#currency)
+ * - [`currencyDisplay`](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Intl/NumberFormat/NumberFormat#currencydisplay)
+ * - [`currencySign`](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Intl/NumberFormat/NumberFormat#currencysign)
+ * - [`useGrouping`](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Intl/NumberFormat/NumberFormat#usegrouping)
+ * - [`minimumIntegerDigits`](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Intl/NumberFormat/NumberFormat#minimumintegerdigits)
+ * - [`minimumFractionDigits`](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Intl/NumberFormat/NumberFormat#minimumfractiondigits)
+ * - [`maximumFractionDigits`](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Intl/NumberFormat/NumberFormat#maximumfractiondigits)
+ * - [`minimumSignificantDigits`](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Intl/NumberFormat/NumberFormat#minimumsignificantdigits)
+ * - [`maximumSignificantDigits`](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Intl/NumberFormat/NumberFormat#maximumsignificantdigits)
+ * - [`numberingSystem`](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Intl/NumberFormat/NumberFormat#numberingsystem)
+ * - [`compactDisplay`](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Intl/NumberFormat/NumberFormat#compactdisplay)
+ * - [`notation`](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Intl/NumberFormat/NumberFormat#notation)
+ * - [`signDisplay`](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Intl/NumberFormat/NumberFormat#signdisplay)
+ * - [`unit`](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Intl/NumberFormat/NumberFormat#unit)
+ * - [`unitDisplay`](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Intl/NumberFormat/NumberFormat#unitdisplay)
+ *
+ * </dd>
+ *
+ * <dt><code>date</code></dt>
+ * <dd>
+ *
+ * Formats argument as a date.
+ *
+ * Allowed style:
+ * - `short`
+ * - `full`
+ * - `long`
+ * - `medium`
+ *
+ * Allowed options:
+ * - [`calendar`](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Intl/DateTimeFormat/DateTimeFormat#calendar)
+ * - [`dayPeriod`](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Intl/DateTimeFormat/DateTimeFormat#dayperiod)
+ * - [`numberingSystem`](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Intl/DateTimeFormat/DateTimeFormat#numberingsystem)
+ * - [`dateStyle`](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Intl/DateTimeFormat/DateTimeFormat#datestyle)
+ * - [`timeStyle`](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Intl/DateTimeFormat/DateTimeFormat#timestyle)
+ * - [`hourCycle`](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Intl/DateTimeFormat/DateTimeFormat#hourcycle)
+ * - [`weekday`](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Intl/DateTimeFormat/DateTimeFormat#weekday)
+ * - [`era`](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Intl/DateTimeFormat/DateTimeFormat#era)
+ * - [`year`](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Intl/DateTimeFormat/DateTimeFormat#year)
+ * - [`month`](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Intl/DateTimeFormat/DateTimeFormat#month)
+ * - [`day`](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Intl/DateTimeFormat/DateTimeFormat#day)
+ * - [`hour`](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Intl/DateTimeFormat/DateTimeFormat#hour)
+ * - [`minute`](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Intl/DateTimeFormat/DateTimeFormat#minute)
+ * - [`second`](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Intl/DateTimeFormat/DateTimeFormat#second)
+ * - [`timeZoneName`](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Intl/DateTimeFormat/DateTimeFormat#timezonename)
+ * - [`formatMatcher`](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Intl/DateTimeFormat/DateTimeFormat#formatmatcher)
+ * - [`hour12`](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Intl/DateTimeFormat/DateTimeFormat#hour12)
+ * - [`timeZone`](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Intl/DateTimeFormat/DateTimeFormat#timezone)
+ *
+ * </dd>
+ *
+ * <dt><code>time</code></dt>
+ * <dd>
+ *
+ * Formats argument as a time.
+ *
+ * Allowed style:
+ * - `short`
+ * - `full`
+ * - `long`
+ * - `medium`
+ *
+ * Allowed options:
+ * - [`calendar`](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Intl/DateTimeFormat/DateTimeFormat#calendar)
+ * - [`dayPeriod`](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Intl/DateTimeFormat/DateTimeFormat#dayperiod)
+ * - [`numberingSystem`](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Intl/DateTimeFormat/DateTimeFormat#numberingsystem)
+ * - [`dateStyle`](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Intl/DateTimeFormat/DateTimeFormat#datestyle)
+ * - [`timeStyle`](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Intl/DateTimeFormat/DateTimeFormat#timestyle)
+ * - [`hourCycle`](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Intl/DateTimeFormat/DateTimeFormat#hourcycle)
+ * - [`weekday`](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Intl/DateTimeFormat/DateTimeFormat#weekday)
+ * - [`era`](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Intl/DateTimeFormat/DateTimeFormat#era)
+ * - [`year`](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Intl/DateTimeFormat/DateTimeFormat#year)
+ * - [`month`](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Intl/DateTimeFormat/DateTimeFormat#month)
+ * - [`day`](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Intl/DateTimeFormat/DateTimeFormat#day)
+ * - [`hour`](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Intl/DateTimeFormat/DateTimeFormat#hour)
+ * - [`minute`](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Intl/DateTimeFormat/DateTimeFormat#minute)
+ * - [`second`](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Intl/DateTimeFormat/DateTimeFormat#second)
+ * - [`timeZoneName`](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Intl/DateTimeFormat/DateTimeFormat#timezonename)
+ * - [`formatMatcher`](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Intl/DateTimeFormat/DateTimeFormat#formatmatcher)
+ * - [`hour12`](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Intl/DateTimeFormat/DateTimeFormat#hour12)
+ * - [`timeZone`](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Intl/DateTimeFormat/DateTimeFormat#timezone)
+ *
+ * </dd>
+ *
+ * <dt><code>conjunction</code></dt>
+ * <dd>
+ *
+ * Formats argument as a list of strings joined by "and".
+ *
+ * Allowed style:
+ * - `long`
+ * - `narrow`
+ * - `short`
+ *
+ * </dd>
+ *
+ * <dt><code>disjunction</code></dt>
+ * <dd>
+ *
+ * Formats argument as a list of strings joined by "or".
+ *
+ * Allowed style:
+ * - `long`
+ * - `narrow`
+ * - `short`
+ *
+ * </dd>
+ *
+ * <dt><code>plural</code></dt>
+ * <dd>
+ *
+ * Selects a cardinal plural category using on an argument value.
+ *
+ * Allowed style:
+ * - `short`
+ * - `full`
+ * - `long`
+ * - `medium`
+ *
+ * Allowed options:
+ * - [`minimumIntegerDigits`](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Intl/NumberFormat/NumberFormat#minimumintegerdigits)
+ * - [`minimumFractionDigits`](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Intl/NumberFormat/NumberFormat#minimumfractiondigits)
+ * - [`maximumFractionDigits`](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Intl/NumberFormat/NumberFormat#maximumfractiondigits)
+ * - [`minimumSignificantDigits`](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Intl/NumberFormat/NumberFormat#minimumsignificantdigits)
+ * - [`maximumSignificantDigits`](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Intl/NumberFormat/NumberFormat#maximumsignificantdigits)
+ *
+ * Allowed categories:
+ * - `zero`
+ * - `one`
+ * - `two`
+ * - `few`
+ * - `many`
+ * - `other`, required
+ *
+ * </dd>
+ *
+ * <dt><code>selectOrdinal</code></dt>
+ * <dd>
+ *
+ * Selects an ordinal plural category using on an argument value.
+ *
+ * Allowed style:
+ * - `short`
+ * - `full`
+ * - `long`
+ * - `medium`
+ *
+ * Allowed options:
+ * - [`minimumIntegerDigits`](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Intl/NumberFormat/NumberFormat#minimumintegerdigits)
+ * - [`minimumFractionDigits`](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Intl/NumberFormat/NumberFormat#minimumfractiondigits)
+ * - [`maximumFractionDigits`](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Intl/NumberFormat/NumberFormat#maximumfractiondigits)
+ * - [`minimumSignificantDigits`](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Intl/NumberFormat/NumberFormat#minimumsignificantdigits)
+ * - [`maximumSignificantDigits`](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Intl/NumberFormat/NumberFormat#maximumsignificantdigits)
+ *
+ * Allowed categories:
+ * - `zero`
+ * - `one`
+ * - `two`
+ * - `few`
+ * - `many`
+ * - `other`, required
+ *
+ * </dd>
+ *
+ * <dt><code>select</code></dt>
+ * <dd>
+ *
+ * Selects a category using on an argument value.
+ *
+ * Any categories, requires `other` category.
+ *
+ * </dd>
+ *
+ * </dl>
  */
 export const defaultAllowedTypes: AllowedTypes = {
   number: {

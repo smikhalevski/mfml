@@ -9,16 +9,16 @@ import {
   getArgumentOptions,
   getArgumentStyle,
   getArgumentType,
-} from '../utils-ast.js';
+} from '../utils.js';
 import { createReactDOMElementRenderer } from './createReactDOMElementRenderer.js';
-import { defaultArgumentFormatter } from '../formatter.js';
+import { defaultFormatter } from '../formatter.js';
 
 const MessageLocaleContext = createContext('en');
 MessageLocaleContext.displayName = 'MessageLocaleContext';
 
 const MessageRendererContext = createContext<Renderer<ReactNode>>({
   renderElement: createReactDOMElementRenderer(),
-  formatArgument: defaultArgumentFormatter,
+  formatArgument: defaultFormatter,
   selectCategory: defaultCategorySelector,
 });
 
@@ -139,12 +139,10 @@ function renderChild(node: ChildNode, locale: string, renderer: Renderer<ReactNo
 
   if (node.nodeType === 'element') {
     if (!hasInterpolatedAttributes(node.attributeNodes)) {
-      return (
-        renderer.renderElement(
-          node.tagName,
-          renderAttributes(node.attributeNodes, locale, undefined, renderer),
-          renderChildren(node.childNodes, locale, renderer)
-        ) || null
+      return renderer.renderElement(
+        node.tagName,
+        renderAttributes(node.attributeNodes, locale, undefined, renderer),
+        renderChildren(node.childNodes, locale, renderer)
       );
     }
 
@@ -156,7 +154,7 @@ function renderChild(node: ChildNode, locale: string, renderer: Renderer<ReactNo
             node.tagName,
             renderAttributes(node.attributeNodes, locale, values, renderer),
             renderChildren(node.childNodes, locale, renderer)
-          ) || null
+          )
         }
       </MessageValuesContext.Consumer>
     );
@@ -175,7 +173,7 @@ function renderChild(node: ChildNode, locale: string, renderer: Renderer<ReactNo
           const value = values?.[name];
 
           if (type === null || categories === null) {
-            return renderer.formatArgument({ locale, value, type, style, options }) || null;
+            return renderer.formatArgument({ locale, value, type, style, options });
           }
 
           const category = renderer.selectCategory({ locale, value, type, categories, options });
@@ -210,7 +208,7 @@ function renderChild(node: ChildNode, locale: string, renderer: Renderer<ReactNo
 
     return (
       <MessageValuesContext.Consumer>
-        {values => renderer.formatArgument({ locale, value: values?.[name], type, style, options }) || null}
+        {values => renderer.formatArgument({ locale, value: values?.[name], type, style, options })}
       </MessageValuesContext.Consumer>
     );
   }

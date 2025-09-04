@@ -8,7 +8,7 @@ import {
   toHashCode,
   truncateMessage,
 } from './utils.js';
-import { walkNode } from '../utils-ast.js';
+import { walkNode } from '../utils.js';
 
 /**
  * The error thrown by a compiler if a message text cannot be processed.

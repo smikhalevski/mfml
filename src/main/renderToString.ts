@@ -8,12 +8,12 @@ import {
   getArgumentStyle,
   getArgumentType,
   isLowerCaseAlpha,
-} from './utils-ast.js';
-import { defaultArgumentFormatter } from './formatter.js';
+} from './utils.js';
+import { defaultFormatter } from './formatter.js';
 
 const defaultStringRenderer: Renderer<string> = {
   renderElement: (tagName, _attributes, children) => (isLowerCaseAlpha(tagName) ? children.join('') : ''),
-  formatArgument: defaultArgumentFormatter,
+  formatArgument: defaultFormatter,
   selectCategory: defaultCategorySelector,
 };
 

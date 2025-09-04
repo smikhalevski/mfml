@@ -1,11 +1,11 @@
-import { getDateTimeFormat, getDisplayNames, getListFormat, getNumberFormat } from './utils-intl.js';
+import { getDateTimeFormat, getDisplayNames, getListFormat, getNumberFormat } from './utils.js';
 
 /**
- * Params provided to a {@link ArgumentFormatter}.
+ * Params provided to a {@link Formatter}.
  *
- * @group Renderer
+ * @group Formatter
  */
-export interface ArgumentFormatterParams {
+export interface FormatterParams {
   /**
    * The message locale.
    */
@@ -37,46 +37,46 @@ export interface ArgumentFormatterParams {
  * Formats an argument value as a string.
  *
  * @param params The formatting params.
- * @returns The formatted argument value, or `undefined` if an argument should not be rendered.
- * @group Renderer
+ * @returns The formatted argument value, or `undefined` if a value cannot be formatted.
+ * @group Formatter
  */
-export type ArgumentFormatter = (params: ArgumentFormatterParams) => string | undefined | void;
+export type Formatter = (params: FormatterParams) => string | undefined;
 
 /**
  * The default formatter.
  *
  * @group Formatter
  */
-export const defaultArgumentFormatter = combineArgumentFormatters([
-  createNumberArgumentFormatter(null, null, { style: 'decimal' }),
-  createNumberArgumentFormatter('number', null, { style: 'decimal' }),
-  createNumberArgumentFormatter('number', 'decimal', { style: 'decimal' }),
-  createNumberArgumentFormatter('number', 'integer', { style: 'decimal', maximumFractionDigits: 0 }),
-  createNumberArgumentFormatter('number', 'percent', { style: 'percent' }),
-  createNumberArgumentFormatter('number', 'currency', { style: 'currency', currency: 'USD' }),
+export const defaultFormatter = combineFormatters([
+  createNumberFormatter(null, null, { style: 'decimal' }),
+  createNumberFormatter('number', null, { style: 'decimal' }),
+  createNumberFormatter('number', 'decimal', { style: 'decimal' }),
+  createNumberFormatter('number', 'integer', { style: 'decimal', maximumFractionDigits: 0 }),
+  createNumberFormatter('number', 'percent', { style: 'percent' }),
+  createNumberFormatter('number', 'currency', { style: 'currency', currency: 'USD' }),
 
-  createDateTimeArgumentFormatter(null, null, { dateStyle: 'medium' }),
-  createDateTimeArgumentFormatter('date', null, { dateStyle: 'medium' }),
-  createDateTimeArgumentFormatter('date', 'short', { dateStyle: 'short' }),
-  createDateTimeArgumentFormatter('date', 'full', { dateStyle: 'full' }),
-  createDateTimeArgumentFormatter('date', 'long', { dateStyle: 'long' }),
-  createDateTimeArgumentFormatter('date', 'medium', { dateStyle: 'medium' }),
+  createDateTimeFormatter(null, null, { dateStyle: 'medium' }),
+  createDateTimeFormatter('date', null, { dateStyle: 'medium' }),
+  createDateTimeFormatter('date', 'short', { dateStyle: 'short' }),
+  createDateTimeFormatter('date', 'full', { dateStyle: 'full' }),
+  createDateTimeFormatter('date', 'long', { dateStyle: 'long' }),
+  createDateTimeFormatter('date', 'medium', { dateStyle: 'medium' }),
 
-  createDateTimeArgumentFormatter('time', null, { timeStyle: 'medium' }),
-  createDateTimeArgumentFormatter('time', 'short', { timeStyle: 'short' }),
-  createDateTimeArgumentFormatter('time', 'full', { timeStyle: 'full' }),
-  createDateTimeArgumentFormatter('time', 'long', { timeStyle: 'long' }),
-  createDateTimeArgumentFormatter('time', 'medium', { timeStyle: 'medium' }),
+  createDateTimeFormatter('time', null, { timeStyle: 'medium' }),
+  createDateTimeFormatter('time', 'short', { timeStyle: 'short' }),
+  createDateTimeFormatter('time', 'full', { timeStyle: 'full' }),
+  createDateTimeFormatter('time', 'long', { timeStyle: 'long' }),
+  createDateTimeFormatter('time', 'medium', { timeStyle: 'medium' }),
 
-  createListArgumentFormatter('conjunction', null, { type: 'conjunction', style: 'long' }),
-  createListArgumentFormatter('conjunction', 'long', { type: 'conjunction', style: 'long' }),
-  createListArgumentFormatter('conjunction', 'narrow', { type: 'conjunction', style: 'narrow' }),
-  createListArgumentFormatter('conjunction', 'short', { type: 'conjunction', style: 'short' }),
+  createListFormatter('conjunction', null, { type: 'conjunction', style: 'long' }),
+  createListFormatter('conjunction', 'long', { type: 'conjunction', style: 'long' }),
+  createListFormatter('conjunction', 'narrow', { type: 'conjunction', style: 'narrow' }),
+  createListFormatter('conjunction', 'short', { type: 'conjunction', style: 'short' }),
 
-  createListArgumentFormatter('disjunction', null, { type: 'disjunction', style: 'long' }),
-  createListArgumentFormatter('disjunction', 'long', { type: 'disjunction', style: 'long' }),
-  createListArgumentFormatter('disjunction', 'narrow', { type: 'disjunction', style: 'narrow' }),
-  createListArgumentFormatter('disjunction', 'short', { type: 'disjunction', style: 'short' }),
+  createListFormatter('disjunction', null, { type: 'disjunction', style: 'long' }),
+  createListFormatter('disjunction', 'long', { type: 'disjunction', style: 'long' }),
+  createListFormatter('disjunction', 'narrow', { type: 'disjunction', style: 'narrow' }),
+  createListFormatter('disjunction', 'short', { type: 'disjunction', style: 'short' }),
 ]);
 
 /**
@@ -85,7 +85,7 @@ export const defaultArgumentFormatter = combineArgumentFormatters([
  *
  * @param formatters The array of formatters to try.
  */
-export function combineArgumentFormatters(formatters: ArgumentFormatter[]): ArgumentFormatter {
+export function combineFormatters(formatters: Formatter[]): Formatter {
   return params => {
     for (const formatter of formatters) {
       const value = formatter(params);
@@ -99,11 +99,19 @@ export function combineArgumentFormatters(formatters: ArgumentFormatter[]): Argu
   };
 }
 
-export function createNumberArgumentFormatter(
+/**
+ * Creates a formatter that uses {@link Intl.NumberFormat} to format numeric argument values.
+ *
+ * @param type The required argument type, or `null` if type shouldn't be specified.
+ * @param style The required argument style, or `null` if style shouldn't be specified.
+ * @param options Default format options.
+ * @group Formatter
+ */
+export function createNumberFormatter(
   type: string | null,
   style: string | null,
   options: Intl.NumberFormatOptions
-): ArgumentFormatter {
+): Formatter {
   return params => {
     const { value } = params;
 
@@ -113,11 +121,19 @@ export function createNumberArgumentFormatter(
   };
 }
 
-export function createDateTimeArgumentFormatter(
+/**
+ * Creates a formatter that uses {@link Intl.DateTimeFormat} to format numeric and {@link Date} argument values.
+ *
+ * @param type The required argument type, or `null` if type shouldn't be specified.
+ * @param style The required argument style, or `null` if style shouldn't be specified.
+ * @param options Default format options.
+ * @group Formatter
+ */
+export function createDateTimeFormatter(
   type: string | null,
   style: string | null,
   options: Intl.DateTimeFormatOptions
-): ArgumentFormatter {
+): Formatter {
   return params => {
     const { value } = params;
 
@@ -127,11 +143,19 @@ export function createDateTimeArgumentFormatter(
   };
 }
 
-export function createListArgumentFormatter(
+/**
+ * Creates a formatter that uses {@link Intl.ListFormat} to format string array argument values.
+ *
+ * @param type The required argument type, or `null` if type shouldn't be specified.
+ * @param style The required argument style, or `null` if style shouldn't be specified.
+ * @param options Default format options.
+ * @group Formatter
+ */
+export function createListFormatter(
   type: string | null,
   style: string | null,
   options: Intl.ListFormatOptions
-): ArgumentFormatter {
+): Formatter {
   return params => {
     const { value } = params;
 
@@ -141,11 +165,11 @@ export function createListArgumentFormatter(
   };
 }
 
-export function createDisplayNameArgumentFormatter(
+export function createDisplayNameFormatter(
   type: string | null,
   style: string | null,
   options: Intl.DisplayNamesOptions
-): ArgumentFormatter {
+): Formatter {
   return params => {
     const { value } = params;
 

@@ -5,7 +5,7 @@
  */
 
 import { Postprocessor } from '../compiler/index.js';
-import { walkNode } from '../utils-ast.js';
+import { walkNode } from '../utils.js';
 import { ParserError } from '../parser/index.js';
 
 /**
@@ -81,6 +81,37 @@ export default function allowTags(allowedTags: AllowedTags): Postprocessor {
 
 /**
  * The safe set of tags and attributes, recommended for general use.
+ *
+ * | Tag name     | Allowed attributes                             |
+ * |--------------|------------------------------------------------|
+ * | `<p>`          | `style` `class`                                |
+ * | `<br>`         |  None                                          |
+ * | `<hr>`         | `style` `class`                                |
+ * | `<b>`          | `style` `class`                                |
+ * | `<u>`          | `style` `class`                                |
+ * | `<s>`          | `style` `class`                                |
+ * | `<em>`         | `style` `class`                                |
+ * | `<strong>`     | `style` `class`                                |
+ * | `<del>`        | `style` `class`                                |
+ * | `<code>`       | `style` `class`                                |
+ * | `<mark>`       | `style` `class`                                |
+ * | `<h1>`         | `style` `class` `id`                           |
+ * | `<h2>`         | `style` `class` `id`                           |
+ * | `<h3>`         | `style` `class` `id`                           |
+ * | `<h4>`         | `style` `class` `id`                           |
+ * | `<h5>`         | `style` `class` `id`                           |
+ * | `<h6>`         | `style` `class` `id`                           |
+ * | `<ul>`         | `style` `class` `id`                           |
+ * | `<ol>`         | `style` `class` `start` `type`                 |
+ * | `<li>`         | `style` `class`                                |
+ * | `<a>`          | `style` `class` `href` `title` `target` `name` |
+ * | `<blockquote>` | `style` `class` `cite`                         |
+ * | `<pre>`        | `style` `class`                                |
+ * | `<sup>`        | `style` `class`                                |
+ * | `<sub>`        | `style` `class`                                |
+ * | `<abbr>`       | `style` `class` `title`                        |
+ * | `<kbd>`        | `style` `class`                                |
+ * | `<samp>`       | `style` `class`                                |
  */
 export const defaultAllowedTags: AllowedTags = {
   p: ['style', 'class'],
@@ -94,21 +125,21 @@ export const defaultAllowedTags: AllowedTags = {
   del: ['style', 'class'],
   code: ['style', 'class'],
   mark: ['style', 'class'],
-  h1: ['id', 'style', 'class'],
-  h2: ['id', 'style', 'class'],
-  h3: ['id', 'style', 'class'],
-  h4: ['id', 'style', 'class'],
-  h5: ['id', 'style', 'class'],
-  h6: ['id', 'style', 'class'],
-  ul: ['id', 'style', 'class'],
-  ol: ['start', 'type', 'style', 'class'],
+  h1: ['style', 'class', 'id'],
+  h2: ['style', 'class', 'id'],
+  h3: ['style', 'class', 'id'],
+  h4: ['style', 'class', 'id'],
+  h5: ['style', 'class', 'id'],
+  h6: ['style', 'class', 'id'],
+  ul: ['style', 'class', 'id'],
+  ol: ['style', 'class', 'start', 'type'],
   li: ['style', 'class'],
-  a: ['href', 'title', 'target', 'name', 'style', 'class'],
-  blockquote: ['cite', 'style', 'class'],
+  a: ['style', 'class', 'href', 'title', 'target', 'name'],
+  blockquote: ['style', 'class', 'cite'],
   pre: ['style', 'class'],
   sup: ['style', 'class'],
   sub: ['style', 'class'],
-  abbr: ['title', 'style', 'class'],
+  abbr: ['style', 'class', 'title'],
   kbd: ['style', 'class'],
   samp: ['style', 'class'],
 };

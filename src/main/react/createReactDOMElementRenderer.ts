@@ -1,6 +1,6 @@
 import { ComponentType, createElement, ReactNode } from 'react';
 import { ElementRenderer } from '../renderer.js';
-import { isLowerCaseAlpha } from '../utils-ast.js';
+import { isLowerCaseAlpha } from '../utils.js';
 
 /**
  * Creates element renderer that produces React DOM elements:

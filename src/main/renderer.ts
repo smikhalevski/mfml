@@ -1,5 +1,6 @@
-import { ArgumentFormatter } from './formatter.js';
-import { getPluralRules } from './utils-intl.js';
+import { Formatter } from './formatter.js';
+
+import { getPluralRules } from './utils.js';
 
 /**
  * Renders an element.
@@ -15,7 +16,7 @@ export type ElementRenderer<Element> = (
   tagName: string,
   attributes: Record<string, string>,
   children: Array<Element | string>
-) => Element | string | undefined | void;
+) => Element | string | undefined;
 
 /**
  * Params provided to a {@link CategorySelector}.
@@ -56,7 +57,7 @@ export interface CategorySelectorParams {
  * @returns The selected category, or `undefined` if there's no matching category.
  * @group Renderer
  */
-export type CategorySelector = (params: CategorySelectorParams) => string | undefined | void;
+export type CategorySelector = (params: CategorySelectorParams) => string | undefined;
 
 /**
  * Renders elements and arguments.
@@ -75,9 +76,9 @@ export interface Renderer<Element> {
   /**
    * Formats argument value as a string.
    *
-   * @see {@link defaultArgumentFormatter}
+   * @see {@link defaultFormatter}
    */
-  formatArgument: ArgumentFormatter;
+  formatArgument: Formatter;
 
   /**
    * Returns the selected category depending of an argument value.
