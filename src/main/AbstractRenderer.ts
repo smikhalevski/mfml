@@ -1,5 +1,5 @@
 /**
- * Describes how elements of a message AST are rendered.
+ * Describes how element, argument and select nodes of a message AST are rendered.
  *
  * @template Element The type of a rendered element.
  * @group Renderer

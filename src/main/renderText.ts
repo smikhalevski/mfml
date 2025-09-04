@@ -3,7 +3,7 @@ import { StringRenderer } from './StringRenderer.js';
 import { defaultRendererOptions } from './utils.js';
 import { Renderer } from './AbstractRenderer.js';
 
-const defaultStringRenderer = new StringRenderer(defaultRendererOptions);
+const stringRenderer: Renderer<string> = new StringRenderer(defaultRendererOptions);
 
 /**
  * Renders message node as plain text string.
@@ -19,7 +19,7 @@ const defaultStringRenderer = new StringRenderer(defaultRendererOptions);
 export function renderText<Values extends object | void>(
   messageNode: MessageNode<Values> | null,
   values: Values,
-  renderer: Renderer<string> = defaultStringRenderer
+  renderer = stringRenderer
 ): string {
   if (messageNode === null) {
     return '';

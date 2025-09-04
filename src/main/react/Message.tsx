@@ -5,12 +5,10 @@ import { renderChildrenAsString } from '../renderText.js';
 import { defaultRendererOptions } from '../utils.js';
 import { Renderer } from '../AbstractRenderer.js';
 
-const defaultReactRenderer = new ReactRenderer(defaultRendererOptions);
-
 const MessageLocaleContext = createContext('en');
 MessageLocaleContext.displayName = 'MessageLocaleContext';
 
-const MessageRendererContext = createContext<Renderer<ReactNode>>(defaultReactRenderer);
+const MessageRendererContext = createContext<Renderer<ReactNode>>(new ReactRenderer(defaultRendererOptions));
 MessageRendererContext.displayName = 'MessageRendererContext';
 
 const MessageValuesContext = createContext<Record<string, unknown> | undefined>(undefined);
@@ -33,7 +31,8 @@ export const MessageRendererProvider = MessageRendererContext.Provider;
 /**
  * Props of a {@link Message} component.
  *
- * @template MessageFunction The function that returns a message node for a given locale.
+ * @template MessageFunction The function that returns a message node for a given locale, or `null` if locale isn't
+ * supported.
  * @group Message
  */
 export type MessageProps<MessageFunction extends (locale: string) => MessageNode<object | void> | null> =

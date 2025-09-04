@@ -210,6 +210,10 @@ export function createArgumentNode(name: string, type?: string, style?: string):
  * the category is matched.
  * @group AST
  */
-export function createSelectNode(argumentName: string, type: string, categories: Record<string, Child[]>): SelectNode {
+export function createSelectNode(
+  argumentName: string,
+  type: string,
+  categories: Record<string, Child[] | string>
+): SelectNode {
   return { nodeType: 'select', argumentName, type, categories };
 }
