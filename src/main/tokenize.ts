@@ -1,307 +1,141 @@
-const TOKEN_XML_TEXT = 0;
-const TOKEN_XML_OPENING_TAG = 1;
-const TOKEN_XML_ATTRIBUTE = 2;
-const TOKEN_XML_UNQUOTED_ATTRIBUTE_VALUE = 3;
-const TOKEN_JSX_CURLY_BRACES_ATTRIBUTE_VALUE = 4;
+import { TokenCallback, readTokens, ReadTokensOptions } from './readTokens.js';
 
-export type TokenType =
-  | 'TEXT'
-  | 'OPENING_TAG_START'
-  | 'OPENING_TAG_END'
-  | 'OPENING_TAG_SELF_CLOSE'
-  | 'CLOSING_TAG'
-  | 'ATTRIBUTE_START'
-  | 'ATTRIBUTE_END';
+export interface TokenizeOptions extends ReadTokensOptions {
+  voidTags: Set<number>;
+  autoClosingTags: Map<number, Set<number>>;
+  autoOpeningTags: Set<number>;
 
-export interface UncheckedTokenizeOptions {
-  enableJSXAttributes?: boolean;
-  enableSelfClosing?: boolean;
+  getHash(text: string, startIndex: number, endIndex: number): number;
 }
 
-export type TokenizeCallback = (tokenType: TokenType, startIndex: number, endIndex: number) => void;
+export function tokenize(text: string, callback: TokenCallback, options: TokenizeOptions) {
+  const { getHash, voidTags, autoClosingTags, autoOpeningTags } = options;
 
-export function uncheckedTokenize(text: string, callback: TokenizeCallback, options: UncheckedTokenizeOptions): void {
-  const { enableJSXAttributes = false, enableSelfClosing = false } = options;
+  const tagStack: number[] = [];
 
-  const tokenTypeStack = [TOKEN_XML_TEXT];
+  let tagStackCursor = -1;
 
-  let tokenTypeStackCursor = 0;
+  readTokens(
+    text,
+    (tokenType, startIndex, endIndex) => {
+      switch (tokenType) {
+        case 'OPENING_TAG_START': {
+          const openingTag = getHash(text, startIndex, endIndex);
 
-  let textStartIndex = 0;
+          tagStackCursor = autoCloseTags(
+            autoClosingTags.get(openingTag),
+            tagStack,
+            tagStackCursor,
+            callback,
+            startIndex - 1
+          );
 
-  for (let index = 0, nextIndex = 0; nextIndex < text.length; index = nextIndex) {
-    const charCode = text.charCodeAt(nextIndex);
-
-    // Unquoted attribute value
-    if (
-      tokenTypeStack[tokenTypeStackCursor] === TOKEN_XML_UNQUOTED_ATTRIBUTE_VALUE &&
-      (isSpaceChar(charCode) || charCode === /* / */ 47 || charCode === /* > */ 62)
-    ) {
-      --tokenTypeStackCursor;
-
-      if (textStartIndex !== index) {
-        callback('TEXT', textStartIndex, index);
-      }
-
-      callback('ATTRIBUTE_END', index, index);
-    }
-
-    if (charCode === /* \ */ 92) {
-      if (textStartIndex !== index) {
-        callback('TEXT', textStartIndex, index);
-      }
-
-      // Ignore escape char
-      textStartIndex = ++nextIndex;
-
-      // Skip next char
-      ++nextIndex;
-      continue;
-    }
-
-    if (
-      charCode === /* < */ 60 &&
-      tokenTypeStack[tokenTypeStackCursor] !== TOKEN_XML_OPENING_TAG &&
-      tokenTypeStack[tokenTypeStackCursor] !== TOKEN_XML_UNQUOTED_ATTRIBUTE_VALUE
-    ) {
-      let tagNameStartIndex = ++nextIndex;
-
-      // Closing tag
-
-      if (getCharCodeAt(text, nextIndex) === /* / */ 47) {
-        // Skip "/"
-        tagNameStartIndex = ++nextIndex;
-
-        // Read the tag name
-        nextIndex = skipTagName(text, tagNameStartIndex);
-
-        if (tagNameStartIndex === nextIndex) {
-          continue;
+          tagStack[++tagStackCursor] = openingTag;
+          callback('OPENING_TAG_START', startIndex, endIndex);
+          break;
         }
 
-        if (textStartIndex !== index) {
-          callback('TEXT', textStartIndex, index);
+        case 'OPENING_TAG_END': {
+          if (voidTags.has(tagStack[tagStackCursor])) {
+            callback('OPENING_TAG_SELF_CLOSE', startIndex, endIndex);
+            break;
+          }
+
+          callback('OPENING_TAG_END', startIndex, endIndex);
+          break;
         }
 
-        callback('CLOSING_TAG', tagNameStartIndex, nextIndex);
-
-        // Skip spaces after the tag name
-        nextIndex = text.indexOf('>', nextIndex);
-
-        if (nextIndex === -1) {
-          // Unterminated closing tag
-          textStartIndex = nextIndex = text.length;
-          continue;
+        case 'OPENING_TAG_SELF_CLOSE': {
+          callback('OPENING_TAG_SELF_CLOSE', startIndex, endIndex);
+          break;
         }
 
-        // Skip ">"
-        textStartIndex = ++nextIndex;
-        continue;
-      }
+        case 'CLOSING_TAG': {
+          const closingTag = getHash(text, startIndex, endIndex);
 
-      // Opening tag
+          // Lookup closed tag
+          let index = tagStackCursor;
 
-      // Read the tag name
-      nextIndex = skipTagName(text, nextIndex);
+          while (index !== -1 && tagStack[index] !== closingTag) {
+            --index;
+          }
 
-      if (tagNameStartIndex === nextIndex) {
-        // No opening tag name, ignore "<"
-        continue;
-      }
+          // Found an opening tag
+          if (index !== -1) {
+            // Insert unbalanced closing tags
+            while (index < tagStackCursor) {
+              callback('CLOSING_TAG', startIndex - 2, startIndex - 2);
+              --tagStackCursor;
+              ++index;
+            }
 
-      if (textStartIndex !== index) {
-        callback('TEXT', textStartIndex, index);
-      }
+            callback('CLOSING_TAG', startIndex, endIndex);
+            --tagStackCursor;
+            break;
+          }
 
-      callback('OPENING_TAG_START', tagNameStartIndex, nextIndex);
+          if (!autoOpeningTags.has(closingTag)) {
+            // Ignore orphan closing tag
+            break;
+          }
 
-      tokenTypeStack[++tokenTypeStackCursor] = TOKEN_XML_OPENING_TAG;
+          // Auto insert opening tag
 
-      // Skip spaces after the tag name
-      nextIndex = skipChars(text, nextIndex, isSpaceChar);
-      textStartIndex = nextIndex;
-      continue;
-    }
+          tagStackCursor = autoCloseTags(
+            autoClosingTags.get(closingTag),
+            tagStack,
+            tagStackCursor,
+            callback,
+            startIndex - 2
+          );
 
-    if (charCode === /* > */ 62) {
-      if (tokenTypeStack[tokenTypeStackCursor] === TOKEN_XML_OPENING_TAG) {
-        ++nextIndex;
-
-        callback('OPENING_TAG_END', index, nextIndex);
-
-        --tokenTypeStackCursor;
-        textStartIndex = nextIndex;
-        continue;
-      }
-
-      ++nextIndex;
-      continue;
-    }
-
-    // Self-closing tags
-    if (charCode === /* / */ 47) {
-      if (
-        enableSelfClosing &&
-        tokenTypeStack[tokenTypeStackCursor] === TOKEN_XML_OPENING_TAG &&
-        getCharCodeAt(text, index + 1) === /* > */ 62
-      ) {
-        nextIndex += 2;
-
-        callback('OPENING_TAG_SELF_CLOSE', index, nextIndex);
-
-        --tokenTypeStackCursor;
-        textStartIndex = nextIndex;
-        continue;
-      }
-
-      ++nextIndex;
-      continue;
-    }
-
-    // JSX attributes
-    if (
-      enableJSXAttributes &&
-      charCode === /* } */ 125 &&
-      tokenTypeStack[tokenTypeStackCursor] === TOKEN_JSX_CURLY_BRACES_ATTRIBUTE_VALUE
-    ) {
-      if (textStartIndex !== index) {
-        callback('TEXT', textStartIndex, index);
-      }
-
-      ++nextIndex;
-
-      callback('ATTRIBUTE_END', index, nextIndex);
-
-      --tokenTypeStackCursor;
-      nextIndex = skipChars(text, nextIndex, isSpaceChar);
-      continue;
-    }
-
-    // Non-control characters
-
-    // Attribute
-    if (tokenTypeStack[tokenTypeStackCursor] === TOKEN_XML_OPENING_TAG && isAttributeNameChar(charCode)) {
-      nextIndex = skipChars(text, index + 1, isAttributeNameChar);
-
-      callback('ATTRIBUTE_START', index, nextIndex);
-
-      tokenTypeStack[++tokenTypeStackCursor] = TOKEN_XML_ATTRIBUTE;
-
-      // Skip spaces after the attribute name
-      nextIndex = skipChars(text, nextIndex, isSpaceChar);
-
-      if (getCharCodeAt(text, nextIndex) !== /* = */ 61) {
-        // No attribute value
-        callback('ATTRIBUTE_END', nextIndex, nextIndex);
-        --tokenTypeStackCursor;
-        continue;
-      }
-
-      // Skip spaces after the equality char
-      nextIndex = skipChars(text, ++nextIndex, isSpaceChar);
-
-      const quoteCharCode = getCharCodeAt(text, nextIndex);
-
-      // Quoted attribute value
-      if (quoteCharCode === /* " */ 34 || quoteCharCode === /* ' */ 39) {
-        // Skip opening quote
-        textStartIndex = ++nextIndex;
-
-        // Lookup closing quote
-        nextIndex = text.indexOf(quoteCharCode === /* " */ 34 ? '"' : "'", nextIndex);
-
-        if (nextIndex === -1) {
-          // No closing quote
-          nextIndex = text.length;
-          continue;
+          callback('OPENING_TAG_START', startIndex, endIndex);
+          callback('OPENING_TAG_SELF_CLOSE', endIndex, endIndex);
+          break;
         }
 
-        if (textStartIndex !== nextIndex) {
-          callback('TEXT', textStartIndex, nextIndex);
+        case 'ATTRIBUTE_START': {
+          callback('ATTRIBUTE_START', startIndex, endIndex);
+          break;
         }
 
-        callback('ATTRIBUTE_END', nextIndex, nextIndex + 1);
+        case 'ATTRIBUTE_END': {
+          callback('ATTRIBUTE_END', startIndex, endIndex);
+          break;
+        }
 
-        --tokenTypeStackCursor;
-
-        // Skip closing quote and space chars
-        textStartIndex = nextIndex = skipChars(text, ++nextIndex, isSpaceChar);
-        continue;
+        default: {
+          callback('TEXT', startIndex, endIndex);
+          break;
+        }
       }
-
-      // JSX attribute
-      if (enableJSXAttributes && quoteCharCode === /* { */ 123) {
-        tokenTypeStack[tokenTypeStackCursor] = TOKEN_JSX_CURLY_BRACES_ATTRIBUTE_VALUE;
-        textStartIndex = ++nextIndex;
-        continue;
-      }
-
-      // Unquoted attribute
-      tokenTypeStack[tokenTypeStackCursor] = TOKEN_XML_UNQUOTED_ATTRIBUTE_VALUE;
-      textStartIndex = nextIndex;
-      continue;
-    }
-
-    // Plain text
-    ++nextIndex;
-  }
-
-  if (textStartIndex !== text.length) {
-    callback('TEXT', textStartIndex, text.length);
-  }
-}
-
-function skipTagName(text: string, index: number): number {
-  return isTagNameStartChar(getCharCodeAt(text, index)) ? skipChars(text, index + 1, isTagNameChar) : index;
-}
-
-/**
- * https://www.w3.org/TR/xml/#NT-NameStartChar
- */
-function isTagNameStartChar(charCode: number): boolean {
-  return (
-    (charCode >= /* a */ 97 && charCode <= /* z */ 122) ||
-    (charCode >= /* A */ 65 && charCode <= /* Z */ 90) ||
-    charCode === /* _ */ 95 ||
-    charCode === /* : */ 58 ||
-    (charCode >= 0x000c0 && charCode <= 0x000d6) ||
-    (charCode >= 0x000d8 && charCode <= 0x000f6) ||
-    (charCode >= 0x000f8 && charCode <= 0x002ff) ||
-    (charCode >= 0x00370 && charCode <= 0x0037d) ||
-    (charCode >= 0x0037f && charCode <= 0x01fff) ||
-    (charCode >= 0x0200c && charCode <= 0x0200d) ||
-    (charCode >= 0x02070 && charCode <= 0x0218f) ||
-    (charCode >= 0x02c00 && charCode <= 0x02fef) ||
-    (charCode >= 0x03001 && charCode <= 0x0d7ff) ||
-    (charCode >= 0x0f900 && charCode <= 0x0fdcf) ||
-    (charCode >= 0x0fdf0 && charCode <= 0x0fffd) ||
-    (charCode >= 0x10000 && charCode <= 0xeffff)
+    },
+    options
   );
 }
 
-function isTagNameChar(charCode: number): boolean {
-  return !(isSpaceChar(charCode) || charCode === /* / */ 47 || charCode === /* > */ 62);
-}
+function autoCloseTags(
+  autoClosedTags: Set<number> | undefined,
+  tagStack: number[],
+  tagStackCursor: number,
+  callback: TokenCallback,
+  insertionIndex: number
+): number {
+  if (autoClosedTags === undefined) {
+    return tagStackCursor;
+  }
 
-/**
- * Reads chars until predicate returns `true`.
- */
-function skipChars(text: string, index: number, predicate: (charCode: number) => boolean): number {
-  while (index < text.length && predicate(text.charCodeAt(index))) {
+  let index = 0;
+
+  while (index <= tagStackCursor && !autoClosedTags.has(tagStack[index])) {
     ++index;
   }
-  return index;
-}
 
-function getCharCodeAt(text: string, index: number): number {
-  return index < text.length ? text.charCodeAt(index) : -1;
-}
+  while (index <= tagStackCursor) {
+    callback('CLOSING_TAG', insertionIndex, insertionIndex);
+    --tagStackCursor;
+    ++index;
+  }
 
-// https://www.w3.org/TR/xml/#NT-S
-function isSpaceChar(charCode: number): boolean {
-  return charCode == /* \s */ 32 || charCode === /* \n */ 10 || charCode === /* \t */ 9 || charCode === /* \r */ 13;
-}
-
-function isAttributeNameChar(charCode: number): boolean {
-  return !(isSpaceChar(charCode) || charCode === /* > */ 62 || charCode === /* = */ 61);
+  return tagStackCursor;
 }
