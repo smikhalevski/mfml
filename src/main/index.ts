@@ -23,6 +23,7 @@ export {
 } from './renderer.js';
 export { renderToString, type RenderToStringOptions } from './renderToString.js';
 export type {
+  Metadata,
   ChildNode,
   ParentNode,
   AnyNode,

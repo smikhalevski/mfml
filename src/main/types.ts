@@ -1,4 +1,14 @@
 /**
+ * The metadata exported from the compiled translations module.
+ */
+export interface Metadata {
+  /**
+   * The array of locales supported by compiled message functions.
+   */
+  supportedLocales: string[];
+}
+
+/**
  * The node that can be a child node of a {@link ParentNode parent node}.
  *
  * @group AST

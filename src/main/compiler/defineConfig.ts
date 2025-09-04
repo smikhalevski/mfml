@@ -84,7 +84,7 @@ export function defineConfig(config: Config): ResolvedConfig {
   } = config;
 
   const tokenizer = createTokenizer(tokenizerOptions);
-  const parser = createParser({ ...config, tokenizer, decodeText });
+  const parser = createParser({ tokenizer, decodeText });
   const compiler = createCompiler({ ...config, parser });
 
   return {

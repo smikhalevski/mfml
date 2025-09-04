@@ -1,4 +1,4 @@
-import { AnyNode, ArgumentNode, MessageNode } from '../types.js';
+import { AnyNode, ArgumentNode, MessageNode, Metadata } from '../types.js';
 import { Parser } from '../parser/index.js';
 import {
   escapeJsIdentifier,
@@ -33,6 +33,11 @@ export class CompilerError extends Error {
     super();
   }
 }
+
+/**
+ * @internal
+ */
+CompilerError.prototype.name = 'CompilerError';
 
 /**
  * Params provided to the {@link Preprocessor} by the {@link Compiler}.
@@ -264,10 +269,6 @@ export async function compileFiles(
     localesJs += 'export const ' + localeVar + '=' + JSON.stringify(locale) + ';\n';
   }
 
-  files['locales.js'] = localesJs;
-
-  const localesJsImport = 'import{' + Object.values(localeVars).join(',') + '}from"./locales.js";';
-
   // Prevents infinite loop when resolving a fallback locale, reused between messages
   const visitedFallbackLocales = new Set<string>();
 
@@ -389,8 +390,10 @@ export async function compileFiles(
 
     files[fileName + '.js'] =
       'import{M,E,A,V,R,O,C}from"mfml/dsl";\n' +
-      localesJsImport +
-      '\n\n' +
+      'import{' +
+      Object.values(localeVars).join(',') +
+      '}from"./locales.js";\n' +
+      '\n' +
       formatJSDocComment(jsDocComment) +
       '\nexport default function ' +
       functionName +
@@ -414,18 +417,23 @@ export async function compileFiles(
     throw new AggregateError(errors);
   }
 
+  const metadata: Metadata = { supportedLocales: locales };
+
   files['index.js'] = indexJs;
 
   files['index.d.ts'] = indexTs;
 
-  files['metadata.js'] =
-    localesJsImport + '\n\nexport const supportedLocales=[' + Object.values(localeVars).join(',') + '];\n';
+  files['locales.js'] = localesJs;
+
+  files['metadata.js'] = 'export default ' + JSON.stringify(metadata, null, 2) + ';\n';
 
   files['metadata.d.ts'] =
+    'import{Metadata}from "mfml";\n\n' +
     'export type SupportedLocale=' +
     locales.map(locale => JSON.stringify(locale)).join('|') +
-    ';\n' +
-    '\nexport declare const supportedLocales:readonly SupportedLocale[];\n';
+    ';\n\n' +
+    'declare const metadata:Metadata;\n\n' +
+    'export default metadata;\n';
 
   return files;
 }
