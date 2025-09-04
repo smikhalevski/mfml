@@ -1,4 +1,4 @@
-import { TokenizerOptions } from './resolveTokenizerOptions.js';
+import { createTokenizer, TokenizerOptions } from './createTokenizer.js';
 
 const formTags = ['input', 'option', 'optgroup', 'select', 'button', 'datalist', 'textarea'];
 
@@ -11,7 +11,11 @@ const rtpTags = ['rt', 'rp'];
 const tableTags = ['thead', 'tbody'];
 
 /**
- * Options that describe HTML tokenization.
+ * Options used by the {@link htmlTokenizer forgiving HTML tokenizer}.
+ *
+ * @see {@link htmlTokenizer}
+ * @see {@link createTokenizer}
+ * @group Tokenizer
  */
 export const htmlTokenizerOptions: TokenizerOptions = {
   voidTags: [
@@ -92,3 +96,11 @@ export const htmlTokenizerOptions: TokenizerOptions = {
   isOrphanClosingTagsIgnored: true,
   isArgumentsInRawTextTagsRecognized: true,
 };
+
+/**
+ * The forgiving HTML syntax {@link createTokenizer tokenizer} that uses {@link htmlTokenizerOptions}.
+ *
+ * @see {@link createTokenizer}
+ * @group Tokenizer
+ */
+export const htmlTokenizer = createTokenizer(htmlTokenizerOptions);

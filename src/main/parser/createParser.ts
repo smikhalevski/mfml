@@ -1,4 +1,5 @@
-import { TokenCallback, tokenizeMessage, ResolvedTokenizerOptions } from './tokenizeMessage.js';
+import { Tokenizer } from './createTokenizer.js';
+import { TokenCallback } from './tokenizeMessage.js';
 import {
   Child,
   createArgumentNode,
@@ -11,9 +12,18 @@ import {
 } from '../ast.js';
 
 /**
- * Options that describe how names and HTML entities are decoded in a parsed MFML markup.
+ * Options of the {@link createParser}.
+ *
+ * @group Parser
  */
-export interface DecodingOptions {
+export interface ParserOptions {
+  /**
+   * Tokenizer that reads message as tokens.
+   *
+   * @see {@link createTokenizer}
+   */
+  tokenizer: Tokenizer;
+
   /**
    * Renames an XML tag.
    *
@@ -84,15 +94,22 @@ export interface DecodingOptions {
 }
 
 /**
- * Options of {@link parseMessage}.
+ * @group Parser
  */
-export interface ParserOptions extends DecodingOptions {
-  /**
-   * Tokenizer options prepared by {@link resolveTokenizerOptions}.
-   *
-   * @see {@link htmlTokenizerOptions}
-   */
-  tokenizerOptions?: ResolvedTokenizerOptions;
+export interface Parser {
+  parse(text: string): MessageNode<any>;
+}
+
+/**
+ * @param options
+ * @group Parser
+ */
+export function createParser(options: ParserOptions): Parser {
+  return {
+    parse(text) {
+      return parseMessage('', text, options);
+    },
+  };
 }
 
 /**
@@ -108,9 +125,9 @@ export interface ParserOptions extends DecodingOptions {
  * @param options Parser options.
  * @returns The message node that describes the message contents.
  */
-export function parseMessage(locale: string, text: string, options: ParserOptions = {}): MessageNode<any> {
+export function parseMessage(locale: string, text: string, options: ParserOptions): MessageNode<any> {
   const {
-    tokenizerOptions,
+    tokenizer,
     renameTag = noRename,
     renameAttribute = noRename,
     renameArgument = noRename,
@@ -219,7 +236,7 @@ export function parseMessage(locale: string, text: string, options: ParserOption
     }
   };
 
-  tokenizeMessage(text, tokenCallback, tokenizerOptions);
+  tokenizer.tokenize(text, tokenCallback);
 
   return messageNode;
 }

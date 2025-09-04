@@ -38,14 +38,14 @@ export interface ElementNode {
   /**
    * The name of the element tag.
    *
-   * @see {@link DecodingOptions.renameTag}
+   * @see {@link ParserOptions.renameTag}
    */
   tagName: string;
 
   /**
    * Mapping from an attribute name to children, or `null` if there are no attributes.
    *
-   * @see {@link DecodingOptions.renameAttribute}
+   * @see {@link ParserOptions.renameAttribute}
    */
   attributes: Record<string, Child[] | string> | null;
 
@@ -64,7 +64,7 @@ export interface ArgumentNode {
   /**
    * The name of the ICU attribute.
    *
-   * @see {@link DecodingOptions.renameArgument}
+   * @see {@link ParserOptions.renameArgument}
    */
   name: string;
 
@@ -72,14 +72,14 @@ export interface ArgumentNode {
    * The data type of the argument.
    *
    * @example "number"
-   * @see {@link DecodingOptions.renameArgumentType}
+   * @see {@link ParserOptions.renameArgumentType}
    */
   type: string | undefined;
 
   /**
    * The style that should be used for argument formatting, varies depending on an argument {@link type}.
    *
-   * @see {@link DecodingOptions.renameArgumentStyle}
+   * @see {@link ParserOptions.renameArgumentStyle}
    */
   style: string | undefined;
 }
@@ -93,7 +93,7 @@ export interface SelectNode {
   /**
    * The name of the ICU argument.
    *
-   * @see {@link DecodingOptions.renameArgument}
+   * @see {@link ParserOptions.renameArgument}
    */
   argumentName: string;
 
@@ -107,7 +107,7 @@ export interface SelectNode {
   /**
    * Mapping from an argument value or a category name to children that should be rendered when the category is matched.
    *
-   * @see {@link DecodingOptions.renameSelectCategory}
+   * @see {@link ParserOptions.renameSelectCategory}
    */
   categories: Record<string, Child[] | string>;
 }

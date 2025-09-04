@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import { compileMessageNode, compileModule } from '../../main/compiler/compileModule.js';
-import { parseMessage } from '../../main/parser/parseMessage.js';
+import { parseMessage } from '../../main/parser/createParser.js';
+import { createTokenizer } from '../../main/parser/index.js';
 
 describe('compileMessageNode', () => {
   test('compiles text', () => {
@@ -16,7 +17,7 @@ describe('compileMessageNode', () => {
     expect(
       compileMessageNode(
         'LLL',
-        parseMessage('ru', '<aaa/>', { tokenizerOptions: { isSelfClosingTagsRecognized: true } })
+        parseMessage('ru', '<aaa/>', { tokenizer: createTokenizer({ isSelfClosingTagsRecognized: true }) })
       )
     ).toBe('M(LLL,E("aaa"))');
     expect(compileMessageNode('LLL', parseMessage('ru', '<aaa xxx="zzz" yyy="{vvv}fff">bbb</aaa>'))).toBe(

@@ -1,7 +1,15 @@
-import { getCaseInsensitiveHashCode, getCaseSensitiveHashCode, ResolvedTokenizerOptions } from './tokenizeMessage.js';
+import {
+  getCaseInsensitiveHashCode,
+  getCaseSensitiveHashCode,
+  ResolvedTokenizerOptions,
+  TokenCallback,
+  tokenizeMessage,
+} from './tokenizeMessage.js';
 
 /**
- * Human-readable tokenizer options that can be resolved by {@link resolveTokenizerOptions}.
+ * Options of the {@link createTokenizer}.
+ *
+ * @group Tokenizer
  */
 export interface TokenizerOptions {
   /**
@@ -111,9 +119,62 @@ export interface TokenizerOptions {
 }
 
 /**
+ * A tokenizer that reads tokens from text and returns them by invoking a callback.
+ *
+ * @see {@link createTokenizer}
+ * @group Tokenizer
+ */
+export interface Tokenizer {
+  /**
+   * Reads tokens from text and returns them by invoking a callback.
+   */
+  tokenize(text: string, callback: TokenCallback): void;
+}
+
+/**
+ * Reads tokens from text and returns them by invoking a callback.
+ *
+ * Tokens are guaranteed to be returned in correct order. Missing tokens are inserted and `startIndex === endIndex`
+ * for such tokens.
+ *
+ * The tokenizer doesn't guarantee that contents of returned tokens are consistent. For example, ICU argument type may
+ * not properly reflect the consequent ICU category tokens.
+ *
+ * @example
+ * import { createTokenizer, htmlTokenizerOptions } from 'mfml/parser';
+ *
+ * const tokenizer = createTokenizer(htmlTokenizerOptions);
+ *
+ * tokenizer.tokenize(
+ *   'Hello, <b>{name}</b>!',
+ *   (token, startIndex, endIndex) => {
+ *     // Handle token here
+ *   },
+ * );
+ *
+ * @param options Tokenizer options.
+ * @group Tokenizer
+ */
+export function createTokenizer(options: TokenizerOptions = {}): Tokenizer {
+  const resolvedOptions = resolveTokenizerOptions(options);
+
+  return {
+    /**
+     * Reads tokens from text and returns them by invoking a callback.
+     *
+     * @param text The text string to read tokens from.
+     * @param callback The callback that is invoked when a token is read.
+     */
+    tokenize(text, callback) {
+      return tokenizeMessage(text, callback, resolvedOptions);
+    },
+  };
+}
+
+/**
  * Converts human-readable tokenizer options into options consumed by {@link parseMessage} and {@link tokenizeMessage}.
  */
-export function resolveTokenizerOptions(config: TokenizerOptions): ResolvedTokenizerOptions {
+export function resolveTokenizerOptions(options: TokenizerOptions): ResolvedTokenizerOptions {
   const {
     voidTags,
     rawTextTags,
@@ -124,7 +185,7 @@ export function resolveTokenizerOptions(config: TokenizerOptions): ResolvedToken
     isUnbalancedTagsImplicitlyClosed,
     isOrphanClosingTagsIgnored,
     isArgumentsInRawTextTagsRecognized,
-  } = config;
+  } = options;
 
   const getHashCode = isCaseInsensitiveTags ? getCaseInsensitiveHashCode : getCaseSensitiveHashCode;
 

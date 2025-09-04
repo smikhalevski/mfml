@@ -1,5 +1,7 @@
 /**
  * A token that can be read from a text.
+ *
+ * @group Tokenizer
  */
 export type Token =
   | 'TEXT'
@@ -23,6 +25,7 @@ export type Token =
  * @param token The token that was read.
  * @param startIndex The start index of the first meaningful token char (inclusive).
  * @param endIndex The end index of the last meaningful token char (exclusive).
+ * @group Tokenizer
  */
 export type TokenCallback = (token: Token, startIndex: number, endIndex: number) => void;
 
@@ -132,7 +135,7 @@ export interface ResolvedTokenizerOptions {
 }
 
 /**
- * Reads tokens from text and returns the by invoking a callback.
+ * Reads tokens from text and returns them by invoking a callback.
  *
  * Tokens are guaranteed to be returned in correct order. Missing tokens are inserted and `startIndex === endIndex`
  * for such tokens.

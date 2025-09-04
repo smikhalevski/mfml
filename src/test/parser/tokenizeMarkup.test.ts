@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { readTokens, tokenizeMessage } from '../../main/parser/tokenizeMessage.js';
-import { resolveTokenizerOptions } from '../../main/parser/resolveTokenizerOptions.js';
+import { resolveTokenizerOptions } from '../../main/parser/createTokenizer.js';
 
 const callbackMock = vi.fn();
 
