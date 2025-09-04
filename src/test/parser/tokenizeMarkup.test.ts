@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
-import { readTokens, tokenizeMessage } from '../../main/parser/tokenizeMessage.js';
+import { ParserError, readTokens, tokenizeMessage } from '../../main/parser/tokenizeMessage.js';
 import { resolveTokenizerOptions } from '../../main/parser/createTokenizer.js';
 
 const callbackMock = vi.fn();
@@ -756,7 +756,7 @@ describe('readTokens', () => {
 
   test('throws on non-escaped quote in an ICU select inside an attribute', () => {
     expect(() => readTokens('<aaa xxx="{zzz,yyy,fff{"}}"></aaa>', callbackMock, {})).toThrow(
-      new SyntaxError('Unexpected ICU syntax at 23')
+      new ParserError('Unterminated ICU argument.', '<aaa xxx="{zzz,yyy,fff{"}}"></aaa>', 23)
     );
 
     expect(callbackMock).toHaveBeenCalledTimes(5);
@@ -1042,10 +1042,14 @@ describe('tokenizeMessage', () => {
   });
 
   test('throws if opening tag is not ended before EOF', () => {
-    expect(() => tokenizeMessage('<aaa xxx="bbb"', callbackMock)).toThrow(new SyntaxError('Missing closing tag at 14'));
+    expect(() => tokenizeMessage('<aaa xxx="bbb"', callbackMock)).toThrow(
+      new ParserError('Missing closing tag.', '<aaa xxx="bbb"', 14)
+    );
   });
 
   test('throws if argument is not ended before EOF', () => {
-    expect(() => tokenizeMessage('<aaa>{xxx', callbackMock)).toThrow(new SyntaxError('Unexpected ICU syntax at 9'));
+    expect(() => tokenizeMessage('<aaa>{xxx', callbackMock)).toThrow(
+      new ParserError('Expected an ICU argument type separated by a "," or an end of an argument "}".', '<aaa>{xxx', 9)
+    );
   });
 });

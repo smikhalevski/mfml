@@ -10,6 +10,16 @@ import {
   truncateMessage,
 } from './utils.js';
 
+export class CompilerError extends Error {
+  constructor(
+    readonly messageKey: string,
+    readonly locale: string,
+    readonly cause: unknown
+  ) {
+    super();
+  }
+}
+
 /**
  * Options of {@link createCompiler}.
  *
@@ -155,6 +165,8 @@ export async function compileFiles(
     getArgumentTsType = getArgumentNaturalTsType,
   } = options;
 
+  const errors: CompilerError[] = [];
+
   const locales = Object.keys(messages);
 
   const messageKeys = new Set(locales.flatMap(locale => Object.keys(messages[locale])));
@@ -181,7 +193,7 @@ export async function compileFiles(
   // Prevents infinite loop when resolving a fallback locale, reused between messages
   const visitedFallbackLocales = new Set<string>();
 
-  for (const messageKey of messageKeys) {
+  nextMessageKey: for (const messageKey of messageKeys) {
     const localeGroups = [];
 
     // Pick locales supported by a message
@@ -203,6 +215,7 @@ export async function compileFiles(
 
         let fallbackLocale = locale;
 
+        // noinspection CommaExpressionJS
         do {
           fallbackLocale = fallbackLocales[fallbackLocale];
         } while (
@@ -254,8 +267,9 @@ export async function compileFiles(
         }
 
         collectArgumentTsTypes(messageNode, getArgumentTsType, argumentTsTypes);
-      } catch (cause) {
-        throw new Error('Cannot compile "' + messageKey + '" message for locale ' + baseLocale, { cause });
+      } catch (error) {
+        errors.push(new CompilerError(messageKey, baseLocale, error));
+        continue nextMessageKey;
       }
 
       messageNodes.push(messageNode);
@@ -276,8 +290,9 @@ export async function compileFiles(
 
       try {
         jsCode += '?' + compileMessageNode('locale', messageNodes[i]) + ':';
-      } catch (cause) {
-        throw new Error('Cannot compile "' + messageKey + '" message for locale ' + localeGroups[i][0], { cause });
+      } catch (error) {
+        errors.push(new CompilerError(messageKey, localeGroups[i][0], error));
+        continue nextMessageKey;
       }
     }
 
@@ -310,9 +325,13 @@ export async function compileFiles(
         '(locale:string):' +
         compileMessageTsType(argumentTsTypes) +
         ';\n';
-    } catch (cause) {
-      throw new Error('Cannot compile "' + messageKey + '" message', { cause });
+    } catch (error) {
+      errors.push(new CompilerError(messageKey, localeGroups[0][0], error));
     }
+  }
+
+  if (errors.length !== 0) {
+    throw new AggregateError(errors);
   }
 
   files['index.js'] = indexJs;

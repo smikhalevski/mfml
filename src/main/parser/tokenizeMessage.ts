@@ -1,3 +1,19 @@
+export class ParserError extends SyntaxError {
+  constructor(
+    message: string,
+    readonly text: string,
+    readonly startIndex: number,
+    readonly endIndex = startIndex
+  ) {
+    super(message);
+  }
+}
+
+/**
+ * @internal
+ */
+ParserError.prototype.name = 'ParserError';
+
 /**
  * A token that can be read from a text.
  *
@@ -230,7 +246,7 @@ export function tokenizeMessage(text: string, callback: TokenCallback, options: 
         // Found an opening tag
         if (index !== -1) {
           if (!isUnbalancedTagsImplicitlyClosed && index !== tagStackCursor) {
-            throw new SyntaxError('Missing closing tag at ' + closingTagStartIndex);
+            throw new ParserError('Missing closing tag.', text, closingTagStartIndex);
           }
           // Insert unbalanced closing tags
           while (index < tagStackCursor) {
@@ -245,7 +261,7 @@ export function tokenizeMessage(text: string, callback: TokenCallback, options: 
 
         if (implicitlyOpenedTags === undefined || !implicitlyOpenedTags.has(closingTag)) {
           if (!isOrphanClosingTagsIgnored) {
-            throw new SyntaxError('Orphan closing tag at ' + closingTagStartIndex);
+            throw new ParserError('Orphan closing tag.', text, startIndex, endIndex);
           }
           break;
         }
@@ -295,11 +311,11 @@ export function tokenizeMessage(text: string, callback: TokenCallback, options: 
   }
 
   if (!canEOF) {
-    throw new SyntaxError('Unexpected EOF');
+    throw new ParserError('Unexpected end of message.', text, text.length);
   }
 
   if (!isUnbalancedTagsImplicitlyClosed) {
-    throw new SyntaxError('Missing closing tag at ' + text.length);
+    throw new ParserError('Missing closing tag.', text, text.length);
   }
 
   while (tagStackCursor !== -1) {
@@ -364,8 +380,6 @@ const TOKEN_ICU_CATEGORY_START = 'ICU_CATEGORY_START';
 const TOKEN_ICU_CATEGORY_END = 'ICU_CATEGORY_END';
 const TOKEN_ICU_OCTOTHORPE = 'ICU_OCTOTHORPE';
 
-const ICU_ERROR_MESSAGE = 'Unexpected ICU syntax at ';
-
 export interface TokenReaderOptions {
   readTag?: (text: string, startIndex: number, endIndex: number) => number;
   rawTextTags?: Set<number>;
@@ -403,8 +417,7 @@ export function readTokens(text: string, callback: TokenCallback, options: Token
       (charCode === /* ' */ 39 && scopeStack.lastIndexOf(SCOPE_XML_SINGLE_QUOTED_ATTRIBUTE_VALUE) !== -1)
     ) {
       if (scope === SCOPE_ICU_CATEGORY) {
-        // ICU category has ended prematurely
-        throw new SyntaxError(ICU_ERROR_MESSAGE + index);
+        throw new ParserError('Unterminated ICU argument.', text, index);
       }
 
       if (textStartIndex !== index) {
@@ -656,7 +669,7 @@ export function readTokens(text: string, callback: TokenCallback, options: Token
       nextIndex = readChars(text, nextIndex, isICUNameChar);
 
       if (argumentNameStartIndex === nextIndex) {
-        throw new SyntaxError(ICU_ERROR_MESSAGE + nextIndex);
+        throw new ParserError('Empty ICU argument name.', text, nextIndex);
       }
 
       callback(TOKEN_ICU_ARGUMENT_START, argumentNameStartIndex, nextIndex);
@@ -670,7 +683,11 @@ export function readTokens(text: string, callback: TokenCallback, options: Token
       }
 
       if (getCharCodeAt(text, nextIndex) !== /* , */ 44) {
-        throw new SyntaxError(ICU_ERROR_MESSAGE + nextIndex);
+        throw new ParserError(
+          'Expected an ICU argument type separated by a "," or an end of an argument "}".',
+          text,
+          nextIndex
+        );
       }
 
       // ICU argument type
@@ -682,7 +699,7 @@ export function readTokens(text: string, callback: TokenCallback, options: Token
       nextIndex = readChars(text, argumentTypeStartIndex, isICUNameChar);
 
       if (argumentTypeStartIndex === nextIndex) {
-        throw new SyntaxError(ICU_ERROR_MESSAGE + nextIndex);
+        throw new ParserError('Empty ICU argument type.', text, nextIndex);
       }
 
       callback(TOKEN_ICU_ARGUMENT_TYPE, argumentTypeStartIndex, nextIndex);
@@ -696,7 +713,11 @@ export function readTokens(text: string, callback: TokenCallback, options: Token
       }
 
       if (getCharCodeAt(text, nextIndex) !== /* , */ 44) {
-        throw new SyntaxError(ICU_ERROR_MESSAGE + nextIndex);
+        throw new ParserError(
+          'Expected an ICU argument style or category name separated by a "," or an end of an argument "}".',
+          text,
+          nextIndex
+        );
       }
 
       // ICU argument style or select
@@ -708,7 +729,7 @@ export function readTokens(text: string, callback: TokenCallback, options: Token
       nextIndex = readChars(text, nextIndex, isICUNameChar);
 
       if (argumentStyleStartIndex === nextIndex) {
-        throw new SyntaxError(ICU_ERROR_MESSAGE + nextIndex);
+        throw new ParserError('Empty ICU argument style.', text, nextIndex);
       }
 
       const argumentStyleEndIndex = nextIndex;
@@ -734,7 +755,7 @@ export function readTokens(text: string, callback: TokenCallback, options: Token
         continue;
       }
 
-      throw new SyntaxError(ICU_ERROR_MESSAGE + nextIndex);
+      throw new ParserError('Expected an ICU category start "{" or an end of an argument "}".', text, nextIndex);
     }
 
     // End of an ICU argument
@@ -775,7 +796,7 @@ export function readTokens(text: string, callback: TokenCallback, options: Token
     // Start of an ICU category
     if (scope === SCOPE_ICU_ARGUMENT) {
       if (!isICUNameChar(charCode)) {
-        throw new SyntaxError(ICU_ERROR_MESSAGE + index);
+        throw new ParserError('ICU category name cannot contain "' + text.charAt(index) + '".', text, nextIndex);
       }
 
       nextIndex = readChars(text, index + 1, isICUNameChar);
@@ -785,7 +806,7 @@ export function readTokens(text: string, callback: TokenCallback, options: Token
       nextIndex = skipSpaces(text, nextIndex);
 
       if (getCharCodeAt(text, nextIndex) !== /* { */ 123) {
-        throw new SyntaxError(ICU_ERROR_MESSAGE + nextIndex);
+        throw new ParserError('Expected an ICU category start "{".', text, nextIndex);
       }
 
       scope = scopeStack[++scopeStackCursor] = SCOPE_ICU_CATEGORY;

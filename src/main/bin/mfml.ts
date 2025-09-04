@@ -2,7 +2,7 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { ResolvedConfig } from '../compiler/index.js';
-import { printHelp, printError } from './utils.js';
+import { printError, printHelp } from './utils.js';
 
 const fallbackConfigPaths = ['mfml.config.ts', 'mfml.config.js', 'mfml.config.mts', 'mfml.config.mjs'];
 
@@ -27,7 +27,6 @@ try {
   await build(config);
 } catch (error) {
   printError(error);
-
   process.exit(1);
 }
 

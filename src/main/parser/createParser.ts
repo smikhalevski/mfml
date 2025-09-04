@@ -1,5 +1,5 @@
 import { Tokenizer } from './createTokenizer.js';
-import { TokenCallback } from './tokenizeMessage.js';
+import { ParserError, TokenCallback } from './tokenizeMessage.js';
 import {
   Child,
   createArgumentNode,
@@ -259,8 +259,11 @@ export function parseMessage(locale: string, text: string, options: ParserOption
           }
           break;
       }
-    } catch (cause) {
-      throw new Error('Cannot parse "' + token + '" token at ' + startIndex, { cause });
+    } catch (error) {
+      if (error instanceof ParserError) {
+        throw error;
+      }
+      throw new ParserError('Failed to parse ' + token + ': ' + error, text, startIndex, endIndex);
     }
   };
 

@@ -1,80 +1,105 @@
+import { ParserError } from '../parser/tokenizeMessage.js';
+import { CompilerError } from '../compiler/createCompiler.js';
+
+const isColorized = process.stdout.isTTY && process.env.FORCE_COLOR !== '0';
+
+export function printHelp(): void {
+  console.log(`mfml: ICU MessageFormat + XML/HTML compiler tool. 
+
+${dim('mfml [...options]')}
+
+  ${dim('--config')}  Compile the project given the path to its configuration file.
+
+    ${dim('--help')}  Print this message.
+
+Visit ${blue(underline('https://megastack.dev/mfml'))} for API docs and tutorials.
+`);
+}
+
+export function printError(error: unknown): void {
+  console.log(formatError(error));
+}
+
 export function formatError(error: unknown): string {
-  if (error === null || error === undefined) {
-    return '';
+  if (error instanceof AggregateError) {
+    return '\n' + error.errors.map(formatError).join('\n\n');
+  }
+
+  if (error instanceof CompilerError) {
+    return dim(error.locale) + ':' + dim(error.messageKey) + ' - ' + red('error') + ' ' + formatError(error.cause);
+  }
+
+  if (error instanceof ParserError) {
+    return error.message + '\n\n' + formatTextExcerpt(error.text, error.startIndex, error.endIndex);
   }
 
   if (error instanceof Error) {
-    let message = error.message;
-
-    if (error.cause instanceof Error) {
-      message += '\n  Caused by: ' + formatError(error.cause).replace(/\n/g, '\n  ');
-    }
-
-    return message;
+    return error.message;
   }
 
   return '' + error;
 }
 
-export function printHelp(): void {
-  console.log(`ICU MessageFormat + XML/HTML compiler tool. 
+function formatTextExcerpt(text: string, startIndex: number, endIndex: number, excerptLength = 80): string {
+  let excerptStartIndex = text.lastIndexOf('\n', startIndex) + 1;
+  let excerptEndIndex = text.indexOf('\n', startIndex);
 
-Visit ${decorateLink('https://megastack.dev/mfml')} for API docs and tutorials.
+  let lineIndex = 0;
 
+  if (excerptEndIndex === -1) {
+    excerptEndIndex = text.length;
+  }
 
-${decorateHeader('USAGE')}
+  for (let i = -1; (i = text.indexOf('\n', i + 1)) !== -1 && i < excerptStartIndex; ) {
+    lineIndex++;
+  }
 
-${decorateCommand('mfml [...options]')}
+  if (endIndex + excerptLength / 2 > excerptEndIndex) {
+    // Ends after line end
+    excerptEndIndex = Math.min(excerptEndIndex, endIndex + excerptLength);
+  } else if (startIndex - excerptLength / 2 < excerptStartIndex) {
+    // Starts before line start
+    excerptStartIndex = Math.max(excerptStartIndex, startIndex - excerptLength);
+  } else {
+    // Fits inside the line
+    excerptStartIndex = startIndex - excerptLength / 2;
+    excerptEndIndex = endIndex + excerptLength / 2;
+  }
 
+  const prefix = lineIndex + 1 + '';
 
-${decorateHeader('OPTIONS')}
-
-${decorateCommand('--config')}  A path to a configuration file.
-
-  ${decorateCommand('--help')}  Print this message.
-`);
+  return (
+    inverse(prefix) +
+    ' ' +
+    text.substring(excerptStartIndex, excerptEndIndex) +
+    '\n' +
+    inverse(' '.repeat(prefix.length)) +
+    ' ' +
+    ' '.repeat(startIndex - excerptStartIndex) +
+    red('~'.repeat(Math.max(1, Math.min(endIndex, excerptEndIndex) - startIndex)))
+  );
 }
 
-export function printError(error: unknown): void {
-  console.log(bgRed(black(' ERROR ')) + ' ' + formatError(error));
+function colorize(text: string, startCode: number, endCode: number): string {
+  return isColorized ? `\x1b[${startCode}m${text}\x1b[${endCode}m` : text;
 }
 
-function bgRed(text: string): string {
-  return formatCLI(text, 41, 49);
+function inverse(text: string): string {
+  return colorize(text, 7, 27);
 }
 
-function black(text: string): string {
-  return formatCLI(text, 30, 39);
+function red(text: string): string {
+  return colorize(text, 31, 39);
 }
 
 function blue(text: string): string {
-  return formatCLI(text, 34, 39);
+  return colorize(text, 34, 39);
 }
 
 function dim(text: string): string {
-  return formatCLI(text, 2, 22);
+  return colorize(text, 2, 22);
 }
 
 function underline(text: string): string {
-  return formatCLI(text, 4, 24);
-}
-
-function bold(text: string): string {
-  return formatCLI(text, 1, 22);
-}
-
-function decorateHeader(text: string): string {
-  return bold(text);
-}
-
-function decorateCommand(text: string): string {
-  return dim(text);
-}
-
-function decorateLink(text: string): string {
-  return blue(underline(text));
-}
-
-function formatCLI(text: string, startCode: number, endCode: number): string {
-  return `\x1b[${startCode}m${text}\x1b[${endCode}m`;
+  return colorize(text, 4, 24);
 }

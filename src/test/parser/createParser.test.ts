@@ -2,6 +2,7 @@ import { describe, expect, test } from 'vitest';
 import { parseMessage } from '../../main/parser/createParser.js';
 import { MessageNode } from '../../main/ast.js';
 import { createTokenizer } from '../../main/parser/createTokenizer.js';
+import { ParserError } from '../../main/parser/tokenizeMessage.js';
 
 describe('parseMessage', () => {
   const tokenizer = createTokenizer();
@@ -300,5 +301,16 @@ describe('parseMessage', () => {
         },
       ],
     } satisfies MessageNode);
+  });
+
+  test('wraps thrown errors', () => {
+    expect(() =>
+      parseMessage('en', '{aaa}', {
+        tokenizer,
+        renameArgument: () => {
+          throw new Error('Expected');
+        },
+      })
+    ).toThrow(new ParserError('Failed to parse ICU_ARGUMENT_START: Error: Expected', '{aaa}', 1, 4));
   });
 });
