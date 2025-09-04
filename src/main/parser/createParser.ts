@@ -97,7 +97,7 @@ export function createParser(options: ParserOptions): Parser {
  * @returns The message node that describes the message contents.
  */
 export function parseMessage(locale: string, text: string, options: ParserOptions): MessageNode {
-  const { tokenizer, decodeText = identity } = options;
+  const { tokenizer, decodeText } = options;
 
   const messageNode = createMessageNode(locale);
 
@@ -108,10 +108,12 @@ export function parseMessage(locale: string, text: string, options: ParserOption
       case 'TEXT':
         let value = text.substring(startIndex, endIndex);
 
-        try {
-          value = decodeText(value);
-        } catch (error) {
-          throw new ParserError('Cannot decode text: ' + error, text, startIndex, endIndex);
+        if (decodeText !== undefined) {
+          try {
+            value = decodeText(value);
+          } catch (error) {
+            throw new ParserError('Cannot decode text: ' + error, text, startIndex, endIndex);
+          }
         }
 
         (parentNode as ParentNode).childNodes = pushChild(
@@ -244,8 +246,4 @@ function setSourceLocation<T extends SourceLocation>(node: T, startIndex: number
   node.endIndex = endIndex;
 
   return node;
-}
-
-function identity(value: string): string {
-  return value;
 }

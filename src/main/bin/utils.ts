@@ -26,7 +26,13 @@ export function formatError(error: unknown): string {
   }
 
   if (error instanceof CompilerError) {
-    return dim(error.locale) + ':' + dim(error.messageKey) + ' - ' + red('error') + ' ' + formatError(error.cause);
+    const prefix = dim(error.locale) + ':' + dim(error.messageKey) + ' - ' + red('error') + ' ';
+
+    if (error.cause instanceof AggregateError) {
+      return '\n' + error.cause.errors.map(error => prefix + formatError(error)).join('\n\n');
+    }
+
+    return prefix + formatError(error.cause);
   }
 
   if (error instanceof ParserError) {

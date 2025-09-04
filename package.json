@@ -13,7 +13,9 @@
     "./compiler": "./compiler/index.js",
     "./parser": "./parser/index.js",
     "./postprocessor/allowTags": "./postprocessor/allowTags.js",
+    "./postprocessor/allowTypes": "./postprocessor/allowTypes.js",
     "./react": "./react/index.js",
+    "./dsl": "./dsl.js",
     "./package.json": "./package.json"
   },
   "sideEffects": false,
