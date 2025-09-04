@@ -36,17 +36,20 @@ async function build(config: ResolvedConfig): Promise<void> {
 
   const files = await compiler.compile(messages);
 
-  files['package.json'] = JSON.stringify({
+  const packageJSON = {
     name: packageName,
     type: 'module',
     main: './index.js',
     types: './index.d.ts',
     exports: {
       '.': './index.js',
+      './metadata': './metadata.js',
       './package.json': './package.json',
     },
     sideEffects: false,
-  });
+  };
+
+  files['package.json'] = JSON.stringify(packageJSON, null, 2);
 
   const packageDir = path.join(process.cwd(), outDir, 'node_modules', packageName);
 

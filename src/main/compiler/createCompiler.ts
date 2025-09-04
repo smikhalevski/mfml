@@ -316,7 +316,17 @@ export async function compileFiles(
   }
 
   files['index.js'] = indexJs;
+
   files['index.d.ts'] = indexTs;
+
+  files['metadata.js'] =
+    localesJsImport + '\n\nexport const supportedLocales=[' + Object.values(localeVars).join(',') + '];\n';
+
+  files['metadata.d.ts'] =
+    'export type SupportedLocale=' +
+    locales.map(locale => JSON.stringify(locale)).join('|') +
+    ';\n' +
+    '\nexport declare const supportedLocales:readonly SupportedLocale[];\n';
 
   return files;
 }

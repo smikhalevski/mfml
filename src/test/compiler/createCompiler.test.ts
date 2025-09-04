@@ -155,6 +155,16 @@ describe('compileFiles', () => {
         ' * ```\n' +
         ' */\n' +
         'export declare function messageReceived(locale:string):MessageNode<{"gender":number|string}>|null;\n',
+
+      'metadata.d.ts':
+        'export type SupportedLocale="en-US"|"ru-RU";\n' +
+        '\n' +
+        'export declare const supportedLocales:readonly SupportedLocale[];\n',
+
+      'metadata.js':
+        'import{LOCALE_EN_US,LOCALE_RU_RU}from"./locales.js";\n' +
+        '\n' +
+        'export const supportedLocales=[LOCALE_EN_US,LOCALE_RU_RU];\n',
     });
   });
 
@@ -250,6 +260,14 @@ describe('compileFiles', () => {
         ' * ```\n' +
         ' */\n' +
         'export declare function bbb(locale:string):MessageNode|null;\n',
+
+      'metadata.d.ts':
+        'export type SupportedLocale="en"|"ru";\n' +
+        '\n' +
+        'export declare const supportedLocales:readonly SupportedLocale[];\n',
+
+      'metadata.js':
+        'import{LOCALE_EN,LOCALE_RU}from"./locales.js";\n\nexport const supportedLocales=[LOCALE_EN,LOCALE_RU];\n',
     });
   });
 
@@ -348,6 +366,14 @@ describe('compileFiles', () => {
         ' * ```\n' +
         ' */\n' +
         'export declare function bbb(locale:string):MessageNode|null;\n',
+
+      'metadata.d.ts':
+        'export type SupportedLocale="en"|"ru";\n' +
+        '\n' +
+        'export declare const supportedLocales:readonly SupportedLocale[];\n',
+
+      'metadata.js':
+        'import{LOCALE_EN,LOCALE_RU}from"./locales.js";\n\nexport const supportedLocales=[LOCALE_EN,LOCALE_RU];\n',
     });
   });
 
@@ -446,6 +472,14 @@ describe('compileFiles', () => {
         ' * ```\n' +
         ' */\n' +
         'export declare function bbb(locale:string):MessageNode|null;\n',
+
+      'metadata.d.ts':
+        'export type SupportedLocale="en"|"ru";\n' +
+        '\n' +
+        'export declare const supportedLocales:readonly SupportedLocale[];\n',
+
+      'metadata.js':
+        'import{LOCALE_EN,LOCALE_RU}from"./locales.js";\n\nexport const supportedLocales=[LOCALE_EN,LOCALE_RU];\n',
     });
   });
 
@@ -556,6 +590,16 @@ describe('compileFiles', () => {
         ' * ```\n' +
         ' */\n' +
         'export declare function bbb(locale:string):MessageNode|null;\n',
+
+      'metadata.d.ts':
+        'export type SupportedLocale="en"|"ru"|"es";\n' +
+        '\n' +
+        'export declare const supportedLocales:readonly SupportedLocale[];\n',
+
+      'metadata.js':
+        'import{LOCALE_EN,LOCALE_RU,LOCALE_ES}from"./locales.js";\n' +
+        '\n' +
+        'export const supportedLocales=[LOCALE_EN,LOCALE_RU,LOCALE_ES];\n',
     });
   });
 });
