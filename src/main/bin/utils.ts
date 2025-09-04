@@ -1,5 +1,5 @@
-import { ParserError } from '../parser/tokenizeMessage.js';
-import { CompilerError } from '../compiler/createCompiler.js';
+import { ParserError } from '../parser/index.js';
+import { CompilerError } from '../compiler/index.js';
 
 export function print(text: string): void {
   if (!print.isSilent) {

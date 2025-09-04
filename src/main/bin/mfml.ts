@@ -46,7 +46,11 @@ try {
 async function build(config: ResolvedConfig): Promise<void> {
   const { messages, compiler, packageName, outDir } = config;
 
+  const startTimestamp = performance.now();
+
   const files = await compiler.compile(messages);
+
+  const duration = (performance.now() - startTimestamp).toFixed(1);
 
   const packageJSON = {
     name: packageName,
@@ -71,7 +75,7 @@ async function build(config: ResolvedConfig): Promise<void> {
     fs.writeFileSync(path.join(packageDir, file), files[file]);
   }
 
-  print('Generated ' + Object.keys(files).length + ' files in ' + packageDir);
+  print('Generated ' + Object.keys(files).length + ' files in ' + packageDir + ' (' + duration + 'ms)');
 }
 
 function resolveConfigPath(basePath: string, configPaths: string[]): string {
