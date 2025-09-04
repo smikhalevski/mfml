@@ -27,6 +27,7 @@ export interface TypeRequirements {
    *
    * @example
    * ['decimal', 'percent']
+   *
    * @default false
    */
   allowedStyles?: string[] | boolean;
@@ -38,6 +39,7 @@ export interface TypeRequirements {
    *
    * @example
    * ['currencyDisplay', 'useGrouping', 'minimumIntegerDigits']
+   *
    * @default false
    */
   allowedOptions?: string[] | boolean;
@@ -49,33 +51,27 @@ export interface TypeRequirements {
    *
    * @example
    * ['one', 'many', 'few', 'other']
+   *
    * @default false
    */
   allowedCategories?: string[] | boolean;
 
   /**
-   * The array of categories that are required.
+   * The array of categories that are required, or `true` if at least one category is required.
    *
    * @example
    * ['other']
+   *
+   * @default false
    */
-  requiredCategories?: string[];
+  requiredCategories?: string[] | boolean;
 
   /**
-   * If `true` then style is always required.
+   * If `true` then style is always required and options and categories requirements are ignored.
    *
    * @default false
    */
   isStyleRequired?: boolean;
-
-  /**
-   * If `true` then at least one category from {@link allowedCategories} is required.
-   *
-   * Ignored if {@link requiredCategories} are non-empty.
-   *
-   * @default false
-   */
-  isCategoryRequired?: boolean;
 }
 
 /**
@@ -124,14 +120,8 @@ export default function allowTypes(allowedTypes: { [type: string]: TypeRequireme
         return;
       }
 
-      const {
-        allowedStyles,
-        allowedOptions,
-        allowedCategories,
-        requiredCategories,
-        isStyleRequired,
-        isCategoryRequired,
-      } = allowedTypes[typeNode.value];
+      const { allowedStyles, allowedOptions, allowedCategories, requiredCategories, isStyleRequired } =
+        allowedTypes[typeNode.value];
 
       const hasStyle = styleNode !== null;
       const hasOptions = optionNodes !== null && optionNodes.length !== 0;
@@ -145,11 +135,16 @@ export default function allowTypes(allowedTypes: { [type: string]: TypeRequireme
       const areStylesAllowed = hasAllowedStyles || allowedStyles === true;
       const areOptionsAllowed = hasAllowedOptions || allowedOptions === true;
       const areCategoriesAllowed = hasAllowedCategories || allowedCategories === true;
+      const areCategoriesRequired = hasRequiredCategories || requiredCategories === true;
 
-      if (!hasStyle && hasAllowedStyles && isStyleRequired) {
+      if (!hasStyle && isStyleRequired) {
         errors.push(
           new ParserError(
-            'The argument type "' + typeNode.value + '" requires a style: ' + allowedStyles.join(', ') + '.',
+            'The argument type "' +
+              typeNode.value +
+              '" requires a style' +
+              (hasAllowedStyles ? ': ' + allowedStyles.join(', ') : '') +
+              '.',
             params.text,
             typeNode.startIndex,
             typeNode.endIndex
@@ -183,6 +178,11 @@ export default function allowTypes(allowedTypes: { [type: string]: TypeRequireme
             styleNode.endIndex
           )
         );
+      }
+
+      if (isStyleRequired) {
+        // The presence of an argument style allows for neither options nor categories
+        return;
       }
 
       if (hasOptions && !areOptionsAllowed) {
@@ -219,13 +219,13 @@ export default function allowTypes(allowedTypes: { [type: string]: TypeRequireme
         }
       }
 
-      if (!hasCategories && hasAllowedCategories && isCategoryRequired && !hasRequiredCategories) {
+      if (!hasCategories && areCategoriesRequired) {
         errors.push(
           new ParserError(
             'The argument type "' +
               typeNode.value +
-              '" requires at least one category: ' +
-              allowedCategories.join(', ') +
+              '" requires at least one category' +
+              (hasAllowedCategories ? ': ' + allowedCategories.join(', ') : '') +
               '.',
             params.text,
             typeNode.startIndex,

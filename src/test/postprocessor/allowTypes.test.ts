@@ -136,7 +136,7 @@ test('throws if type requires a category', () => {
   const text = '{xxx,yyy}';
 
   expect(() =>
-    allowTypes({ yyy: { allowedCategories: ['zzz', 'vvv'], isCategoryRequired: true } })({
+    allowTypes({ yyy: { allowedCategories: ['zzz', 'vvv'], requiredCategories: true } })({
       text,
       locale: 'en',
       messageKey: 'xxx',
