@@ -309,7 +309,7 @@ export default function allowTypes(allowedTypes: { [type: string]: TypeRequireme
 
 /**
  * Allowed types that can be passed to {@link allowTypes} preprocessor to match
- * the {@link mfml!defaultFormatter defaultFormatter} setup.
+ * the {@link mfml!defaultArgumentFormatter defaultArgumentFormatter} setup.
  *
  * <dl>
  *

@@ -1,11 +1,11 @@
 import { getDateTimeFormat, getDisplayNames, getListFormat, getNumberFormat, mergeOptions } from './utils.js';
 
 /**
- * Params provided to a {@link Formatter}.
+ * Params provided to a {@link ArgumentFormatter}.
  *
- * @group Formatter
+ * @group Argument Formatter
  */
-export interface FormatterParams {
+export interface ArgumentFormatterParams {
   /**
    * The value of an argument.
    */
@@ -38,18 +38,18 @@ export interface FormatterParams {
  *
  * @param params The formatting params.
  * @returns The formatted argument value, or `undefined` if a value cannot be formatted.
- * @group Formatter
+ * @group Argument Formatter
  */
-export type Formatter = (params: FormatterParams) => string | undefined;
+export type ArgumentFormatter = (params: ArgumentFormatterParams) => string | undefined;
 
 /**
  * Creates an argument formatter that sequentially applies each formatter from the list of formatters until one returns
  * a formatted value. If none of the formatters returns a formatted value, a stringified value is returned instead.
  *
  * @param formatters The array of formatters to try.
- * @group Formatter
+ * @group Argument Formatter
  */
-export function createWaterfallFormatter(formatters: Formatter[]): Formatter {
+export function createWaterfallArgumentFormatter(formatters: ArgumentFormatter[]): ArgumentFormatter {
   return params => {
     for (const formatter of formatters) {
       const value = formatter(params);
@@ -69,13 +69,13 @@ export function createWaterfallFormatter(formatters: Formatter[]): Formatter {
  * @param type The required argument type, or `null` if type shouldn't be specified.
  * @param style The required argument style, or `null` if style shouldn't be specified.
  * @param options Number format options.
- * @group Formatter
+ * @group Argument Formatter
  */
-export function createNumberFormatter(
+export function createNumberArgumentFormatter(
   type: string | null,
   style: string | null,
   options?: Intl.NumberFormatOptions
-): Formatter {
+): ArgumentFormatter {
   return params => {
     if (
       type === params.type &&
@@ -93,13 +93,13 @@ export function createNumberFormatter(
  * @param type The required argument type, or `null` if type shouldn't be specified.
  * @param style The required argument style, or `null` if style shouldn't be specified.
  * @param options Date-time format options.
- * @group Formatter
+ * @group Argument Formatter
  */
-export function createDateTimeFormatter(
+export function createDateTimeArgumentFormatter(
   type: string | null,
   style: string | null,
   options?: Intl.DateTimeFormatOptions
-): Formatter {
+): ArgumentFormatter {
   return params => {
     if (
       type === params.type &&
@@ -117,13 +117,13 @@ export function createDateTimeFormatter(
  * @param type The required argument type, or `null` if type shouldn't be specified.
  * @param style The required argument style, or `null` if style shouldn't be specified.
  * @param options List format options.
- * @group Formatter
+ * @group Argument Formatter
  */
-export function createListFormatter(
+export function createListArgumentFormatter(
   type: string | null,
   style: string | null,
   options?: Intl.ListFormatOptions
-): Formatter {
+): ArgumentFormatter {
   return params => {
     if (type === params.type && style === params.style && Array.isArray(params.value)) {
       return getListFormat(params.locale, mergeOptions(options, params.options)).format(params.value);
@@ -138,13 +138,13 @@ export function createListFormatter(
  * @param type The required argument type, or `null` if type shouldn't be specified.
  * @param style The required argument style, or `null` if style shouldn't be specified.
  * @param options Display name format options.
- * @group Formatter
+ * @group Argument Formatter
  */
-export function createDisplayNameFormatter(
+export function createDisplayNameArgumentFormatter(
   type: string | null,
   style: string | null,
   options: Intl.DisplayNamesOptions
-): Formatter {
+): ArgumentFormatter {
   return params => {
     if (type === params.type && style === params.style && typeof params.value === 'string') {
       return getDisplayNames(params.locale, mergeOptions(options, params.options)).of(params.value);
@@ -153,38 +153,38 @@ export function createDisplayNameFormatter(
 }
 
 /**
- * The default formatter.
+ * The default argument formatter.
  *
- * @group Formatter
+ * @group Argument Formatter
  */
-export const defaultFormatter = createWaterfallFormatter([
-  createNumberFormatter(null, null),
-  createNumberFormatter('number', null),
-  createNumberFormatter('number', 'decimal'),
-  createNumberFormatter('number', 'integer', { maximumFractionDigits: 0 }),
-  createNumberFormatter('number', 'percent', { style: 'percent' }),
-  createNumberFormatter('number', 'currency', { style: 'currency', currency: 'USD' }),
+export const defaultArgumentFormatter = createWaterfallArgumentFormatter([
+  createNumberArgumentFormatter(null, null),
+  createNumberArgumentFormatter('number', null),
+  createNumberArgumentFormatter('number', 'decimal'),
+  createNumberArgumentFormatter('number', 'integer', { maximumFractionDigits: 0 }),
+  createNumberArgumentFormatter('number', 'percent', { style: 'percent' }),
+  createNumberArgumentFormatter('number', 'currency', { style: 'currency', currency: 'USD' }),
 
-  createDateTimeFormatter(null, null),
-  createDateTimeFormatter('date', null),
-  createDateTimeFormatter('date', 'short', { dateStyle: 'short' }),
-  createDateTimeFormatter('date', 'full', { dateStyle: 'full' }),
-  createDateTimeFormatter('date', 'long', { dateStyle: 'long' }),
-  createDateTimeFormatter('date', 'medium', { dateStyle: 'medium' }),
+  createDateTimeArgumentFormatter(null, null),
+  createDateTimeArgumentFormatter('date', null),
+  createDateTimeArgumentFormatter('date', 'short', { dateStyle: 'short' }),
+  createDateTimeArgumentFormatter('date', 'full', { dateStyle: 'full' }),
+  createDateTimeArgumentFormatter('date', 'long', { dateStyle: 'long' }),
+  createDateTimeArgumentFormatter('date', 'medium', { dateStyle: 'medium' }),
 
-  createDateTimeFormatter('time', null),
-  createDateTimeFormatter('time', 'short', { timeStyle: 'short' }),
-  createDateTimeFormatter('time', 'full', { timeStyle: 'full' }),
-  createDateTimeFormatter('time', 'long', { timeStyle: 'long' }),
-  createDateTimeFormatter('time', 'medium', { timeStyle: 'medium' }),
+  createDateTimeArgumentFormatter('time', null, { timeStyle: 'short' }),
+  createDateTimeArgumentFormatter('time', 'short', { timeStyle: 'short' }),
+  createDateTimeArgumentFormatter('time', 'full', { timeStyle: 'full' }),
+  createDateTimeArgumentFormatter('time', 'long', { timeStyle: 'long' }),
+  createDateTimeArgumentFormatter('time', 'medium', { timeStyle: 'medium' }),
 
-  createListFormatter('conjunction', null),
-  createListFormatter('conjunction', 'long', { type: 'conjunction', style: 'long' }),
-  createListFormatter('conjunction', 'narrow', { type: 'conjunction', style: 'narrow' }),
-  createListFormatter('conjunction', 'short', { type: 'conjunction', style: 'short' }),
+  createListArgumentFormatter('conjunction', null),
+  createListArgumentFormatter('conjunction', 'long', { type: 'conjunction', style: 'long' }),
+  createListArgumentFormatter('conjunction', 'narrow', { type: 'conjunction', style: 'narrow' }),
+  createListArgumentFormatter('conjunction', 'short', { type: 'conjunction', style: 'short' }),
 
-  createListFormatter('disjunction', null, { type: 'disjunction' }),
-  createListFormatter('disjunction', 'long', { type: 'disjunction', style: 'long' }),
-  createListFormatter('disjunction', 'narrow', { type: 'disjunction', style: 'narrow' }),
-  createListFormatter('disjunction', 'short', { type: 'disjunction', style: 'short' }),
+  createListArgumentFormatter('disjunction', null, { type: 'disjunction' }),
+  createListArgumentFormatter('disjunction', 'long', { type: 'disjunction', style: 'long' }),
+  createListArgumentFormatter('disjunction', 'narrow', { type: 'disjunction', style: 'narrow' }),
+  createListArgumentFormatter('disjunction', 'short', { type: 'disjunction', style: 'short' }),
 ]);

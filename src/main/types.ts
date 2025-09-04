@@ -1,4 +1,4 @@
-import { Formatter } from './formatter.js';
+import { ArgumentFormatter } from './formatter.js';
 import { CategorySelector } from './selector.js';
 
 /**
@@ -18,9 +18,9 @@ export interface Renderer<Element> {
   /**
    * Formats argument value as a string.
    *
-   * @see {@link defaultFormatter}
+   * @see {@link defaultArgumentFormatter}
    */
-  formatArgument: Formatter;
+  formatArgument: ArgumentFormatter;
 
   /**
    * Returns the selected category depending of an argument value.

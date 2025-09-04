@@ -10,7 +10,7 @@ import {
   getArgumentType,
 } from '../utils.js';
 import { createReactDOMElementRenderer } from './createReactDOMElementRenderer.js';
-import { defaultFormatter } from '../formatter.js';
+import { defaultArgumentFormatter } from '../formatter.js';
 import { defaultCategorySelector } from '../selector.js';
 
 const MessageLocaleContext = createContext('en');
@@ -18,7 +18,7 @@ MessageLocaleContext.displayName = 'MessageLocaleContext';
 
 const MessageRendererContext = createContext<Renderer<ReactNode>>({
   renderElement: createReactDOMElementRenderer(),
-  formatArgument: defaultFormatter,
+  formatArgument: defaultArgumentFormatter,
   selectCategory: defaultCategorySelector,
 });
 

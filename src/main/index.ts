@@ -5,18 +5,20 @@
  */
 
 export {
-  defaultFormatter,
-  createWaterfallFormatter,
-  createNumberFormatter,
-  createDateTimeFormatter,
-  createListFormatter,
-  createDisplayNameFormatter,
-  type Formatter,
-  type FormatterParams,
+  defaultArgumentFormatter,
+  createWaterfallArgumentFormatter,
+  createNumberArgumentFormatter,
+  createDateTimeArgumentFormatter,
+  createListArgumentFormatter,
+  createDisplayNameArgumentFormatter,
+  type ArgumentFormatter,
+  type ArgumentFormatterParams,
 } from './formatter.js';
 export { defaultCategorySelector, type CategorySelector, type CategorySelectorParams } from './selector.js';
 export { renderToString, type RenderToStringOptions } from './renderToString.js';
 export type {
+  Renderer,
+  ElementRenderer,
   Metadata,
   ChildNode,
   ParentNode,
@@ -33,5 +35,3 @@ export type {
   LiteralNode,
 } from './types.js';
 export { walkNode } from './utils.js';
-export { Renderer } from './types.js';
-export { ElementRenderer } from './types.js';
