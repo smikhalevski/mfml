@@ -9,11 +9,11 @@
   "readme": "none",
   "tsconfig": "./tsconfig.json",
   "navigation": {
-    "includeFolders": false,
-    "includeGroups": true
+    "includeFolders": false
   },
   "entryPoints": [
     "./src/main/compiler/index.ts",
+    "./src/main/postprocessor/*.ts",
     "./src/main/parser/index.ts",
     "./src/main/react/index.ts",
     "./src/main/index.ts"

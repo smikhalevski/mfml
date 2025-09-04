@@ -1,3 +1,9 @@
+/**
+ * The postprocessor that restricts what tags and attributes are allowed in messages.
+ *
+ * @module mfml/postprocessor/allowTags
+ */
+
 import { Postprocessor } from '../compiler/index.js';
 import { walkNode } from '../utils.js';
 import { ParserError } from '../parser/index.js';

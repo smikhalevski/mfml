@@ -1,3 +1,10 @@
+/**
+ * The postprocessor that restricts what argument styles, options and categories are allowed for a particular
+ * argument type.
+ *
+ * @module mfml/postprocessor/allowTypes
+ */
+
 import { Postprocessor } from '../compiler/index.js';
 import { walkNode } from '../utils.js';
 import { ParserError } from '../parser/index.js';
@@ -56,7 +63,7 @@ export interface TypeRequirements {
 }
 
 /**
- * Restricts what styles, options and categories are allowed for a particular argument type.
+ * Restricts what argument styles, options and categories are allowed for a particular argument type.
  *
  * @example
  * allowTypes({
