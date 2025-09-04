@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest';
-import { parseMessage } from '../../main/parser/index.js';
+import { parseMessage, resolveTokenizerOptions } from '../../main/parser/index.js';
 import { MessageNode } from '../../main/ast.js';
 
 test('parses text', () => {
@@ -7,6 +7,24 @@ test('parses text', () => {
     nodeType: 'message',
     locale: 'en',
     children: 'aaa',
+  } satisfies MessageNode);
+});
+
+test('parses implicitly opened tags', () => {
+  expect(
+    parseMessage('en', '</aaa>bbb', { tokenizerOptions: resolveTokenizerOptions({ implicitlyOpenedTags: ['aaa'] }) })
+  ).toStrictEqual({
+    nodeType: 'message',
+    locale: 'en',
+    children: [
+      {
+        nodeType: 'element',
+        tagName: 'aaa',
+        attributes: null,
+        children: null,
+      },
+      'bbb',
+    ],
   } satisfies MessageNode);
 });
 

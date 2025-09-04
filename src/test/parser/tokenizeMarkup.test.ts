@@ -928,8 +928,8 @@ describe('tokenizeMessage', () => {
     tokenizeMessage('</aaa>', callbackMock, resolveTokenizerOptions({ implicitlyOpenedTags: ['aaa'] }));
 
     expect(callbackMock).toHaveBeenCalledTimes(3);
-    expect(callbackMock).toHaveBeenNthCalledWith(1, 'XML_OPENING_TAG_START', 0, 0);
-    expect(callbackMock).toHaveBeenNthCalledWith(2, 'XML_OPENING_TAG_END', 0, 0);
+    expect(callbackMock).toHaveBeenNthCalledWith(1, 'XML_OPENING_TAG_START', 2, 5);
+    expect(callbackMock).toHaveBeenNthCalledWith(2, 'XML_OPENING_TAG_END', 5, 6);
     expect(callbackMock).toHaveBeenNthCalledWith(3, 'XML_CLOSING_TAG', 2, 5);
   });
 
@@ -944,8 +944,8 @@ describe('tokenizeMessage', () => {
     expect(callbackMock).toHaveBeenNthCalledWith(1, 'XML_OPENING_TAG_START', 1, 4);
     expect(callbackMock).toHaveBeenNthCalledWith(2, 'XML_OPENING_TAG_END', 4, 5);
     expect(callbackMock).toHaveBeenNthCalledWith(3, 'XML_CLOSING_TAG', 5, 5);
-    expect(callbackMock).toHaveBeenNthCalledWith(4, 'XML_OPENING_TAG_START', 5, 5);
-    expect(callbackMock).toHaveBeenNthCalledWith(5, 'XML_OPENING_TAG_END', 5, 5);
+    expect(callbackMock).toHaveBeenNthCalledWith(4, 'XML_OPENING_TAG_START', 7, 10);
+    expect(callbackMock).toHaveBeenNthCalledWith(5, 'XML_OPENING_TAG_END', 10, 11);
     expect(callbackMock).toHaveBeenNthCalledWith(6, 'XML_CLOSING_TAG', 7, 10);
   });
 
@@ -967,8 +967,8 @@ describe('tokenizeMessage', () => {
     expect(callbackMock).toHaveBeenNthCalledWith(8, 'TEXT', 16, 19);
     expect(callbackMock).toHaveBeenNthCalledWith(9, 'XML_CLOSING_TAG', 21, 24);
     expect(callbackMock).toHaveBeenNthCalledWith(10, 'TEXT', 25, 28);
-    expect(callbackMock).toHaveBeenNthCalledWith(11, 'XML_OPENING_TAG_START', 28, 28);
-    expect(callbackMock).toHaveBeenNthCalledWith(12, 'XML_OPENING_TAG_END', 28, 28);
+    expect(callbackMock).toHaveBeenNthCalledWith(11, 'XML_OPENING_TAG_START', 30, 33);
+    expect(callbackMock).toHaveBeenNthCalledWith(12, 'XML_OPENING_TAG_END', 33, 34);
     expect(callbackMock).toHaveBeenNthCalledWith(13, 'XML_CLOSING_TAG', 30, 33);
     expect(callbackMock).toHaveBeenNthCalledWith(14, 'TEXT', 34, 37);
   });

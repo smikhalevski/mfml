@@ -257,8 +257,8 @@ export function tokenizeMessage(text: string, callback: TokenCallback, options: 
           );
         }
 
-        callback(TOKEN_XML_OPENING_TAG_START, closingTagStartIndex, closingTagStartIndex);
-        callback(TOKEN_XML_OPENING_TAG_END, closingTagStartIndex, closingTagStartIndex);
+        callback(TOKEN_XML_OPENING_TAG_START, startIndex, endIndex);
+        callback(TOKEN_XML_OPENING_TAG_END, endIndex, endIndex + 1);
         callback(TOKEN_XML_CLOSING_TAG, startIndex, endIndex);
         break;
 
@@ -363,7 +363,7 @@ const TOKEN_ICU_OCTOTHORPE = 'ICU_OCTOTHORPE';
 
 const ICU_ERROR_MESSAGE = 'Unexpected ICU syntax at ';
 
-export interface ReadTokensOptions {
+export interface TokenReaderOptions {
   readTag?: (text: string, startIndex: number, endIndex: number) => number;
   rawTextTags?: Set<number>;
   isSelfClosingTagsRecognized?: boolean;
@@ -375,7 +375,7 @@ export interface ReadTokensOptions {
  *
  * Tokens returned in the same order they are listed in text.
  */
-export function readTokens(text: string, callback: TokenCallback, options: ReadTokensOptions): void {
+export function readTokens(text: string, callback: TokenCallback, options: TokenReaderOptions): void {
   const {
     readTag = getCaseSensitiveHashCode,
     rawTextTags,
