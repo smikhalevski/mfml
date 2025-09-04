@@ -83,6 +83,10 @@ export function defineConfig(config: Config): ResolvedConfig {
     decodeText = decodeXML,
   } = config;
 
+  if (messages === null || typeof messages !== 'object') {
+    throw new Error('Expected "messages" option to be an object that contains messages arranged by a locale.');
+  }
+
   const tokenizer = createTokenizer(tokenizerOptions);
   const parser = createParser({ tokenizer, decodeText });
   const compiler = createCompiler({ ...config, parser });

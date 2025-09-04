@@ -62,9 +62,7 @@ npm install --save-prod mfml
 
 # Overview
 
-This section shows how to prepare and build i18n messages with MFML.
-
-Save your messages in a _messages.json_:
+Save your i18n messages in _messages.json_:
 
 ```json
 {
@@ -77,57 +75,52 @@ Save your messages in a _messages.json_:
 }
 ```
 
-Create the build script in _build-messages.ts_:
+Put your config in _mfml.config.js_:
 
 ```ts
-import fs from 'node:fs';
-import { compileFiles } from 'mfml/compiler';
+import { defineConfig } from 'mfml/compiler';
 import messages from './messages.json' with { type: 'json' };
 
-fs.writeFileSync(import.meta.dirname + '/messages.ts', compileFiles(messages));
+export default defineConfig({
+  messages,
+});
 ```
 
-Build messages:
+Compile messages:
 
 ```shell
-node build-messages.ts
+npx mfml
 ```
 
-This would produce _messages.ts_ with the following contents:
+This would create an `@mfml/messages` npm package in _node_modules_ directory.
 
-<!--prettier-ignore-->
-```ts
-import{createMessageNode as M,createElementNode as E,createArgumentNode as A,createSelectNode as S,type MessageNode}from"mfml";
-
-const LOCALE_EN_US="en-US";
-const LOCALE_RU_RU="ru-RU";
-
-export function greeting(locale:string):MessageNode<{"name":unknown}>|null{
-return locale===LOCALE_EN_US?M(LOCALE_EN_US,"Hello, ",E("b",null,A("name")),"!'"):locale===LOCALE_RU_RU?M(LOCALE_RU_RU,"Привет, ",E("b",null,A("name")),"!'"):null;
-}
-```
-
-Now, you can import functions exported from _messages.ts_ to produce text messages:
+Now you can import message functions to produce formatted text:
 
 ```ts
 import { renderToString } from 'mfml';
-import { greeting } from './messages.js';
+import { greeting } from '@mfml/messages';
 
-renderToString(greeting('en-US'), { name: 'Bob' });
+renderToString({
+  locale: 'en-US',
+  message: greeting,
+  values: { name: 'Bob' },
+});
 // ⮕ 'Hello, Bob!'
 ```
 
 Or render messages in your React app:
 
 ```tsx
-import { Message } from 'mfml/react';
-import { greeting } from './messages.js';
+import { Message, MessageLocaleProvider } from 'mfml/react';
+import { greeting } from '@mfml/messages';
 
 export const App = () => (
-  <Message
-    message={greeting}
-    values={{ name: 'Bob' }}
-  />
+  <MessageLocaleProvider value={'en-US'}>
+    <Message
+      message={greeting}
+      values={{ name: 'Bob' }}
+    />
+  </MessageLocaleProvider>
 );
 ```
 
@@ -137,8 +130,526 @@ This renders markup with HTML elements:
 Hello, <b>Bob</b>!
 ```
 
-Now, your bundler would do all the heavy lifting an colocate message functions with components that use them in the same
-chunk.
+Now, your bundler would do all the heavy lifting and colocate message functions with components that use them in
+the same chunk.
+
+# Configuration
+
+When running `mfml` from the command line, MFML will automatically try to resolve a config file named
+`mfml.config.js` inside project root (other JS and TS extensions are also supported).
+
+The most basic config file looks like this:
+
+```ts
+import { defineConfig } from 'mfml/compiler';
+
+export default defineConfig({
+  messages: {
+    en: {
+      greeting: 'Hello',
+    },
+  },
+});
+```
+
+You can also explicitly specify a config file to use with the `--config` CLI option (resolved relative to `cwd`):
+
+```shell
+mfml --config my-config.js
+```
+
+There are multiple configuration options available.
+
+## `messages`
+
+Messages arranged by a locale.
+
+```json5
+{
+  en: {
+    greeting: 'Hello',
+  },
+  ru: {
+    greeting: 'Привет',
+  },
+}
+```
+
+Usually, it is preferable to store messages in a separate files on per-locale basis. For example, _en.json_ and
+_ru.json_. Import them in the configuration file:
+
+```ts
+import { defineConfig } from 'mfml/compiler';
+import en from './en.json' with { type: 'json' };
+import ru from './ru.json' with { type: 'json' };
+
+export default defineConfig({
+  messages: { en, ru },
+});
+```
+
+## `outDir`
+
+**Default:** `cwd`
+
+The directory that contains _node_modules_ to which a package with compiled messages is written.
+
+## `packageName`
+
+**Default:** `@mfml/messages`
+
+The name of the package from to which compiled messages are written.
+
+Specify a custom package name:
+
+```ts
+export default defineConfig({
+  packageName: 'my-messages',
+  messages: {
+    en: {
+      greeting: 'Hello',
+    },
+  },
+});
+```
+
+Import message functions from the custom package:
+
+```ts
+import { renderToString } from 'mfml';
+import { greeting } from 'my-messages';
+
+renderToString({ locale: 'en', message: greeting });
+// ⮕ 'Hello'
+```
+
+## `fallbackLocales`
+
+Mapping from a locale to a corresponding fallback locale.
+
+For example, let's consider `fallbackLocales` set to:
+
+```json5
+{
+  'ru-RU': 'ru',
+  'en-US': 'en',
+  ru: 'en',
+}
+```
+
+In this case:
+
+- if a message doesn't support `ru-RU` locale, then compiler would look for `ru` locale.
+- if `ru` locale isn't supported as well then a compiler would fall back to `en` locale.
+- if `en` isn't supported as well then `null` would be returned from a message function when called with `ru-RU`
+  locale.
+
+It is safe to have a loop in fallback locales:
+
+```json5
+{
+  en: 'ru',
+  ru: 'en',
+}
+```
+
+This would cause a fallback to `ru` for messages that don't support `en`, and fallback to `en` for messages that don't
+support `ru` without causing an infinite loop.
+
+## `preprocessors`
+
+The array of callbacks that are run before message parsing.
+
+Preprocessors can be used to transform the original message text, for example to transform Markdown messages to HTML:
+
+```ts
+import { marked } from 'marked';
+import { defineConfig, type Preprocessor } from 'mfml/compiler';
+
+const parseMarkdown: Preprocessor = params => marked.parse(params.text);
+
+export default defineConfig({
+  messages: {
+    en: {
+      greeting: '__Hello__',
+    },
+  },
+  preprocessors: [parseMarkdown],
+});
+```
+
+The compiled message would be:
+
+```html
+<strong>Hello</strong>
+```
+
+## `postprocessors`
+
+The array of callbacks that are run after the message was parsed as an MFML AST.
+
+Preprocessors can be used to validate messages, rename arguments, or for other AST-based transformations.
+
+```ts
+import { defineConfig } from 'mfml/compiler';
+import allowTags from 'mfml/postprocessor/allowTags';
+
+export default defineConfig({
+  messages: {
+    en: {
+      greeting: '<em>Hello</em>',
+    },
+  },
+  postprocessors: [
+    allowTags({
+      em: true,
+    }),
+  ],
+});
+```
+
+## `renameMessageFunction`
+
+Returns the name of a message function for the given message key.
+
+By default, an escaped message key is used as a function name: illegal characters are replaced with the underscore
+(`"_"`).
+
+```ts
+export default defineConfig({
+  messages: {
+    en: {
+      greeting: 'Hello',
+    },
+  },
+  renameMessageFunction(messageKey) {
+    return 'Bazinga_' + messageKey;
+  },
+});
+```
+
+Import the message function with the altered name:
+
+```ts
+import { renderToString } from 'mfml';
+import { Bazinga_greeting } from '@mfml/messages';
+
+renderToString({ locale: 'en', message: Bazinga_greeting });
+// ⮕ 'Hello'
+```
+
+## `decodeText`
+
+**Default:** [`decodeXML`](https://github.com/smikhalevski/speedy-entities#decode)
+
+Decode text content before it is pushed to an MFML AST node. Use this method to decode HTML entities.
+
+By default, the compiler supports XML entities and numeric character references:
+
+```json5
+{
+  en: {
+    hotOrCold: 'hot &gt; cold',
+  },
+}
+```
+
+Provide a custom decoder to support HTML entities:
+
+```ts
+import { decodeHTML } from 'speedy-entities';
+
+export default defineConfig({
+  messages: {
+    en: {
+      hello: '&CounterClockwiseContourIntegral;',
+    },
+  },
+  decodeText: decodeHTML,
+});
+```
+
+## `getArgumentTsType`
+
+**Default:** [`getArgumentIntlTsType`](https://smikhalevski.github.io/mfml/functions/mfml_compiler.getArgumentIntlTsType.html)
+
+Returns the TypeScript type for a given argument.
+
+```ts
+export default defineConfig({
+  messages: {
+    en: {
+      greeting: '{name} is {age,number} years old',
+    },
+  },
+  getArgumentTsType(argumentNode) {
+    if (argumentNode.typeNode?.value === 'number') {
+      return 'number|bigint';
+    }
+  },
+});
+```
+
+This would produce a message function with the following signature:
+
+```ts
+export declare function greeting(locale: string): MessageNode<{ name: unknown; age: number | bigint }> | null;
+```
+
+By default, [`getArgumentIntlTsType`](https://smikhalevski.github.io/mfml/functions/mfml_compiler.getArgumentIntlTsType.html)
+is used and returns the TypeScript type of an argument that matches the `Intl` format requirements:
+
+| Argument type   | TypeScript type                                                           |
+| :-------------- | :------------------------------------------------------------------------ |
+| `number`        | `number \| bigint`                                                        |
+| `date`          | `number \| Date`                                                          |
+| `time`          | `number \| Date`                                                          |
+| `list`          | `string[]`                                                                |
+| `plural`        | `number`                                                                  |
+| `selectOrdinal` | `number`                                                                  |
+| `select`        | Union of category name literals and `string & {}` (for "other" category). |
+
+## `tokenizerOptions`
+
+**Default:** [`htmlTokenizerOptions`](https://smikhalevski.github.io/mfml/variables/mfml_parser.htmlTokenizerOptions.html)
+
+Options that define how MFML messages are tokenized. By default, forgiving HTML tokenizer options are used.
+
+```ts
+export default defineConfig({
+  messages: {
+    en: {
+      greeting: '<h1>Hello<p>Dear diary',
+    },
+  },
+  tokenizerOptions: {
+    implicitlyClosedTags: {
+      p: ['h1'],
+    },
+    isUnbalancedStartTagsImplicitlyClosed: true,
+  },
+});
+```
+
+The compiled message would be:
+
+```html
+<h1>Hello</h1>
+<p>Dear diary</p>
+```
+
+Read more about tokenization in [Parsing messages](#parsing-messages) section.
+
+# Parsing messages
+
+## `voidTags`
+
+**Default:** `[]`
+
+The list of tags that can't have any contents (since there's no end tag, no content can be put between the start tag and
+the end tag).
+
+```ts
+createTokenizer({
+  voidTags: ['img', 'link', 'meta'],
+});
+```
+
+See [HTML5 Void Elements](https://www.w3.org/TR/2010/WD-html5-20101019/syntax.html#void-elements) for more info.
+
+## `rawTextTags`
+
+**Default:** `[]`
+
+The list of tags which content is interpreted as plain text.
+
+```ts
+createTokenizer({
+  rawTextTags: ['script', 'style'],
+});
+```
+
+See [HTML5 Raw Text Elements](https://www.w3.org/TR/2010/WD-html5-20101019/syntax.html#raw-text-elements) for more info.
+
+## `implicitlyClosedTags`
+
+**Default:** `{}`
+
+The map from a tag to a list of tags that must be closed if it is opened.
+
+For example, in HTML `p` and `h1` tags have the following semantics:
+
+<!-- prettier-ignore -->
+```html
+<p><h1>  ⮕  <p></p><h1></h1>
+                ^^^^
+```
+
+To achieve this behavior, set this option to:
+
+```ts
+createTokenizer({
+  implicitlyClosedTags: {
+    // h1 implicitly closes p
+    h1: ['p'],
+  },
+});
+```
+
+Use in conjunctions with [`isUnbalancedStartTagsImplicitlyClosed`](#isunbalancedstarttagsimplicitlyclosed).
+
+## `implicitlyOpenedTags`
+
+**Default:** `[]`
+
+The list of tags for which a start tag is inserted if an unbalanced end tag is met. Otherwise,
+a [`ParserError`](https://smikhalevski.github.io/mfml/classes/mfml_parser.ParserError.html) is thrown.
+
+You can ignore unbalanced end tags with [`isUnbalancedEndTagsIgnored`](#isunbalancedendtagsignored).
+
+For example, in HTML `p` and `br` tags follow this semantics:
+
+```html
+</p>   ⮕  <p></p>
+           ^^^
+
+</br>  ⮕  <br/>
+              ^
+```
+
+To achieve this behavior, set this option to:
+
+```ts
+createTokenizer({
+  implicitlyOpenedTags: ['p', 'br'],
+});
+```
+
+## `isCaseInsensitiveTags`
+
+**Default:** `false`
+
+If `true` then ASCII alpha characters are case-insensitive in tag names.
+
+This markup would cause a [`ParserError`](https://smikhalevski.github.io/mfml/classes/mfml_parser.ParserError.html) if
+`isCaseInsensitiveTags` is set to `false`:
+
+<!-- prettier-ignore -->
+```html
+<strong>hello</STRONG>
+```
+
+## `isSelfClosingTags​Recognized`
+
+**Default:** `false`
+
+If `true` then self-closing tags are recognized, otherwise they are treated as start tags.
+
+<!-- prettier-ignore -->
+```html
+<link />
+      ^
+```
+
+## `isUnbalancedStartTags​ImplicitlyClosed`
+
+**Default:** `false`
+
+If `true` then unbalanced start tags are forcefully closed. Otherwise,
+a [`ParserError`](https://smikhalevski.github.io/mfml/classes/mfml_parser.ParserError.html) is thrown.
+
+Use in conjunctions with [`isUnbalancedEndTagsIgnored`](#isunbalancedendtagsignored).
+
+```html
+<a><b></a>  ⮕  <a><b></b></a>
+                      ^^^^
+```
+
+## `isUnbalancedEndTags​Ignored`
+
+**Default:** `false`
+
+If `true` then end tags that don't have a corresponding start tag are ignored. Otherwise,
+a [`ParserError`](https://smikhalevski.github.io/mfml/classes/mfml_parser.ParserError.html) is thrown.
+
+Use in conjunctions with [`isUnbalancedStartTagsImplicitlyClosed`](#isunbalancedstarttagsimplicitlyclosed).
+
+```html
+<a></b></a> ⮕ <a></a>
+   ^^^^
+```
+
+## `isRawTextInterpolated`
+
+**Default:** `false`
+
+If `true` then arguments are parsed inside [`rawTextTags`](#rawtexttags).
+
+With this setup:
+
+```ts
+createTokenizer({
+  rawTextTags: ['script'],
+  isRawTextInterpolated: true,
+});
+```
+
+An argument inside the `<script>` tag would be interpolated:
+
+<!-- prettier-ignore -->
+```html
+<script>console.log('{name}')</script>
+                     ^^^^^^
+```
+
+## `isOctothorpeRecognized`
+
+**Default:** `false`
+
+If `true` then an octothorpe character ("#") inside an argument category is replaced with the argument value.
+
+```html
+{gender, select, male { He is a man } female { She is a # }} ^
+```
+
+# XML/HTML markup
+
+# Arguments
+
+# Formatters
+
+# Preprocessors
+
+# Postprocessors
+
+# React integration
+
+<!-- !!!!!!!!!!!!!!! -->
+<!-- !!!!!!!!!!!!!!! -->
+<!-- !!!!!!!!!!!!!!! -->
+<!-- !!!!!!!!!!!!!!! -->
+<!-- !!!!!!!!!!!!!!! -->
+<!-- !!!!!!!!!!!!!!! -->
+<!-- !!!!!!!!!!!!!!! -->
+<!-- !!!!!!!!!!!!!!! -->
+<!-- !!!!!!!!!!!!!!! -->
+<!-- !!!!!!!!!!!!!!! -->
+<!-- !!!!!!!!!!!!!!! -->
+<!-- !!!!!!!!!!!!!!! -->
+<!-- !!!!!!!!!!!!!!! -->
+<!-- !!!!!!!!!!!!!!! -->
+<!-- !!!!!!!!!!!!!!! -->
+<!-- !!!!!!!!!!!!!!! -->
+<!-- !!!!!!!!!!!!!!! -->
+<!-- !!!!!!!!!!!!!!! -->
+<!-- !!!!!!!!!!!!!!! -->
+<!-- !!!!!!!!!!!!!!! -->
+<!-- !!!!!!!!!!!!!!! -->
+<!-- !!!!!!!!!!!!!!! -->
+<!-- !!!!!!!!!!!!!!! -->
+<!-- !!!!!!!!!!!!!!! -->
+<!-- !!!!!!!!!!!!!!! -->
+<!-- !!!!!!!!!!!!!!! -->
 
 # Parse a message
 

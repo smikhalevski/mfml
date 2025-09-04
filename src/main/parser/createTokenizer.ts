@@ -107,7 +107,7 @@ export interface TokenizerOptions {
   isUnbalancedStartTagsImplicitlyClosed?: boolean;
 
   /**
-   * If `true` then end tags that dont have a corresponding start tag are ignored. Otherwise,
+   * If `true` then end tags that don't have a corresponding start tag are ignored. Otherwise,
    * a {@link ParserError} is thrown.
    *
    * Use in conjunctions with {@link isUnbalancedStartTagsImplicitlyClosed}.
