@@ -159,7 +159,7 @@ export function tokenizeMessage(text: string, callback: TokenCallback, options: 
             throw new ParserError('Missing end tag.', text, endTagStartIndex);
           }
 
-          // Insert unbalanced end tags
+          // Insert unbalanced end tags before the opened start tag
           while (index < tagStackCursor) {
             callback(TOKEN_END_TAG_NAME, endTagStartIndex, endTagStartIndex);
             --tagStackCursor;
@@ -198,8 +198,16 @@ export function tokenizeMessage(text: string, callback: TokenCallback, options: 
         break;
 
       case TOKEN_CATEGORY_CLOSING:
+        if (!isUnbalancedStartTagsImplicitlyClosed && tagStack[tagStackCursor] !== CATEGORY_TAG) {
+          throw new ParserError('Missing end tag.', text, startIndex);
+        }
+
+        // Insert unbalanced end tags before the category closing
+        while (tagStack[tagStackCursor--] !== CATEGORY_TAG) {
+          callback(TOKEN_END_TAG_NAME, startIndex, startIndex);
+        }
+
         callback(token, startIndex, endIndex);
-        --tagStackCursor;
         break;
 
       case TOKEN_TEXT:

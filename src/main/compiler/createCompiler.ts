@@ -355,7 +355,7 @@ export async function compileFiles(
       jsDocComment +=
         '\n' +
         formatMarkdownBold(baseLocale) +
-        (localeGroup.length === 1 ? '' : ' (Used as a fallback for ' + localeGroup.slice(1).join(', ') + ')') +
+        (localeGroup.length === 1 ? '' : ' ← ' + localeGroup.slice(1).join(' ← ')) +
         '\n' +
         formatMarkdownFence(truncateMessage(text), 'html');
     }

@@ -412,7 +412,7 @@ describe('compileFiles', () => {
   //       ' * ```text\n' +
   //       ' * bbb\n' +
   //       ' * ```\n' +
-  //       ' * **ru** (Used as a fallback for en)\n' +
+  //       ' * **ru** ← en\n' +
   //       ' * ```html\n' +
   //       ' * Пока\n' +
   //       ' * ```\n' +
@@ -448,7 +448,7 @@ describe('compileFiles', () => {
   //       ' * ```text\n' +
   //       ' * bbb\n' +
   //       ' * ```\n' +
-  //       ' * **ru** (Used as a fallback for en)\n' +
+  //       ' * **ru** ← en\n' +
   //       ' * ```html\n' +
   //       ' * Пока\n' +
   //       ' * ```\n' +
@@ -632,7 +632,7 @@ describe('compileFiles', () => {
   //       ' * ```text\n' +
   //       ' * bbb\n' +
   //       ' * ```\n' +
-  //       ' * **ru** (Used as a fallback for en, es)\n' +
+  //       ' * **ru** ← en ← es\n' +
   //       ' * ```html\n' +
   //       ' * Пока\n' +
   //       ' * ```\n' +
@@ -672,7 +672,7 @@ describe('compileFiles', () => {
   //       ' * ```text\n' +
   //       ' * bbb\n' +
   //       ' * ```\n' +
-  //       ' * **ru** (Used as a fallback for en, es)\n' +
+  //       ' * **ru** ← en ← es\n' +
   //       ' * ```html\n' +
   //       ' * Пока\n' +
   //       ' * ```\n' +
