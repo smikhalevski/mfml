@@ -1,6 +1,7 @@
 import { Child, MessageNode } from '../ast.js';
 import { Parser } from '../parser/index.js';
 import { collectArgumentNames, escapeIdentifier } from '../utils.js';
+import { sha256, formatMessagePreview } from './utils.js';
 
 /**
  * Options of {@link createCompiler}.
@@ -181,26 +182,25 @@ export async function compileFiles(
 
     indexSrc += 'export{default as ' + functionName + '}from"./' + fileName + '";\n';
 
-    const jsDoc =
-      '\n/**' +
-      '\n * **Message key**&emsp;`' +
+    const doc =
+      '**Message key**\n```\n' +
       messageKey +
-      '`' +
-      '\n * ' +
-      '\n * ' +
+      '\n```\n' +
       messageLocales
-        .map(locale => '**' + locale + '**\n' + formatMessagePreview(messages[locale][messageKey]))
-        .join('\n\n')
-        .replace(/\n/g, '\n * ') +
-      '\n */';
+        .map(
+          locale =>
+            '**' +
+            locale +
+            '**\n```\n' +
+            formatMessagePreview(messages[locale][messageKey]).replace(/`/g, '\\&$') +
+            '\n```'
+        )
+        .join('\n');
+
+    const jsDoc = '\n/**\n *' + doc.replace(/\n/g, '\n * ') + '\n */';
 
     typingsSrc +=
-      jsDoc +
-      '\nexport declare function ' +
-      functionName +
-      '(locale:string):' +
-      compileMessageType(argumentNames) +
-      ';\n';
+      jsDoc + '\nexport function ' + functionName + '(locale:string):' + compileMessageType(argumentNames) + ';\n';
   }
 
   files['locales.js'] = localesSrc;
@@ -208,18 +208,6 @@ export async function compileFiles(
   files['index.d.ts'] = typingsSrc;
 
   return files;
-}
-
-async function sha256(str: string): Promise<string> {
-  let hashCode = '';
-
-  const bytes = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str)));
-
-  for (let i = 0; i < bytes.length; ++i) {
-    hashCode += bytes[i].toString(16).padStart(2, '0');
-  }
-
-  return hashCode;
 }
 
 function compileMessageType(argumentNames: Set<string>): string {
@@ -303,40 +291,4 @@ function compileChild(child: Child): string {
   }
 
   throw new Error('Unknown node type');
-}
-
-export function formatMessagePreview(text: string, lineLength = 80): string {
-  const lines = [];
-
-  let lineStart = 0;
-  let lineEnd = 0;
-
-  for (let i = 0; i < text.length; ++i) {
-    const charCode = text.charCodeAt(i);
-
-    // Line separator
-    if (charCode === /* \n */ 10 || charCode === /* \r */ 13) {
-      lines.push(text.substring(lineStart, lineEnd));
-      lineEnd = i + 1;
-      continue;
-    }
-
-    // Word separator
-    if (charCode == /* \s */ 32 || charCode === /* \t */ 9) {
-      // Word fits in a line
-      if (i - lineStart < lineLength) {
-        lineEnd = i;
-        continue;
-      }
-
-      lines.push(text.substring(lineStart, lineEnd));
-      lineEnd = i + 1;
-    }
-  }
-
-  if (lineStart !== lineEnd) {
-    lines.push(text.substring(lineStart, lineEnd));
-  }
-
-  return '```\n' + lines.join('\n').replace(/`/g, '\\&$') + '\n```';
 }
