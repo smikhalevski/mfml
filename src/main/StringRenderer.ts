@@ -49,7 +49,7 @@ export class StringRenderer extends AbstractRenderer<string> {
 
     if (component === undefined) {
       // Ignore unknown custom elements
-      return !isLowerCaseAlpha(tagName) ? '' : children.join('');
+      return isLowerCaseAlpha(tagName) ? children.join('') : '';
     }
 
     return component(attributes, children);

@@ -4,5 +4,11 @@
  * @module mfml/react
  */
 
-export { Message, MessageRendererProvider, MessageLocaleProvider, type MessageProps } from './Message.js';
+export {
+  Message,
+  MessageLocaleProvider,
+  MessageFallbackLocalesProvider,
+  MessageRendererProvider,
+  type MessageProps,
+} from './Message.js';
 export { ReactRenderer, type ReactRendererOptions } from './ReactRenderer.js';

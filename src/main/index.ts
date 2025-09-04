@@ -16,5 +16,5 @@ export {
   type ArgumentNode,
   type SelectNode,
 } from './ast.js';
-export { renderText } from './renderText.js';
+export { renderText, type RenderTextOptions } from './renderText.js';
 export { StringRenderer, type StringComponentType, type StringRendererOptions } from './StringRenderer.js';

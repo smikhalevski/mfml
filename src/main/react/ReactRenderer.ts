@@ -51,8 +51,10 @@ export class ReactRenderer extends AbstractRenderer<ReactNode> {
       component = tagName;
     }
 
-    return Array.isArray(children)
-      ? createElement(component, attributes, ...children)
-      : createElement(component, attributes, children);
+    if (Array.isArray(children)) {
+      return createElement(component, attributes, ...children);
+    }
+
+    return createElement(component, attributes, children);
   }
 }

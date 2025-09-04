@@ -259,7 +259,7 @@ export function getArgumentNaturalTsType(argumentType: string | undefined, _argu
       return 'number|Date';
 
     case 'list':
-      return 'any[]';
+      return 'string[]';
 
     case 'plural':
     case 'selectordinal':

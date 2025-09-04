@@ -1,26 +1,76 @@
 import { Child, MessageNode } from './ast.js';
 import { StringRenderer } from './StringRenderer.js';
-import { defaultRendererOptions } from './utils.js';
+import { defaultStyles, getMessageNodeOrFallback } from './utils.js';
 import { Renderer } from './AbstractRenderer.js';
 
-const stringRenderer: Renderer<string> = new StringRenderer(defaultRendererOptions);
+const defaultStringRenderer: Renderer<string> = new StringRenderer(defaultStyles);
+
+/**
+ * Options of {@link renderText}.
+ *
+ * @template MessageFunction The function that returns a message node for a given locale, or `null` if locale isn't
+ * supported.
+ * @template Values Message argument values.
+ * @group Renderer
+ */
+export interface RenderTextOptions<
+  MessageFunction extends (locale: string) => MessageNode<Values> | null,
+  Values extends object | void,
+> {
+  /**
+   * The function that returns a message node for a given locale, or `null` if locale isn't supported.
+   */
+  message: MessageFunction;
+
+  /**
+   * The locale to render.
+   */
+  locale: string;
+
+  /**
+   * Message argument values.
+   */
+  values?: Values;
+
+  /**
+   * Renderer that should be used.
+   */
+  renderer?: Renderer<string>;
+
+  /**
+   * Fallback locales mapping.
+   */
+  fallbackLocales?: Record<string, string>;
+}
+
+type InferRenderTextOptions<MessageFunction extends (locale: string) => MessageNode<object | void> | null> =
+  MessageFunction extends (locale: string) => MessageNode<infer Values> | null
+    ? Values extends void
+      ? RenderTextOptions<MessageFunction, Values>
+      : RenderTextOptions<MessageFunction, Values> & { values: Values }
+    : never;
 
 /**
  * Renders message node as plain text string.
  *
  * @example
- * renderText(greeting('en-US'), { name: 'Bob' });
+ * renderText({
+ *   message: greeting,
+ *   locale: 'en-US',
+ *   fallbackLocales: { 'en-US': 'en' },
+ *   values: { name: 'Bob' },
+ * });
  *
- * @param messageNode The message to render.
- * @param values Message argument values.
- * @param renderer The message renderer.
+ * @param options Rendering options.
  * @group Renderer
  */
-export function renderText<Values extends object | void>(
-  messageNode: MessageNode<Values> | null,
-  values: Values,
-  renderer = stringRenderer
+export function renderText<MessageFunction extends (locale: string) => MessageNode<object | void> | null>(
+  options: InferRenderTextOptions<MessageFunction>
 ): string {
+  const { message, locale, fallbackLocales, values, renderer = defaultStringRenderer } = options;
+
+  const messageNode = getMessageNodeOrFallback(message, locale, fallbackLocales);
+
   if (messageNode === null) {
     return '';
   }

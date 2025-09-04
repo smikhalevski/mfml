@@ -1,5 +1,5 @@
 /**
- * Describes how element, argument and select nodes of a message AST are rendered.
+ * Describes how element, argument and select nodes of an MFML AST are rendered.
  *
  * @template Element The type of a rendered element.
  * @group Renderer
@@ -37,7 +37,7 @@ export interface Renderer<Element> {
    *
    * @param locale The message locale.
    * @param value The value of an argument.
-   * @param type The type of the select node ("plural", "selectordinal", "select")
+   * @param type The type of the select node ("plural", "selectordinal", "select").
    * @param categories The array of categories available in the select node.
    * @returns The selected category, or `undefined` if there's no matching category.
    */
@@ -136,19 +136,19 @@ export abstract class AbstractRenderer<Element> implements Renderer<Element> {
     }
 
     if (type === 'number' && (typeof value === 'number' || typeof value === 'bigint')) {
-      return getCachedNumberFormat(locale, (style && this.numberStyles[style]) || emptyOptions).format(value);
+      return getCachedNumberFormat(locale, getStyleOptions(this.numberStyles, style)).format(value);
     }
 
     if (type === 'date' && (typeof value === 'number' || value instanceof Date)) {
-      return getCachedDateTimeFormat(locale, (style && this.dateStyles[style]) || emptyOptions).format(value);
+      return getCachedDateTimeFormat(locale, getStyleOptions(this.dateStyles, style)).format(value);
     }
 
     if (type === 'time' && (typeof value === 'number' || value instanceof Date)) {
-      return getCachedDateTimeFormat(locale, (style && this.timeStyles[style]) || emptyOptions).format(value);
+      return getCachedDateTimeFormat(locale, getStyleOptions(this.timeStyles, style)).format(value);
     }
 
     if (type === 'list' && Array.isArray(value)) {
-      return getCachedListFormat(locale, (style && this.listStyles[style]) || emptyOptions).format(value);
+      return getCachedListFormat(locale, getStyleOptions(this.listStyles, style)).format(value);
     }
 
     if (value === null || value === undefined || value !== value) {
@@ -161,7 +161,7 @@ export abstract class AbstractRenderer<Element> implements Renderer<Element> {
   selectCategory(locale: string, value: unknown, type: string, categories: string[]): string | undefined {
     let category = '=' + value;
 
-    if (categories.includes(category)) {
+    if ((type === 'plural' || type === 'selectordinal' || type === 'select') && categories.includes(category)) {
       return category;
     }
 
@@ -177,7 +177,14 @@ export abstract class AbstractRenderer<Element> implements Renderer<Element> {
   }
 }
 
-const emptyOptions = {};
+function getStyleOptions<T>(styles: Record<string, T>, style: string | undefined): T {
+  if (style !== undefined && styles.hasOwnProperty(style)) {
+    return styles[style];
+  }
+  return defaultStyleOptions as T;
+}
+
+const defaultStyleOptions = {};
 
 const cardinalOptions: Intl.PluralRulesOptions = { type: 'cardinal' };
 

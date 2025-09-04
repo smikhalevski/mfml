@@ -2,13 +2,16 @@ import React, { createContext, createElement, Fragment, ReactNode, useContext, u
 import { Child, ElementNode, MessageNode } from '../ast.js';
 import { ReactRenderer } from './ReactRenderer.js';
 import { renderChildrenAsString } from '../renderText.js';
-import { defaultRendererOptions } from '../utils.js';
+import { defaultStyles, getMessageNodeOrFallback } from '../utils.js';
 import { Renderer } from '../AbstractRenderer.js';
 
 const MessageLocaleContext = createContext('en');
 MessageLocaleContext.displayName = 'MessageLocaleContext';
 
-const MessageRendererContext = createContext<Renderer<ReactNode>>(new ReactRenderer(defaultRendererOptions));
+const MessageFallbackLocalesContext = createContext<Record<string, string>>({});
+MessageFallbackLocalesContext.displayName = 'MessageFallbackLocalesContext';
+
+const MessageRendererContext = createContext<Renderer<ReactNode>>(new ReactRenderer(defaultStyles));
 MessageRendererContext.displayName = 'MessageRendererContext';
 
 const MessageValuesContext = createContext<Record<string, unknown> | undefined>(undefined);
@@ -22,6 +25,20 @@ MessageValuesContext.displayName = 'MessageValuesContext';
 export const MessageLocaleProvider = MessageLocaleContext.Provider;
 
 /**
+ * Provides a mapping from a locale to fallback locale.
+ *
+ * @example
+ * {
+ *   'ru-RU': 'ru',
+ *   'en-US': 'en',
+ *   'ru': 'en'
+ * }
+ *
+ * @group Message
+ */
+export const MessageFallbackLocalesProvider = MessageFallbackLocalesContext.Provider;
+
+/**
  * Provides a message renderer to underlying components.
  *
  * @group Message
@@ -33,13 +50,50 @@ export const MessageRendererProvider = MessageRendererContext.Provider;
  *
  * @template MessageFunction The function that returns a message node for a given locale, or `null` if locale isn't
  * supported.
+ * @template Values Message argument values.
  * @group Message
  */
-export type MessageProps<MessageFunction extends (locale: string) => MessageNode<object | void> | null> =
+export interface MessageProps<
+  MessageFunction extends (locale: string) => MessageNode<Values> | null,
+  Values extends object | void,
+> {
+  /**
+   * The function that returns a message node for a given locale, or `null` if locale isn't supported.
+   */
+  message: MessageFunction;
+
+  /**
+   * The locale to render.
+   *
+   * By default, a locale provided by {@link MessageLocaleProvider} is used.
+   */
+  locale?: string;
+
+  /**
+   * Message argument values.
+   */
+  values?: Values;
+
+  /**
+   * Renderer that should be used.
+   *
+   * By default, a mapping provided by {@link MessageRendererProvider} is used.
+   */
+  renderer?: Renderer<ReactNode>;
+
+  /**
+   * Fallback locales mapping.
+   *
+   * By default, a mapping provided by {@link MessageFallbackLocalesProvider} is used.
+   */
+  fallbackLocales?: Record<string, string>;
+}
+
+type InferMessageProps<MessageFunction extends (locale: string) => MessageNode<object | void> | null> =
   MessageFunction extends (locale: string) => MessageNode<infer Values> | null
     ? Values extends void
-      ? { message: MessageFunction; renderer?: Renderer<ReactNode>; values?: undefined }
-      : { message: MessageFunction; renderer?: Renderer<ReactNode>; values: Values }
+      ? MessageProps<MessageFunction, Values>
+      : MessageProps<MessageFunction, Values> & { values: Values }
     : never;
 
 /**
@@ -49,15 +103,22 @@ export type MessageProps<MessageFunction extends (locale: string) => MessageNode
  * @group Message
  */
 export function Message<MessageFunction extends (locale: string) => MessageNode<object | void> | null>(
-  props: MessageProps<MessageFunction>
+  props: InferMessageProps<MessageFunction>
 ): ReactNode {
-  const locale = useContext(MessageLocaleContext);
-  const fallbackRenderer = useContext(MessageRendererContext);
+  const contextLocale = useContext(MessageLocaleContext);
+  const contextFallbackLocales = useContext(MessageFallbackLocalesContext);
+  const contextRenderer = useContext(MessageRendererContext);
 
-  const { message, renderer = fallbackRenderer, values } = props;
+  const {
+    message,
+    locale = contextLocale,
+    fallbackLocales = contextFallbackLocales,
+    values,
+    renderer = contextRenderer,
+  } = props;
 
   const children = useMemo(() => {
-    const messageNode = message(locale);
+    const messageNode = getMessageNodeOrFallback(message, locale, fallbackLocales);
 
     if (messageNode === null) {
       return null;
@@ -65,8 +126,13 @@ export function Message<MessageFunction extends (locale: string) => MessageNode<
 
     const children = renderChildren(messageNode.locale, messageNode.children, renderer);
 
-    return Array.isArray(children) ? createElement(Fragment, null, ...children) : children;
-  }, [locale, message, renderer]);
+    if (Array.isArray(children)) {
+      // Prevent React warning about absent element keys
+      return createElement(Fragment, null, ...children);
+    }
+
+    return children;
+  }, [message, locale, fallbackLocales, renderer]);
 
   return (
     <MessageValuesContext.Provider value={values as Record<string, unknown> | undefined}>
@@ -104,21 +170,25 @@ function renderChild(locale: string, child: Child, renderer: Renderer<ReactNode>
       return renderer.renderElement(locale, child.tagName, {}, renderChildren(locale, child.children, renderer));
     }
 
-    // Element must be subscribed to values if some of its attributes are interpolated
-    for (const key in child.attributes) {
-      if (typeof child.attributes[key] === 'string') {
-        continue;
-      }
+    let hasInterpolatedAttributes = false;
 
-      // Attribute requires interpolation
-      return (
-        <MessageValuesContext.Consumer>
-          {values => renderElement(locale, child, values, renderer)}
-        </MessageValuesContext.Consumer>
-      );
+    for (const key in child.attributes) {
+      // Attributes may contain only ICU argument and select nodes, no XML tags, see tokenizer
+      if ((hasInterpolatedAttributes = typeof child.attributes[key] !== 'string')) {
+        break;
+      }
     }
 
-    return renderElement(locale, child, undefined, renderer);
+    if (!hasInterpolatedAttributes) {
+      return renderElement(locale, child, undefined, renderer);
+    }
+
+    // Some element attributes require value interpolation
+    return (
+      <MessageValuesContext.Consumer>
+        {values => renderElement(locale, child, values, renderer)}
+      </MessageValuesContext.Consumer>
+    );
   }
 
   if (child.nodeType === 'argument') {
@@ -140,7 +210,11 @@ function renderChild(locale: string, child: Child, renderer: Renderer<ReactNode>
             Object.keys(child.categories)
           );
 
-          return category === undefined ? null : renderChildren(locale, child.categories[category], renderer);
+          if (category === null || category === undefined) {
+            return null;
+          }
+
+          return renderChildren(locale, child.categories[category], renderer);
         }}
       </MessageValuesContext.Consumer>
     );
