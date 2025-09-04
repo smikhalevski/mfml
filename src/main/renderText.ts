@@ -1,8 +1,6 @@
-import { Child, MessageNode } from './ast.js';
-import { StringRenderer } from './StringRenderer.js';
 import { Renderer } from './AbstractRenderer.js';
-
-const defaultStringRenderer: Renderer<string> = new StringRenderer();
+import { AnyNode, CategoryNode, MessageNode } from './types.js';
+import { getOctothorpeArgument } from './utils.js';
 
 /**
  * Options of {@link renderText}.
@@ -34,7 +32,7 @@ export interface RenderTextOptions<
   /**
    * Renderer that should be used.
    */
-  renderer?: Renderer<string>;
+  renderer: Renderer<string>;
 }
 
 type InferRenderTextOptions<MessageFunction extends (locale: string) => MessageNode<object | void> | null> =
@@ -60,7 +58,7 @@ type InferRenderTextOptions<MessageFunction extends (locale: string) => MessageN
 export function renderText<MessageFunction extends (locale: string) => MessageNode<object | void> | null>(
   options: InferRenderTextOptions<MessageFunction>
 ): string {
-  const { message, locale, values, renderer = defaultStringRenderer } = options;
+  const { message, locale, values, renderer } = options;
 
   const messageNode = message(locale);
 
@@ -68,68 +66,139 @@ export function renderText<MessageFunction extends (locale: string) => MessageNo
     return '';
   }
 
-  return renderChildrenAsString(messageNode.locale, messageNode.children, values, renderer).join('');
+  return renderNodeAsString(messageNode.locale, values, messageNode, renderer);
 }
 
-export function renderChildrenAsString(
+export function renderNodesAsString(
   locale: string,
-  children: Child[] | string | null,
   values: any,
+  nodes: readonly AnyNode[] | null,
   renderer: Renderer<string>
 ): string[] {
-  if (children === null) {
-    return [];
-  }
+  const result: string[] = [];
 
-  const result = [];
-
-  for (let i = 0; i < children.length; ++i) {
-    result.push(renderChild(locale, children[i], values, renderer));
+  if (nodes !== null) {
+    for (let i = 0; i < nodes.length; ++i) {
+      result.push(renderNodeAsString(locale, values, nodes[i], renderer));
+    }
   }
 
   return result;
 }
 
-function renderChild(locale: string, child: Child, values: any, renderer: Renderer<string>): string {
-  if (typeof child === 'string') {
-    return child;
+export function renderNodeAsString(
+  locale: string,
+  values: any,
+  node: AnyNode | null,
+  renderer: Renderer<string>
+): string {
+  if (node === null) {
+    return '';
   }
 
-  if (child.nodeType === 'element') {
-    const attributes: Record<string, string> = {};
+  switch (node.nodeType) {
+    case 'message':
+      return renderNodesAsString(locale, values, node.childNodes, renderer).join('');
 
-    if (child.attributes !== null) {
-      for (const key in child.attributes) {
-        attributes[key] = renderChildrenAsString(locale, child.attributes[key], values, renderer).join('');
+    case 'text':
+      return node.value;
+
+    case 'element':
+      const attributes: Record<string, string> = {};
+
+      if (node.attributeNodes !== null) {
+        for (const attributeNode of node.attributeNodes) {
+          attributes[attributeNode.name] = renderNodesAsString(locale, values, attributeNode.childNodes, renderer).join(
+            ''
+          );
+        }
       }
-    }
 
-    return renderer.renderElement(
-      locale,
-      child.tagName,
-      attributes,
-      renderChildrenAsString(locale, child.children, values, renderer)
-    );
-  }
+      return renderer.renderElement(
+        node.tagName,
+        attributes,
+        renderNodesAsString(locale, values, node.childNodes, renderer)
+      );
 
-  if (child.nodeType === 'argument') {
-    return renderer.formatArgument(locale, values && values[child.name], child.type, child.style);
-  }
+    case 'argument':
+      let options: Record<string, string> | undefined;
 
-  if (child.nodeType === 'select') {
-    const category = renderer.selectCategory(
-      locale,
-      values && values[child.argumentName],
-      child.type,
-      Object.keys(child.categories)
-    );
+      if (node.optionNodes !== null) {
+        options = {};
 
-    if (category === undefined) {
+        for (const optionNode of node.optionNodes) {
+          options[optionNode.name] = optionNode.valueNode!.value;
+        }
+      }
+
+      if (node.categoryNodes === null) {
+        return renderer.formatArgument(
+          locale,
+          values && values[node.name],
+          node.typeNode?.value,
+          node.styleNode?.value,
+          options
+        );
+      }
+
+      const categories = [];
+
+      let selectedCategoryNode: CategoryNode | undefined;
+
+      for (const categoryNode of node.categoryNodes) {
+        categories.push(categoryNode.name);
+
+        if (categoryNode.name === 'other') {
+          selectedCategoryNode = categoryNode;
+        }
+      }
+
+      const category = renderer.selectCategory(
+        locale,
+        values && values[node.name],
+        node.typeNode!.value,
+        categories,
+        options
+      );
+
+      if (category !== undefined && categories.indexOf(category) !== -1) {
+        for (const categoryNode of node.categoryNodes) {
+          if (category === categoryNode.name) {
+            selectedCategoryNode = categoryNode;
+            break;
+          }
+        }
+      }
+
+      if (selectedCategoryNode !== undefined) {
+        return renderNodesAsString(locale, values, selectedCategoryNode.childNodes, renderer).join('');
+      }
+
       return '';
+
+    case 'octothorpe': {
+      const argumentNode = getOctothorpeArgument(node)!;
+
+      let options: Record<string, string> | undefined;
+
+      if (argumentNode.optionNodes !== null) {
+        options = {};
+
+        for (const optionNode of argumentNode.optionNodes) {
+          options[optionNode.name] = optionNode.valueNode!.value;
+        }
+      }
+
+      return renderer.formatArgument(
+        locale,
+        values && values[argumentNode.name],
+        argumentNode.typeNode?.value,
+        argumentNode.styleNode?.value,
+        options
+      );
     }
 
-    return renderChildrenAsString(locale, child.categories[category], values, renderer).join('');
+    default:
+      return '';
   }
-
-  return '';
 }

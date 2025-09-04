@@ -1,7 +1,5 @@
 import React, { createContext, createElement, Fragment, ReactNode, useContext, useMemo } from 'react';
-import { Child, ElementNode, MessageNode } from '../ast.js';
 import { ReactRenderer } from './ReactRenderer.js';
-import { renderChildrenAsString } from '../renderText.js';
 import { Renderer } from '../AbstractRenderer.js';
 
 const MessageLocaleContext = createContext('en');
