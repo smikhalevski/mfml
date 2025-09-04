@@ -46,9 +46,24 @@ export interface Config extends Omit<ParserOptions, 'tokenizer'>, Omit<CompilerO
  * @group Config
  */
 export interface ResolvedConfig {
+  /**
+   * Messages arranged by a locale.
+   */
   messages: { [locale: string]: { [messageKey: string]: string } };
+
+  /**
+   * The compiler that transforms messages to source code.
+   */
   compiler: Compiler;
+
+  /**
+   * The name of the package from to which compiled messages are written.
+   */
   packageName: string;
+
+  /**
+   * The directory that contains node_modules.
+   */
   outDir: string;
 }
 

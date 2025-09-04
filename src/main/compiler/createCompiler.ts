@@ -1,7 +1,14 @@
 import { Child, MessageNode } from '../ast.js';
 import { Parser } from '../parser/index.js';
-import { collectArgumentNames, escapeIdentifier } from '../utils.js';
-import { formatJSDocComment, formatMarkdownBold, formatMarkdownFence, hashCode, truncateMessage } from './utils.js';
+import {
+  collectArgumentNames,
+  escapeJsIdentifier,
+  formatJSDocComment,
+  formatMarkdownBold,
+  formatMarkdownFence,
+  hashCode,
+  truncateMessage,
+} from './utils.js';
 
 /**
  * Options of {@link createCompiler}.
@@ -16,6 +23,8 @@ export interface CompilerOptions {
 
   /**
    * The array of callbacks that are run before message tokenization.
+   *
+   * For example, preprocessors can be used to transform Markdown messages to HTML.
    */
   preprocessors?: Array<(text: string, locale: string, messageKey: string) => Promise<string> | string>;
 
@@ -44,7 +53,7 @@ export interface Compiler {
    * Compiles MFML messages to a source code.
    *
    * @param messages Messages arranged by a locale.
-   * @returns The source of a module that exports message functions.
+   * @returns The map from a file path to file contents.
    */
   compile(messages: { [locale: string]: { [messageKey: string]: string } }): Promise<Record<string, string>>;
 }
@@ -91,13 +100,13 @@ export function createCompiler(options: CompilerOptions): Compiler {
  *
  * @param messages Messages arranged by a locale.
  * @param options Compilation options.
- * @returns The map from a file path to a file contents.
+ * @returns The map from a file path to file contents.
  */
 export async function compileFiles(
   messages: { [locale: string]: { [messageKey: string]: string } },
   options: CompilerOptions
 ): Promise<Record<string, string>> {
-  const { parser, preprocessors, postprocessors, renameMessageFunction = escapeIdentifier } = options;
+  const { parser, preprocessors, postprocessors, renameMessageFunction = escapeJsIdentifier } = options;
 
   const locales = Object.keys(messages);
 
@@ -112,11 +121,13 @@ export async function compileFiles(
   let localesJs = '';
 
   for (const locale of locales) {
-    const localeVar = 'LOCALE_' + escapeIdentifier(locale).toUpperCase();
+    const localeVar = 'LOCALE_' + escapeJsIdentifier(locale).toUpperCase();
 
     localeVars[locale] = localeVar;
     localesJs += 'export const ' + localeVar + '=' + JSON.stringify(locale) + ';\n';
   }
+
+  files['locales.js'] = localesJs;
 
   const localesJsImport = 'import{' + Object.values(localeVars).join(',') + '}from"./locales.js";';
 
@@ -136,14 +147,16 @@ export async function compileFiles(
 
       jsDocComment += '\n' + formatMarkdownBold(locale) + '\n' + formatMarkdownFence(truncateMessage(text), 'html');
 
-      if (preprocessors !== undefined) {
-        for (const preprocessor of preprocessors) {
-          text = await preprocessor(text, locale, messageKey);
-        }
-      }
+      let messageNode;
 
       try {
-        let messageNode = parser.parse(locale, text);
+        if (preprocessors !== undefined) {
+          for (const preprocessor of preprocessors) {
+            text = await preprocessor(text, locale, messageKey);
+          }
+        }
+
+        messageNode = parser.parse(locale, text);
 
         if (postprocessors !== undefined) {
           for (const postprocessor of postprocessors) {
@@ -152,17 +165,21 @@ export async function compileFiles(
         }
 
         collectArgumentNames(messageNode, argumentNames);
-
-        messageNodes.push(messageNode);
-      } catch (error) {
-        throw new Error('Cannot compile "' + messageKey + '" message for locale "' + locale + '"', { cause: error });
+      } catch (cause) {
+        throw new Error('Cannot compile "' + messageKey + '" message, "' + locale + '" locale', { cause });
       }
+
+      messageNodes.push(messageNode);
     }
 
     for (const messageNode of messageNodes) {
       const localeVar = localeVars[messageNode.locale];
 
-      jsCode += 'locale===' + localeVar + '?' + compileMessageNode(localeVar, messageNode) + ':';
+      try {
+        jsCode += 'locale===' + localeVar + '?' + compileMessageNode(localeVar, messageNode) + ':';
+      } catch (cause) {
+        throw new Error('Cannot compile "' + messageKey + '" message, "' + messageNode.locale + '" locale', { cause });
+      }
     }
 
     jsCode += 'null;\n}\n';
@@ -177,24 +194,27 @@ export async function compileFiles(
       '\n' +
       jsCode;
 
-    const fileName = await hashCode(jsCode, 16);
-    const functionName = renameMessageFunction(messageKey);
+    try {
+      const fileName = await hashCode(jsCode, 16);
+      const functionName = renameMessageFunction(messageKey);
 
-    files[fileName + '.js'] = jsCode;
+      files[fileName + '.js'] = jsCode;
 
-    indexJs += 'export{default as ' + functionName + '}from"./' + fileName + '.js";\n';
+      indexJs += 'export{default as ' + functionName + '}from"./' + fileName + '.js";\n';
 
-    indexTs +=
-      '\n' +
-      jsDocComment +
-      '\nexport declare function ' +
-      functionName +
-      '(locale:string):' +
-      compileMessageType(argumentNames) +
-      ';\n';
+      indexTs +=
+        '\n' +
+        jsDocComment +
+        '\nexport declare function ' +
+        functionName +
+        '(locale:string):' +
+        compileMessageType(argumentNames) +
+        ';\n';
+    } catch (cause) {
+      throw new Error('Cannot compile "' + messageKey + '" message', { cause });
+    }
   }
 
-  files['locales.js'] = localesJs;
   files['index.js'] = indexJs;
   files['index.d.ts'] = indexTs;
 
@@ -233,7 +253,9 @@ function compileChild(child: Child): string {
     return JSON.stringify(child);
   }
 
-  if (child.nodeType === 'element') {
+  const nodeType = child.nodeType;
+
+  if (nodeType === 'element') {
     let str = 'E(' + JSON.stringify(child.tagName);
 
     if (child.attributes !== null) {
@@ -255,7 +277,7 @@ function compileChild(child: Child): string {
     return str + ')';
   }
 
-  if (child.nodeType === 'argument') {
+  if (nodeType === 'argument') {
     let str = 'A(' + JSON.stringify(child.name);
 
     if (child.type !== undefined) {
@@ -269,7 +291,7 @@ function compileChild(child: Child): string {
     return str + ')';
   }
 
-  if (child.nodeType === 'select') {
+  if (nodeType === 'select') {
     let str = 'S(' + JSON.stringify(child.argumentName) + ',' + JSON.stringify(child.type) + ',{';
 
     let keyIndex = 0;
@@ -281,5 +303,5 @@ function compileChild(child: Child): string {
     return str + '})';
   }
 
-  throw new Error('Unknown node type');
+  throw new Error('Unknown AST node type: ' + nodeType);
 }

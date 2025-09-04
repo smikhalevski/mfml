@@ -148,14 +148,14 @@ export function createParser(options: ParserOptions): Parser {
 export function parseMessage(locale: string, text: string, options: ParserOptions): MessageNode<any> {
   const {
     tokenizer,
-    renameTag = noRename,
-    renameAttribute = noRename,
-    renameArgument = noRename,
-    renameArgumentType = noRename,
-    renameArgumentStyle = noRename,
-    renameSelectType = noRename,
-    renameSelectCategory = noRename,
-    decodeText = noRename,
+    renameTag = identity,
+    renameAttribute = identity,
+    renameArgument = identity,
+    renameArgumentType = identity,
+    renameArgumentStyle = identity,
+    renameSelectType = identity,
+    renameSelectCategory = identity,
+    decodeText = identity,
   } = options;
 
   let tagName: string;
@@ -168,91 +168,99 @@ export function parseMessage(locale: string, text: string, options: ParserOption
   const stack: Array<MessageNode | ElementNode | SelectNode | string> = [messageNode];
 
   const tokenCallback: TokenCallback = (token, startIndex, endIndex) => {
-    switch (token) {
-      case 'TEXT':
-        pushChild(stack, stackCursor, decodeText(text.substring(startIndex, endIndex)));
-        break;
+    try {
+      switch (token) {
+        case 'TEXT':
+          pushChild(stack, stackCursor, decodeText(text.substring(startIndex, endIndex)));
+          break;
 
-      case 'XML_OPENING_TAG_START':
-        tagName = renameTag(text.substring(startIndex, endIndex));
-        pushChild(stack, stackCursor, (stack[++stackCursor] = createElementNode(tagName)));
-        break;
+        case 'XML_OPENING_TAG_START':
+          tagName = renameTag(text.substring(startIndex, endIndex));
+          pushChild(stack, stackCursor, (stack[++stackCursor] = createElementNode(tagName)));
+          break;
 
-      case 'XML_OPENING_TAG_END':
-        break;
+        case 'XML_OPENING_TAG_END':
+          break;
 
-      case 'XML_OPENING_TAG_SELF_CLOSE':
-      case 'XML_CLOSING_TAG':
-        --stackCursor;
-        break;
-
-      case 'XML_ATTRIBUTE_START':
-        stack[++stackCursor] = renameAttribute(text.substring(startIndex, endIndex), tagName);
-        pushChild(stack, stackCursor, '');
-        break;
-
-      case 'XML_ATTRIBUTE_END':
-        --stackCursor;
-        break;
-
-      case 'ICU_ARGUMENT_START':
-        argumentName = renameArgument(text.substring(startIndex, endIndex));
-        rawArgumentType = undefined;
-        rawArgumentStyle = undefined;
-        break;
-
-      case 'ICU_ARGUMENT_TYPE':
-        rawArgumentType = text.substring(startIndex, endIndex);
-        break;
-
-      case 'ICU_ARGUMENT_STYLE':
-        rawArgumentStyle = text.substring(startIndex, endIndex);
-        break;
-
-      case 'ICU_ARGUMENT_END':
-        if (argumentName === undefined) {
-          // No argument name means that a select node was already put on the stack
+        case 'XML_OPENING_TAG_SELF_CLOSE':
+        case 'XML_CLOSING_TAG':
           --stackCursor;
           break;
-        }
 
-        const argumentType = rawArgumentType && renameArgumentType(rawArgumentType, argumentName);
-        const argumentStyle = rawArgumentStyle && renameArgumentStyle(rawArgumentStyle, argumentType!);
+        case 'XML_ATTRIBUTE_START':
+          stack[++stackCursor] = renameAttribute(text.substring(startIndex, endIndex), tagName);
+          pushChild(stack, stackCursor, '');
+          break;
 
-        pushChild(stack, stackCursor, createArgumentNode(argumentName, argumentType, argumentStyle));
-        break;
+        case 'XML_ATTRIBUTE_END':
+          --stackCursor;
+          break;
 
-      case 'ICU_CATEGORY_START':
-        const parent = stack[stackCursor];
+        case 'ICU_ARGUMENT_START':
+          argumentName = renameArgument(text.substring(startIndex, endIndex));
+          rawArgumentType = undefined;
+          rawArgumentStyle = undefined;
+          break;
 
-        if (typeof parent === 'string' || parent.nodeType !== 'select') {
-          const selectType = renameSelectType(rawArgumentType!, argumentName!);
+        case 'ICU_ARGUMENT_TYPE':
+          rawArgumentType = text.substring(startIndex, endIndex);
+          break;
 
-          pushChild(stack, stackCursor, (stack[++stackCursor] = createSelectNode(argumentName!, selectType, {})));
-          argumentName = undefined;
-        }
+        case 'ICU_ARGUMENT_STYLE':
+          rawArgumentStyle = text.substring(startIndex, endIndex);
+          break;
 
-        stack[++stackCursor] = renameSelectCategory(text.substring(startIndex, endIndex), (parent as SelectNode).type);
-        pushChild(stack, stackCursor, '');
-        break;
-
-      case 'ICU_CATEGORY_END':
-        --stackCursor;
-        break;
-
-      case 'ICU_OCTOTHORPE':
-        for (let index = stackCursor; index > -1; --index) {
-          const node = stack[index];
-
-          if (typeof node === 'string' || node.nodeType !== 'select') {
-            continue;
+        case 'ICU_ARGUMENT_END':
+          if (argumentName === undefined) {
+            // No argument name means that a select node was already put on the stack
+            --stackCursor;
+            break;
           }
 
-          // Use argument of the enclosing select to replace an octothorpe
-          pushChild(stack, stackCursor, createArgumentNode(node.argumentName));
+          const argumentType = rawArgumentType && renameArgumentType(rawArgumentType, argumentName);
+          const argumentStyle = rawArgumentStyle && renameArgumentStyle(rawArgumentStyle, argumentType!);
+
+          pushChild(stack, stackCursor, createArgumentNode(argumentName, argumentType, argumentStyle));
           break;
-        }
-        break;
+
+        case 'ICU_CATEGORY_START':
+          const parent = stack[stackCursor];
+
+          if (typeof parent === 'string' || parent.nodeType !== 'select') {
+            const selectType = renameSelectType(rawArgumentType!, argumentName!);
+
+            pushChild(stack, stackCursor, (stack[++stackCursor] = createSelectNode(argumentName!, selectType, {})));
+            argumentName = undefined;
+          }
+
+          stack[++stackCursor] = renameSelectCategory(
+            text.substring(startIndex, endIndex),
+            (parent as SelectNode).type
+          );
+
+          pushChild(stack, stackCursor, '');
+          break;
+
+        case 'ICU_CATEGORY_END':
+          --stackCursor;
+          break;
+
+        case 'ICU_OCTOTHORPE':
+          for (let index = stackCursor; index > -1; --index) {
+            const node = stack[index];
+
+            if (typeof node === 'string' || node.nodeType !== 'select') {
+              continue;
+            }
+
+            // Use argument of the enclosing select to replace an octothorpe
+            pushChild(stack, stackCursor, createArgumentNode(node.argumentName));
+            break;
+          }
+          break;
+      }
+    } catch (cause) {
+      throw new Error('Cannot parse "' + token + '" token at ' + startIndex, { cause });
     }
   };
 
@@ -276,7 +284,11 @@ function pushChild(
       return;
     }
 
-    (parent.attributes ||= {})[node] = concatChildren(parent.attributes[node], child);
+    if (parent.attributes === null) {
+      parent.attributes = {};
+    }
+
+    parent.attributes[node] = concatChildren(parent.attributes[node], child);
     return;
   }
 
@@ -300,9 +312,10 @@ function concatChildren(children: Child[] | string | null, child: Child): Child[
   }
 
   children.push(child);
+
   return children;
 }
 
-function noRename(value: string): string {
+function identity(value: string): string {
   return value;
 }
