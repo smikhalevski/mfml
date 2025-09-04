@@ -1,4 +1,4 @@
-import { defaultArgumentFormatter, defaultCategorySelector, Renderer } from './renderer.js';
+import { defaultCategorySelector, Renderer } from './renderer.js';
 import { AttributeNode, ChildNode, MessageNode } from './types.js';
 import {
   getArgumentByOctothorpe,
@@ -9,6 +9,7 @@ import {
   getArgumentType,
   isLowerCaseAlpha,
 } from './utils.js';
+import { defaultArgumentFormatter } from './formatter.js';
 
 const defaultStringRenderer: Renderer<string> = {
   renderElement: (tagName, _attributes, children) => (isLowerCaseAlpha(tagName) ? children.join('') : ''),

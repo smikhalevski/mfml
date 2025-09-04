@@ -1,5 +1,5 @@
 import React, { createContext, createElement, Fragment, ReactNode, useContext, useMemo } from 'react';
-import { defaultArgumentFormatter, defaultCategorySelector, Renderer } from '../renderer.js';
+import { defaultCategorySelector, Renderer } from '../renderer.js';
 import { AttributeNode, ChildNode, MessageNode } from '../types.js';
 import { renderAttributes } from '../renderToString.js';
 import {
@@ -11,6 +11,7 @@ import {
   getArgumentType,
 } from '../utils.js';
 import { createReactDOMElementRenderer } from './createReactDOMElementRenderer.js';
+import { defaultArgumentFormatter } from '../formatter.js';
 
 const MessageLocaleContext = createContext('en');
 MessageLocaleContext.displayName = 'MessageLocaleContext';

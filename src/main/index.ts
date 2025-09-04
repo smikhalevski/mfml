@@ -5,18 +5,21 @@
  */
 
 export {
-  createListFormatter,
-  createDateTimeFormatter,
-  createNumberFormatter,
-  enqueueFormatters,
   defaultArgumentFormatter,
+  createWaterfallArgumentFormatter,
+  createNumberArgumentFormatter,
+  createDateTimeArgumentFormatter,
+  createListArgumentFormatter,
+  createDisplayNameArgumentFormatter,
+  type ArgumentFormatter,
+  type ArgumentFormatterParams,
+} from './formatter.js';
+export {
   defaultCategorySelector,
   type Renderer,
-  type ArgumentFormatterParams,
-  type CategorySelectorParams,
-  type ArgumentFormatter,
-  type CategorySelector,
   type ElementRenderer,
+  type CategorySelectorParams,
+  type CategorySelector,
 } from './renderer.js';
 export { renderToString, type RenderToStringOptions } from './renderToString.js';
 export type {
