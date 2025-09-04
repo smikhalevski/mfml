@@ -83,35 +83,35 @@ export default function allowTags(allowedTags: AllowedTags): Postprocessor {
  * The safe set of tags and attributes, recommended for general use.
  *
  * | Tag name     | Allowed attributes                             |
- * |--------------|------------------------------------------------|
- * | `<p>`          | `style` `class`                                |
- * | `<br>`         |  None                                          |
- * | `<hr>`         | `style` `class`                                |
- * | `<b>`          | `style` `class`                                |
- * | `<u>`          | `style` `class`                                |
- * | `<s>`          | `style` `class`                                |
- * | `<em>`         | `style` `class`                                |
- * | `<strong>`     | `style` `class`                                |
- * | `<del>`        | `style` `class`                                |
- * | `<code>`       | `style` `class`                                |
- * | `<mark>`       | `style` `class`                                |
- * | `<h1>`         | `style` `class` `id`                           |
- * | `<h2>`         | `style` `class` `id`                           |
- * | `<h3>`         | `style` `class` `id`                           |
- * | `<h4>`         | `style` `class` `id`                           |
- * | `<h5>`         | `style` `class` `id`                           |
- * | `<h6>`         | `style` `class` `id`                           |
- * | `<ul>`         | `style` `class` `id`                           |
- * | `<ol>`         | `style` `class` `start` `type`                 |
- * | `<li>`         | `style` `class`                                |
- * | `<a>`          | `style` `class` `href` `title` `target` `name` |
- * | `<blockquote>` | `style` `class` `cite`                         |
- * | `<pre>`        | `style` `class`                                |
- * | `<sup>`        | `style` `class`                                |
- * | `<sub>`        | `style` `class`                                |
- * | `<abbr>`       | `style` `class` `title`                        |
- * | `<kbd>`        | `style` `class`                                |
- * | `<samp>`       | `style` `class`                                |
+ * | ------------ | ---------------------------------------------- |
+ * | `p`          | `style` `class`                                |
+ * | `br`         |  None                                          |
+ * | `hr`         | `style` `class`                                |
+ * | `b`          | `style` `class`                                |
+ * | `u`          | `style` `class`                                |
+ * | `s`          | `style` `class`                                |
+ * | `em`         | `style` `class`                                |
+ * | `strong`     | `style` `class`                                |
+ * | `del`        | `style` `class`                                |
+ * | `code`       | `style` `class`                                |
+ * | `mark`       | `style` `class`                                |
+ * | `h1`         | `style` `class` `id`                           |
+ * | `h2`         | `style` `class` `id`                           |
+ * | `h3`         | `style` `class` `id`                           |
+ * | `h4`         | `style` `class` `id`                           |
+ * | `h5`         | `style` `class` `id`                           |
+ * | `h6`         | `style` `class` `id`                           |
+ * | `ul`         | `style` `class` `id`                           |
+ * | `ol`         | `style` `class` `start` `type`                 |
+ * | `li`         | `style` `class`                                |
+ * | `a`          | `style` `class` `href` `title` `target` `name` |
+ * | `blockquote` | `style` `class` `cite`                         |
+ * | `pre`        | `style` `class`                                |
+ * | `sup`        | `style` `class`                                |
+ * | `sub`        | `style` `class`                                |
+ * | `abbr`       | `style` `class` `title`                        |
+ * | `kbd`        | `style` `class`                                |
+ * | `samp`       | `style` `class`                                |
  */
 export const defaultAllowedTags: AllowedTags = {
   p: ['style', 'class'],

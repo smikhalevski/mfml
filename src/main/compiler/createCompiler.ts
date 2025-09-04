@@ -443,6 +443,16 @@ export async function compileFiles(
 /**
  * Returns the TypeScript type of an argument that matches the Intl format.
  *
+ * | Argument type   | TypeScript type    |
+ * | --------------- | ------------------ |
+ * | `number`        | `number \| bigint` |
+ * | `date`          | `number \| Date`   |
+ * | `time`          | `number \| Date`   |
+ * | `list`          | `string[]`         |
+ * | `plural`        | `number`           |
+ * | `selectOrdinal` | `number`           |
+ * | `select`        | `'foo' \| 'bar'`   |
+ *
  * @group Compiler
  */
 export function getArgumentIntlTsType(argumentNode: ArgumentNode): string | undefined {
