@@ -2,12 +2,25 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { ResolvedConfig } from '../compiler/index.js';
-import { printError } from './utils.js';
+import { printHelp, printError } from './utils.js';
 
 const fallbackConfigPaths = ['mfml.config.ts', 'mfml.config.js', 'mfml.config.mts', 'mfml.config.mjs'];
 
+let userConfigPath;
+
+for (let i = 2; i < process.argv.length; ++i) {
+  if (process.argv[i] === '--config') {
+    userConfigPath = process.argv[i + 1];
+  }
+
+  if (process.argv[i] === '--help') {
+    printHelp();
+    process.exit(0);
+  }
+}
+
 try {
-  const configPath = resolveConfigPath(process.cwd(), process.argv[2] ? [process.argv[2]] : fallbackConfigPaths);
+  const configPath = resolveConfigPath(process.cwd(), userConfigPath ? [userConfigPath] : fallbackConfigPaths);
 
   const { default: config } = await import(configPath);
 
