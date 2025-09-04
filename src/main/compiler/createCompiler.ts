@@ -1,14 +1,14 @@
-import { Child, MessageNode } from '../ast.js';
+import { AnyNode, MessageNode } from '../types.js';
 import { Parser } from '../parser/index.js';
 import {
-  collectArgumentTsTypes,
   escapeJsIdentifier,
   formatJSDocComment,
   formatMarkdownBold,
   formatMarkdownFence,
-  hashCode,
+  toHashCode,
   truncateMessage,
 } from './utils.js';
+import { getOctothorpeArgument, walkNode } from '../utils.js';
 
 export class CompilerError extends Error {
   constructor(
@@ -62,7 +62,7 @@ export interface PostprocessorOptions {
   /**
    * The parsed message node.
    */
-  messageNode: MessageNode<any>;
+  messageNode: MessageNode;
 }
 
 /**
@@ -116,12 +116,12 @@ export interface CompilerOptions {
    *
    * For example, preprocessors can be used to transform Markdown messages to HTML.
    */
-  preprocessors?: Array<Preprocessor>;
+  preprocessors?: Preprocessor[];
 
   /**
    * The array of callbacks that are run after the message was parsed as an MFML AST.
    */
-  postprocessors?: Array<Postprocessor>;
+  postprocessors?: Postprocessor[];
 
   /**
    * Returns the name of a message function for the given message key.
@@ -263,7 +263,7 @@ export async function compileFiles(
     }
 
     if (fallbackLocales !== undefined && localeGroups.length !== locales.length) {
-      // Message doesn't support all locales, detect fallbacks and extent locale groups
+      // Message doesn't support all locales, detect fallbacks and extend locale groups
 
       for (const locale of locales) {
         if (messages[locale][messageKey] !== undefined) {
@@ -274,7 +274,6 @@ export async function compileFiles(
 
         let fallbackLocale = locale;
 
-        // noinspection CommaExpressionJS
         do {
           fallbackLocale = fallbackLocales[fallbackLocale];
         } while (
@@ -348,7 +347,7 @@ export async function compileFiles(
       }
 
       try {
-        jsCode += '?' + compileMessageNode('locale', messageNodes[i]) + ':';
+        jsCode += '?' + compileNode(messageNodes[i]) + ':';
       } catch (error) {
         errors.push(new CompilerError(messageKey, localeGroups[i][0], error));
         continue nextMessageKey;
@@ -360,16 +359,10 @@ export async function compileFiles(
 
     jsDocComment = formatJSDocComment(jsDocComment);
 
-    jsCode =
-      'import{createMessageNode as M,createElementNode as E,createArgumentNode as A,createSelectNode as S}from"mfml";\n' +
-      localesJsImport +
-      '\n\n' +
-      jsDocComment +
-      '\n' +
-      jsCode;
+    jsCode = 'import{M,E,A,V,R,O,C}from"mfml/dsl";\n' + localesJsImport + '\n\n' + jsDocComment + '\n' + jsCode;
 
     try {
-      const fileName = await hashCode(jsCode, 16);
+      const fileName = await toHashCode(jsCode, 16);
       const functionName = renameMessageFunction(messageKey);
 
       files[fileName + '.js'] = jsCode;
@@ -409,6 +402,37 @@ export async function compileFiles(
   return files;
 }
 
+export function collectArgumentTsTypes(
+  node: AnyNode,
+  getArgumentTsType: typeof getArgumentNaturalTsType,
+  argumentTsTypes: Map<string, Set<string>>
+): void {
+  walkNode(node, node => {
+    if (node.nodeType === 'octothorpe') {
+      node = getOctothorpeArgument(node)!;
+    }
+
+    if (node.nodeType !== 'argument') {
+      return;
+    }
+
+    const tsType = getArgumentTsType(node.typeNode?.value, node.name);
+
+    let tsTypes = argumentTsTypes.get(node.name);
+
+    if (tsTypes === undefined) {
+      tsTypes = new Set();
+      argumentTsTypes.set(node.name, tsTypes);
+    }
+
+    if (tsType === undefined || tsType === null || tsType === '') {
+      return;
+    }
+
+    tsTypes.add(tsType);
+  });
+}
+
 export function getArgumentNaturalTsType(argumentType: string | undefined, _argumentName: string): string | undefined {
   switch (argumentType) {
     case 'number':
@@ -435,7 +459,7 @@ export function getArgumentNaturalTsType(argumentType: string | undefined, _argu
 
 export function compileMessageTsType(argumentTsTypes: Map<string, Set<string>>): string {
   if (argumentTsTypes.size === 0) {
-    return 'MessageNode|null';
+    return 'MessageNode<void>|null';
   }
 
   let str = '';
@@ -466,72 +490,63 @@ export function compileMessageTsType(argumentTsTypes: Map<string, Set<string>>):
   return 'MessageNode<{' + str + '}>|null';
 }
 
-export function compileMessageNode(localeVar: string, messageNode: MessageNode): string {
-  return 'M(' + localeVar + ',' + compileChildrenSpread(messageNode.children) + ')';
+export function compileNode(node: AnyNode): string {
+  switch (node.nodeType) {
+    case 'message':
+      return 'M(locale' + compileRestNodes(node.childNodes) + ')';
+
+    case 'text':
+    case 'literal':
+      return JSON.stringify(node.value);
+
+    case 'element':
+      return (
+        'E(' +
+        JSON.stringify(node.tagName) +
+        compileRestNodes(node.attributeNodes) +
+        compileRestNodes(node.childNodes) +
+        ')'
+      );
+
+    case 'attribute':
+      return 'A(' + JSON.stringify(node.name) + compileRestNodes(node.childNodes) + ')';
+
+    case 'argument':
+      return (
+        'V(' +
+        JSON.stringify(node.name) +
+        compileNullableNode(node.typeNode) +
+        compileNullableNode(node.styleNode) +
+        compileRestNodes(node.optionNodes) +
+        compileRestNodes(node.categoryNodes) +
+        ')'
+      );
+
+    case 'octothorpe':
+      return 'R()';
+
+    case 'option':
+      return 'O(' + JSON.stringify(node.name) + compileNullableNode(node.valueNode) + ')';
+
+    case 'category':
+      return 'C(' + JSON.stringify(node.name) + compileRestNodes(node.childNodes) + ')';
+  }
 }
 
-function compileChildrenSpread(children: Child[] | string): string {
-  return typeof children === 'string' ? compileChild(children) : children.map(compileChild).join(',');
+function compileRestNodes<T extends AnyNode[]>(nodes: T | null): string {
+  if (nodes === null) {
+    return '';
+  }
+
+  let str = '';
+
+  for (let i = 0; i < nodes.length; ++i) {
+    str += ',' + compileNode(nodes[i]);
+  }
+
+  return str;
 }
 
-function compileChildrenArray(children: Child[] | string): string {
-  return typeof children === 'string' ? compileChild(children) : '[' + children.map(compileChild).join(',') + ']';
-}
-
-function compileChild(child: Child): string {
-  if (typeof child === 'string') {
-    return JSON.stringify(child);
-  }
-
-  const nodeType = child.nodeType;
-
-  if (nodeType === 'element') {
-    let str = 'E(' + JSON.stringify(child.tagName);
-
-    if (child.attributes !== null) {
-      str += ',{';
-
-      let keyIndex = 0;
-
-      for (const key in child.attributes) {
-        str += (keyIndex++ === 0 ? '' : ',') + JSON.stringify(key) + ':' + compileChildrenArray(child.attributes[key]);
-      }
-
-      str += '}';
-    }
-
-    if (child.children !== null) {
-      str += (child.attributes !== null ? ',' : ',null,') + compileChildrenSpread(child.children);
-    }
-
-    return str + ')';
-  }
-
-  if (nodeType === 'argument') {
-    let str = 'A(' + JSON.stringify(child.name);
-
-    if (child.type !== undefined) {
-      str += ',' + JSON.stringify(child.type);
-    }
-
-    if (child.style !== undefined) {
-      str += ',' + JSON.stringify(child.style);
-    }
-
-    return str + ')';
-  }
-
-  if (nodeType === 'select') {
-    let str = 'S(' + JSON.stringify(child.argumentName) + ',' + JSON.stringify(child.type) + ',{';
-
-    let keyIndex = 0;
-
-    for (const key in child.categories) {
-      str += (keyIndex++ === 0 ? '' : ',') + JSON.stringify(key) + ':' + compileChildrenArray(child.categories[key]);
-    }
-
-    return str + '})';
-  }
-
-  throw new Error('Unknown AST node type: ' + nodeType);
+function compileNullableNode(node: AnyNode | null): string {
+  return node === null ? '' : ',' + compileNode(node);
 }

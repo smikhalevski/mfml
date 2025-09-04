@@ -13,6 +13,7 @@ import {
 export function createMessageNode(locale: string): MessageNode {
   return {
     nodeType: 'message',
+    parentNode: null,
     locale,
     childNodes: [],
   };

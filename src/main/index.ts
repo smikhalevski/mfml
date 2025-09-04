@@ -4,17 +4,21 @@
  * @module mfml
  */
 
-export { AbstractRenderer, type Renderer, type AbstractRendererOptions } from './AbstractRenderer.js';
-export {
-  createMessageNode,
-  createElementNode,
-  createArgumentNode,
-  createSelectNode,
-  type Child,
-  type MessageNode,
-  type ElementNode,
-  type ArgumentNode,
-  type SelectNode,
-} from './ast.js';
+export { AbstractRenderer, type Renderer } from './AbstractRenderer.js';
 export { renderText, type RenderTextOptions } from './renderText.js';
 export { StringRenderer, type StringComponentType, type StringRendererOptions } from './StringRenderer.js';
+export type {
+  ChildNode,
+  ParentNode,
+  AnyNode,
+  SourceLocation,
+  MessageNode,
+  TextNode,
+  ElementNode,
+  AttributeNode,
+  ArgumentNode,
+  OctothorpeNode,
+  OptionNode,
+  CategoryNode,
+  LiteralNode,
+} from './types.js';

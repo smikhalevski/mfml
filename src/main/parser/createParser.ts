@@ -12,17 +12,15 @@ import {
   createTextNode,
 } from '../dsl.js';
 import {
+  AnyNode,
   ArgumentNode,
   AttributeNode,
   CategoryNode,
   ElementNode,
-  LiteralNode,
   MessageNode,
-  OctothorpeNode,
   OptionNode,
   ParentNode,
   SourceLocation,
-  TextNode,
 } from '../types.js';
 
 /**
@@ -103,7 +101,7 @@ export function parseMessage(locale: string, text: string, options: ParserOption
 
   const messageNode = createMessageNode(locale);
 
-  let parentNode: MessageNode | NestableNode = messageNode;
+  let parentNode: AnyNode = messageNode;
 
   const tokenCallback: TokenCallback = (token, startIndex, endIndex) => {
     switch (token) {
@@ -229,21 +227,7 @@ export function parseMessage(locale: string, text: string, options: ParserOption
   return messageNode;
 }
 
-type NestableNode =
-  | TextNode
-  | ElementNode
-  | AttributeNode
-  | ArgumentNode
-  | OctothorpeNode
-  | OptionNode
-  | CategoryNode
-  | LiteralNode;
-
-function pushChild<T extends NestableNode>(
-  parentNode: MessageNode | NestableNode,
-  childNodes: T[] | null,
-  node: T
-): T[] {
+function pushChild<T extends AnyNode>(parentNode: AnyNode, childNodes: T[] | null, node: T): T[] {
   node.parentNode = parentNode as typeof node.parentNode;
 
   if (childNodes === null) {

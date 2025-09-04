@@ -891,6 +891,9 @@ export function getCaseInsensitiveHashCode(text: string, startIndex: number, end
   return hashCode;
 }
 
+/**
+ * Returns case-sensitive djb2 hash of a substring.
+ */
 export function getCaseSensitiveHashCode(text: string, startIndex: number, endIndex: number): number {
   let hashCode = 0;
 

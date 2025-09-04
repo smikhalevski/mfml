@@ -12,6 +12,17 @@ export type ChildNode = TextNode | ElementNode | ArgumentNode | OctothorpeNode;
  */
 export type ParentNode = MessageNode | ElementNode | AttributeNode | CategoryNode;
 
+export type AnyNode =
+  | MessageNode
+  | TextNode
+  | ElementNode
+  | AttributeNode
+  | ArgumentNode
+  | OctothorpeNode
+  | OptionNode
+  | CategoryNode
+  | LiteralNode;
+
 /**
  * The indices of a node position in a message text
  *
@@ -45,6 +56,11 @@ export interface MessageNode<Values extends object | void = any> {
    * The node type.
    */
   nodeType: 'message';
+
+  /**
+   * The parent node.
+   */
+  parentNode: null;
 
   /**
    * The message locale.
