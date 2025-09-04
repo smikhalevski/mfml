@@ -201,11 +201,8 @@ export function tokenizeMessage(text: string, callback: TokenCallback, options: 
   const tagStack = [0, 0, 0, 0, 0, 0, 0, 0];
 
   let tagStackCursor = -1;
-  let canEOF = true;
 
   const tokenCallback: TokenCallback = (token, startIndex, endIndex) => {
-    canEOF = false;
-
     switch (token) {
       case TOKEN_START_TAG_NAME:
         const startTag = readTag(text, startIndex, endIndex);
@@ -225,8 +222,6 @@ export function tokenizeMessage(text: string, callback: TokenCallback, options: 
         break;
 
       case TOKEN_START_TAG_CLOSING:
-        canEOF = true;
-
         callback(TOKEN_START_TAG_CLOSING, startIndex, endIndex);
 
         if (voidTags !== undefined && voidTags.has(tagStack[tagStackCursor])) {
@@ -241,8 +236,6 @@ export function tokenizeMessage(text: string, callback: TokenCallback, options: 
         break;
 
       case TOKEN_END_TAG_NAME:
-        canEOF = true;
-
         const endTag = readTag(text, startIndex, endIndex);
 
         if (tagStackCursor !== -1 && tagStack[tagStackCursor] === endTag) {
@@ -255,7 +248,7 @@ export function tokenizeMessage(text: string, callback: TokenCallback, options: 
 
         let index = tagStackCursor;
 
-        while (index !== -1 && tagStack[index] !== ISOLATED_BLOCK_MARKER && tagStack[index] !== endTag) {
+        while (index !== -1 && tagStack[index] !== CATEGORY_TAG && tagStack[index] !== endTag) {
           --index;
         }
 
@@ -264,6 +257,7 @@ export function tokenizeMessage(text: string, callback: TokenCallback, options: 
           if (!isUnbalancedTagsImplicitlyClosed && index !== tagStackCursor) {
             throw new ParserError('Missing end tag.', text, endTagStartIndex);
           }
+
           // Insert unbalanced end tags
           while (index < tagStackCursor) {
             callback(TOKEN_END_TAG_NAME, endTagStartIndex, endTagStartIndex);
@@ -299,7 +293,7 @@ export function tokenizeMessage(text: string, callback: TokenCallback, options: 
 
       case TOKEN_CATEGORY_NAME:
         callback(token, startIndex, endIndex);
-        tagStack[++tagStackCursor] = ISOLATED_BLOCK_MARKER;
+        tagStack[++tagStackCursor] = CATEGORY_TAG;
         break;
 
       case TOKEN_CATEGORY_CLOSING:
@@ -309,8 +303,6 @@ export function tokenizeMessage(text: string, callback: TokenCallback, options: 
 
       case TOKEN_TEXT:
       case TOKEN_ARGUMENT_CLOSING:
-        canEOF = true;
-
         callback(token, startIndex, endIndex);
         break;
 
@@ -322,19 +314,14 @@ export function tokenizeMessage(text: string, callback: TokenCallback, options: 
 
   readTokens(text, tokenCallback, options);
 
-  if (tagStackCursor === -1) {
-    return;
-  }
-
-  if (!canEOF) {
-    throw new ParserError('Unexpected end of message.', text, text.length);
-  }
-
-  if (!isUnbalancedTagsImplicitlyClosed) {
-    throw new ParserError('Missing end tag.', text, text.length);
-  }
-
   while (tagStackCursor !== -1) {
+    if (tagStack[tagStackCursor] === CATEGORY_TAG) {
+      throw new ParserError('Unterminated argument.', text, text.length);
+    }
+    if (!isUnbalancedTagsImplicitlyClosed) {
+      throw new ParserError('Missing end tag.', text, text.length);
+    }
+
     callback(TOKEN_END_TAG_NAME, text.length, text.length);
 
     --tagStackCursor;
@@ -352,7 +339,7 @@ function insertEndTags(
     return tagStackCursor;
   }
 
-  let index = tagStack.lastIndexOf(ISOLATED_BLOCK_MARKER);
+  let index = tagStack.lastIndexOf(CATEGORY_TAG);
 
   if (index === -1) {
     index = 0;
@@ -370,7 +357,7 @@ function insertEndTags(
   return tagStackCursor;
 }
 
-const ISOLATED_BLOCK_MARKER = -1;
+const CATEGORY_TAG = -1;
 
 const SCOPE_TEXT = 0;
 const SCOPE_START_TAG = 1;

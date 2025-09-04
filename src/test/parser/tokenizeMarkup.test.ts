@@ -724,7 +724,7 @@ describe('readTokens', () => {
     expect(callbackMock).toHaveBeenNthCalledWith(14, 'ARGUMENT_CLOSING', 41, 42);
   });
 
-  test('does not read an octothorpe after select has ended', () => {
+  test('does not read an octothorpe after an argument was closed', () => {
     readTokens('{aaa,bbb,ccc{#}}#', callbackMock, {});
 
     expect(callbackMock).toHaveBeenCalledTimes(7);
@@ -951,6 +951,16 @@ describe('readTokens', () => {
     expect(callbackMock).toHaveBeenNthCalledWith(3, 'ARGUMENT_NAME', 11, 14);
     expect(callbackMock).toHaveBeenNthCalledWith(4, 'ARGUMENT_TYPE', 15, 18);
     expect(callbackMock).toHaveBeenNthCalledWith(5, 'CATEGORY_NAME', 19, 22);
+  });
+
+  test('reads unterminated category', () => {
+    readTokens('{xxx,yyy,zzz{kkk', callbackMock, {});
+
+    expect(callbackMock).toHaveBeenCalledTimes(4);
+    expect(callbackMock).toHaveBeenNthCalledWith(1, 'ARGUMENT_NAME', 1, 4);
+    expect(callbackMock).toHaveBeenNthCalledWith(2, 'ARGUMENT_TYPE', 5, 8);
+    expect(callbackMock).toHaveBeenNthCalledWith(3, 'CATEGORY_NAME', 9, 12);
+    expect(callbackMock).toHaveBeenNthCalledWith(4, 'TEXT', 13, 16);
   });
 });
 
@@ -1233,7 +1243,61 @@ describe('tokenizeMessage', () => {
     );
   });
 
-  test('throws if argument is not ended before EOF', () => {
+  test('throws if an argument is not closed before EOF', () => {
+    expect(() => tokenizeMessage('{aaa', callbackMock)).toThrow(
+      new ParserError(
+        'Expected an argument type separated by a comma (",") or the end of the argument ("}").',
+        '{aaa',
+        4
+      )
+    );
+
+    expect(() => tokenizeMessage('{aaa,', callbackMock)).toThrow(
+      new ParserError('An argument type cannot be empty.', '{aaa,', 5)
+    );
+
+    expect(() => tokenizeMessage('{aaa,bbb', callbackMock)).toThrow(
+      new ParserError(
+        'Expected an argument style, category name, or option name separated by a comma (",") or the end of the argument ("}").',
+        '{aaa,bbb',
+        8
+      )
+    );
+
+    expect(() => tokenizeMessage('{aaa,bbb,', callbackMock)).toThrow(
+      new ParserError('Expected an argument style, category name or option name.', '{aaa,bbb,', 9)
+    );
+
+    expect(() => tokenizeMessage('{aaa,bbb,ccc', callbackMock)).toThrow(
+      new ParserError('Expected an argument category start ("{") or an option value start ("=").', '{aaa,bbb,ccc', 12)
+    );
+
+    expect(() => tokenizeMessage('{aaa,bbb,ccc{', callbackMock)).toThrow(
+      new ParserError('Unterminated argument.', '{aaa,bbb,ccc{', 13)
+    );
+
+    expect(() => tokenizeMessage('{aaa,bbb,ccc{ddd', callbackMock)).toThrow(
+      new ParserError('Unterminated argument.', '{aaa,bbb,ccc{ddd', 16)
+    );
+
+    expect(() => tokenizeMessage('{aaa,bbb,ccc{{xxx,yyy,zzz{kkk', callbackMock)).toThrow(
+      new ParserError('Unterminated argument.', '{aaa,bbb,ccc{{xxx,yyy,zzz{kkk', 29)
+    );
+
+    expect(() => tokenizeMessage('{aaa,bbb,ccc{<ppp>{xxx,yyy,zzz{kkk', callbackMock)).toThrow(
+      new ParserError('Unterminated argument.', '{aaa,bbb,ccc{<ppp>{xxx,yyy,zzz{kkk', 34)
+    );
+
+    expect(() =>
+      tokenizeMessage('{aaa,bbb,ccc{<ppp>', callbackMock, { isUnbalancedTagsImplicitlyClosed: true })
+    ).toThrow(new ParserError('Unterminated argument.', '{aaa,bbb,ccc{<ppp>', 18));
+
+    expect(() => tokenizeMessage('{aaa,bbb,ccc{<ppp>', callbackMock)).toThrow(
+      new ParserError('Missing end tag.', '{aaa,bbb,ccc{<ppp>', 18)
+    );
+  });
+
+  test('throws if an argument inside a tag is not closed before EOF', () => {
     expect(() => tokenizeMessage('<aaa>{xxx', callbackMock)).toThrow(
       new ParserError(
         'Expected an argument type separated by a comma (",") or the end of the argument ("}").',
