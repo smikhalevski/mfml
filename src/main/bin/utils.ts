@@ -1,23 +1,34 @@
 import { ParserError } from '../parser/tokenizeMessage.js';
 import { CompilerError } from '../compiler/createCompiler.js';
 
-const isColorized = process.stdout.isTTY && process.env.FORCE_COLOR !== '0';
+export function print(text: string): void {
+  if (!print.isSilent) {
+    console.log(text);
+  }
+}
+
+print.isColorized = false;
+print.isSilent = false;
 
 export function printHelp(): void {
-  console.log(`mfml: ICU MessageFormat + XML/HTML compiler tool. 
+  print(`mfml: ICU MessageFormat + XML/HTML compiler tool. 
 
 ${dim('mfml [...options]')}
 
+    ${dim('--help')}  Print this message.
+    
   ${dim('--config')}  Compile the project given the path to its configuration file.
 
-    ${dim('--help')}  Print this message.
+  ${dim('--silent')}  Suppress all output.
+
+   ${dim('--color')}  Force colorized output.
 
 Visit ${blue(underline('https://megastack.dev/mfml'))} for API docs and tutorials.
 `);
 }
 
 export function printError(error: unknown): void {
-  console.log(formatError(error));
+  print(formatError(error));
 }
 
 export function formatError(error: unknown): string {
@@ -93,7 +104,7 @@ function formatTextExcerpt(text: string, startIndex: number, endIndex: number, e
 }
 
 function colorize(text: string, startCode: number, endCode: number): string {
-  return isColorized ? `\x1b[${startCode}m${text}\x1b[${endCode}m` : text;
+  return print.isColorized ? `\x1b[${startCode}m${text}\x1b[${endCode}m` : text;
 }
 
 function inverse(text: string): string {

@@ -2,20 +2,33 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { ResolvedConfig } from '../compiler/index.js';
-import { printError, printHelp } from './utils.js';
+import { print, printError, printHelp } from './utils.js';
+
+print.isColorized = process.stdout.isTTY && process.env.FORCE_COLOR !== '0';
 
 const fallbackConfigPaths = ['mfml.config.ts', 'mfml.config.js', 'mfml.config.mts', 'mfml.config.mjs'];
 
 let userConfigPath;
 
 for (let i = 2; i < process.argv.length; ++i) {
-  if (process.argv[i] === '--config') {
-    userConfigPath = process.argv[i + 1];
-  }
+  switch (process.argv[i]) {
+    case '--help':
+      print.isSilent = false;
+      printHelp();
+      process.exit(0);
+      break;
 
-  if (process.argv[i] === '--help') {
-    printHelp();
-    process.exit(0);
+    case '--config':
+      userConfigPath = process.argv[++i];
+      break;
+
+    case '--silent':
+      print.isSilent = true;
+      break;
+
+    case '--color':
+      print.isColorized = true;
+      break;
   }
 }
 
@@ -58,7 +71,7 @@ async function build(config: ResolvedConfig): Promise<void> {
     fs.writeFileSync(path.join(packageDir, file), files[file]);
   }
 
-  console.log('Generated ' + Object.keys(files).length + ' files in ' + packageDir);
+  print('Generated ' + Object.keys(files).length + ' files in ' + packageDir);
 }
 
 function resolveConfigPath(basePath: string, configPaths: string[]): string {

@@ -8,7 +8,7 @@ import {
   toHashCode,
   truncateMessage,
 } from './utils.js';
-import { getArgumentByOctothorpe, walkNode } from '../utils.js';
+import { walkNode } from '../utils.js';
 
 /**
  * The error thrown by a compiler if a message text cannot be processed.
@@ -436,10 +436,6 @@ export function collectArgumentTsTypes(
   argumentTsTypes: Map<string, Set<string>>
 ): void {
   walkNode(messageNode, node => {
-    if (node.nodeType === 'octothorpe') {
-      node = getArgumentByOctothorpe(node)!;
-    }
-
     if (node.nodeType !== 'argument') {
       return;
     }
