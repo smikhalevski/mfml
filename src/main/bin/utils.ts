@@ -37,7 +37,7 @@ export function formatError(error: unknown): string {
   }
 
   if (error instanceof CompilerError) {
-    const prefix = dim(error.locale) + ':' + dim(error.messageKey) + ' - ' + red('error') + ' ';
+    const prefix = dim(error.locale) + ': ' + dim(error.messageKey) + ' - ' + red('error') + ' ';
 
     if (error.cause instanceof AggregateError) {
       return error.cause.errors.map(error => prefix + formatError(error)).join('\n\n');
@@ -80,9 +80,11 @@ function formatTextExcerpt(text: string, startIndex: number, endIndex: number, e
   if (endIndex + excerptLength / 2 > excerptEndIndex) {
     // Ends after line end
     excerptEndIndex = Math.min(excerptEndIndex, endIndex + excerptLength);
+    excerptStartIndex = Math.max(excerptStartIndex, excerptEndIndex - excerptLength);
   } else if (startIndex - excerptLength / 2 < excerptStartIndex) {
     // Starts before line start
     excerptStartIndex = Math.max(excerptStartIndex, startIndex - excerptLength);
+    excerptEndIndex = Math.min(excerptStartIndex + excerptLength, excerptEndIndex);
   } else {
     // Fits inside the line
     excerptStartIndex = startIndex - excerptLength / 2;
