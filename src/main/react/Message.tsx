@@ -1,7 +1,7 @@
 import React, { createContext, createElement, Fragment, ReactNode, useContext, useMemo } from 'react';
 import { Renderer } from '../createRenderer.js';
-import { AnyNode, CategoryNode, ElementNode, MessageNode } from '../types.js';
-import { renderElementAttributes } from '../renderToString.js';
+import { AnyNode, AttributeNode, CategoryNode, ChildNode, MessageNode } from '../types.js';
+import { renderAttributes } from '../renderToString.js';
 
 const MessageLocaleContext = createContext('en');
 MessageLocaleContext.displayName = 'MessageLocaleContext';
@@ -80,10 +80,10 @@ type InferMessageProps<MessageFunction extends (locale: string) => MessageNode |
 export function Message<MessageFunction extends (locale: string) => MessageNode | null>(
   props: InferMessageProps<MessageFunction>
 ): ReactNode {
-  const contextLocale = useContext(MessageLocaleContext);
-  const contextRenderer = useContext(MessageRendererContext);
+  const defaultLocale = useContext(MessageLocaleContext);
+  const defaultRenderer = useContext(MessageRendererContext);
 
-  const { message, locale = contextLocale, values, renderer = contextRenderer } = props;
+  const { message, locale = defaultLocale, values, renderer = defaultRenderer } = props;
 
   const children = useMemo(() => {
     const messageNode = message(locale);
@@ -92,7 +92,7 @@ export function Message<MessageFunction extends (locale: string) => MessageNode 
       return null;
     }
 
-    return createElement(Fragment, null, ...renderNodes(messageNode.locale, messageNode.childNodes, renderer));
+    return createElement(Fragment, null, ...renderChildren(messageNode.locale, messageNode.childNodes, renderer));
   }, [message, locale, renderer]);
 
   return (
@@ -107,140 +107,146 @@ export function Message<MessageFunction extends (locale: string) => MessageNode 
  */
 Message.displayName = 'Message';
 
-function renderNodes(locale: string, nodes: readonly AnyNode[] | null, renderer: Renderer<ReactNode>): ReactNode[] {
-  const result: ReactNode[] = [];
+function renderChildren(nodes: ChildNode[] | null, locale: string, renderer: Renderer<ReactNode>): ReactNode[] {
+  if (nodes === null) {
+    return [];
+  }
 
-  if (nodes !== null) {
-    for (let i = 0; i < nodes.length; ++i) {
-      result.push(renderNode(locale, nodes[i], renderer));
+  const children = [];
+
+  for (let i = 0; i < nodes.length; ++i) {
+    children.push(renderChild(nodes[i], locale, renderer));
+  }
+
+  return children;
+}
+
+function renderChild(node: AnyNode, locale: string, renderer: Renderer<ReactNode>): ReactNode {
+  if (node.nodeType === 'text') {
+    return node.value;
+  }
+
+  if (node.nodeType === 'element') {
+    if (!containsArguments(node.attributeNodes)) {
+      return renderer.renderElement(
+        node.tagName,
+        renderAttributes(node.attributeNodes, locale, undefined, renderer as Renderer<string>),
+        renderChildren(node.childNodes, locale, renderer)
+      );
+    }
+
+    return (
+      <MessageValuesContext.Consumer>
+        {values =>
+          renderer.renderElement(
+            node.tagName,
+            renderAttributes(node, locale, values, renderer as Renderer<string>),
+            renderChildren(node.childNodes, locale, renderer)
+          )
+        }
+      </MessageValuesContext.Consumer>
+    );
+  }
+
+  if (node.nodeType === 'argument') {
+  }
+
+  // switch (node.nodeType) {
+  //   case 'text':
+  //
+  //   case 'element':
+  //
+  //   case 'argument':
+  //     const { categoryNodes } = node;
+  //
+  //     let options: Record<string, string> | undefined;
+  //
+  //     if (node.optionNodes !== null) {
+  //       options = {};
+  //
+  //       for (const optionNode of node.optionNodes) {
+  //         options[optionNode.name] = optionNode.valueNode!.value;
+  //       }
+  //     }
+  //
+  //     if (categoryNodes === null) {
+  //       return (
+  //         <MessageValuesContext.Consumer>
+  //           {values =>
+  //             renderer.formatArgument(
+  //               locale,
+  //               values && values[node.name],
+  //               node.typeNode?.value,
+  //               node.styleNode?.value,
+  //               options
+  //             )
+  //           }
+  //         </MessageValuesContext.Consumer>
+  //       );
+  //     }
+  //
+  //     return (
+  //       <MessageValuesContext.Consumer>
+  //         {values => {
+  //           const categories = [];
+  //
+  //           let selectedCategoryNode: CategoryNode | undefined;
+  //
+  //           for (const categoryNode of categoryNodes) {
+  //             categories.push(categoryNode.name);
+  //
+  //             if (categoryNode.name === 'other') {
+  //               selectedCategoryNode = categoryNode;
+  //             }
+  //           }
+  //
+  //           const category = renderer.selectCategory({
+  //             locale: locale,
+  //             value: values && values[node.name],
+  //             type: node.typeNode!.value,
+  //             categories: categories,
+  //             options: options,
+  //           });
+  //
+  //           if (category !== undefined && categories.indexOf(category) !== -1) {
+  //             for (const categoryNode of categoryNodes) {
+  //               if (category === categoryNode.name) {
+  //                 selectedCategoryNode = categoryNode;
+  //                 break;
+  //               }
+  //             }
+  //           }
+  //
+  //           if (selectedCategoryNode !== undefined) {
+  //             return renderChildren(locale, selectedCategoryNode.childNodes, renderer);
+  //           }
+  //
+  //           return null;
+  //         }}
+  //       </MessageValuesContext.Consumer>
+  //     );
+  // }
+}
+
+/**
+ * Returns `true` if some of attributes contain arguments.
+ */
+function containsArguments(attributeNodes: AttributeNode[] | null): boolean {
+  if (attributeNodes === null) {
+    return false;
+  }
+
+  for (const attributeNode of attributeNodes) {
+    if (attributeNode.childNodes === null) {
+      continue;
+    }
+
+    for (const childNode of attributeNode.childNodes) {
+      if (childNode.nodeType === 'argument' || childNode.nodeType === 'octothorpe') {
+        return true;
+      }
     }
   }
 
-  return result;
-}
-
-function renderNode(locale: string, node: AnyNode | null, renderer: Renderer<ReactNode>): ReactNode {
-  if (node === null) {
-    return null;
-  }
-
-  switch (node.nodeType) {
-    case 'message':
-      return renderNodes(locale, node.childNodes, renderer);
-
-    case 'text':
-      return node.value;
-
-    case 'element':
-      if (node.attributeNodes === null || node.attributeNodes.length === 0) {
-        return renderer.renderElement(node.tagName, {}, renderNodes(locale, node.childNodes, renderer));
-      }
-
-      let hasInterpolatedAttributes = false;
-
-      for (const attributeNode of node.attributeNodes) {
-        if (attributeNode.childNodes !== null) {
-          for (const childNode of attributeNode.childNodes) {
-            if (childNode.nodeType === 'argument') {
-              hasInterpolatedAttributes = true;
-              break;
-            }
-          }
-        }
-      }
-
-      if (!hasInterpolatedAttributes) {
-        return renderElement(locale, node, undefined, renderer);
-      }
-
-      // Some element attributes require value interpolation
-      return (
-        <MessageValuesContext.Consumer>
-          {values => renderElement(locale, node, values, renderer)}
-        </MessageValuesContext.Consumer>
-      );
-
-    case 'argument':
-      const { categoryNodes } = node;
-
-      let options: Record<string, string> | undefined;
-
-      if (node.optionNodes !== null) {
-        options = {};
-
-        for (const optionNode of node.optionNodes) {
-          options[optionNode.name] = optionNode.valueNode!.value;
-        }
-      }
-
-      if (categoryNodes === null) {
-        return (
-          <MessageValuesContext.Consumer>
-            {values =>
-              renderer.formatArgument(
-                locale,
-                values && values[node.name],
-                node.typeNode?.value,
-                node.styleNode?.value,
-                options
-              )
-            }
-          </MessageValuesContext.Consumer>
-        );
-      }
-
-      return (
-        <MessageValuesContext.Consumer>
-          {values => {
-            const categories = [];
-
-            let selectedCategoryNode: CategoryNode | undefined;
-
-            for (const categoryNode of categoryNodes) {
-              categories.push(categoryNode.name);
-
-              if (categoryNode.name === 'other') {
-                selectedCategoryNode = categoryNode;
-              }
-            }
-
-            const category = renderer.selectCategory(
-              locale,
-              values && values[node.name],
-              node.typeNode!.value,
-              categories,
-              options
-            );
-
-            if (category !== undefined && categories.indexOf(category) !== -1) {
-              for (const categoryNode of categoryNodes) {
-                if (category === categoryNode.name) {
-                  selectedCategoryNode = categoryNode;
-                  break;
-                }
-              }
-            }
-
-            if (selectedCategoryNode !== undefined) {
-              return renderNodes(locale, selectedCategoryNode.childNodes, renderer);
-            }
-
-            return null;
-          }}
-        </MessageValuesContext.Consumer>
-      );
-  }
-}
-
-function renderElement(
-  locale: string,
-  elementNode: ElementNode,
-  values: any,
-  renderer: Renderer<ReactNode>
-): ReactNode {
-  return renderer.renderElement(
-    elementNode.tagName,
-    renderElementAttributes(elementNode, locale, values, renderer as Renderer<string>),
-    renderNodes(locale, elementNode.childNodes, renderer)
-  );
+  return false;
 }

@@ -326,7 +326,7 @@ export function readTokens(text: string, callback: TokenCallback, options: Token
       (charCode === /* " */ 34 && scopeStack.lastIndexOf(SCOPE_DOUBLE_QUOTED_ATTRIBUTE_VALUE) !== -1) ||
       (charCode === /* ' */ 39 && scopeStack.lastIndexOf(SCOPE_SINGLE_QUOTED_ATTRIBUTE_VALUE) !== -1)
     ) {
-      if (scopeStack.lastIndexOf(SCOPE_ARGUMENT) !== -1) {
+      if (scope === SCOPE_ARGUMENT || scope === SCOPE_CATEGORY) {
         throw new ParserError('Unterminated argument.', text, index);
       }
 

@@ -1,5 +1,5 @@
 import { createRenderer, defaultFormatters, ElementRenderer, Renderer } from './createRenderer.js';
-import { AnyNode, ElementNode, MessageNode, ChildNode } from './types.js';
+import { AnyNode, AttributeNode, ChildNode, MessageNode } from './types.js';
 import {
   getArgumentByOctothorpe,
   getArgumentCategories,
@@ -78,40 +78,41 @@ export function renderToString<MessageFunction extends (locale: string) => Messa
 
   const messageNode = message(locale);
 
-  return messageNode === null ? '' : renderNode(messageNode, messageNode.locale, values, renderer);
+  if (messageNode === null) {
+    return '';
+  }
+
+  return renderChildren(messageNode.childNodes, messageNode.locale, values, renderer).join('');
 }
 
-export function renderElementAttributes(
-  elementNode: ElementNode,
+export function renderAttributes(
+  attributeNodes: AttributeNode[] | null,
   locale: string,
   values: any,
   renderer: Renderer<string>
 ): Record<string, string> {
-  if (elementNode.attributeNodes === null) {
+  if (attributeNodes === null) {
     return {};
   }
 
   const attributes: Record<string, string> = {};
 
-  for (const attributeNode of elementNode.attributeNodes) {
+  for (const attributeNode of attributeNodes) {
     attributes[attributeNode.name] = renderChildren(attributeNode.childNodes, locale, values, renderer).join('');
   }
 
   return attributes;
 }
 
-function renderNode(node: AnyNode, locale: string, values: any, renderer: Renderer<string>): string {
+function renderChild(node: AnyNode, locale: string, values: any, renderer: Renderer<string>): string {
   switch (node.nodeType) {
-    case 'message':
-      return renderChildren(node.childNodes, locale, values, renderer).join('');
-
     case 'text':
       return node.value;
 
     case 'element':
       return renderer.renderElement(
         node.tagName,
-        renderElementAttributes(node, locale, values, renderer),
+        renderAttributes(node.attributeNodes, locale, values, renderer),
         renderChildren(node.childNodes, locale, values, renderer)
       );
 
@@ -167,7 +168,7 @@ function renderChildren(nodes: ChildNode[] | null, locale: string, values: any, 
   const children = [];
 
   for (let i = 0; i < nodes.length; ++i) {
-    children.push(renderNode(nodes[i], locale, values, renderer));
+    children.push(renderChild(nodes[i], locale, values, renderer));
   }
 
   return children;

@@ -644,4 +644,66 @@ describe('parseMessage', () => {
       ],
     } satisfies MessageNode);
   });
+
+  test('parses element attributes with an octothorpe', () => {
+    expect(parseMessage('en', '{xxx,yyy,zzz{<aaa bbb="#"></aaa>}}', { tokenizer })).toStrictEqual({
+      nodeType: 'message',
+      parentNode: null,
+      locale: 'en',
+      childNodes: [
+        {
+          nodeType: 'argument',
+          parentNode: expect.objectContaining({ nodeType: 'message' }),
+          startIndex: 1,
+          endIndex: 4,
+          name: 'xxx',
+          typeNode: {
+            nodeType: 'literal',
+            parentNode: expect.objectContaining({ nodeType: 'argument' }),
+            startIndex: 5,
+            endIndex: 8,
+            value: 'yyy',
+          },
+          styleNode: null,
+          optionNodes: null,
+          categoryNodes: [
+            {
+              nodeType: 'category',
+              parentNode: expect.objectContaining({ nodeType: 'argument' }),
+              startIndex: 9,
+              endIndex: 12,
+              name: 'zzz',
+              childNodes: [
+                {
+                  nodeType: 'element',
+                  parentNode: expect.objectContaining({ nodeType: 'category' }),
+                  startIndex: 14,
+                  endIndex: 17,
+                  tagName: 'aaa',
+                  attributeNodes: [
+                    {
+                      nodeType: 'attribute',
+                      parentNode: expect.objectContaining({ nodeType: 'element' }),
+                      startIndex: 18,
+                      endIndex: 21,
+                      name: 'bbb',
+                      childNodes: [
+                        {
+                          nodeType: 'octothorpe',
+                          parentNode: expect.objectContaining({ nodeType: 'attribute' }),
+                          startIndex: 23,
+                          endIndex: 24,
+                        },
+                      ],
+                    },
+                  ],
+                  childNodes: null,
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    } satisfies MessageNode);
+  });
 });
