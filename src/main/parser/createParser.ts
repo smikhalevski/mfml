@@ -284,7 +284,11 @@ function pushChild(
       return;
     }
 
-    (parent.attributes ||= {})[node] = concatChildren(parent.attributes[node], child);
+    if (parent.attributes === null) {
+      parent.attributes = {};
+    }
+
+    parent.attributes[node] = concatChildren(parent.attributes[node], child);
     return;
   }
 

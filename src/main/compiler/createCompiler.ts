@@ -192,7 +192,7 @@ export async function compileFiles(
 
         collectArgumentTsTypes(messageNode, getArgumentTsType, argumentTsTypes);
       } catch (cause) {
-        throw new Error('Cannot compile "' + messageKey + '" message, "' + locale + '" locale', { cause });
+        throw new Error('Cannot compile "' + messageKey + '" message for "' + locale + '" locale', { cause });
       }
 
       messageNodes.push(messageNode);
@@ -204,7 +204,9 @@ export async function compileFiles(
       try {
         jsCode += 'locale===' + localeVar + '?' + compileMessageNode(localeVar, messageNode) + ':';
       } catch (cause) {
-        throw new Error('Cannot compile "' + messageKey + '" message, "' + messageNode.locale + '" locale', { cause });
+        throw new Error('Cannot compile "' + messageKey + '" message for "' + messageNode.locale + '" locale', {
+          cause,
+        });
       }
     }
 
@@ -247,7 +249,7 @@ export async function compileFiles(
   return files;
 }
 
-function getArgumentNaturalTsType(argumentType: string | undefined, _argumentName: string): string | undefined {
+export function getArgumentNaturalTsType(argumentType: string | undefined, _argumentName: string): string | undefined {
   switch (argumentType) {
     case 'number':
       return 'number|bigint';
@@ -257,7 +259,7 @@ function getArgumentNaturalTsType(argumentType: string | undefined, _argumentNam
       return 'number|Date';
 
     case 'list':
-      return 'unknown[]';
+      return 'any[]';
 
     case 'plural':
     case 'selectordinal':
@@ -271,7 +273,7 @@ function getArgumentNaturalTsType(argumentType: string | undefined, _argumentNam
   }
 }
 
-function compileMessageTsType(argumentTsTypes: Map<string, Set<string>>): string {
+export function compileMessageTsType(argumentTsTypes: Map<string, Set<string>>): string {
   if (argumentTsTypes.size === 0) {
     return 'MessageNode|null';
   }

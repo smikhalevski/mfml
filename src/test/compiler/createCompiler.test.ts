@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { compileFiles, compileMessageNode } from '../../main/compiler/createCompiler.js';
+import { compileFiles, compileMessageNode, compileMessageTsType } from '../../main/compiler/createCompiler.js';
 import { createParser, parseMessage } from '../../main/parser/createParser.js';
 import { createTokenizer, htmlTokenizer } from '../../main/parser/index.js';
 
@@ -42,6 +42,17 @@ describe('compileMessageNode', () => {
   });
 });
 
+describe('compileMessageTsType', () => {
+  test('compiles message type', () => {
+    expect(compileMessageTsType(new Map())).toBe('MessageNode|null');
+    expect(compileMessageTsType(new Map().set('xxx', new Set()))).toBe('MessageNode<{"xxx":unknown}>|null');
+    expect(compileMessageTsType(new Map().set('xxx', new Set(['string'])))).toBe('MessageNode<{"xxx":string}>|null');
+    expect(compileMessageTsType(new Map().set('xxx', new Set(['string', 'string|number'])))).toBe(
+      'MessageNode<{"xxx":(string)&(string|number)}>|null'
+    );
+  });
+});
+
 describe('compileFiles', () => {
   test('compiles messages as a node_module', async () => {
     await expect(
@@ -68,7 +79,7 @@ describe('compileFiles', () => {
       'index.js':
         'export{default as messageCount}from"./134ee10d6143f77d.js";\nexport{default as messageReceived}from"./27343573573cbc00.js";\n',
       'index.d.ts':
-        'import{MessageNode}from"mfml";\n\n/**\n * **Message key**\n * ```text\n * messageCount\n * ```\n * **en-US**\n * ```html\n * You have <b>{count, number}</b> unread messages\n * ```\n * **ru-RU**\n * ```html\n * У вас <b>{count, number}</b> непрочитанных сообщений\n * ```\n */\nexport declare function messageCount(locale:string):MessageNode<{"count":unknown}>|null;\n\n/**\n * **Message key**\n * ```text\n * messageReceived\n * ```\n * **en-US**\n * ```html\n * {gender, select, male {He} female {She} other {They}} sent you a message\n * ```\n * **ru-RU**\n * ```html\n * {gender, select, male {Он отправил} female {Она отправила} other {Они отправили}} вам сообщение\n * ```\n */\nexport declare function messageReceived(locale:string):MessageNode<{"gender":unknown}>|null;\n',
+        'import{MessageNode}from"mfml";\n\n/**\n * **Message key**\n * ```text\n * messageCount\n * ```\n * **en-US**\n * ```html\n * You have <b>{count, number}</b> unread messages\n * ```\n * **ru-RU**\n * ```html\n * У вас <b>{count, number}</b> непрочитанных сообщений\n * ```\n */\nexport declare function messageCount(locale:string):MessageNode<{"count":number|bigint}>|null;\n\n/**\n * **Message key**\n * ```text\n * messageReceived\n * ```\n * **en-US**\n * ```html\n * {gender, select, male {He} female {She} other {They}} sent you a message\n * ```\n * **ru-RU**\n * ```html\n * {gender, select, male {Он отправил} female {Она отправила} other {Они отправили}} вам сообщение\n * ```\n */\nexport declare function messageReceived(locale:string):MessageNode<{"gender":number|string}>|null;\n',
     });
   });
 });
