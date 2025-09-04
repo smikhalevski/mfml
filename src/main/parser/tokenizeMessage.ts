@@ -1,5 +1,7 @@
 /**
  * The error thrown by a parser if a text substring is malformed.
+ *
+ * @group Parser
  */
 export class ParserError extends SyntaxError {
   constructor(

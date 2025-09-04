@@ -9,7 +9,8 @@
   "readme": "none",
   "tsconfig": "./tsconfig.json",
   "navigation": {
-    "includeFolders": false
+    "includeFolders": false,
+    "includeGroups": true
   },
   "entryPoints": [
     "./src/main/compiler/index.ts",

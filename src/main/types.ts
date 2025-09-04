@@ -211,6 +211,8 @@ export interface ArgumentNode extends SourceLocation {
 
 /**
  * The node that descries an argument reference in a category.
+ *
+ * @group AST
  */
 export interface OctothorpeNode extends SourceLocation {
   /**

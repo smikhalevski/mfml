@@ -6,6 +6,7 @@
  * @param children Children of an element.
  * @returns Rendering result, or `undefined` if an element should not be rendered.
  * @template Element The rendered element.
+ * @group Renderer
  */
 export type ElementRenderer<Element> = (
   tagName: string,
@@ -50,6 +51,7 @@ export interface FormatterParams {
  *
  * @param params The formatting params.
  * @returns The formatted argument value, or `undefined` if an argument should not be rendered.
+ * @group Renderer
  */
 export type Formatter = (params: FormatterParams) => string | undefined;
 
@@ -90,6 +92,7 @@ export interface CategorySelectorParams {
  *
  * @param params The params use for category selection.
  * @returns The selected category, or `undefined` if there's no matching category.
+ * @group Renderer
  */
 export type CategorySelector = (params: CategorySelectorParams) => string | undefined;
 
