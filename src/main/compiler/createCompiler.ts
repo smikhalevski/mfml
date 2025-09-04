@@ -171,6 +171,8 @@ export interface CompilerOptions {
    *     return 'number|Date';
    *   }
    * };
+   *
+   * @see {@link getArgumentIntlTsType}
    */
   getArgumentTsType?: (argumentNode: ArgumentNode) => string | undefined;
 }
@@ -245,7 +247,7 @@ export async function compileFiles(
     preprocessors,
     postprocessors,
     renameMessageFunction = escapeJsIdentifier,
-    getArgumentTsType = getNaturalArgumentTsType,
+    getArgumentTsType = getArgumentIntlTsType,
   } = options;
 
   const errors: CompilerError[] = [];
@@ -438,6 +440,42 @@ export async function compileFiles(
   return files;
 }
 
+/**
+ * Returns the TypeScript type of an argument that matches the Intl format.
+ *
+ * @group Compiler
+ */
+export function getArgumentIntlTsType(argumentNode: ArgumentNode): string | undefined {
+  switch (argumentNode.typeNode?.value) {
+    case 'number':
+      return 'number|bigint';
+
+    case 'date':
+    case 'time':
+      return 'number|Date';
+
+    case 'list':
+      return 'string[]';
+
+    case 'plural':
+    case 'selectOrdinal':
+      return 'number';
+
+    case 'select':
+      if (argumentNode.categoryNodes === null || argumentNode.categoryNodes.length === 0) {
+        return 'string';
+      }
+
+      return argumentNode.categoryNodes
+        .map(categoryNode =>
+          categoryNode.name === 'other'
+            ? '(string&{})'
+            : JSON.stringify(categoryNode.name.charAt(0) === '=' ? categoryNode.name.substring(1) : categoryNode.name)
+        )
+        .join('|');
+  }
+}
+
 export function collectArgumentTsTypes(
   messageNode: MessageNode,
   getArgumentTsType: (argumentNode: ArgumentNode) => string | undefined,
@@ -463,53 +501,6 @@ export function collectArgumentTsTypes(
 
     tsTypes.add(tsType);
   });
-}
-
-/**
- * Returns the TypeScript type of an argument that matches the Intl formatter.
- */
-export function getNaturalArgumentTsType(argumentNode: ArgumentNode): string | undefined {
-  switch (argumentNode.typeNode?.value) {
-    case 'number':
-      return 'number|bigint';
-
-    case 'date':
-    case 'time':
-      return 'number|Date';
-
-    case 'list':
-      return 'string[]';
-
-    case 'plural':
-    case 'selectOrdinal':
-      return 'number';
-
-    case 'select':
-      if (argumentNode.categoryNodes === null || argumentNode.categoryNodes.length === 0) {
-        return 'string';
-      }
-
-      const categoryTsTypes = [];
-
-      let hasOtherCategory = false;
-
-      for (const categoryNode of argumentNode.categoryNodes) {
-        if (categoryNode.name === 'other') {
-          hasOtherCategory = true;
-          continue;
-        }
-
-        categoryTsTypes.push(
-          JSON.stringify(categoryNode.name.charAt(0) === '=' ? categoryNode.name.substring(1) : categoryNode.name)
-        );
-      }
-
-      if (hasOtherCategory) {
-        categoryTsTypes.push('(string&{})');
-      }
-
-      return categoryTsTypes.join('|');
-  }
 }
 
 export function compileMessageTsType(argumentTsTypes: Map<string, Set<string>>): string {

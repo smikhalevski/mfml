@@ -119,6 +119,6 @@ function mergeOptions<T>(formatOptions: T, argumentOptions: T | null): T {
   return argumentOptions === null ? formatOptions : { ...formatOptions, ...argumentOptions };
 }
 
-const cardinalOptions: Intl.PluralRulesOptions = { type: 'cardinal' };
+const cardinalOptions = { type: 'cardinal' };
 
-const ordinalOptions: Intl.PluralRulesOptions = { type: 'ordinal' };
+const ordinalOptions = { type: 'ordinal' };

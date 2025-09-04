@@ -6,6 +6,7 @@
 
 export {
   createCompiler,
+  getArgumentIntlTsType,
   CompilerError,
   type Compiler,
   type CompilerOptions,
