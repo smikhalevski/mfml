@@ -95,6 +95,7 @@ export const htmlTokenizerOptions: TokenizerOptions = {
   isUnbalancedStartTagsImplicitlyClosed: true,
   isUnbalancedEndTagsIgnored: true,
   isRawTextInterpolated: true,
+  isOctothorpeRecognized: true,
 };
 
 /**

@@ -126,6 +126,13 @@ export interface TokenizerOptions {
    * @default false
    */
   isRawTextInterpolated?: boolean;
+
+  /**
+   * If `true` then an octothorpe character ("#") inside an argument category is replaced with the argument value.
+   *
+   * @default false
+   */
+  isOctothorpeRecognized?: boolean;
 }
 
 /**

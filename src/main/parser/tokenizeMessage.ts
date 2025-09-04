@@ -62,16 +62,12 @@ export type TokenCallback = (token: Token, startIndex: number, endIndex: number)
 /**
  * Options of {@link tokenizeMessage}.
  */
-export interface ResolvedTokenizerOptions {
-  readTag?: (text: string, startIndex: number, endIndex: number) => number;
+export interface ResolvedTokenizerOptions extends ReadTokensOptions {
   voidTags?: Set<number>;
-  rawTextTags?: Set<number>;
   implicitlyClosedTags?: Map<number, Set<number>>;
   implicitlyOpenedTags?: Set<number>;
-  isSelfClosingTagsRecognized?: boolean;
   isUnbalancedStartTagsImplicitlyClosed?: boolean;
   isUnbalancedEndTagsIgnored?: boolean;
-  isRawTextInterpolated?: boolean;
 }
 
 /**
@@ -290,11 +286,12 @@ const TOKEN_OPTION_NAME = 'OPTION_NAME';
 const TOKEN_OPTION_VALUE = 'OPTION_VALUE';
 const TOKEN_OCTOTHORPE = 'OCTOTHORPE';
 
-export interface TokenReaderOptions {
+export interface ReadTokensOptions {
   readTag?: (text: string, startIndex: number, endIndex: number) => number;
   rawTextTags?: Set<number>;
   isSelfClosingTagsRecognized?: boolean;
   isRawTextInterpolated?: boolean;
+  isOctothorpeRecognized?: boolean;
 }
 
 /**
@@ -302,12 +299,13 @@ export interface TokenReaderOptions {
  *
  * Tokens returned in the same order they are listed in text.
  */
-export function readTokens(text: string, callback: TokenCallback, options: TokenReaderOptions): void {
+export function readTokens(text: string, callback: TokenCallback, options: ReadTokensOptions): void {
   const {
     readTag = getCaseSensitiveHashCode,
     rawTextTags,
     isSelfClosingTagsRecognized = false,
     isRawTextInterpolated = false,
+    isOctothorpeRecognized = false,
   } = options;
 
   let scope = SCOPE_TEXT;
@@ -706,7 +704,7 @@ export function readTokens(text: string, callback: TokenCallback, options: Token
     }
 
     // An octothorpe
-    if (charCode === /* # */ 35 && scopeStack.lastIndexOf(SCOPE_CATEGORY) !== -1) {
+    if (isOctothorpeRecognized && charCode === /* # */ 35 && scopeStack.lastIndexOf(SCOPE_CATEGORY) !== -1) {
       if (textStartIndex !== index) {
         callback(TOKEN_TEXT, textStartIndex, index);
       }

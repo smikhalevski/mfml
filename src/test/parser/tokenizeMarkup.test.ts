@@ -676,8 +676,20 @@ describe('readTokens', () => {
     expect(callbackMock).toHaveBeenNthCalledWith(1, 'TEXT', 0, 9);
   });
 
-  test('reads an octothorpe in a select', () => {
+  test('doe not read an octothorpe by default', () => {
     readTokens('{aaa,bbb,ccc{ddd#eee}}', callbackMock, {});
+
+    expect(callbackMock).toHaveBeenCalledTimes(6);
+    expect(callbackMock).toHaveBeenNthCalledWith(1, 'ARGUMENT_NAME', 1, 4);
+    expect(callbackMock).toHaveBeenNthCalledWith(2, 'ARGUMENT_TYPE', 5, 8);
+    expect(callbackMock).toHaveBeenNthCalledWith(3, 'CATEGORY_NAME', 9, 12);
+    expect(callbackMock).toHaveBeenNthCalledWith(4, 'TEXT', 13, 20);
+    expect(callbackMock).toHaveBeenNthCalledWith(5, 'CATEGORY_CLOSING', 20, 21);
+    expect(callbackMock).toHaveBeenNthCalledWith(6, 'ARGUMENT_CLOSING', 21, 22);
+  });
+
+  test('reads an octothorpe in a select', () => {
+    readTokens('{aaa,bbb,ccc{ddd#eee}}', callbackMock, { isOctothorpeRecognized: true });
 
     expect(callbackMock).toHaveBeenCalledTimes(8);
     expect(callbackMock).toHaveBeenNthCalledWith(1, 'ARGUMENT_NAME', 1, 4);
@@ -691,7 +703,7 @@ describe('readTokens', () => {
   });
 
   test('reads an octothorpe in a select with spaces', () => {
-    readTokens('{   xxx   ,   yyy   ,   zzz   {   #   }   }', callbackMock, {});
+    readTokens('{   xxx   ,   yyy   ,   zzz   {   #   }   }', callbackMock, { isOctothorpeRecognized: true });
 
     expect(callbackMock).toHaveBeenCalledTimes(8);
     expect(callbackMock).toHaveBeenNthCalledWith(1, 'ARGUMENT_NAME', 4, 7);
@@ -705,7 +717,7 @@ describe('readTokens', () => {
   });
 
   test('reads an octothorpe in a nested select', () => {
-    readTokens('{aaa,bbb,ccc{{aaa,bbb,ccc{<zzz>#</zzz>}}}}', callbackMock, {});
+    readTokens('{aaa,bbb,ccc{{aaa,bbb,ccc{<zzz>#</zzz>}}}}', callbackMock, { isOctothorpeRecognized: true });
 
     expect(callbackMock).toHaveBeenCalledTimes(14);
     expect(callbackMock).toHaveBeenNthCalledWith(1, 'ARGUMENT_NAME', 1, 4);
@@ -725,7 +737,7 @@ describe('readTokens', () => {
   });
 
   test('does not read an octothorpe after an argument was closed', () => {
-    readTokens('{aaa,bbb,ccc{#}}#', callbackMock, {});
+    readTokens('{aaa,bbb,ccc{#}}#', callbackMock, { isOctothorpeRecognized: true });
 
     expect(callbackMock).toHaveBeenCalledTimes(7);
     expect(callbackMock).toHaveBeenNthCalledWith(1, 'ARGUMENT_NAME', 1, 4);
@@ -1224,7 +1236,7 @@ describe('tokenizeMessage', () => {
   });
 
   test('reads an argument with categories with octothorpe', () => {
-    tokenizeMessage('{   xxx   ,   yyy   ,   zzz   {   #   }   }', callbackMock);
+    tokenizeMessage('{   xxx   ,   yyy   ,   zzz   {   #   }   }', callbackMock, { isOctothorpeRecognized: true });
 
     expect(callbackMock).toHaveBeenCalledTimes(8);
     expect(callbackMock).toHaveBeenNthCalledWith(1, 'ARGUMENT_NAME', 4, 7);
