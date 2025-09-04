@@ -320,7 +320,11 @@ describe('parseMessage', () => {
   });
 
   test('parses a category with an octothorpe', () => {
-    expect(parseMessage('en', '{   xxx   ,   yyy   ,   zzz   {   #   }   }', { tokenizer })).toStrictEqual({
+    expect(
+      parseMessage('en', '{   xxx   ,   yyy   ,   zzz   {   #   }   }', {
+        tokenizer: createTokenizer({ isOctothorpeRecognized: true }),
+      })
+    ).toStrictEqual({
       nodeType: 'message',
       parentNode: null,
       locale: 'en',
@@ -646,7 +650,11 @@ describe('parseMessage', () => {
   });
 
   test('parses element attributes with an octothorpe', () => {
-    expect(parseMessage('en', '{xxx,yyy,zzz{<aaa bbb="#"></aaa>}}', { tokenizer })).toStrictEqual({
+    expect(
+      parseMessage('en', '{xxx,yyy,zzz{<aaa bbb="#"></aaa>}}', {
+        tokenizer: createTokenizer({ isOctothorpeRecognized: true }),
+      })
+    ).toStrictEqual({
       nodeType: 'message',
       parentNode: null,
       locale: 'en',

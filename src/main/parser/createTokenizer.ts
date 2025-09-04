@@ -38,12 +38,13 @@ export interface TokenizerOptions {
    *
    * ```html
    * <p><h1>  →  <p></p><h1></h1>
-   *                ^^^^ p is implicitly closed
+   *                ^^^^ p is implicitly closed by h1
    * ```
    *
    * To achieve this behavior, set this option to:
    *
    * ```ts
+   * // h1 implicitly closes p
    * { h1: ['p'] }
    * ```
    *
@@ -196,6 +197,7 @@ export function resolveTokenizerOptions(options: TokenizerOptions): ResolvedToke
     isUnbalancedStartTagsImplicitlyClosed,
     isUnbalancedEndTagsIgnored,
     isRawTextInterpolated,
+    isOctothorpeRecognized,
   } = options;
 
   const getHashCode = isCaseInsensitiveTags ? getCaseInsensitiveHashCode : getCaseSensitiveHashCode;
@@ -216,5 +218,6 @@ export function resolveTokenizerOptions(options: TokenizerOptions): ResolvedToke
     isUnbalancedStartTagsImplicitlyClosed,
     isUnbalancedEndTagsIgnored,
     isRawTextInterpolated,
+    isOctothorpeRecognized,
   };
 }

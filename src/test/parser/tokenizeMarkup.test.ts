@@ -1141,6 +1141,43 @@ describe('tokenizeMessage', () => {
     expect(callbackMock).toHaveBeenNthCalledWith(3, 'END_TAG_NAME', 2, 5);
   });
 
+  test('implicitly closes a tag', () => {
+    tokenizeMessage(
+      '<aaa><bbb>',
+      callbackMock,
+      resolveTokenizerOptions({ implicitlyClosedTags: { bbb: ['aaa'] }, isUnbalancedStartTagsImplicitlyClosed: true })
+    );
+
+    expect(callbackMock).toHaveBeenCalledTimes(6);
+    expect(callbackMock).toHaveBeenNthCalledWith(1, 'START_TAG_NAME', 1, 4);
+    expect(callbackMock).toHaveBeenNthCalledWith(2, 'START_TAG_CLOSING', 4, 5);
+    expect(callbackMock).toHaveBeenNthCalledWith(3, 'END_TAG_NAME', 5, 5);
+    expect(callbackMock).toHaveBeenNthCalledWith(4, 'START_TAG_NAME', 6, 9);
+    expect(callbackMock).toHaveBeenNthCalledWith(5, 'START_TAG_CLOSING', 9, 10);
+    expect(callbackMock).toHaveBeenNthCalledWith(6, 'END_TAG_NAME', 10, 10);
+  });
+
+  test('does not implicitly close a tag in a category', () => {
+    tokenizeMessage(
+      '<aaa>{xxx,yyy,zzz{<bbb>}}',
+      callbackMock,
+      resolveTokenizerOptions({ implicitlyClosedTags: { bbb: ['aaa'] }, isUnbalancedStartTagsImplicitlyClosed: true })
+    );
+
+    expect(callbackMock).toHaveBeenCalledTimes(11);
+    expect(callbackMock).toHaveBeenNthCalledWith(1, 'START_TAG_NAME', 1, 4);
+    expect(callbackMock).toHaveBeenNthCalledWith(2, 'START_TAG_CLOSING', 4, 5);
+    expect(callbackMock).toHaveBeenNthCalledWith(3, 'ARGUMENT_NAME', 6, 9);
+    expect(callbackMock).toHaveBeenNthCalledWith(4, 'ARGUMENT_TYPE', 10, 13);
+    expect(callbackMock).toHaveBeenNthCalledWith(5, 'CATEGORY_NAME', 14, 17);
+    expect(callbackMock).toHaveBeenNthCalledWith(6, 'START_TAG_NAME', 19, 22);
+    expect(callbackMock).toHaveBeenNthCalledWith(7, 'START_TAG_CLOSING', 22, 23);
+    expect(callbackMock).toHaveBeenNthCalledWith(8, 'END_TAG_NAME', 23, 23);
+    expect(callbackMock).toHaveBeenNthCalledWith(9, 'CATEGORY_CLOSING', 23, 24);
+    expect(callbackMock).toHaveBeenNthCalledWith(10, 'ARGUMENT_CLOSING', 24, 25);
+    expect(callbackMock).toHaveBeenNthCalledWith(11, 'END_TAG_NAME', 25, 25);
+  });
+
   test('inserts start tag that forcefully closes preceding tag', () => {
     tokenizeMessage(
       '<aaa></bbb>',
@@ -1249,7 +1286,7 @@ describe('tokenizeMessage', () => {
     expect(callbackMock).toHaveBeenNthCalledWith(8, 'ARGUMENT_CLOSING', 42, 43);
   });
 
-  test('reads an argument with categories with octothorpe', () => {
+  test('reads an argument with categories that contain unbalanced tags', () => {
     tokenizeMessage('{xxx,yyy,aaa{<lll>ppp}bbb{<kkk>qqq}}', callbackMock, {
       isUnbalancedStartTagsImplicitlyClosed: true,
     });
@@ -1270,6 +1307,63 @@ describe('tokenizeMessage', () => {
     expect(callbackMock).toHaveBeenNthCalledWith(13, 'END_TAG_NAME', 34, 34);
     expect(callbackMock).toHaveBeenNthCalledWith(14, 'CATEGORY_CLOSING', 34, 35);
     expect(callbackMock).toHaveBeenNthCalledWith(15, 'ARGUMENT_CLOSING', 35, 36);
+  });
+
+  test('reads an argument with categories that contain unbalanced tags nested in tags', () => {
+    tokenizeMessage('<rrr>{qqq,www,   vvv{   {xxx,yyy,aaa{<lll>ppp}}   }   bbb{<kkk>qqq}   }', callbackMock, {
+      isUnbalancedStartTagsImplicitlyClosed: true,
+    });
+
+    expect(callbackMock).toHaveBeenCalledTimes(25);
+    expect(callbackMock).toHaveBeenNthCalledWith(1, 'START_TAG_NAME', 1, 4);
+    expect(callbackMock).toHaveBeenNthCalledWith(2, 'START_TAG_CLOSING', 4, 5);
+    expect(callbackMock).toHaveBeenNthCalledWith(3, 'ARGUMENT_NAME', 6, 9);
+    expect(callbackMock).toHaveBeenNthCalledWith(4, 'ARGUMENT_TYPE', 10, 13);
+    expect(callbackMock).toHaveBeenNthCalledWith(5, 'CATEGORY_NAME', 17, 20);
+    expect(callbackMock).toHaveBeenNthCalledWith(6, 'TEXT', 21, 24);
+    expect(callbackMock).toHaveBeenNthCalledWith(7, 'ARGUMENT_NAME', 25, 28);
+    expect(callbackMock).toHaveBeenNthCalledWith(8, 'ARGUMENT_TYPE', 29, 32);
+    expect(callbackMock).toHaveBeenNthCalledWith(9, 'CATEGORY_NAME', 33, 36);
+    expect(callbackMock).toHaveBeenNthCalledWith(10, 'START_TAG_NAME', 38, 41);
+    expect(callbackMock).toHaveBeenNthCalledWith(11, 'START_TAG_CLOSING', 41, 42);
+    expect(callbackMock).toHaveBeenNthCalledWith(12, 'TEXT', 42, 45);
+    expect(callbackMock).toHaveBeenNthCalledWith(13, 'END_TAG_NAME', 45, 45);
+    expect(callbackMock).toHaveBeenNthCalledWith(14, 'CATEGORY_CLOSING', 45, 46);
+    expect(callbackMock).toHaveBeenNthCalledWith(15, 'ARGUMENT_CLOSING', 46, 47);
+    expect(callbackMock).toHaveBeenNthCalledWith(16, 'TEXT', 47, 50);
+    expect(callbackMock).toHaveBeenNthCalledWith(17, 'CATEGORY_CLOSING', 50, 51);
+    expect(callbackMock).toHaveBeenNthCalledWith(18, 'CATEGORY_NAME', 54, 57);
+    expect(callbackMock).toHaveBeenNthCalledWith(19, 'START_TAG_NAME', 59, 62);
+    expect(callbackMock).toHaveBeenNthCalledWith(20, 'START_TAG_CLOSING', 62, 63);
+    expect(callbackMock).toHaveBeenNthCalledWith(21, 'TEXT', 63, 66);
+    expect(callbackMock).toHaveBeenNthCalledWith(22, 'END_TAG_NAME', 66, 66);
+    expect(callbackMock).toHaveBeenNthCalledWith(23, 'CATEGORY_CLOSING', 66, 67);
+    expect(callbackMock).toHaveBeenNthCalledWith(24, 'ARGUMENT_CLOSING', 70, 71);
+    expect(callbackMock).toHaveBeenNthCalledWith(25, 'END_TAG_NAME', 71, 71);
+  });
+
+  test('reads an octothorpe nested in an element', () => {
+    tokenizeMessage('{xxx,yyy,aaa{<lll>#}bbb{<kkk>#}}', callbackMock, {
+      isUnbalancedStartTagsImplicitlyClosed: true,
+      isOctothorpeRecognized: true,
+    });
+
+    expect(callbackMock).toHaveBeenCalledTimes(15);
+    expect(callbackMock).toHaveBeenNthCalledWith(1, 'ARGUMENT_NAME', 1, 4);
+    expect(callbackMock).toHaveBeenNthCalledWith(2, 'ARGUMENT_TYPE', 5, 8);
+    expect(callbackMock).toHaveBeenNthCalledWith(3, 'CATEGORY_NAME', 9, 12);
+    expect(callbackMock).toHaveBeenNthCalledWith(4, 'START_TAG_NAME', 14, 17);
+    expect(callbackMock).toHaveBeenNthCalledWith(5, 'START_TAG_CLOSING', 17, 18);
+    expect(callbackMock).toHaveBeenNthCalledWith(6, 'OCTOTHORPE', 18, 19);
+    expect(callbackMock).toHaveBeenNthCalledWith(7, 'END_TAG_NAME', 19, 19);
+    expect(callbackMock).toHaveBeenNthCalledWith(8, 'CATEGORY_CLOSING', 19, 20);
+    expect(callbackMock).toHaveBeenNthCalledWith(9, 'CATEGORY_NAME', 20, 23);
+    expect(callbackMock).toHaveBeenNthCalledWith(10, 'START_TAG_NAME', 25, 28);
+    expect(callbackMock).toHaveBeenNthCalledWith(11, 'START_TAG_CLOSING', 28, 29);
+    expect(callbackMock).toHaveBeenNthCalledWith(12, 'OCTOTHORPE', 29, 30);
+    expect(callbackMock).toHaveBeenNthCalledWith(13, 'END_TAG_NAME', 30, 30);
+    expect(callbackMock).toHaveBeenNthCalledWith(14, 'CATEGORY_CLOSING', 30, 31);
+    expect(callbackMock).toHaveBeenNthCalledWith(15, 'ARGUMENT_CLOSING', 31, 32);
   });
 
   test('throws if start tag is not closed before EOF', () => {
