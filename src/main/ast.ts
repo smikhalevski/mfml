@@ -29,7 +29,7 @@ export interface MessageNode<Values extends object | void = void> {
    *
    * @internal
    */
-  __values?: Values;
+  __valuesType?: Values;
 }
 
 /**
@@ -131,24 +131,21 @@ export interface SelectNode {
 export function createMessageNode(locale: string, ...children: Child[]): MessageNode<any>;
 
 export function createMessageNode(locale: string): MessageNode {
-  const node: MessageNode = { nodeType: 'message', locale, children: '' };
+  let children;
 
-  if (arguments.length <= 1) {
-    return node;
+  if (arguments.length < 2) {
+    children = '';
+  } else if (arguments.length === 2 && typeof arguments[1] === 'string') {
+    children = arguments[1];
+  } else {
+    children = [];
+
+    for (let i = 1; i < arguments.length; ++i) {
+      children.push(arguments[i]);
+    }
   }
 
-  if (arguments.length === 2 && typeof arguments[1] === 'string') {
-    node.children = arguments[1];
-    return node;
-  }
-
-  node.children = [];
-
-  for (let index = 1; index < arguments.length; ++index) {
-    node.children.push(arguments[index]);
-  }
-
-  return node;
+  return { nodeType: 'message', locale, children };
 }
 
 /**
@@ -169,24 +166,21 @@ export function createElementNode(
   tagName: string,
   attributes: Record<string, Child[] | string> | null = null
 ): ElementNode {
-  const node: ElementNode = { nodeType: 'element', tagName, attributes, children: null };
+  let children;
 
-  if (arguments.length <= 2) {
-    return node;
+  if (arguments.length < 3) {
+    children = null;
+  } else if (arguments.length === 3 && typeof arguments[2] === 'string') {
+    children = arguments[2];
+  } else {
+    children = [];
+
+    for (let i = 1; i < arguments.length; ++i) {
+      children.push(arguments[i]);
+    }
   }
 
-  if (arguments.length === 3 && typeof arguments[2] === 'string') {
-    node.children = arguments[2];
-    return node;
-  }
-
-  node.children = [];
-
-  for (let index = 2; index < arguments.length; ++index) {
-    node.children.push(arguments[index]);
-  }
-
-  return node;
+  return { nodeType: 'element', tagName, attributes, children };
 }
 
 /**

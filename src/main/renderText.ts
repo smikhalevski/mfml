@@ -47,7 +47,7 @@ export function renderChildrenAsString(
   return result;
 }
 
-function renderChild(locale: string, child: Child | string, values: any, renderer: Renderer<string>): string {
+function renderChild(locale: string, child: Child, values: any, renderer: Renderer<string>): string {
   if (typeof child === 'string') {
     return child;
   }

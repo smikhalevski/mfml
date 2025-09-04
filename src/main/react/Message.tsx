@@ -94,7 +94,7 @@ function renderChildren(locale: string, children: Child[] | string | null, rende
   return result;
 }
 
-function renderChild(locale: string, child: Child | string, renderer: Renderer<ReactNode>): ReactNode {
+function renderChild(locale: string, child: Child, renderer: Renderer<ReactNode>): ReactNode {
   if (typeof child === 'string') {
     return child;
   }
