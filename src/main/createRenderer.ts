@@ -64,56 +64,48 @@ export type Formatter = (
   options: Record<string, string> | undefined
 ) => string | void;
 
-export abstract class AbstractRenderer<Element> implements Renderer<Element> {
-  constructor(public formatters: Formatter[]) {}
+export interface RendererOptions {
+  formatters?: Formatter[];
+}
 
-  abstract renderElement(
-    tagName: string,
-    attributes: Record<string, string>,
-    children: Array<string | Element>
-  ): string | Element;
+export function createRenderer<Element>(options: RendererOptions = {}): Renderer<Element> {
+  const { formatters = [] } = options;
 
-  formatArgument(
-    locale: string,
-    value: unknown,
-    type: string | undefined,
-    style: string | undefined,
-    options: Record<string, string> | undefined
-  ): string {
-    for (const formatter of this.formatters) {
-      const formattedValue = formatter(locale, value, type, style, options);
+  return {
+    renderElement(_tagName, _attributes, _children) {
+      return '';
+    },
 
-      if (formattedValue !== undefined) {
-        return formattedValue;
+    formatArgument(locale, value, type, style, options) {
+      for (const formatter of formatters) {
+        const formattedValue = formatter(locale, value, type, style, options);
+
+        if (formattedValue !== undefined) {
+          return formattedValue;
+        }
       }
-    }
 
-    return '' + value;
-  }
+      return '' + value;
+    },
 
-  selectCategory(
-    locale: string,
-    value: unknown,
-    type: string,
-    categories: string[],
-    _options: Record<string, string> | undefined
-  ): string | undefined {
-    let category = '=' + value;
+    selectCategory(locale, value, type, categories, _options) {
+      let category = '=' + value;
 
-    if ((type === 'plural' || type === 'selectordinal' || type === 'select') && categories.includes(category)) {
-      return category;
-    }
+      if ((type === 'plural' || type === 'selectordinal' || type === 'select') && categories.includes(category)) {
+        return category;
+      }
 
-    if ((type === 'plural' || type === 'selectordinal') && typeof value === 'number') {
-      category = new Intl.PluralRules(locale, { type: type === 'plural' ? 'cardinal' : 'ordinal' }).select(value);
-    } else if (type === 'select') {
-      category = '' + value;
-    } else {
-      category = 'other';
-    }
+      if ((type === 'plural' || type === 'selectordinal') && typeof value === 'number') {
+        category = new Intl.PluralRules(locale, { type: type === 'plural' ? 'cardinal' : 'ordinal' }).select(value);
+      } else if (type === 'select') {
+        category = '' + value;
+      } else {
+        category = 'other';
+      }
 
-    return categories.includes(category) ? category : categories.includes('other') ? 'other' : undefined;
-  }
+      return categories.includes(category) ? category : categories.includes('other') ? 'other' : undefined;
+    },
+  };
 }
 
 export function createNumberFormatter(type: string, options?: Intl.NumberFormatOptions): Formatter;
@@ -166,20 +158,22 @@ export function createDateTimeFormatter(
   };
 }
 
-export const defaultFormatters: Formatter[] = [
-  createNumberFormatter('number', 'decimal', { style: 'decimal' }),
-  createNumberFormatter('number', 'percent', { style: 'percent' }),
-  createNumberFormatter('number'),
+createRenderer({
+  formatters: [
+    createNumberFormatter('number', 'decimal', { style: 'decimal' }),
+    createNumberFormatter('number', 'percent', { style: 'percent' }),
+    createNumberFormatter('number'),
 
-  createDateTimeFormatter('date', 'short', { dateStyle: 'short' }),
-  createDateTimeFormatter('date', 'full', { dateStyle: 'full' }),
-  createDateTimeFormatter('date', 'long', { dateStyle: 'long' }),
-  createDateTimeFormatter('date', 'medium', { dateStyle: 'medium' }),
-  createDateTimeFormatter('date', { dateStyle: 'medium' }),
+    createDateTimeFormatter('date', 'short', { dateStyle: 'short' }),
+    createDateTimeFormatter('date', 'full', { dateStyle: 'full' }),
+    createDateTimeFormatter('date', 'long', { dateStyle: 'long' }),
+    createDateTimeFormatter('date', 'medium', { dateStyle: 'medium' }),
+    createDateTimeFormatter('date', { dateStyle: 'medium' }),
 
-  createDateTimeFormatter('time', 'short', { timeStyle: 'short' }),
-  createDateTimeFormatter('time', 'full', { timeStyle: 'full' }),
-  createDateTimeFormatter('time', 'long', { timeStyle: 'long' }),
-  createDateTimeFormatter('time', 'medium', { timeStyle: 'medium' }),
-  createDateTimeFormatter('time', { timeStyle: 'medium' }),
-];
+    createDateTimeFormatter('time', 'short', { timeStyle: 'short' }),
+    createDateTimeFormatter('time', 'full', { timeStyle: 'full' }),
+    createDateTimeFormatter('time', 'long', { timeStyle: 'long' }),
+    createDateTimeFormatter('time', 'medium', { timeStyle: 'medium' }),
+    createDateTimeFormatter('time', { timeStyle: 'medium' }),
+  ],
+});

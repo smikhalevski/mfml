@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest';
-import { AbstractRenderer } from '../main/AbstractRenderer.js';
+import { AbstractRenderer } from '../main/createRenderer.js';
 
 class MockRenderer extends AbstractRenderer<string> {
   renderText(_locale: string, text: string): string {

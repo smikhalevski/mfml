@@ -1,4 +1,4 @@
-import { Renderer } from './AbstractRenderer.js';
+import { Renderer } from './createRenderer.js';
 import { AnyNode, CategoryNode, MessageNode } from './types.js';
 import { getOctothorpeArgument } from './utils.js';
 

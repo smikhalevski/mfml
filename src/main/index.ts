@@ -4,9 +4,8 @@
  * @module mfml
  */
 
-export { AbstractRenderer, type Renderer } from './AbstractRenderer.js';
+export { createRenderer, type Renderer } from './createRenderer.js';
 export { renderText, type RenderTextOptions } from './renderText.js';
-export { StringRenderer, type StringComponentType, type StringRendererOptions } from './StringRenderer.js';
 export type {
   ChildNode,
   ParentNode,
@@ -22,3 +21,4 @@ export type {
   CategoryNode,
   LiteralNode,
 } from './types.js';
+export { walkNode, getOctothorpeArgument } from './utils.js';
