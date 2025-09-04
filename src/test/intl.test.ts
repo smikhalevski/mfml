@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest';
-import { getNumberFormat } from '../main/intl.js';
+import { getNumberFormat } from '../main/utils-intl.js';
 
 test('returns the cached format', () => {
   const options = {};

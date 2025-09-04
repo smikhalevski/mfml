@@ -1,4 +1,4 @@
-import { getDateTimeFormat, getDisplayNames, getListFormat, getNumberFormat } from './intl.js';
+import { getDateTimeFormat, getDisplayNames, getListFormat, getNumberFormat } from './utils-intl.js';
 
 /**
  * Params provided to a {@link ArgumentFormatter}.

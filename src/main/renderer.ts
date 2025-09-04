@@ -1,5 +1,5 @@
 import { ArgumentFormatter } from './formatter.js';
-import { getPluralRules } from './intl.js';
+import { getPluralRules } from './utils-intl.js';
 
 /**
  * Renders an element.

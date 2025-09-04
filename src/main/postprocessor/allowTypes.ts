@@ -6,7 +6,7 @@
  */
 
 import { Postprocessor } from '../compiler/index.js';
-import { walkNode } from '../utils.js';
+import { walkNode } from '../utils-ast.js';
 import { ParserError } from '../parser/index.js';
 
 /**

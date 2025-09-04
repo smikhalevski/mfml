@@ -38,4 +38,4 @@ export type {
   CategoryNode,
   LiteralNode,
 } from './types.js';
-export { walkNode } from './utils.js';
+export { walkNode } from './utils-ast.js';

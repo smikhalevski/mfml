@@ -9,7 +9,7 @@ import {
   getArgumentOptions,
   getArgumentStyle,
   getArgumentType,
-} from '../utils.js';
+} from '../utils-ast.js';
 import { createReactDOMElementRenderer } from './createReactDOMElementRenderer.js';
 import { defaultArgumentFormatter } from '../formatter.js';
 

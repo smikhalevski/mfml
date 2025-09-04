@@ -8,7 +8,7 @@ import {
   getArgumentStyle,
   getArgumentType,
   isLowerCaseAlpha,
-} from './utils.js';
+} from './utils-ast.js';
 import { defaultArgumentFormatter } from './formatter.js';
 
 const defaultStringRenderer: Renderer<string> = {
