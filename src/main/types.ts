@@ -201,12 +201,12 @@ export interface ArgumentNode extends SourceLocation {
   /**
    * The type of the argument.
    */
-  typeNode: LiteralNode | null;
+  typeNode: LiteralNode<string> | null;
 
   /**
    * The style that should be used for argument formatting, varies depending on an argument {@link typeNode}.
    */
-  styleNode: LiteralNode | null;
+  styleNode: LiteralNode<string> | null;
 
   /**
    * The array of options that were provided to an argument.
@@ -293,9 +293,10 @@ export interface CategoryNode extends SourceLocation {
 /**
  * The node describes a literal value.
  *
+ * @template Value The literal value.
  * @group AST
  */
-export interface LiteralNode extends SourceLocation {
+export interface LiteralNode<Value = any> extends SourceLocation {
   /**
    * The node type.
    */
@@ -309,5 +310,5 @@ export interface LiteralNode extends SourceLocation {
   /**
    * The node value.
    */
-  value: string;
+  value: Value;
 }

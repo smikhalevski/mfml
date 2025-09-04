@@ -20,15 +20,15 @@ export function getArgumentStyle(argumentNode: ArgumentNode): string | null {
   return argumentNode.styleNode === null ? null : argumentNode.styleNode.value;
 }
 
-export function getArgumentOptions(argumentNode: ArgumentNode): Record<string, string> | null {
+export function getArgumentOptions(argumentNode: ArgumentNode): Record<string, unknown> | null {
   if (argumentNode.optionNodes === null || argumentNode.optionNodes.length === 0) {
     return null;
   }
 
-  const options: Record<string, string> = {};
+  const options: Record<string, unknown> = {};
 
   for (const optionNode of argumentNode.optionNodes) {
-    options[optionNode.name] = optionNode.valueNode === null ? '' : optionNode.valueNode.value;
+    options[optionNode.name] = optionNode.valueNode === null ? null : optionNode.valueNode.value;
   }
   return options;
 }

@@ -30,7 +30,7 @@ export interface ArgumentFormatterParams {
   /**
    * Argument options, or `null` if there are no options.
    */
-  options: Record<string, string> | null;
+  options: Record<string, any> | null;
 }
 
 /**

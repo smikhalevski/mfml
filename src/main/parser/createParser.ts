@@ -106,11 +106,11 @@ export function parseMessage(locale: string, text: string, options: ParserOption
   const tokenCallback: TokenCallback = (token, startIndex, endIndex) => {
     switch (token) {
       case 'TEXT':
-        let value = text.substring(startIndex, endIndex);
+        let textValue = text.substring(startIndex, endIndex);
 
         if (decodeText !== undefined) {
           try {
-            value = decodeText(value);
+            textValue = decodeText(textValue);
           } catch (error) {
             throw new ParserError('Cannot decode text: ' + error, text, startIndex, endIndex);
           }
@@ -119,7 +119,7 @@ export function parseMessage(locale: string, text: string, options: ParserOption
         (parentNode as ParentNode).childNodes = pushChild(
           parentNode,
           (parentNode as ParentNode).childNodes,
-          setSourceLocation(createTextNode(value), startIndex, endIndex)
+          setSourceLocation(createTextNode(textValue), startIndex, endIndex)
         );
         break;
 
@@ -206,9 +206,18 @@ export function parseMessage(locale: string, text: string, options: ParserOption
         );
         break;
 
-      case 'OPTION_VALUE':
+      case 'QUOTED_OPTION_VALUE':
+      case 'UNQUOTED_OPTION_VALUE':
+        let optionValue = text.substring(startIndex, endIndex);
+
+        if (token === 'UNQUOTED_OPTION_VALUE') {
+          try {
+            optionValue = JSON.parse(optionValue);
+          } catch {}
+        }
+
         parentNode = (((parentNode as OptionNode).valueNode = setSourceLocation(
-          createLiteralNode(text.substring(startIndex, endIndex)),
+          createLiteralNode(optionValue),
           startIndex,
           endIndex
         )).parentNode = parentNode as OptionNode).parentNode!;

@@ -86,7 +86,7 @@ export function createCategoryNode(name: string): CategoryNode {
   };
 }
 
-export function createLiteralNode(value: string): LiteralNode {
+export function createLiteralNode<T>(value: T): LiteralNode<T> {
   return {
     nodeType: 'literal',
     parentNode: null,
@@ -183,7 +183,7 @@ export function buildArgumentNode(name: string): ArgumentNode {
 }
 
 // O
-export function buildOptionNode(name: string, value: string): OptionNode {
+export function buildOptionNode(name: string, value: any): OptionNode {
   const optionNode = createOptionNode(name);
 
   // Value
@@ -219,6 +219,7 @@ function pushChild<T extends AnyNode>(parentNode: AnyNode, childNodes: T[] | nul
   return childNodes;
 }
 
+// Imported by generated message functions
 export {
   createOctothorpeNode as R,
   buildMessageNode as M,

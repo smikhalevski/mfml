@@ -809,7 +809,7 @@ describe('readTokens', () => {
     expect(callbackMock).toHaveBeenNthCalledWith(1, 'ARGUMENT_NAME', 1, 4);
     expect(callbackMock).toHaveBeenNthCalledWith(2, 'ARGUMENT_TYPE', 5, 8);
     expect(callbackMock).toHaveBeenNthCalledWith(3, 'OPTION_NAME', 11, 14);
-    expect(callbackMock).toHaveBeenNthCalledWith(4, 'OPTION_VALUE', 17, 20);
+    expect(callbackMock).toHaveBeenNthCalledWith(4, 'UNQUOTED_OPTION_VALUE', 17, 20);
     expect(callbackMock).toHaveBeenNthCalledWith(5, 'ARGUMENT_CLOSING', 21, 22);
   });
 
@@ -820,7 +820,7 @@ describe('readTokens', () => {
     expect(callbackMock).toHaveBeenNthCalledWith(1, 'ARGUMENT_NAME', 1, 4);
     expect(callbackMock).toHaveBeenNthCalledWith(2, 'ARGUMENT_TYPE', 5, 8);
     expect(callbackMock).toHaveBeenNthCalledWith(3, 'OPTION_NAME', 11, 14);
-    expect(callbackMock).toHaveBeenNthCalledWith(4, 'OPTION_VALUE', 17, 17);
+    expect(callbackMock).toHaveBeenNthCalledWith(4, 'UNQUOTED_OPTION_VALUE', 17, 17);
     expect(callbackMock).toHaveBeenNthCalledWith(5, 'ARGUMENT_CLOSING', 17, 18);
   });
 
@@ -831,7 +831,7 @@ describe('readTokens', () => {
     expect(callbackMock).toHaveBeenNthCalledWith(1, 'ARGUMENT_NAME', 1, 4);
     expect(callbackMock).toHaveBeenNthCalledWith(2, 'ARGUMENT_TYPE', 5, 8);
     expect(callbackMock).toHaveBeenNthCalledWith(3, 'OPTION_NAME', 11, 14);
-    expect(callbackMock).toHaveBeenNthCalledWith(4, 'OPTION_VALUE', 18, 28);
+    expect(callbackMock).toHaveBeenNthCalledWith(4, 'QUOTED_OPTION_VALUE', 18, 28);
     expect(callbackMock).toHaveBeenNthCalledWith(5, 'ARGUMENT_CLOSING', 30, 31);
   });
 
@@ -842,7 +842,7 @@ describe('readTokens', () => {
     expect(callbackMock).toHaveBeenNthCalledWith(1, 'ARGUMENT_NAME', 1, 4);
     expect(callbackMock).toHaveBeenNthCalledWith(2, 'ARGUMENT_TYPE', 5, 8);
     expect(callbackMock).toHaveBeenNthCalledWith(3, 'OPTION_NAME', 11, 14);
-    expect(callbackMock).toHaveBeenNthCalledWith(4, 'OPTION_VALUE', 18, 28);
+    expect(callbackMock).toHaveBeenNthCalledWith(4, 'QUOTED_OPTION_VALUE', 18, 28);
     expect(callbackMock).toHaveBeenNthCalledWith(5, 'ARGUMENT_CLOSING', 30, 31);
   });
 
@@ -864,11 +864,11 @@ describe('readTokens', () => {
     expect(callbackMock).toHaveBeenNthCalledWith(1, 'ARGUMENT_NAME', 1, 4);
     expect(callbackMock).toHaveBeenNthCalledWith(2, 'ARGUMENT_TYPE', 5, 8);
     expect(callbackMock).toHaveBeenNthCalledWith(3, 'OPTION_NAME', 11, 14);
-    expect(callbackMock).toHaveBeenNthCalledWith(4, 'OPTION_VALUE', 18, 21);
+    expect(callbackMock).toHaveBeenNthCalledWith(4, 'QUOTED_OPTION_VALUE', 18, 21);
     expect(callbackMock).toHaveBeenNthCalledWith(5, 'OPTION_NAME', 23, 26);
-    expect(callbackMock).toHaveBeenNthCalledWith(6, 'OPTION_VALUE', 28, 31);
+    expect(callbackMock).toHaveBeenNthCalledWith(6, 'QUOTED_OPTION_VALUE', 28, 31);
     expect(callbackMock).toHaveBeenNthCalledWith(7, 'OPTION_NAME', 33, 36);
-    expect(callbackMock).toHaveBeenNthCalledWith(8, 'OPTION_VALUE', 37, 40);
+    expect(callbackMock).toHaveBeenNthCalledWith(8, 'UNQUOTED_OPTION_VALUE', 37, 40);
     expect(callbackMock).toHaveBeenNthCalledWith(9, 'ARGUMENT_CLOSING', 41, 42);
   });
 
@@ -879,12 +879,12 @@ describe('readTokens', () => {
     expect(callbackMock).toHaveBeenNthCalledWith(1, 'ARGUMENT_NAME', 1, 4);
     expect(callbackMock).toHaveBeenNthCalledWith(2, 'ARGUMENT_TYPE', 5, 8);
     expect(callbackMock).toHaveBeenNthCalledWith(3, 'OPTION_NAME', 11, 14);
-    expect(callbackMock).toHaveBeenNthCalledWith(4, 'OPTION_VALUE', 15, 18);
+    expect(callbackMock).toHaveBeenNthCalledWith(4, 'UNQUOTED_OPTION_VALUE', 15, 18);
     expect(callbackMock).toHaveBeenNthCalledWith(5, 'CATEGORY_NAME', 19, 22);
     expect(callbackMock).toHaveBeenNthCalledWith(6, 'TEXT', 24, 27);
     expect(callbackMock).toHaveBeenNthCalledWith(7, 'CATEGORY_CLOSING', 27, 28);
     expect(callbackMock).toHaveBeenNthCalledWith(8, 'OPTION_NAME', 29, 32);
-    expect(callbackMock).toHaveBeenNthCalledWith(9, 'OPTION_VALUE', 34, 37);
+    expect(callbackMock).toHaveBeenNthCalledWith(9, 'QUOTED_OPTION_VALUE', 34, 37);
   });
 
   test('throws if a style and options are mixed', () => {
@@ -912,7 +912,7 @@ describe('readTokens', () => {
     expect(callbackMock).toHaveBeenNthCalledWith(3, 'ARGUMENT_NAME', 11, 14);
     expect(callbackMock).toHaveBeenNthCalledWith(4, 'ARGUMENT_TYPE', 15, 18);
     expect(callbackMock).toHaveBeenNthCalledWith(5, 'OPTION_NAME', 19, 22);
-    expect(callbackMock).toHaveBeenNthCalledWith(6, 'OPTION_VALUE', 23, 26);
+    expect(callbackMock).toHaveBeenNthCalledWith(6, 'UNQUOTED_OPTION_VALUE', 23, 26);
   });
 
   test('throws on non-terminated argument in an attribute', () => {

@@ -714,4 +714,104 @@ describe('parseMessage', () => {
       ],
     } satisfies MessageNode);
   });
+
+  test('parses JSON options', () => {
+    expect(
+      parseMessage('en', '{xxx,yyy,aaa=true bbb="true" ccc=111 ddd="222" eee=111.222}', { tokenizer })
+    ).toStrictEqual({
+      nodeType: 'message',
+      parentNode: null,
+      locale: 'en',
+      childNodes: [
+        {
+          nodeType: 'argument',
+          parentNode: expect.objectContaining({ nodeType: 'message' }),
+          startIndex: 1,
+          endIndex: 4,
+          name: 'xxx',
+          typeNode: {
+            nodeType: 'literal',
+            parentNode: expect.objectContaining({ nodeType: 'argument' }),
+            startIndex: 5,
+            endIndex: 8,
+            value: 'yyy',
+          },
+          styleNode: null,
+          optionNodes: [
+            {
+              nodeType: 'option',
+              parentNode: expect.objectContaining({ nodeType: 'argument' }),
+              startIndex: 9,
+              endIndex: 12,
+              name: 'aaa',
+              valueNode: {
+                nodeType: 'literal',
+                parentNode: expect.objectContaining({ nodeType: 'option' }),
+                startIndex: 13,
+                endIndex: 17,
+                value: true,
+              },
+            },
+            {
+              nodeType: 'option',
+              parentNode: expect.objectContaining({ nodeType: 'argument' }),
+              startIndex: 18,
+              endIndex: 21,
+              name: 'bbb',
+              valueNode: {
+                nodeType: 'literal',
+                parentNode: expect.objectContaining({ nodeType: 'option' }),
+                startIndex: 23,
+                endIndex: 27,
+                value: 'true',
+              },
+            },
+            {
+              nodeType: 'option',
+              parentNode: expect.objectContaining({ nodeType: 'argument' }),
+              startIndex: 29,
+              endIndex: 32,
+              name: 'ccc',
+              valueNode: {
+                nodeType: 'literal',
+                parentNode: expect.objectContaining({ nodeType: 'option' }),
+                startIndex: 33,
+                endIndex: 36,
+                value: 111,
+              },
+            },
+            {
+              nodeType: 'option',
+              parentNode: expect.objectContaining({ nodeType: 'argument' }),
+              startIndex: 37,
+              endIndex: 40,
+              name: 'ddd',
+              valueNode: {
+                nodeType: 'literal',
+                parentNode: expect.objectContaining({ nodeType: 'option' }),
+                startIndex: 42,
+                endIndex: 45,
+                value: '222',
+              },
+            },
+            {
+              nodeType: 'option',
+              parentNode: expect.objectContaining({ nodeType: 'argument' }),
+              startIndex: 47,
+              endIndex: 50,
+              name: 'eee',
+              valueNode: {
+                nodeType: 'literal',
+                parentNode: expect.objectContaining({ nodeType: 'option' }),
+                startIndex: 51,
+                endIndex: 58,
+                value: 111.222,
+              },
+            },
+          ],
+          categoryNodes: null,
+        },
+      ],
+    } satisfies MessageNode);
+  });
 });

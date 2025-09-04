@@ -48,7 +48,8 @@ export type Token =
   | 'CATEGORY_NAME'
   | 'CATEGORY_CLOSING'
   | 'OPTION_NAME'
-  | 'OPTION_VALUE'
+  | 'QUOTED_OPTION_VALUE'
+  | 'UNQUOTED_OPTION_VALUE'
   | 'OCTOTHORPE';
 
 /**
@@ -293,7 +294,8 @@ const TOKEN_ARGUMENT_STYLE = 'ARGUMENT_STYLE';
 const TOKEN_CATEGORY_NAME = 'CATEGORY_NAME';
 const TOKEN_CATEGORY_CLOSING = 'CATEGORY_CLOSING';
 const TOKEN_OPTION_NAME = 'OPTION_NAME';
-const TOKEN_OPTION_VALUE = 'OPTION_VALUE';
+const TOKEN_QUOTED_OPTION_VALUE = 'QUOTED_OPTION_VALUE';
+const TOKEN_UNQUOTED_OPTION_VALUE = 'UNQUOTED_OPTION_VALUE';
 const TOKEN_OCTOTHORPE = 'OCTOTHORPE';
 
 export interface ReadTokensOptions {
@@ -760,6 +762,7 @@ export function readTokens(text: string, callback: TokenCallback, options: ReadT
       // Skip spaces after "="
       nextIndex = skipSpaces(text, nextIndex + 1);
 
+      let optionToken: Token = TOKEN_UNQUOTED_OPTION_VALUE;
       let optionValueStartIndex = nextIndex;
       let optionValueEndIndex = -1;
 
@@ -774,6 +777,7 @@ export function readTokens(text: string, callback: TokenCallback, options: ReadT
         (quoteCharCode !== /* ' */ 39 || scopeStack.lastIndexOf(SCOPE_SINGLE_QUOTED_ATTRIBUTE_VALUE) === -1)
       ) {
         // Double or single quoted option value
+        optionToken = TOKEN_QUOTED_OPTION_VALUE;
         optionValueEndIndex = text.indexOf(String.fromCharCode(quoteCharCode), ++optionValueStartIndex);
         nextIndex = optionValueEndIndex + 1;
       }
@@ -782,7 +786,7 @@ export function readTokens(text: string, callback: TokenCallback, options: ReadT
         throw new ParserError('Unterminated argument.', text, optionValueStartIndex);
       }
 
-      callback(TOKEN_OPTION_VALUE, optionValueStartIndex, optionValueEndIndex);
+      callback(optionToken, optionValueStartIndex, optionValueEndIndex);
 
       // Skip spaces after option value
       textStartIndex = nextIndex = skipSpaces(text, nextIndex);
