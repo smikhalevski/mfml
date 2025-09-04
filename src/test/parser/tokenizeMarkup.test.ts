@@ -976,7 +976,7 @@ describe('tokenizeMessage', () => {
   });
 
   test('reads the unbalanced start tag', () => {
-    tokenizeMessage('<aaa><bbb>ccc', callbackMock, { isUnbalancedTagsImplicitlyClosed: true });
+    tokenizeMessage('<aaa><bbb>ccc', callbackMock, { isUnbalancedStartTagsImplicitlyClosed: true });
 
     expect(callbackMock).toHaveBeenCalledTimes(7);
     expect(callbackMock).toHaveBeenNthCalledWith(1, 'START_TAG_NAME', 1, 4);
@@ -992,7 +992,7 @@ describe('tokenizeMessage', () => {
     tokenizeMessage(
       '<aaa>bbb<ccc>ddd',
       callbackMock,
-      resolveTokenizerOptions({ isUnbalancedTagsImplicitlyClosed: true, implicitlyClosedTags: { ccc: ['aaa'] } })
+      resolveTokenizerOptions({ isUnbalancedStartTagsImplicitlyClosed: true, implicitlyClosedTags: { ccc: ['aaa'] } })
     );
 
     expect(callbackMock).toHaveBeenCalledTimes(8);
@@ -1010,7 +1010,7 @@ describe('tokenizeMessage', () => {
     tokenizeMessage(
       '<aaa>bbb<ccc>ddd<eee>',
       callbackMock,
-      resolveTokenizerOptions({ isUnbalancedTagsImplicitlyClosed: true, implicitlyClosedTags: { eee: ['aaa'] } })
+      resolveTokenizerOptions({ isUnbalancedStartTagsImplicitlyClosed: true, implicitlyClosedTags: { eee: ['aaa'] } })
     );
 
     expect(callbackMock).toHaveBeenCalledTimes(11);
@@ -1032,7 +1032,7 @@ describe('tokenizeMessage', () => {
       '<aaa>bbb<ccc>ddd<eee>fff<ggg>',
       callbackMock,
       resolveTokenizerOptions({
-        isUnbalancedTagsImplicitlyClosed: true,
+        isUnbalancedStartTagsImplicitlyClosed: true,
         implicitlyClosedTags: { ggg: ['aaa', 'eee'] },
       })
     );
@@ -1093,7 +1093,7 @@ describe('tokenizeMessage', () => {
     tokenizeMessage(
       '<aaa><bbb></aaa>',
       callbackMock,
-      resolveTokenizerOptions({ isUnbalancedTagsImplicitlyClosed: true })
+      resolveTokenizerOptions({ isUnbalancedStartTagsImplicitlyClosed: true })
     );
 
     expect(callbackMock).toHaveBeenCalledTimes(6);
@@ -1105,14 +1105,14 @@ describe('tokenizeMessage', () => {
     expect(callbackMock).toHaveBeenNthCalledWith(6, 'END_TAG_NAME', 12, 15);
   });
 
-  test('ignores an orphan end tag', () => {
-    tokenizeMessage('</aaa>', callbackMock, resolveTokenizerOptions({ isOrphanEndTagsIgnored: true }));
+  test('ignores an unbalanced end tag', () => {
+    tokenizeMessage('</aaa>', callbackMock, resolveTokenizerOptions({ isUnbalancedEndTagsIgnored: true }));
 
     expect(callbackMock).toHaveBeenCalledTimes(0);
   });
 
-  test('ignores an orphan end tag in a container', () => {
-    tokenizeMessage('<aaa></bbb></aaa>', callbackMock, resolveTokenizerOptions({ isOrphanEndTagsIgnored: true }));
+  test('ignores an unbalanced end tag in a container', () => {
+    tokenizeMessage('<aaa></bbb></aaa>', callbackMock, resolveTokenizerOptions({ isUnbalancedEndTagsIgnored: true }));
 
     expect(callbackMock).toHaveBeenCalledTimes(3);
     expect(callbackMock).toHaveBeenNthCalledWith(1, 'START_TAG_NAME', 1, 4);
@@ -1120,7 +1120,7 @@ describe('tokenizeMessage', () => {
     expect(callbackMock).toHaveBeenNthCalledWith(3, 'END_TAG_NAME', 13, 16);
   });
 
-  test('inserts start tags for orphan end tags', () => {
+  test('inserts start tags for unbalanced end tags', () => {
     tokenizeMessage('</aaa>', callbackMock, resolveTokenizerOptions({ implicitlyOpenedTags: ['aaa'] }));
 
     expect(callbackMock).toHaveBeenCalledTimes(3);
@@ -1171,8 +1171,8 @@ describe('tokenizeMessage', () => {
 
   test('reads case-sensitive end tags by default', () => {
     tokenizeMessage('<aaa></AAA>', callbackMock, {
-      isUnbalancedTagsImplicitlyClosed: true,
-      isOrphanEndTagsIgnored: true,
+      isUnbalancedStartTagsImplicitlyClosed: true,
+      isUnbalancedEndTagsIgnored: true,
     });
 
     expect(callbackMock).toHaveBeenCalledTimes(3);
@@ -1196,8 +1196,8 @@ describe('tokenizeMessage', () => {
       callbackMock,
       resolveTokenizerOptions({
         isCaseInsensitiveTags: true,
-        isUnbalancedTagsImplicitlyClosed: true,
-        isOrphanEndTagsIgnored: true,
+        isUnbalancedStartTagsImplicitlyClosed: true,
+        isUnbalancedEndTagsIgnored: true,
       })
     );
 
@@ -1211,7 +1211,7 @@ describe('tokenizeMessage', () => {
     tokenizeMessage(
       '<a><b></a></b>',
       callbackMock,
-      resolveTokenizerOptions({ isUnbalancedTagsImplicitlyClosed: true, isOrphanEndTagsIgnored: true })
+      resolveTokenizerOptions({ isUnbalancedStartTagsImplicitlyClosed: true, isUnbalancedEndTagsIgnored: true })
     );
 
     expect(callbackMock).toHaveBeenCalledTimes(6);
@@ -1289,7 +1289,7 @@ describe('tokenizeMessage', () => {
     );
 
     expect(() =>
-      tokenizeMessage('{aaa,bbb,ccc{<ppp>', callbackMock, { isUnbalancedTagsImplicitlyClosed: true })
+      tokenizeMessage('{aaa,bbb,ccc{<ppp>', callbackMock, { isUnbalancedStartTagsImplicitlyClosed: true })
     ).toThrow(new ParserError('Unterminated argument.', '{aaa,bbb,ccc{<ppp>', 18));
 
     expect(() => tokenizeMessage('{aaa,bbb,ccc{<ppp>', callbackMock)).toThrow(

@@ -92,8 +92,8 @@ export const htmlTokenizerOptions: TokenizerOptions = {
   implicitlyOpenedTags: ['p', 'br'],
   isCaseInsensitiveTags: true,
   isSelfClosingTagsRecognized: false,
-  isUnbalancedTagsImplicitlyClosed: true,
-  isOrphanEndTagsIgnored: true,
+  isUnbalancedStartTagsImplicitlyClosed: true,
+  isUnbalancedEndTagsIgnored: true,
   isRawTextInterpolated: true,
 };
 

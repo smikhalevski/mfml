@@ -20,7 +20,7 @@ export interface TokenizerOptions {
    * ['link', 'meta']
    * @see [HTML5 Void Elements](https://www.w3.org/TR/2010/WD-html5-20101019/syntax.html#void-elements)
    */
-  voidTags?: readonly string[];
+  voidTags?: string[];
 
   /**
    * The list of tags which content is interpreted as plain text.
@@ -29,45 +29,53 @@ export interface TokenizerOptions {
    * ['script', 'style']
    * @see [HTML5 Raw Text Elements](https://www.w3.org/TR/2010/WD-html5-20101019/syntax.html#raw-text-elements)
    */
-  rawTextTags?: readonly string[];
+  rawTextTags?: string[];
 
   /**
    * The map from a tag (A) to a list of tags that must be closed if tag (A) is opened.
    *
-   * For example, in HTML `p`, `table`, and many other tags follow this semantics:
+   * For example, in HTML `p` and `h1` tags have the following semantics:
+   *
    * ```html
    * <p>foo<h1>bar → <p>foo</p><h1>bar</h1>
+   *                       ^^^^ p is implicitly closed
    * ```
    *
    * To achieve this behavior, set this option to:
+   *
    * ```ts
    * { h1: ['p'] }
    * ```
    *
-   * Use in conjunctions with {@link isUnbalancedTagsImplicitlyClosed}.
+   * Use in conjunctions with {@link isUnbalancedStartTagsImplicitlyClosed}.
    */
-  implicitlyClosedTags?: Record<string, readonly string[]>;
+  implicitlyClosedTags?: Record<string, string[]>;
 
   /**
-   * The list of tags for which a start tag is inserted if an orphan end tag is met. Otherwise,
+   * The list of tags for which a start tag is inserted if an unbalanced end tag is met. Otherwise,
    * a {@link ParserError} is thrown.
    *
-   * You can ignore orphan end tags with {@link isOrphanEndTagsIgnored}.
+   * You can ignore unbalanced end tags with {@link isUnbalancedEndTagsIgnored}.
    *
    * For example, in HTML `p` and `br` tags follow this semantics:
+   *
    * ```html
    * </p>  → <p></p>
+   *         ^^^ p is implicitly opened
+   *
    * </br> → <br/>
+   *            ^ br is implicitly opened
    * ```
    *
    * To achieve this behavior, set this option to:
+   *
    * ```ts
    * ['p', 'br']
    * ```
    *
-   * @see {@link isOrphanEndTagsIgnored}
+   * @see {@link isUnbalancedEndTagsIgnored}
    */
-  implicitlyOpenedTags?: readonly string[];
+  implicitlyOpenedTags?: string[];
 
   /**
    * If `true` then ASCII alpha characters are case-insensitive in tag names.
@@ -86,29 +94,31 @@ export interface TokenizerOptions {
   /**
    * If `true` then unbalanced start tags are forcefully closed. Otherwise, a {@link ParserError} is thrown.
    *
-   * Use in conjunctions with {@link isOrphanEndTagsIgnored}.
+   * Use in conjunctions with {@link isUnbalancedEndTagsIgnored}.
    *
    * ```html
    * <a><b></a></b> → <a><b></b></a></b>
+   *                        ^^^^ b is implicitly closed
    * ```
    *
    * @default false
    */
-  isUnbalancedTagsImplicitlyClosed?: boolean;
+  isUnbalancedStartTagsImplicitlyClosed?: boolean;
 
   /**
    * If `true` then end tags that dont have a corresponding start tag are ignored. Otherwise,
    * a {@link ParserError} is thrown.
    *
-   * Use in conjunctions with {@link isUnbalancedTagsImplicitlyClosed}.
+   * Use in conjunctions with {@link isUnbalancedStartTagsImplicitlyClosed}.
    *
    * ```html
    * <a></b></a> → <a></a>
+   *    ^^^^ b is ignored
    * ```
    *
    * @default false
    */
-  isOrphanEndTagsIgnored?: boolean;
+  isUnbalancedEndTagsIgnored?: boolean;
 
   /**
    * If `true` then arguments are parsed inside {@link rawTextTags}.
@@ -176,8 +186,8 @@ export function resolveTokenizerOptions(options: TokenizerOptions): ResolvedToke
     implicitlyOpenedTags,
     isCaseInsensitiveTags,
     isSelfClosingTagsRecognized,
-    isUnbalancedTagsImplicitlyClosed,
-    isOrphanEndTagsIgnored,
+    isUnbalancedStartTagsImplicitlyClosed,
+    isUnbalancedEndTagsIgnored,
     isRawTextInterpolated,
   } = options;
 
@@ -196,8 +206,8 @@ export function resolveTokenizerOptions(options: TokenizerOptions): ResolvedToke
       ),
     implicitlyOpenedTags: implicitlyOpenedTags && new Set(implicitlyOpenedTags.map(toHashCode)),
     isSelfClosingTagsRecognized,
-    isUnbalancedTagsImplicitlyClosed,
-    isOrphanEndTagsIgnored,
+    isUnbalancedStartTagsImplicitlyClosed,
+    isUnbalancedEndTagsIgnored,
     isRawTextInterpolated,
   };
 }

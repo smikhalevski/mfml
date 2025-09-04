@@ -66,106 +66,14 @@ export type TokenCallback = (token: Token, startIndex: number, endIndex: number)
  * Options of {@link tokenizeMessage}.
  */
 export interface ResolvedTokenizerOptions {
-  /**
-   * Reads a tag name as a unique hash code.
-   *
-   * By default, tags are read in a case-sensitive way.
-   *
-   * @param text The string containing a tag.
-   * @param startIndex The tag name start index.
-   * @param endIndex The tag name end index.
-   */
   readTag?: (text: string, startIndex: number, endIndex: number) => number;
-
-  /**
-   * The list of tags that can't have any contents (since there's no end tag, no content can be put between the start
-   * tag and the end tag).
-   *
-   * @example
-   * ['link', 'meta']
-   * @see [HTML5 Void Elements](https://www.w3.org/TR/2010/WD-html5-20101019/syntax.html#void-elements)
-   */
   voidTags?: Set<number>;
-
-  /**
-   * The list of tags which content is interpreted as plain text.
-   *
-   * @example
-   * ['script', 'style']
-   * @see [HTML5 Raw Text Elements](https://www.w3.org/TR/2010/WD-html5-20101019/syntax.html#raw-text-elements)
-   */
   rawTextTags?: Set<number>;
-
-  /**
-   * The map from a tag (A) to a list of tags that must be closed if tag (A) is opened.
-   *
-   * For example, in HTML `p`, `table`, and many other tags follow this semantics:
-   * ```html
-   * <p>foo<h1>bar → <p>foo</p><h1>bar</h1>
-   * ```
-   *
-   * To achieve this behavior, set this option to:
-   * ```ts
-   * { h1: ['p'] }
-   * ```
-   */
   implicitlyClosedTags?: Map<number, Set<number>>;
-
-  /**
-   * The list of tags for which a start tag is inserted if an orphan end tag is met. Otherwise,
-   * a {@link ParserError} is thrown.
-   *
-   * You can ignore orphan end tags with {@link isOrphanEndTagsIgnored}.
-   *
-   * For example, in HTML `p` and `br` tags follow this semantics:
-   * ```html
-   * </p>  → <p></p>
-   * </br> → <br/>
-   * ```
-   *
-   * @see {@link isOrphanEndTagsIgnored}
-   */
   implicitlyOpenedTags?: Set<number>;
-
-  /**
-   * If `true` then self-closing tags are recognized, otherwise they are treated as start tags.
-   *
-   * @default false
-   */
   isSelfClosingTagsRecognized?: boolean;
-
-  /**
-   * If `true` then unbalanced start tags are forcefully closed. Otherwise, a {@link ParserError} is thrown.
-   *
-   * Use in conjunctions with {@link isOrphanEndTagsIgnored}.
-   *
-   * ```html
-   * <a><b></a></b> → <a><b></b></a></b>
-   * ```
-   *
-   * @default false
-   */
-  isUnbalancedTagsImplicitlyClosed?: boolean;
-
-  /**
-   * If `true` then end tags that dont have a corresponding start tag are ignored. Otherwise,
-   * a {@link ParserError} is thrown.
-   *
-   * Use in conjunctions with {@link isUnbalancedTagsImplicitlyClosed}.
-   *
-   * ```html
-   * <a></b></a> → <a></a>
-   * ```
-   *
-   * @default false
-   */
-  isOrphanEndTagsIgnored?: boolean;
-
-  /**
-   * If `true` then arguments are parsed inside {@link rawTextTags}.
-   *
-   * @default false
-   */
+  isUnbalancedStartTagsImplicitlyClosed?: boolean;
+  isUnbalancedEndTagsIgnored?: boolean;
   isRawTextInterpolated?: boolean;
 }
 
@@ -194,8 +102,8 @@ export function tokenizeMessage(text: string, callback: TokenCallback, options: 
     voidTags,
     implicitlyClosedTags,
     implicitlyOpenedTags,
-    isUnbalancedTagsImplicitlyClosed = false,
-    isOrphanEndTagsIgnored = false,
+    isUnbalancedStartTagsImplicitlyClosed = false,
+    isUnbalancedEndTagsIgnored = false,
   } = options;
 
   const tagStack = [0, 0, 0, 0, 0, 0, 0, 0];
@@ -254,7 +162,7 @@ export function tokenizeMessage(text: string, callback: TokenCallback, options: 
 
         // Found a start tag
         if (index !== -1) {
-          if (!isUnbalancedTagsImplicitlyClosed && index !== tagStackCursor) {
+          if (!isUnbalancedStartTagsImplicitlyClosed && index !== tagStackCursor) {
             throw new ParserError('Missing end tag.', text, endTagStartIndex);
           }
 
@@ -270,7 +178,7 @@ export function tokenizeMessage(text: string, callback: TokenCallback, options: 
         }
 
         if (implicitlyOpenedTags === undefined || !implicitlyOpenedTags.has(endTag)) {
-          if (!isOrphanEndTagsIgnored) {
+          if (!isUnbalancedEndTagsIgnored) {
             throw new ParserError('Orphan end tag.', text, startIndex, endIndex);
           }
           break;
@@ -318,7 +226,7 @@ export function tokenizeMessage(text: string, callback: TokenCallback, options: 
     if (tagStack[tagStackCursor] === CATEGORY_TAG) {
       throw new ParserError('Unterminated argument.', text, text.length);
     }
-    if (!isUnbalancedTagsImplicitlyClosed) {
+    if (!isUnbalancedStartTagsImplicitlyClosed) {
       throw new ParserError('Missing end tag.', text, text.length);
     }
 
