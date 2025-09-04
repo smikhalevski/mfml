@@ -1,9 +1,24 @@
+/**
+ * The error thrown by a parser if a {@link text} substring is malformed.
+ */
 export class ParserError extends SyntaxError {
   constructor(
     message: string,
-    readonly text: string,
-    readonly startIndex = -1,
-    readonly endIndex = startIndex
+
+    /**
+     * The text where an error was detected.
+     */
+    public text: string,
+
+    /**
+     * The index of the first char in {@link text} where an error was detected, inclusive.
+     */
+    public startIndex = -1,
+
+    /**
+     * The index of the last char in {@link text} where an error was detected, exclusive.
+     */
+    public endIndex = -1
   ) {
     super(message);
   }
@@ -41,8 +56,8 @@ export type Token =
  * A callback that is invoked when a token is read from a text.
  *
  * @param token The token that was read.
- * @param startIndex The start index of the first meaningful token char (inclusive).
- * @param endIndex The end index of the last meaningful token char (exclusive).
+ * @param startIndex The start index of the first meaningful token char, inclusive.
+ * @param endIndex The end index of the last meaningful token char, exclusive.
  * @group Tokenizer
  */
 export type TokenCallback = (token: Token, startIndex: number, endIndex: number) => void;
@@ -53,6 +68,8 @@ export type TokenCallback = (token: Token, startIndex: number, endIndex: number)
 export interface ResolvedTokenizerOptions {
   /**
    * Reads a tag name as a unique hash code.
+   *
+   * By default, tags are read in a case-sensitive way.
    *
    * @param text The string containing a tag.
    * @param startIndex The tag name start index.
@@ -96,7 +113,7 @@ export interface ResolvedTokenizerOptions {
 
   /**
    * The list of tags for which an opening tag is inserted if an orphan closing tag is met. Otherwise,
-   * a {@link SyntaxError} is thrown.
+   * a {@link ParserError} is thrown.
    *
    * You can ignore orphan closing tags with {@link isOrphanClosingTagsIgnored}.
    *
@@ -118,7 +135,7 @@ export interface ResolvedTokenizerOptions {
   isSelfClosingTagsRecognized?: boolean;
 
   /**
-   * If `true` then unbalanced opening tags are forcefully closed. Otherwise, a {@link SyntaxError} is thrown.
+   * If `true` then unbalanced opening tags are forcefully closed. Otherwise, a {@link ParserError} is thrown.
    *
    * Use in conjunctions with {@link isOrphanClosingTagsIgnored}.
    *
@@ -132,7 +149,7 @@ export interface ResolvedTokenizerOptions {
 
   /**
    * If `true` then closing tags that dont have a corresponding closing tag are ignored. Otherwise,
-   * a {@link SyntaxError} is thrown.
+   * a {@link ParserError} is thrown.
    *
    * Use in conjunctions with {@link isUnbalancedTagsImplicitlyClosed}.
    *
@@ -155,11 +172,8 @@ export interface ResolvedTokenizerOptions {
 /**
  * Reads tokens from text and returns them by invoking a callback.
  *
- * Tokens are guaranteed to be returned in correct order. Missing tokens are inserted and `startIndex === endIndex`
- * for such tokens.
- *
- * This method doesn't guarantee that contents of returned tokens is consistent. For example, ICU argument type may not
- * properly reflect the consequent ICU category tokens.
+ * Tokens are _guaranteed_ to be returned in correct order. Missing tokens are inserted to restore the correct order if
+ * needed.
  *
  * @example
  * tokenizeMessage(

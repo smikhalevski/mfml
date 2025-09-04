@@ -50,7 +50,7 @@ export interface TokenizerOptions {
 
   /**
    * The list of tags for which an opening tag is inserted if an orphan closing tag is met. Otherwise,
-   * a {@link SyntaxError} is thrown.
+   * a {@link ParserError} is thrown.
    *
    * You can ignore orphan closing tags with {@link isOrphanClosingTagsIgnored}.
    *
@@ -84,7 +84,7 @@ export interface TokenizerOptions {
   isSelfClosingTagsRecognized?: boolean;
 
   /**
-   * If `true` then unbalanced opening tags are forcefully closed. Otherwise, a {@link SyntaxError} is thrown.
+   * If `true` then unbalanced opening tags are forcefully closed. Otherwise, a {@link ParserError} is thrown.
    *
    * Use in conjunctions with {@link isOrphanClosingTagsIgnored}.
    *
@@ -98,7 +98,7 @@ export interface TokenizerOptions {
 
   /**
    * If `true` then closing tags that dont have a corresponding closing tag are ignored. Otherwise,
-   * a {@link SyntaxError} is thrown.
+   * a {@link ParserError} is thrown.
    *
    * Use in conjunctions with {@link isUnbalancedTagsImplicitlyClosed}.
    *

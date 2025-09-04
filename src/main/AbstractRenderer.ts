@@ -1,5 +1,5 @@
 /**
- * Describes how element, argument and select nodes of an MFML AST are rendered.
+ * Renders elements and arguments.
  *
  * @template Element The type of a rendered element.
  * @group Renderer
@@ -8,14 +8,12 @@ export interface Renderer<Element> {
   /**
    * Renders an element.
    *
-   * @param locale The message locale.
    * @param tagName The element tag name.
    * @param attributes Attributes of an element.
    * @param children Children of an element.
    * @returns Rendering result.
    */
   renderElement(
-    locale: string,
     tagName: string,
     attributes: Record<string, string>,
     children: Array<Element | string>
@@ -28,151 +26,78 @@ export interface Renderer<Element> {
    * @param value The value of an argument.
    * @param type The type of an argument.
    * @param style The formatting style to apply.
+   * @param options The argument options.
    * @returns Formatted argument value.
    */
-  formatArgument(locale: string, value: unknown, type: string | undefined, style: string | undefined): string;
+  formatArgument(
+    locale: string,
+    value: unknown,
+    type: string | undefined,
+    style: string | undefined,
+    options: Record<string, string> | undefined
+  ): string;
 
   /**
-   * Returns the select category name depending of an ICU argument value.
+   * Returns the selected category depending of an ICU argument value.
    *
    * @param locale The message locale.
    * @param value The value of an argument.
    * @param type The type of the select node ("plural", "selectordinal", "select").
-   * @param categories The array of categories available in the select node.
+   * @param categories The array of categories available for the argument.
+   * @param options The argument options.
    * @returns The selected category, or `undefined` if there's no matching category.
    */
-  selectCategory(locale: string, value: unknown, type: string, categories: string[]): string | undefined;
+  selectCategory(
+    locale: string,
+    value: unknown,
+    type: string,
+    categories: string[],
+    options: Record<string, string> | undefined
+  ): string | undefined;
 }
 
-/**
- * Options of the {@link AbstractRenderer}.
- *
- * @group Renderer
- */
-export interface AbstractRendererOptions {
-  /**
-   * Formatting styles used for "number" argument type.
-   */
-  numberStyles?: Record<string, Intl.NumberFormatOptions>;
+export type Formatter = (
+  locale: string,
+  value: unknown,
+  type: string | undefined,
+  style: string | undefined,
+  options: Record<string, string> | undefined
+) => string | void;
 
-  /**
-   * Formatting styles used for "date" argument type.
-   */
-  dateStyles?: Record<string, Intl.DateTimeFormatOptions>;
-
-  /**
-   * Formatting styles used for "time" argument type.
-   */
-  timeStyles?: Record<string, Intl.DateTimeFormatOptions>;
-
-  /**
-   * Formatting styles used for "list" argument type.
-   */
-  listStyles?: Record<string, Intl.ListFormatOptions>;
-
-  /**
-   * Map from an attribute type to a custom formatter function.
-   */
-  formatters?: Record<string, (value: unknown, style: string | undefined) => string>;
-}
-
-/**
- * The message renderer that provides the default implementation of argument formatting and select matching.
- *
- * @template Element The type of a rendered element.
- * @group Renderer
- */
 export abstract class AbstractRenderer<Element> implements Renderer<Element> {
-  /**
-   * Formatting styles used for "number" argument type.
-   *
-   * By default, "decimal" and "percent" styles are supported.
-   */
-  numberStyles;
-
-  /**
-   * Formatting styles used for "date" argument type.
-   *
-   * By default, "short", "full", "long", and "medium" styles are supported.
-   */
-  dateStyles;
-
-  /**
-   * Formatting styles used for "time" argument type.
-   *
-   * By default, "short", "full", "long", and "medium" styles are supported.
-   */
-  timeStyles;
-
-  /**
-   * Formatting styles used for "list" argument type.
-   *
-   * By default, "and" and "or" styles are supported.
-   */
-  listStyles;
-
-  /**
-   * Map from an attribute type to a custom formatter function.
-   */
-  formatters;
-
-  /**
-   * Creates a new {@link AbstractRenderer} instance.
-   *
-   * @param options Rendering options.
-   */
-  constructor(options: AbstractRendererOptions = {}) {
-    const {
-      numberStyles = defaultNumberStyles,
-      dateStyles = defaultDateStyles,
-      timeStyles = defaultTimeStyles,
-      listStyles = defaultListStyles,
-      formatters = {},
-    } = options;
-
-    this.numberStyles = numberStyles;
-    this.dateStyles = dateStyles;
-    this.timeStyles = timeStyles;
-    this.listStyles = listStyles;
-    this.formatters = formatters;
-  }
+  constructor(public formatters: Formatter[]) {}
 
   abstract renderElement(
-    locale: string,
     tagName: string,
     attributes: Record<string, string>,
-    children: Array<Element | string>
-  ): Element | string;
+    children: Array<string | Element>
+  ): string | Element;
 
-  formatArgument(locale: string, value: unknown, type: string | undefined, style: string | undefined): string {
-    if (type !== undefined && this.formatters.hasOwnProperty(type)) {
-      return this.formatters[type](value, style);
-    }
+  formatArgument(
+    locale: string,
+    value: unknown,
+    type: string | undefined,
+    style: string | undefined,
+    options: Record<string, string> | undefined
+  ): string {
+    for (const formatter of this.formatters) {
+      const formattedValue = formatter(locale, value, type, style, options);
 
-    if (type === 'number' && (typeof value === 'number' || typeof value === 'bigint')) {
-      return getCachedNumberFormat(locale, getStyleOptions(this.numberStyles, style)).format(value);
-    }
-
-    if (type === 'date' && (typeof value === 'number' || value instanceof Date)) {
-      return getCachedDateTimeFormat(locale, getStyleOptions(this.dateStyles, style)).format(value);
-    }
-
-    if (type === 'time' && (typeof value === 'number' || value instanceof Date)) {
-      return getCachedDateTimeFormat(locale, getStyleOptions(this.timeStyles, style)).format(value);
-    }
-
-    if (type === 'list' && Array.isArray(value)) {
-      return getCachedListFormat(locale, getStyleOptions(this.listStyles, style)).format(value);
-    }
-
-    if (value === null || value === undefined || value !== value) {
-      return '';
+      if (formattedValue !== undefined) {
+        return formattedValue;
+      }
     }
 
     return '' + value;
   }
 
-  selectCategory(locale: string, value: unknown, type: string, categories: string[]): string | undefined {
+  selectCategory(
+    locale: string,
+    value: unknown,
+    type: string,
+    categories: string[],
+    _options: Record<string, string> | undefined
+  ): string | undefined {
     let category = '=' + value;
 
     if ((type === 'plural' || type === 'selectordinal' || type === 'select') && categories.includes(category)) {
@@ -180,7 +105,7 @@ export abstract class AbstractRenderer<Element> implements Renderer<Element> {
     }
 
     if ((type === 'plural' || type === 'selectordinal') && typeof value === 'number') {
-      category = getCachedPluralRules(locale, type === 'plural' ? cardinalOptions : ordinalOptions).select(value);
+      category = new Intl.PluralRules(locale, { type: type === 'plural' ? 'cardinal' : 'ordinal' }).select(value);
     } else if (type === 'select') {
       category = '' + value;
     } else {
@@ -191,71 +116,70 @@ export abstract class AbstractRenderer<Element> implements Renderer<Element> {
   }
 }
 
-const cardinalOptions: Intl.PluralRulesOptions = { type: 'cardinal' };
+export function createNumberFormatter(type: string, options?: Intl.NumberFormatOptions): Formatter;
 
-const ordinalOptions: Intl.PluralRulesOptions = { type: 'ordinal' };
+export function createNumberFormatter(type: string, style: string, options?: Intl.NumberFormatOptions): Formatter;
 
-const getCachedDateTimeFormat = createCachedFactory((locale, options) => new Intl.DateTimeFormat(locale, options));
-
-const getCachedNumberFormat = createCachedFactory((locale, options) => new Intl.NumberFormat(locale, options));
-
-const getCachedListFormat = createCachedFactory((locale, options) => new Intl.ListFormat(locale, options));
-
-const getCachedPluralRules = createCachedFactory((locale, options) => new Intl.PluralRules(locale, options));
-
-function createCachedFactory<O extends object, V>(
-  factory: (locale: string, options?: O) => V
-): (locale: string, options: O) => V {
-  const localeCache = new Map<string, WeakMap<O, V>>();
-
-  return (locale, options) => {
-    let optionsCache = localeCache.get(locale);
-
-    if (optionsCache === undefined) {
-      optionsCache = new WeakMap();
-      localeCache.set(locale, optionsCache);
+export function createNumberFormatter(
+  type: string,
+  style?: string | Intl.NumberFormatOptions,
+  options?: Intl.NumberFormatOptions
+): Formatter {
+  return (locale, value, actualType, actualStyle, actualOptions) => {
+    if (
+      type !== actualType ||
+      (typeof value !== 'number' && typeof value !== 'bigint') ||
+      (typeof style === 'string' && style !== actualStyle)
+    ) {
+      return;
     }
 
-    let result = optionsCache.get(options);
-
-    if (result === undefined) {
-      result = factory(locale, options);
-      optionsCache.set(options, result);
-    }
-
-    return result;
+    return new Intl.NumberFormat(
+      locale,
+      style === undefined ? actualOptions : typeof style === 'string' ? { ...options, ...actualOptions } : style
+    ).format(value);
   };
 }
 
-function getStyleOptions<T>(styles: Record<string, T>, style: string | undefined): T {
-  if (style !== undefined && styles.hasOwnProperty(style)) {
-    return styles[style];
-  }
-  return defaultStyleOptions as T;
+export function createDateTimeFormatter(type: string, options?: Intl.DateTimeFormatOptions): Formatter;
+
+export function createDateTimeFormatter(type: string, style: string, options?: Intl.DateTimeFormatOptions): Formatter;
+
+export function createDateTimeFormatter(
+  type: string,
+  style?: string | Intl.DateTimeFormatOptions,
+  options?: Intl.DateTimeFormatOptions
+): Formatter {
+  return (locale, value, actualType, actualStyle, actualOptions) => {
+    if (
+      type !== actualType ||
+      (typeof value !== 'number' && !(value instanceof Date)) ||
+      (typeof style === 'string' && style !== actualStyle)
+    ) {
+      return;
+    }
+
+    return new Intl.DateTimeFormat(
+      locale,
+      style === undefined ? actualOptions : typeof style === 'string' ? options : { ...style, ...actualOptions }
+    ).format(value);
+  };
 }
 
-const defaultStyleOptions = {};
+export const defaultFormatters: Formatter[] = [
+  createNumberFormatter('number', 'decimal', { style: 'decimal' }),
+  createNumberFormatter('number', 'percent', { style: 'percent' }),
+  createNumberFormatter('number'),
 
-const defaultNumberStyles: Record<string, Intl.NumberFormatOptions> = {
-  decimal: { style: 'decimal' },
-  percent: { style: 'percent' },
-};
+  createDateTimeFormatter('date', 'short', { dateStyle: 'short' }),
+  createDateTimeFormatter('date', 'full', { dateStyle: 'full' }),
+  createDateTimeFormatter('date', 'long', { dateStyle: 'long' }),
+  createDateTimeFormatter('date', 'medium', { dateStyle: 'medium' }),
+  createDateTimeFormatter('date', { dateStyle: 'medium' }),
 
-const defaultDateStyles: Record<string, Intl.DateTimeFormatOptions> = {
-  short: { dateStyle: 'short' },
-  full: { dateStyle: 'full' },
-  long: { dateStyle: 'long' },
-  medium: { dateStyle: 'medium' },
-};
-
-const defaultTimeStyles: Record<string, Intl.DateTimeFormatOptions> = {
-  short: { timeStyle: 'short' },
-  full: { timeStyle: 'full' },
-  long: { timeStyle: 'long' },
-  medium: { timeStyle: 'medium' },
-};
-
-const defaultListStyles: Record<string, Intl.ListFormatOptions> = {
-  and: { type: 'conjunction' },
-  or: { type: 'disjunction' },
-};
+  createDateTimeFormatter('time', 'short', { timeStyle: 'short' }),
+  createDateTimeFormatter('time', 'full', { timeStyle: 'full' }),
+  createDateTimeFormatter('time', 'long', { timeStyle: 'long' }),
+  createDateTimeFormatter('time', 'medium', { timeStyle: 'medium' }),
+  createDateTimeFormatter('time', { timeStyle: 'medium' }),
+];

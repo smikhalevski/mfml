@@ -1,5 +1,5 @@
 /**
- * Parses MFML text as a stream of tokens or as an AST.
+ * Tokenizes MFML text as a stream of tokens or parser it as an AST.
  *
  * @module mfml/parser
  */
