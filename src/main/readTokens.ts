@@ -1,17 +1,28 @@
-const SCOPE_XML_TEXT = 0;
+const SCOPE_TEXT = 0;
 const SCOPE_XML_OPENING_TAG = 1;
 const SCOPE_XML_ATTRIBUTE = 2;
 const SCOPE_XML_UNQUOTED_ATTRIBUTE_VALUE = 3;
 const SCOPE_JSX_CURLY_BRACES_ATTRIBUTE_VALUE = 4;
+const SCOPE_ICU_ARGUMENT = 5;
+const SCOPE_ICU_CASE = 6;
+
+const ERROR_MESSAGE = 'Unexpected ICU syntax at ';
 
 export type TokenType =
   | 'TEXT'
-  | 'OPENING_TAG_START'
-  | 'OPENING_TAG_END'
-  | 'OPENING_TAG_SELF_CLOSE'
-  | 'CLOSING_TAG'
-  | 'ATTRIBUTE_START'
-  | 'ATTRIBUTE_END';
+  | 'XML_OPENING_TAG_START'
+  | 'XML_OPENING_TAG_END'
+  | 'XML_OPENING_TAG_SELF_CLOSE'
+  | 'XML_CLOSING_TAG'
+  | 'XML_ATTRIBUTE_START'
+  | 'XML_ATTRIBUTE_END'
+  | 'ICU_ARGUMENT_START'
+  | 'ICU_ARGUMENT_END'
+  | 'ICU_ARGUMENT_TYPE'
+  | 'ICU_ARGUMENT_STYLE'
+  | 'ICU_CASE_START'
+  | 'ICU_CASE_END'
+  | 'ICU_OCTOTHORPE';
 
 export interface ReadTokensOptions {
   escapeChar?: string;
@@ -26,9 +37,9 @@ export function readTokens(text: string, callback: TokenCallback, options: ReadT
 
   const escapeCharCode = getCharCodeAt(escapeChar, 0);
 
-  let scope = SCOPE_XML_TEXT;
+  let scope = SCOPE_TEXT;
 
-  const scopeStack = [scope];
+  const scopeStack = [scope, 0, 0, 0, 0, 0, 0, 0];
 
   let scopeStackCursor = 0;
 
@@ -37,22 +48,11 @@ export function readTokens(text: string, callback: TokenCallback, options: ReadT
   for (let index = 0, nextIndex = 0; nextIndex < text.length; index = nextIndex) {
     const charCode = text.charCodeAt(nextIndex);
 
-    // Unquoted attribute value
+    // Escape char
     if (
-      scope === SCOPE_XML_UNQUOTED_ATTRIBUTE_VALUE &&
-      (isSpaceChar(charCode) || charCode === /* / */ 47 || charCode === /* > */ 62)
+      charCode === escapeCharCode &&
+      (scope === SCOPE_TEXT || scope === SCOPE_ICU_CASE || scope === SCOPE_JSX_CURLY_BRACES_ATTRIBUTE_VALUE)
     ) {
-      scope = scopeStack[--scopeStackCursor];
-
-      if (textStartIndex !== index) {
-        callback('TEXT', textStartIndex, index);
-      }
-
-      callback('ATTRIBUTE_END', index, index);
-    }
-
-    // Escape
-    if (charCode === escapeCharCode && (scope === SCOPE_XML_TEXT || scope === SCOPE_JSX_CURLY_BRACES_ATTRIBUTE_VALUE)) {
       if (textStartIndex !== index) {
         callback('TEXT', textStartIndex, index);
       }
@@ -65,7 +65,21 @@ export function readTokens(text: string, callback: TokenCallback, options: ReadT
       continue;
     }
 
-    // Tags
+    // End of unquoted XML attribute value
+    if (
+      scope === SCOPE_XML_UNQUOTED_ATTRIBUTE_VALUE &&
+      (charCode === /* / */ 47 || charCode === /* > */ 62 || isSpaceChar(charCode))
+    ) {
+      scope = scopeStack[--scopeStackCursor];
+
+      if (textStartIndex !== index) {
+        callback('TEXT', textStartIndex, index);
+      }
+
+      callback('XML_ATTRIBUTE_END', index, index);
+    }
+
+    // XML tags
     if (charCode === /* < */ 60 && scope !== SCOPE_XML_OPENING_TAG && scope !== SCOPE_XML_UNQUOTED_ATTRIBUTE_VALUE) {
       let tagNameStartIndex = ++nextIndex;
 
@@ -75,7 +89,7 @@ export function readTokens(text: string, callback: TokenCallback, options: ReadT
         // Skip "/"
         tagNameStartIndex = ++nextIndex;
 
-        nextIndex = readTagName(text, tagNameStartIndex);
+        nextIndex = readXMLTagName(text, tagNameStartIndex);
 
         if (tagNameStartIndex === nextIndex) {
           continue;
@@ -85,9 +99,9 @@ export function readTokens(text: string, callback: TokenCallback, options: ReadT
           callback('TEXT', textStartIndex, index);
         }
 
-        callback('CLOSING_TAG', tagNameStartIndex, nextIndex);
+        callback('XML_CLOSING_TAG', tagNameStartIndex, nextIndex);
 
-        // Skip spaces after the tag name
+        // Skip unparsable characters after the tag name
         nextIndex = text.indexOf('>', nextIndex);
 
         if (nextIndex === -1) {
@@ -103,7 +117,7 @@ export function readTokens(text: string, callback: TokenCallback, options: ReadT
 
       // Opening tag
 
-      nextIndex = readTagName(text, nextIndex);
+      nextIndex = readXMLTagName(text, nextIndex);
 
       if (tagNameStartIndex === nextIndex) {
         // No opening tag name, ignore "<"
@@ -114,43 +128,44 @@ export function readTokens(text: string, callback: TokenCallback, options: ReadT
         callback('TEXT', textStartIndex, index);
       }
 
-      callback('OPENING_TAG_START', tagNameStartIndex, nextIndex);
+      callback('XML_OPENING_TAG_START', tagNameStartIndex, nextIndex);
 
       scope = scopeStack[++scopeStackCursor] = SCOPE_XML_OPENING_TAG;
 
-      // Skip spaces after the tag name
-      nextIndex = readChars(text, nextIndex, isSpaceChar);
+      nextIndex = skipSpaces(text, nextIndex);
       textStartIndex = nextIndex;
       continue;
     }
 
-    if (charCode === /* > */ 62) {
-      if (scope === SCOPE_XML_OPENING_TAG) {
-        ++nextIndex;
-
-        callback('OPENING_TAG_END', index, nextIndex);
-
-        scope = scopeStack[--scopeStackCursor];
-        textStartIndex = nextIndex;
-        continue;
-      }
-
+    // End of opening XML tag
+    if (charCode === /* > */ 62 && scope === SCOPE_XML_OPENING_TAG) {
       ++nextIndex;
+
+      callback('XML_OPENING_TAG_END', index, nextIndex);
+
+      scope = scopeStack[--scopeStackCursor];
+      textStartIndex = nextIndex;
       continue;
     }
 
-    // Self-closing tags
-    if (charCode === /* / */ 47) {
-      if (enableSelfClosing && scope === SCOPE_XML_OPENING_TAG && getCharCodeAt(text, index + 1) === /* > */ 62) {
-        nextIndex += 2;
+    // Self-closing XML tags
+    if (
+      enableSelfClosing &&
+      charCode === /* / */ 47 &&
+      scope === SCOPE_XML_OPENING_TAG &&
+      getCharCodeAt(text, index + 1) === /* > */ 62
+    ) {
+      nextIndex += 2;
 
-        callback('OPENING_TAG_SELF_CLOSE', index, nextIndex);
+      callback('XML_OPENING_TAG_SELF_CLOSE', index, nextIndex);
 
-        scope = scopeStack[--scopeStackCursor];
-        textStartIndex = nextIndex;
-        continue;
-      }
+      scope = scopeStack[--scopeStackCursor];
+      textStartIndex = nextIndex;
+      continue;
+    }
 
+    // Treat "/" as space in XML opening tag
+    if (charCode === /* / */ 47 && scope === SCOPE_XML_OPENING_TAG) {
       ++nextIndex;
       continue;
     }
@@ -163,35 +178,31 @@ export function readTokens(text: string, callback: TokenCallback, options: ReadT
 
       ++nextIndex;
 
-      callback('ATTRIBUTE_END', index, nextIndex);
+      callback('XML_ATTRIBUTE_END', index, nextIndex);
 
       scope = scopeStack[--scopeStackCursor];
-      nextIndex = readChars(text, nextIndex, isSpaceChar);
+      nextIndex = skipSpaces(text, nextIndex);
       continue;
     }
 
-    // Non-control characters
+    // XML attribute
+    if (scope === SCOPE_XML_OPENING_TAG && isXMLAttributeNameChar(charCode)) {
+      nextIndex = readChars(text, index + 1, isXMLAttributeNameChar);
 
-    // Attribute
-    if (scope === SCOPE_XML_OPENING_TAG && isAttributeNameChar(charCode)) {
-      nextIndex = readChars(text, index + 1, isAttributeNameChar);
-
-      callback('ATTRIBUTE_START', index, nextIndex);
+      callback('XML_ATTRIBUTE_START', index, nextIndex);
 
       scope = scopeStack[++scopeStackCursor] = SCOPE_XML_ATTRIBUTE;
 
-      // Skip spaces after the attribute name
-      nextIndex = readChars(text, nextIndex, isSpaceChar);
+      nextIndex = skipSpaces(text, nextIndex);
 
       if (getCharCodeAt(text, nextIndex) !== /* = */ 61) {
         // No attribute value
-        callback('ATTRIBUTE_END', nextIndex, nextIndex);
+        callback('XML_ATTRIBUTE_END', nextIndex, nextIndex);
         scope = scopeStack[--scopeStackCursor];
         continue;
       }
 
-      // Skip spaces after the equality char
-      nextIndex = readChars(text, ++nextIndex, isSpaceChar);
+      nextIndex = skipSpaces(text, ++nextIndex);
 
       const quoteCharCode = getCharCodeAt(text, nextIndex);
 
@@ -213,12 +224,11 @@ export function readTokens(text: string, callback: TokenCallback, options: ReadT
           callback('TEXT', textStartIndex, nextIndex);
         }
 
-        callback('ATTRIBUTE_END', nextIndex, nextIndex + 1);
+        callback('XML_ATTRIBUTE_END', nextIndex, nextIndex + 1);
 
         scope = scopeStack[--scopeStackCursor];
 
-        // Skip closing quote and space chars
-        textStartIndex = nextIndex = readChars(text, ++nextIndex, isSpaceChar);
+        textStartIndex = nextIndex = skipSpaces(text, nextIndex + 1);
         continue;
       }
 
@@ -235,6 +245,158 @@ export function readTokens(text: string, callback: TokenCallback, options: ReadT
       continue;
     }
 
+    // ICU argument
+    if (
+      charCode === /* { */ 123 &&
+      (scope === SCOPE_TEXT || scope === SCOPE_JSX_CURLY_BRACES_ATTRIBUTE_VALUE || scope === SCOPE_ICU_CASE)
+    ) {
+      if (textStartIndex !== index) {
+        callback('TEXT', textStartIndex, index);
+      }
+
+      nextIndex = skipSpaces(text, index + 1);
+
+      const argumentNameStartIndex = nextIndex;
+
+      nextIndex = readChars(text, nextIndex, isICUNameChar);
+
+      if (argumentNameStartIndex === nextIndex) {
+        throw new SyntaxError(ERROR_MESSAGE + nextIndex);
+      }
+
+      callback('ICU_ARGUMENT_START', argumentNameStartIndex, nextIndex);
+
+      nextIndex = skipSpaces(text, nextIndex);
+
+      if (getCharCodeAt(text, nextIndex) === /* } */ 125) {
+        callback('ICU_ARGUMENT_END', nextIndex, ++nextIndex);
+        textStartIndex = nextIndex;
+        continue;
+      }
+
+      if (getCharCodeAt(text, nextIndex) !== /* , */ 44) {
+        throw new SyntaxError(ERROR_MESSAGE + nextIndex);
+      }
+
+      // ICU argument type
+
+      nextIndex = skipSpaces(text, nextIndex + 1);
+
+      const argumentTypeStartIndex = nextIndex;
+
+      nextIndex = readChars(text, argumentTypeStartIndex, isICUNameChar);
+
+      if (argumentTypeStartIndex === nextIndex) {
+        throw new SyntaxError(ERROR_MESSAGE + nextIndex);
+      }
+
+      callback('ICU_ARGUMENT_TYPE', argumentTypeStartIndex, nextIndex);
+
+      nextIndex = skipSpaces(text, nextIndex);
+
+      if (getCharCodeAt(text, nextIndex) === /* } */ 125) {
+        callback('ICU_ARGUMENT_END', nextIndex, ++nextIndex);
+        textStartIndex = nextIndex;
+        continue;
+      }
+
+      if (getCharCodeAt(text, nextIndex) !== /* , */ 44) {
+        throw new SyntaxError(ERROR_MESSAGE + nextIndex);
+      }
+
+      // ICU argument style or choice
+
+      nextIndex = skipSpaces(text, nextIndex + 1);
+
+      const argumentStyleStartIndex = nextIndex;
+
+      nextIndex = readChars(text, nextIndex, isICUNameChar);
+
+      if (argumentStyleStartIndex === nextIndex) {
+        throw new SyntaxError(ERROR_MESSAGE + nextIndex);
+      }
+
+      const argumentStyleEndIndex = nextIndex;
+
+      nextIndex = skipSpaces(text, nextIndex);
+
+      // ICU argument style
+      if (getCharCodeAt(text, nextIndex) === /* } */ 125) {
+        callback('ICU_ARGUMENT_STYLE', argumentStyleStartIndex, argumentStyleEndIndex);
+        callback('ICU_ARGUMENT_END', nextIndex, ++nextIndex);
+
+        textStartIndex = nextIndex;
+        continue;
+      }
+
+      // ICU choice
+      if (getCharCodeAt(text, nextIndex) === /* { */ 123) {
+        callback('ICU_CASE_START', argumentStyleStartIndex, argumentStyleEndIndex);
+
+        scopeStack[++scopeStackCursor] = SCOPE_ICU_ARGUMENT;
+        scope = scopeStack[++scopeStackCursor] = SCOPE_ICU_CASE;
+        textStartIndex = ++nextIndex;
+        continue;
+      }
+
+      throw new SyntaxError(ERROR_MESSAGE + nextIndex);
+    }
+
+    if (charCode === /* } */ 125) {
+      // End of an ICU argument
+      if (scope === SCOPE_ICU_ARGUMENT) {
+        callback('ICU_ARGUMENT_END', nextIndex, ++nextIndex);
+        scope = scopeStack[--scopeStackCursor];
+        textStartIndex = nextIndex;
+        continue;
+      }
+
+      // End of an ICU case
+      if (scope === SCOPE_ICU_CASE) {
+        if (textStartIndex !== index) {
+          callback('TEXT', textStartIndex, index);
+        }
+
+        callback('ICU_CASE_END', nextIndex, ++nextIndex);
+        scope = scopeStack[--scopeStackCursor];
+        textStartIndex = nextIndex = skipSpaces(text, nextIndex);
+        continue;
+      }
+    }
+
+    // ICU octothorpe
+    if (charCode === /* # */ 35 && scopeStack.indexOf(SCOPE_ICU_CASE) !== -1) {
+      if (textStartIndex !== index) {
+        callback('TEXT', textStartIndex, index);
+      }
+
+      textStartIndex = ++nextIndex;
+
+      callback('ICU_OCTOTHORPE', index, nextIndex);
+      continue;
+    }
+
+    // Start of an ICU case
+    if (scope === SCOPE_ICU_ARGUMENT) {
+      if (!isICUNameChar(charCode)) {
+        throw new SyntaxError(ERROR_MESSAGE + index);
+      }
+
+      nextIndex = readChars(text, index + 1, isICUNameChar);
+
+      callback('ICU_CASE_START', index, nextIndex);
+
+      nextIndex = skipSpaces(text, nextIndex);
+
+      if (getCharCodeAt(text, nextIndex) !== /* { */ 123) {
+        throw new SyntaxError(ERROR_MESSAGE + nextIndex);
+      }
+
+      scope = scopeStack[++scopeStackCursor] = SCOPE_ICU_CASE;
+      textStartIndex = ++nextIndex;
+      continue;
+    }
+
     // Plain text
     ++nextIndex;
   }
@@ -244,14 +406,12 @@ export function readTokens(text: string, callback: TokenCallback, options: ReadT
   }
 }
 
-function readTagName(text: string, index: number): number {
-  return isTagNameStartChar(getCharCodeAt(text, index)) ? readChars(text, index + 1, isTagNameChar) : index;
+function readXMLTagName(text: string, index: number): number {
+  return isXMLTagNameStartChar(getCharCodeAt(text, index)) ? readChars(text, index + 1, isXMLTagNameChar) : index;
 }
 
-/**
- * https://www.w3.org/TR/xml/#NT-NameStartChar
- */
-function isTagNameStartChar(charCode: number): boolean {
+// https://www.w3.org/TR/xml/#NT-NameStartChar
+function isXMLTagNameStartChar(charCode: number): boolean {
   return (
     (charCode >= /* a */ 97 && charCode <= /* z */ 122) ||
     (charCode >= /* A */ 65 && charCode <= /* Z */ 90) ||
@@ -272,18 +432,19 @@ function isTagNameStartChar(charCode: number): boolean {
   );
 }
 
-function isTagNameChar(charCode: number): boolean {
-  return !(isSpaceChar(charCode) || charCode === /* / */ 47 || charCode === /* > */ 62);
+function isXMLTagNameChar(charCode: number): boolean {
+  return !(charCode === /* / */ 47 || charCode === /* > */ 62 || isSpaceChar(charCode));
 }
 
-/**
- * Reads chars until predicate returns `true`.
- */
 function readChars(text: string, index: number, predicate: (charCode: number) => boolean): number {
   while (index < text.length && predicate(text.charCodeAt(index))) {
     ++index;
   }
   return index;
+}
+
+function skipSpaces(text: string, index: number): number {
+  return readChars(text, index, isSpaceChar);
 }
 
 function getCharCodeAt(text: string, index: number): number {
@@ -295,6 +456,10 @@ function isSpaceChar(charCode: number): boolean {
   return charCode == /* \s */ 32 || charCode === /* \n */ 10 || charCode === /* \t */ 9 || charCode === /* \r */ 13;
 }
 
-function isAttributeNameChar(charCode: number): boolean {
-  return !(isSpaceChar(charCode) || charCode === /* > */ 62 || charCode === /* = */ 61);
+function isXMLAttributeNameChar(charCode: number): boolean {
+  return !(charCode === /* > */ 62 || charCode === /* = */ 61 || isSpaceChar(charCode));
+}
+
+function isICUNameChar(charCode: number): boolean {
+  return !(charCode === /* , */ 44 || charCode === /* { */ 123 || charCode === /* } */ 125 || isSpaceChar(charCode));
 }

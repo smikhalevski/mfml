@@ -21,19 +21,19 @@ export function parseConfig(config: Config = {}): TokenizeOptions {
     enableSelfClosing = false,
   } = config;
 
-  const getHash = isCaseSensitive ? getCaseSensitiveHashCode : getCaseInsensitiveHashCode;
+  const getHashCode = isCaseSensitive ? getCaseSensitiveHashCode : getCaseInsensitiveHashCode;
 
-  const getStringHash = (str: string) => getHash(str, 0, str.length);
+  const toHashCode = (str: string) => getHashCode(str, 0, str.length);
 
   return {
-    voidTags: new Set(voidTags?.map(getStringHash)),
+    voidTags: new Set(voidTags?.map(toHashCode)),
     autoClosingTags: new Map(
       autoClosingTags === null || autoClosingTags === undefined
         ? undefined
-        : Object.entries(autoClosingTags).map(entry => [getStringHash(entry[0]), new Set(entry[1].map(getStringHash))])
+        : Object.entries(autoClosingTags).map(entry => [toHashCode(entry[0]), new Set(entry[1].map(toHashCode))])
     ),
-    autoOpeningTags: new Set(autoOpeningTags?.map(getStringHash)),
-    getHash,
+    autoOpeningTags: new Set(autoOpeningTags?.map(toHashCode)),
+    getHashCode,
     escapeChar,
     enableJSXAttributes,
     enableSelfClosing,

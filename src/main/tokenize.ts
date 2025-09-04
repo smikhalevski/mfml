@@ -1,140 +1,132 @@
 import { TokenCallback, readTokens, ReadTokensOptions } from './readTokens.js';
 
+const ISOLATED_BLOCK_MARKER = -1;
+
 export interface TokenizeOptions extends ReadTokensOptions {
   voidTags: Set<number>;
   autoClosingTags: Map<number, Set<number>>;
   autoOpeningTags: Set<number>;
-
-  getHash(text: string, startIndex: number, endIndex: number): number;
+  getHashCode: (text: string, startIndex: number, endIndex: number) => number;
 }
 
 export function tokenize(text: string, callback: TokenCallback, options: TokenizeOptions) {
-  const { getHash, voidTags, autoClosingTags, autoOpeningTags } = options;
+  const { voidTags, autoClosingTags, autoOpeningTags, getHashCode } = options;
 
-  const tagStack: number[] = [];
+  const tagStack = [0, 0, 0, 0, 0, 0, 0, 0];
 
   let tagStackCursor = -1;
 
-  readTokens(
-    text,
-    (tokenType, startIndex, endIndex) => {
-      switch (tokenType) {
-        case 'OPENING_TAG_START': {
-          const openingTag = getHash(text, startIndex, endIndex);
+  const readTokensCallback: TokenCallback = (tokenType, startIndex, endIndex) => {
+    switch (tokenType) {
+      case 'XML_OPENING_TAG_START':
+        const openingTag = getHashCode(text, startIndex, endIndex);
 
-          tagStackCursor = autoCloseTags(
-            autoClosingTags.get(openingTag),
-            tagStack,
-            tagStackCursor,
-            callback,
-            startIndex - 1
-          );
+        tagStackCursor = insertAutoClosingTags(
+          autoClosingTags.get(openingTag),
+          tagStack,
+          tagStackCursor,
+          callback,
+          startIndex - 1
+        );
 
-          tagStack[++tagStackCursor] = openingTag;
-          callback('OPENING_TAG_START', startIndex, endIndex);
-          break;
+        callback('XML_OPENING_TAG_START', startIndex, endIndex);
+        tagStack[++tagStackCursor] = openingTag;
+        break;
+
+      case 'XML_OPENING_TAG_END':
+        callback('XML_OPENING_TAG_END', startIndex, endIndex);
+
+        if (voidTags.has(tagStack[tagStackCursor])) {
+          callback('XML_CLOSING_TAG', endIndex, endIndex);
+          --tagStackCursor;
+        }
+        break;
+
+      case 'XML_OPENING_TAG_SELF_CLOSE':
+        callback('XML_OPENING_TAG_SELF_CLOSE', startIndex, endIndex);
+        --tagStackCursor;
+        break;
+
+      case 'XML_CLOSING_TAG':
+        const closingTag = getHashCode(text, startIndex, endIndex);
+
+        let index = tagStackCursor;
+
+        while (index !== -1 && tagStack[index] !== ISOLATED_BLOCK_MARKER && tagStack[index] !== closingTag) {
+          --index;
         }
 
-        case 'OPENING_TAG_END': {
-          if (voidTags.has(tagStack[tagStackCursor])) {
-            callback('OPENING_TAG_SELF_CLOSE', startIndex, endIndex);
-            break;
-          }
-
-          callback('OPENING_TAG_END', startIndex, endIndex);
-          break;
-        }
-
-        case 'OPENING_TAG_SELF_CLOSE': {
-          callback('OPENING_TAG_SELF_CLOSE', startIndex, endIndex);
-          break;
-        }
-
-        case 'CLOSING_TAG': {
-          const closingTag = getHash(text, startIndex, endIndex);
-
-          // Lookup closed tag
-          let index = tagStackCursor;
-
-          while (index !== -1 && tagStack[index] !== closingTag) {
-            --index;
-          }
-
-          // Found an opening tag
-          if (index !== -1) {
-            // Insert unbalanced closing tags
-            while (index < tagStackCursor) {
-              callback('CLOSING_TAG', startIndex - 2, startIndex - 2);
-              --tagStackCursor;
-              ++index;
-            }
-
-            callback('CLOSING_TAG', startIndex, endIndex);
+        // Found an opening tag
+        if (index !== -1) {
+          // Insert unbalanced closing tags
+          while (index < tagStackCursor) {
+            callback('XML_CLOSING_TAG', startIndex - 2, startIndex - 2);
             --tagStackCursor;
-            break;
           }
 
-          if (!autoOpeningTags.has(closingTag)) {
-            // Ignore orphan closing tag
-            break;
-          }
-
-          // Auto insert opening tag
-
-          tagStackCursor = autoCloseTags(
-            autoClosingTags.get(closingTag),
-            tagStack,
-            tagStackCursor,
-            callback,
-            startIndex - 2
-          );
-
-          callback('OPENING_TAG_START', startIndex, endIndex);
-          callback('OPENING_TAG_SELF_CLOSE', endIndex, endIndex);
+          callback('XML_CLOSING_TAG', startIndex, endIndex);
+          --tagStackCursor;
           break;
         }
 
-        case 'ATTRIBUTE_START': {
-          callback('ATTRIBUTE_START', startIndex, endIndex);
+        if (!autoOpeningTags.has(closingTag)) {
+          // Ignore orphan closing tag
           break;
         }
 
-        case 'ATTRIBUTE_END': {
-          callback('ATTRIBUTE_END', startIndex, endIndex);
-          break;
-        }
+        tagStackCursor = insertAutoClosingTags(
+          autoClosingTags.get(closingTag),
+          tagStack,
+          tagStackCursor,
+          callback,
+          startIndex - 2
+        );
 
-        default: {
-          callback('TEXT', startIndex, endIndex);
-          break;
-        }
-      }
-    },
-    options
-  );
+        callback('XML_OPENING_TAG_START', startIndex, endIndex);
+        callback('XML_OPENING_TAG_SELF_CLOSE', endIndex, endIndex);
+        break;
+
+      case 'ICU_CASE_START':
+        tagStack[++tagStackCursor] = ISOLATED_BLOCK_MARKER;
+        break;
+
+      case 'ICU_CASE_END':
+        --tagStackCursor;
+        break;
+
+      default:
+        callback(tokenType, startIndex, endIndex);
+        break;
+    }
+  };
+
+  readTokens(text, readTokensCallback, options);
 }
 
-function autoCloseTags(
-  autoClosedTags: Set<number> | undefined,
+function insertAutoClosingTags(
+  tagsToClose: Set<number> | undefined,
   tagStack: number[],
   tagStackCursor: number,
   callback: TokenCallback,
   insertionIndex: number
 ): number {
-  if (autoClosedTags === undefined) {
+  if (tagsToClose === undefined) {
     return tagStackCursor;
   }
 
-  let index = 0;
+  let index = tagStack.lastIndexOf(ISOLATED_BLOCK_MARKER);
 
-  while (index <= tagStackCursor && !autoClosedTags.has(tagStack[index])) {
+  if (index === -1) {
+    index = 0;
+  }
+
+  while (index <= tagStackCursor && !tagsToClose.has(tagStack[index])) {
     ++index;
   }
 
   while (index <= tagStackCursor) {
-    callback('CLOSING_TAG', insertionIndex, insertionIndex);
+    callback('XML_CLOSING_TAG', insertionIndex, insertionIndex);
     --tagStackCursor;
-    ++index;
   }
 
   return tagStackCursor;
