@@ -79,11 +79,11 @@ export interface ParserOptions {
   /**
    * Renames an ICU select category.
    *
-   * @param selectType A type of the select ("plural", "selectordinal") processed with {@link renameSelectType}.
    * @param selectCategory A category to rename ("one", "many", "other", "=5").
+   * @param selectType A type of the select ("plural", "selectordinal") processed with {@link renameSelectType}.
    * @returns The new select category name.
    */
-  renameSelectCategory?: (selectType: string, selectCategory: string) => string;
+  renameSelectCategory?: (selectCategory: string, selectType: string) => string;
 
   /**
    * Decode text content before it is pushed to an MFML AST node. Use this method to decode HTML entities.
