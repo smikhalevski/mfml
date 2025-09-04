@@ -123,7 +123,7 @@ export function parseMessage(locale: string, text: string, options: ParserOption
         );
         break;
 
-      case 'XML_OPENING_TAG_NAME':
+      case 'START_TAG_NAME':
         (parentNode as ParentNode).childNodes = pushChild(
           parentNode,
           (parentNode as ParentNode).childNodes,
@@ -135,18 +135,18 @@ export function parseMessage(locale: string, text: string, options: ParserOption
         );
         break;
 
-      case 'XML_OPENING_TAG_END':
+      case 'START_TAG_CLOSING':
         break;
 
-      case 'XML_OPENING_TAG_SELF_CLOSE':
-      case 'XML_CLOSING_TAG_NAME':
-      case 'XML_ATTRIBUTE_END':
-      case 'ICU_ARGUMENT_END':
-      case 'ICU_CATEGORY_END':
+      case 'START_TAG_SELF_CLOSING':
+      case 'END_TAG_NAME':
+      case 'ATTRIBUTE_CLOSING':
+      case 'ARGUMENT_CLOSING':
+      case 'CATEGORY_CLOSING':
         parentNode = (parentNode as ElementNode | AttributeNode | ArgumentNode | CategoryNode).parentNode!;
         break;
 
-      case 'XML_ATTRIBUTE_NAME':
+      case 'ATTRIBUTE_NAME':
         (parentNode as ElementNode).attributeNodes = pushChild(
           parentNode,
           (parentNode as ElementNode).attributeNodes,
@@ -158,7 +158,7 @@ export function parseMessage(locale: string, text: string, options: ParserOption
         );
         break;
 
-      case 'ICU_ARGUMENT_NAME':
+      case 'ARGUMENT_NAME':
         (parentNode as ParentNode).childNodes = pushChild(
           parentNode,
           (parentNode as ParentNode).childNodes,
@@ -170,7 +170,7 @@ export function parseMessage(locale: string, text: string, options: ParserOption
         );
         break;
 
-      case 'ICU_ARGUMENT_TYPE':
+      case 'ARGUMENT_TYPE':
         ((parentNode as ArgumentNode).typeNode = setSourceLocation(
           createLiteralNode(text.substring(startIndex, endIndex)),
           startIndex,
@@ -178,7 +178,7 @@ export function parseMessage(locale: string, text: string, options: ParserOption
         )).parentNode = parentNode as ArgumentNode;
         break;
 
-      case 'ICU_ARGUMENT_STYLE':
+      case 'ARGUMENT_STYLE':
         ((parentNode as ArgumentNode).styleNode = setSourceLocation(
           createLiteralNode(text.substring(startIndex, endIndex)),
           startIndex,
@@ -186,7 +186,7 @@ export function parseMessage(locale: string, text: string, options: ParserOption
         )).parentNode = parentNode as ArgumentNode;
         break;
 
-      case 'ICU_CATEGORY_NAME':
+      case 'CATEGORY_NAME':
         (parentNode as ArgumentNode).categoryNodes = pushChild(
           parentNode,
           (parentNode as ArgumentNode).categoryNodes,
@@ -198,7 +198,7 @@ export function parseMessage(locale: string, text: string, options: ParserOption
         );
         break;
 
-      case 'ICU_OPTION_NAME':
+      case 'OPTION_NAME':
         (parentNode as ArgumentNode).optionNodes = pushChild(
           parentNode,
           (parentNode as ArgumentNode).optionNodes,
@@ -206,7 +206,7 @@ export function parseMessage(locale: string, text: string, options: ParserOption
         );
         break;
 
-      case 'ICU_OPTION_VALUE':
+      case 'OPTION_VALUE':
         parentNode = (((parentNode as OptionNode).valueNode = setSourceLocation(
           createLiteralNode(text.substring(startIndex, endIndex)),
           startIndex,
@@ -214,7 +214,7 @@ export function parseMessage(locale: string, text: string, options: ParserOption
         )).parentNode = parentNode as OptionNode).parentNode!;
         break;
 
-      case 'ICU_OCTOTHORPE':
+      case 'OCTOTHORPE':
         (parentNode as ParentNode).childNodes = pushChild(
           parentNode,
           (parentNode as ParentNode).childNodes,

@@ -36,21 +36,21 @@ ParserError.prototype.name = 'ParserError';
  */
 export type Token =
   | 'TEXT'
-  | 'XML_OPENING_TAG_NAME'
-  | 'XML_OPENING_TAG_END'
-  | 'XML_OPENING_TAG_SELF_CLOSE'
-  | 'XML_CLOSING_TAG_NAME'
-  | 'XML_ATTRIBUTE_NAME'
-  | 'XML_ATTRIBUTE_END'
-  | 'ICU_ARGUMENT_NAME'
-  | 'ICU_ARGUMENT_END'
-  | 'ICU_ARGUMENT_TYPE'
-  | 'ICU_ARGUMENT_STYLE'
-  | 'ICU_CATEGORY_NAME'
-  | 'ICU_CATEGORY_END'
-  | 'ICU_OPTION_NAME'
-  | 'ICU_OPTION_VALUE'
-  | 'ICU_OCTOTHORPE';
+  | 'START_TAG_NAME'
+  | 'START_TAG_CLOSING'
+  | 'START_TAG_SELF_CLOSING'
+  | 'END_TAG_NAME'
+  | 'ATTRIBUTE_NAME'
+  | 'ATTRIBUTE_CLOSING'
+  | 'ARGUMENT_NAME'
+  | 'ARGUMENT_CLOSING'
+  | 'ARGUMENT_TYPE'
+  | 'ARGUMENT_STYLE'
+  | 'CATEGORY_NAME'
+  | 'CATEGORY_CLOSING'
+  | 'OPTION_NAME'
+  | 'OPTION_VALUE'
+  | 'OCTOTHORPE';
 
 /**
  * A callback that is invoked when a token is read from a text.
@@ -112,10 +112,10 @@ export interface ResolvedTokenizerOptions {
   implicitlyClosedTags?: Map<number, Set<number>>;
 
   /**
-   * The list of tags for which an opening tag is inserted if an orphan closing tag is met. Otherwise,
+   * The list of tags for which a start tag is inserted if an orphan end tag is met. Otherwise,
    * a {@link ParserError} is thrown.
    *
-   * You can ignore orphan closing tags with {@link isOrphanClosingTagsIgnored}.
+   * You can ignore orphan end tags with {@link isOrphanEndTagsIgnored}.
    *
    * For example, in HTML `p` and `br` tags follow this semantics:
    * ```html
@@ -123,21 +123,21 @@ export interface ResolvedTokenizerOptions {
    * </br> → <br/>
    * ```
    *
-   * @see {@link isOrphanClosingTagsIgnored}
+   * @see {@link isOrphanEndTagsIgnored}
    */
   implicitlyOpenedTags?: Set<number>;
 
   /**
-   * If `true` then self-closing tags are recognized, otherwise they are treated as opening tags.
+   * If `true` then self-closing tags are recognized, otherwise they are treated as start tags.
    *
    * @default false
    */
   isSelfClosingTagsRecognized?: boolean;
 
   /**
-   * If `true` then unbalanced opening tags are forcefully closed. Otherwise, a {@link ParserError} is thrown.
+   * If `true` then unbalanced start tags are forcefully closed. Otherwise, a {@link ParserError} is thrown.
    *
-   * Use in conjunctions with {@link isOrphanClosingTagsIgnored}.
+   * Use in conjunctions with {@link isOrphanEndTagsIgnored}.
    *
    * ```html
    * <a><b></a></b> → <a><b></b></a></b>
@@ -148,7 +148,7 @@ export interface ResolvedTokenizerOptions {
   isUnbalancedTagsImplicitlyClosed?: boolean;
 
   /**
-   * If `true` then closing tags that dont have a corresponding closing tag are ignored. Otherwise,
+   * If `true` then end tags that dont have a corresponding start tag are ignored. Otherwise,
    * a {@link ParserError} is thrown.
    *
    * Use in conjunctions with {@link isUnbalancedTagsImplicitlyClosed}.
@@ -159,7 +159,7 @@ export interface ResolvedTokenizerOptions {
    *
    * @default false
    */
-  isOrphanClosingTagsIgnored?: boolean;
+  isOrphanEndTagsIgnored?: boolean;
 
   /**
    * If `true` then arguments are parsed inside {@link rawTextTags}.
@@ -195,7 +195,7 @@ export function tokenizeMessage(text: string, callback: TokenCallback, options: 
     implicitlyClosedTags,
     implicitlyOpenedTags,
     isUnbalancedTagsImplicitlyClosed = false,
-    isOrphanClosingTagsIgnored = false,
+    isOrphanEndTagsIgnored = false,
   } = options;
 
   const tagStack = [0, 0, 0, 0, 0, 0, 0, 0];
@@ -207,12 +207,12 @@ export function tokenizeMessage(text: string, callback: TokenCallback, options: 
     canEOF = false;
 
     switch (token) {
-      case TOKEN_XML_OPENING_TAG_NAME:
-        const openingTag = readTag(text, startIndex, endIndex);
+      case TOKEN_START_TAG_NAME:
+        const startTag = readTag(text, startIndex, endIndex);
 
         if (implicitlyClosedTags !== undefined) {
-          tagStackCursor = insertClosingTags(
-            implicitlyClosedTags.get(openingTag),
+          tagStackCursor = insertEndTags(
+            implicitlyClosedTags.get(startTag),
             tagStack,
             tagStackCursor,
             callback,
@@ -220,95 +220,95 @@ export function tokenizeMessage(text: string, callback: TokenCallback, options: 
           );
         }
 
-        callback(TOKEN_XML_OPENING_TAG_NAME, startIndex, endIndex);
-        tagStack[++tagStackCursor] = openingTag;
+        callback(TOKEN_START_TAG_NAME, startIndex, endIndex);
+        tagStack[++tagStackCursor] = startTag;
         break;
 
-      case TOKEN_XML_OPENING_TAG_END:
+      case TOKEN_START_TAG_CLOSING:
         canEOF = true;
 
-        callback(TOKEN_XML_OPENING_TAG_END, startIndex, endIndex);
+        callback(TOKEN_START_TAG_CLOSING, startIndex, endIndex);
 
         if (voidTags !== undefined && voidTags.has(tagStack[tagStackCursor])) {
-          callback(TOKEN_XML_CLOSING_TAG_NAME, endIndex, endIndex);
+          callback(TOKEN_END_TAG_NAME, endIndex, endIndex);
           --tagStackCursor;
         }
         break;
 
-      case TOKEN_XML_OPENING_TAG_SELF_CLOSE:
-        callback(TOKEN_XML_OPENING_TAG_SELF_CLOSE, startIndex, endIndex);
+      case TOKEN_START_TAG_SELF_CLOSING:
+        callback(TOKEN_START_TAG_SELF_CLOSING, startIndex, endIndex);
         --tagStackCursor;
         break;
 
-      case TOKEN_XML_CLOSING_TAG_NAME:
+      case TOKEN_END_TAG_NAME:
         canEOF = true;
 
-        const closingTag = readTag(text, startIndex, endIndex);
+        const endTag = readTag(text, startIndex, endIndex);
 
-        if (tagStackCursor !== -1 && tagStack[tagStackCursor] === closingTag) {
-          callback(TOKEN_XML_CLOSING_TAG_NAME, startIndex, endIndex);
+        if (tagStackCursor !== -1 && tagStack[tagStackCursor] === endTag) {
+          callback(TOKEN_END_TAG_NAME, startIndex, endIndex);
           --tagStackCursor;
           break;
         }
 
-        const closingTagStartIndex = startIndex - 2;
+        const endTagStartIndex = startIndex - 2;
 
         let index = tagStackCursor;
 
-        while (index !== -1 && tagStack[index] !== ISOLATED_BLOCK_MARKER && tagStack[index] !== closingTag) {
+        while (index !== -1 && tagStack[index] !== ISOLATED_BLOCK_MARKER && tagStack[index] !== endTag) {
           --index;
         }
 
-        // Found an opening tag
+        // Found a start tag
         if (index !== -1) {
           if (!isUnbalancedTagsImplicitlyClosed && index !== tagStackCursor) {
-            throw new ParserError('Missing closing tag.', text, closingTagStartIndex);
+            throw new ParserError('Missing end tag.', text, endTagStartIndex);
           }
-          // Insert unbalanced closing tags
+          // Insert unbalanced end tags
           while (index < tagStackCursor) {
-            callback(TOKEN_XML_CLOSING_TAG_NAME, closingTagStartIndex, closingTagStartIndex);
+            callback(TOKEN_END_TAG_NAME, endTagStartIndex, endTagStartIndex);
             --tagStackCursor;
           }
 
-          callback(TOKEN_XML_CLOSING_TAG_NAME, startIndex, endIndex);
+          callback(TOKEN_END_TAG_NAME, startIndex, endIndex);
           --tagStackCursor;
           break;
         }
 
-        if (implicitlyOpenedTags === undefined || !implicitlyOpenedTags.has(closingTag)) {
-          if (!isOrphanClosingTagsIgnored) {
-            throw new ParserError('Orphan closing tag.', text, startIndex, endIndex);
+        if (implicitlyOpenedTags === undefined || !implicitlyOpenedTags.has(endTag)) {
+          if (!isOrphanEndTagsIgnored) {
+            throw new ParserError('Orphan end tag.', text, startIndex, endIndex);
           }
           break;
         }
 
         if (implicitlyClosedTags !== undefined) {
-          tagStackCursor = insertClosingTags(
-            implicitlyClosedTags.get(closingTag),
+          tagStackCursor = insertEndTags(
+            implicitlyClosedTags.get(endTag),
             tagStack,
             tagStackCursor,
             callback,
-            closingTagStartIndex
+            endTagStartIndex
           );
         }
 
-        callback(TOKEN_XML_OPENING_TAG_NAME, startIndex, endIndex);
-        callback(TOKEN_XML_OPENING_TAG_END, endIndex, endIndex + 1);
-        callback(TOKEN_XML_CLOSING_TAG_NAME, startIndex, endIndex);
+        callback(TOKEN_START_TAG_NAME, startIndex, endIndex);
+        callback(TOKEN_START_TAG_CLOSING, endIndex, endIndex + 1);
+        callback(TOKEN_END_TAG_NAME, startIndex, endIndex);
         break;
 
-      case TOKEN_ICU_CATEGORY_NAME:
+      case TOKEN_CATEGORY_NAME:
         callback(token, startIndex, endIndex);
         tagStack[++tagStackCursor] = ISOLATED_BLOCK_MARKER;
         break;
 
-      case TOKEN_ICU_CATEGORY_END:
+      case TOKEN_CATEGORY_CLOSING:
         callback(token, startIndex, endIndex);
         --tagStackCursor;
         break;
 
       case TOKEN_TEXT:
-      case TOKEN_ICU_ARGUMENT_END:
+      case TOKEN_ARGUMENT_CLOSING:
         canEOF = true;
 
         callback(token, startIndex, endIndex);
@@ -331,17 +331,17 @@ export function tokenizeMessage(text: string, callback: TokenCallback, options: 
   }
 
   if (!isUnbalancedTagsImplicitlyClosed) {
-    throw new ParserError('Missing closing tag.', text, text.length);
+    throw new ParserError('Missing end tag.', text, text.length);
   }
 
   while (tagStackCursor !== -1) {
-    callback(TOKEN_XML_CLOSING_TAG_NAME, text.length, text.length);
+    callback(TOKEN_END_TAG_NAME, text.length, text.length);
 
     --tagStackCursor;
   }
 }
 
-function insertClosingTags(
+function insertEndTags(
   tagsToClose: Set<number> | undefined,
   tagStack: number[],
   tagStackCursor: number,
@@ -363,7 +363,7 @@ function insertClosingTags(
   }
 
   while (index <= tagStackCursor) {
-    callback(TOKEN_XML_CLOSING_TAG_NAME, insertionIndex, insertionIndex);
+    callback(TOKEN_END_TAG_NAME, insertionIndex, insertionIndex);
     --tagStackCursor;
   }
 
@@ -373,30 +373,30 @@ function insertClosingTags(
 const ISOLATED_BLOCK_MARKER = -1;
 
 const SCOPE_TEXT = 0;
-const SCOPE_XML_OPENING_TAG = 1;
-const SCOPE_XML_ATTRIBUTE = 2;
-const SCOPE_XML_DOUBLE_QUOTED_ATTRIBUTE_VALUE = 3;
-const SCOPE_XML_SINGLE_QUOTED_ATTRIBUTE_VALUE = 4;
-const SCOPE_XML_UNQUOTED_ATTRIBUTE_VALUE = 5;
-const SCOPE_ICU_ARGUMENT = 6;
-const SCOPE_ICU_CATEGORY = 7;
+const SCOPE_START_TAG = 1;
+const SCOPE_ATTRIBUTE = 2;
+const SCOPE_DOUBLE_QUOTED_ATTRIBUTE_VALUE = 3;
+const SCOPE_SINGLE_QUOTED_ATTRIBUTE_VALUE = 4;
+const SCOPE_UNQUOTED_ATTRIBUTE_VALUE = 5;
+const SCOPE_ARGUMENT = 6;
+const SCOPE_CATEGORY = 7;
 
 const TOKEN_TEXT = 'TEXT';
-const TOKEN_XML_OPENING_TAG_NAME = 'XML_OPENING_TAG_NAME';
-const TOKEN_XML_OPENING_TAG_END = 'XML_OPENING_TAG_END';
-const TOKEN_XML_OPENING_TAG_SELF_CLOSE = 'XML_OPENING_TAG_SELF_CLOSE';
-const TOKEN_XML_CLOSING_TAG_NAME = 'XML_CLOSING_TAG_NAME';
-const TOKEN_XML_ATTRIBUTE_NAME = 'XML_ATTRIBUTE_NAME';
-const TOKEN_XML_ATTRIBUTE_END = 'XML_ATTRIBUTE_END';
-const TOKEN_ICU_ARGUMENT_NAME = 'ICU_ARGUMENT_NAME';
-const TOKEN_ICU_ARGUMENT_END = 'ICU_ARGUMENT_END';
-const TOKEN_ICU_ARGUMENT_TYPE = 'ICU_ARGUMENT_TYPE';
-const TOKEN_ICU_ARGUMENT_STYLE = 'ICU_ARGUMENT_STYLE';
-const TOKEN_ICU_CATEGORY_NAME = 'ICU_CATEGORY_NAME';
-const TOKEN_ICU_CATEGORY_END = 'ICU_CATEGORY_END';
-const TOKEN_ICU_OPTION_NAME = 'ICU_OPTION_NAME';
-const TOKEN_ICU_OPTION_VALUE = 'ICU_OPTION_VALUE';
-const TOKEN_ICU_OCTOTHORPE = 'ICU_OCTOTHORPE';
+const TOKEN_START_TAG_NAME = 'START_TAG_NAME';
+const TOKEN_START_TAG_CLOSING = 'START_TAG_CLOSING';
+const TOKEN_START_TAG_SELF_CLOSING = 'START_TAG_SELF_CLOSING';
+const TOKEN_END_TAG_NAME = 'END_TAG_NAME';
+const TOKEN_ATTRIBUTE_NAME = 'ATTRIBUTE_NAME';
+const TOKEN_ATTRIBUTE_CLOSING = 'ATTRIBUTE_CLOSING';
+const TOKEN_ARGUMENT_NAME = 'ARGUMENT_NAME';
+const TOKEN_ARGUMENT_CLOSING = 'ARGUMENT_CLOSING';
+const TOKEN_ARGUMENT_TYPE = 'ARGUMENT_TYPE';
+const TOKEN_ARGUMENT_STYLE = 'ARGUMENT_STYLE';
+const TOKEN_CATEGORY_NAME = 'CATEGORY_NAME';
+const TOKEN_CATEGORY_CLOSING = 'CATEGORY_CLOSING';
+const TOKEN_OPTION_NAME = 'OPTION_NAME';
+const TOKEN_OPTION_VALUE = 'OPTION_VALUE';
+const TOKEN_OCTOTHORPE = 'OCTOTHORPE';
 
 export interface TokenReaderOptions {
   readTag?: (text: string, startIndex: number, endIndex: number) => number;
@@ -431,10 +431,10 @@ export function readTokens(text: string, callback: TokenCallback, options: Token
 
     // End of a quoted attribute value
     if (
-      (charCode === /* " */ 34 && scopeStack.lastIndexOf(SCOPE_XML_DOUBLE_QUOTED_ATTRIBUTE_VALUE) !== -1) ||
-      (charCode === /* ' */ 39 && scopeStack.lastIndexOf(SCOPE_XML_SINGLE_QUOTED_ATTRIBUTE_VALUE) !== -1)
+      (charCode === /* " */ 34 && scopeStack.lastIndexOf(SCOPE_DOUBLE_QUOTED_ATTRIBUTE_VALUE) !== -1) ||
+      (charCode === /* ' */ 39 && scopeStack.lastIndexOf(SCOPE_SINGLE_QUOTED_ATTRIBUTE_VALUE) !== -1)
     ) {
-      if (scopeStack.lastIndexOf(SCOPE_ICU_ARGUMENT) !== -1) {
+      if (scopeStack.lastIndexOf(SCOPE_ARGUMENT) !== -1) {
         throw new ParserError('Unterminated argument.', text, index);
       }
 
@@ -444,7 +444,7 @@ export function readTokens(text: string, callback: TokenCallback, options: Token
 
       ++nextIndex;
 
-      callback(TOKEN_XML_ATTRIBUTE_END, index, nextIndex);
+      callback(TOKEN_ATTRIBUTE_CLOSING, index, nextIndex);
 
       scopeStack[scopeStackCursor] = 0;
       scope = scopeStack[--scopeStackCursor];
@@ -454,14 +454,14 @@ export function readTokens(text: string, callback: TokenCallback, options: Token
 
     // End of an unquoted attribute value
     if (
-      scope === SCOPE_XML_UNQUOTED_ATTRIBUTE_VALUE &&
+      scope === SCOPE_UNQUOTED_ATTRIBUTE_VALUE &&
       (charCode === /* / */ 47 || charCode === /* > */ 62 || isSpaceChar(charCode))
     ) {
       if (textStartIndex !== index) {
         callback(TOKEN_TEXT, textStartIndex, index);
       }
 
-      callback(TOKEN_XML_ATTRIBUTE_END, index, index);
+      callback(TOKEN_ATTRIBUTE_CLOSING, index, index);
 
       scopeStack[scopeStackCursor] = 0;
       scope = scopeStack[--scopeStackCursor];
@@ -473,10 +473,10 @@ export function readTokens(text: string, callback: TokenCallback, options: Token
     if (
       charCode === /* < */ 60 &&
       (scope === SCOPE_TEXT ||
-        (scope === SCOPE_ICU_CATEGORY &&
+        (scope === SCOPE_CATEGORY &&
           // Tags are ignored inside attributes
-          scopeStack.lastIndexOf(SCOPE_XML_DOUBLE_QUOTED_ATTRIBUTE_VALUE) === -1 &&
-          scopeStack.lastIndexOf(SCOPE_XML_SINGLE_QUOTED_ATTRIBUTE_VALUE) === -1))
+          scopeStack.lastIndexOf(SCOPE_DOUBLE_QUOTED_ATTRIBUTE_VALUE) === -1 &&
+          scopeStack.lastIndexOf(SCOPE_SINGLE_QUOTED_ATTRIBUTE_VALUE) === -1))
     ) {
       // Skip "<"
       let tagNameStartIndex = ++nextIndex;
@@ -510,7 +510,7 @@ export function readTokens(text: string, callback: TokenCallback, options: Token
         continue;
       }
 
-      // Closing tag
+      // End tag
       if (nextCharCode === /* / */ 47) {
         // Skip "/"
         tagNameStartIndex = ++nextIndex;
@@ -532,13 +532,13 @@ export function readTokens(text: string, callback: TokenCallback, options: Token
           callback(TOKEN_TEXT, textStartIndex, index);
         }
 
-        callback(TOKEN_XML_CLOSING_TAG_NAME, tagNameStartIndex, nextIndex);
+        callback(TOKEN_END_TAG_NAME, tagNameStartIndex, nextIndex);
 
         // Skip unparsable characters after the tag name
         nextIndex = text.indexOf('>', nextIndex);
 
         if (nextIndex === -1) {
-          // Unterminated closing tag
+          // Unterminated end tag
           textStartIndex = nextIndex = text.length;
           continue;
         }
@@ -548,10 +548,10 @@ export function readTokens(text: string, callback: TokenCallback, options: Token
         continue;
       }
 
-      // Start of an opening tag
+      // Start tag
 
       if (latestRawTextTag !== 0) {
-        // Opening tags are ignored inside raw text tags
+        // Start tags are ignored inside raw text tags
         ++nextIndex;
         continue;
       }
@@ -559,7 +559,7 @@ export function readTokens(text: string, callback: TokenCallback, options: Token
       nextIndex = readXMLName(text, nextIndex);
 
       if (tagNameStartIndex === nextIndex) {
-        // No opening tag name, ignore "<"
+        // No start tag name, ignore "<"
         continue;
       }
 
@@ -567,7 +567,7 @@ export function readTokens(text: string, callback: TokenCallback, options: Token
         callback(TOKEN_TEXT, textStartIndex, index);
       }
 
-      callback(TOKEN_XML_OPENING_TAG_NAME, tagNameStartIndex, nextIndex);
+      callback(TOKEN_START_TAG_NAME, tagNameStartIndex, nextIndex);
 
       if (
         rawTextTags === undefined ||
@@ -576,17 +576,17 @@ export function readTokens(text: string, callback: TokenCallback, options: Token
         openedRawTextTag = 0;
       }
 
-      scope = scopeStack[++scopeStackCursor] = SCOPE_XML_OPENING_TAG;
+      scope = scopeStack[++scopeStackCursor] = SCOPE_START_TAG;
       nextIndex = skipSpaces(text, nextIndex);
       textStartIndex = nextIndex;
       continue;
     }
 
-    // End of an opening XML tag
-    if (charCode === /* > */ 62 && scope === SCOPE_XML_OPENING_TAG) {
+    // End of a start tag
+    if (charCode === /* > */ 62 && scope === SCOPE_START_TAG) {
       ++nextIndex;
 
-      callback(TOKEN_XML_OPENING_TAG_END, index, nextIndex);
+      callback(TOKEN_START_TAG_CLOSING, index, nextIndex);
 
       // Start of a raw text tag content
       latestRawTextTag = openedRawTextTag;
@@ -597,16 +597,16 @@ export function readTokens(text: string, callback: TokenCallback, options: Token
       continue;
     }
 
-    // Self-closing XML tag
+    // Self-closing tag
     if (
       isSelfClosingTagsRecognized &&
       charCode === /* / */ 47 &&
-      scope === SCOPE_XML_OPENING_TAG &&
+      scope === SCOPE_START_TAG &&
       getCharCodeAt(text, index + 1) === /* > */ 62
     ) {
       nextIndex += 2;
 
-      callback(TOKEN_XML_OPENING_TAG_SELF_CLOSE, index, nextIndex);
+      callback(TOKEN_START_TAG_SELF_CLOSING, index, nextIndex);
 
       scopeStack[scopeStackCursor] = 0;
       scope = scopeStack[--scopeStackCursor];
@@ -614,25 +614,25 @@ export function readTokens(text: string, callback: TokenCallback, options: Token
       continue;
     }
 
-    // Treat "/" as space in XML opening tag
-    if (charCode === /* / */ 47 && scope === SCOPE_XML_OPENING_TAG) {
+    // Treat "/" as space in start tag
+    if (charCode === /* / */ 47 && scope === SCOPE_START_TAG) {
       ++nextIndex;
       continue;
     }
 
     // Start of an attribute
-    if (scope === SCOPE_XML_OPENING_TAG && isXMLAttributeNameChar(charCode)) {
+    if (scope === SCOPE_START_TAG && isXMLAttributeNameChar(charCode)) {
       nextIndex = readChars(text, index + 1, isXMLAttributeNameChar);
 
-      callback(TOKEN_XML_ATTRIBUTE_NAME, index, nextIndex);
+      callback(TOKEN_ATTRIBUTE_NAME, index, nextIndex);
 
-      scope = scopeStack[++scopeStackCursor] = SCOPE_XML_ATTRIBUTE;
+      scope = scopeStack[++scopeStackCursor] = SCOPE_ATTRIBUTE;
 
       nextIndex = skipSpaces(text, nextIndex);
 
       if (getCharCodeAt(text, nextIndex) !== /* = */ 61) {
         // No attribute value
-        callback(TOKEN_XML_ATTRIBUTE_END, nextIndex, nextIndex);
+        callback(TOKEN_ATTRIBUTE_CLOSING, nextIndex, nextIndex);
         scopeStack[scopeStackCursor] = 0;
         scope = scopeStack[--scopeStackCursor];
         continue;
@@ -644,20 +644,20 @@ export function readTokens(text: string, callback: TokenCallback, options: Token
 
       if (quoteCharCode === /* " */ 34) {
         // Double-quoted value
-        scope = scopeStack[scopeStackCursor] = SCOPE_XML_DOUBLE_QUOTED_ATTRIBUTE_VALUE;
+        scope = scopeStack[scopeStackCursor] = SCOPE_DOUBLE_QUOTED_ATTRIBUTE_VALUE;
         textStartIndex = ++nextIndex;
         continue;
       }
 
       if (quoteCharCode === /* ' */ 39) {
         // Single-quoted value
-        scope = scopeStack[scopeStackCursor] = SCOPE_XML_SINGLE_QUOTED_ATTRIBUTE_VALUE;
+        scope = scopeStack[scopeStackCursor] = SCOPE_SINGLE_QUOTED_ATTRIBUTE_VALUE;
         textStartIndex = ++nextIndex;
         continue;
       }
 
       // Unquoted value
-      scope = scopeStack[scopeStackCursor] = SCOPE_XML_UNQUOTED_ATTRIBUTE_VALUE;
+      scope = scopeStack[scopeStackCursor] = SCOPE_UNQUOTED_ATTRIBUTE_VALUE;
       textStartIndex = nextIndex;
       continue;
     }
@@ -672,9 +672,9 @@ export function readTokens(text: string, callback: TokenCallback, options: Token
     if (
       charCode === /* { */ 123 &&
       (scope === SCOPE_TEXT ||
-        scope === SCOPE_XML_DOUBLE_QUOTED_ATTRIBUTE_VALUE ||
-        scope === SCOPE_XML_SINGLE_QUOTED_ATTRIBUTE_VALUE ||
-        scope === SCOPE_ICU_CATEGORY)
+        scope === SCOPE_DOUBLE_QUOTED_ATTRIBUTE_VALUE ||
+        scope === SCOPE_SINGLE_QUOTED_ATTRIBUTE_VALUE ||
+        scope === SCOPE_CATEGORY)
     ) {
       if (textStartIndex !== index) {
         callback(TOKEN_TEXT, textStartIndex, index);
@@ -690,13 +690,13 @@ export function readTokens(text: string, callback: TokenCallback, options: Token
         throw new ParserError('An argument name cannot be empty.', text, nextIndex);
       }
 
-      callback(TOKEN_ICU_ARGUMENT_NAME, argumentNameStartIndex, nextIndex);
+      callback(TOKEN_ARGUMENT_NAME, argumentNameStartIndex, nextIndex);
 
       nextIndex = skipSpaces(text, nextIndex);
 
       // End of an argument
       if (getCharCodeAt(text, nextIndex) === /* } */ 125) {
-        callback(TOKEN_ICU_ARGUMENT_END, nextIndex, ++nextIndex);
+        callback(TOKEN_ARGUMENT_CLOSING, nextIndex, ++nextIndex);
         textStartIndex = nextIndex;
         continue;
       }
@@ -725,18 +725,18 @@ export function readTokens(text: string, callback: TokenCallback, options: Token
         }
 
         // End of an argument
-        callback(TOKEN_ICU_ARGUMENT_END, nextIndex, ++nextIndex);
+        callback(TOKEN_ARGUMENT_CLOSING, nextIndex, ++nextIndex);
         textStartIndex = nextIndex;
         continue;
       }
 
-      callback(TOKEN_ICU_ARGUMENT_TYPE, argumentTypeStartIndex, nextIndex);
+      callback(TOKEN_ARGUMENT_TYPE, argumentTypeStartIndex, nextIndex);
 
       nextIndex = skipSpaces(text, nextIndex);
 
       // End of an argument and type
       if (getCharCodeAt(text, nextIndex) === /* } */ 125) {
-        callback(TOKEN_ICU_ARGUMENT_END, nextIndex, ++nextIndex);
+        callback(TOKEN_ARGUMENT_CLOSING, nextIndex, ++nextIndex);
         textStartIndex = nextIndex;
         continue;
       }
@@ -765,7 +765,7 @@ export function readTokens(text: string, callback: TokenCallback, options: Token
         }
 
         // End of an argument and type
-        callback(TOKEN_ICU_ARGUMENT_END, nextIndex, ++nextIndex);
+        callback(TOKEN_ARGUMENT_CLOSING, nextIndex, ++nextIndex);
         textStartIndex = nextIndex;
         continue;
       }
@@ -776,23 +776,23 @@ export function readTokens(text: string, callback: TokenCallback, options: Token
 
       // End of an argument, type, and style
       if (getCharCodeAt(text, nextIndex) === /* } */ 125) {
-        callback(TOKEN_ICU_ARGUMENT_STYLE, argumentStyleStartIndex, argumentStyleEndIndex);
-        callback(TOKEN_ICU_ARGUMENT_END, nextIndex, ++nextIndex);
+        callback(TOKEN_ARGUMENT_STYLE, argumentStyleStartIndex, argumentStyleEndIndex);
+        callback(TOKEN_ARGUMENT_CLOSING, nextIndex, ++nextIndex);
 
         textStartIndex = nextIndex;
         continue;
       }
 
       // Revert to reading category name and option name in a loop
-      scope = scopeStack[++scopeStackCursor] = SCOPE_ICU_ARGUMENT;
+      scope = scopeStack[++scopeStackCursor] = SCOPE_ARGUMENT;
 
       textStartIndex = nextIndex = argumentStyleStartIndex;
       continue;
     }
 
     // End of an argument
-    if (charCode === /* } */ 125 && scope === SCOPE_ICU_ARGUMENT) {
-      callback(TOKEN_ICU_ARGUMENT_END, nextIndex, ++nextIndex);
+    if (charCode === /* } */ 125 && scope === SCOPE_ARGUMENT) {
+      callback(TOKEN_ARGUMENT_CLOSING, nextIndex, ++nextIndex);
       scopeStack[scopeStackCursor] = 0;
       scope = scopeStack[--scopeStackCursor];
       textStartIndex = nextIndex;
@@ -800,12 +800,12 @@ export function readTokens(text: string, callback: TokenCallback, options: Token
     }
 
     // End of an category
-    if (charCode === /* } */ 125 && scope === SCOPE_ICU_CATEGORY) {
+    if (charCode === /* } */ 125 && scope === SCOPE_CATEGORY) {
       if (textStartIndex !== index) {
         callback(TOKEN_TEXT, textStartIndex, index);
       }
 
-      callback(TOKEN_ICU_CATEGORY_END, nextIndex, ++nextIndex);
+      callback(TOKEN_CATEGORY_CLOSING, nextIndex, ++nextIndex);
 
       scopeStack[scopeStackCursor] = 0;
       scope = scopeStack[--scopeStackCursor];
@@ -814,19 +814,19 @@ export function readTokens(text: string, callback: TokenCallback, options: Token
     }
 
     // An octothorpe
-    if (charCode === /* # */ 35 && scopeStack.lastIndexOf(SCOPE_ICU_CATEGORY) !== -1) {
+    if (charCode === /* # */ 35 && scopeStack.lastIndexOf(SCOPE_CATEGORY) !== -1) {
       if (textStartIndex !== index) {
         callback(TOKEN_TEXT, textStartIndex, index);
       }
 
       textStartIndex = ++nextIndex;
 
-      callback(TOKEN_ICU_OCTOTHORPE, index, nextIndex);
+      callback(TOKEN_OCTOTHORPE, index, nextIndex);
       continue;
     }
 
     // An category name or option
-    if (scope === SCOPE_ICU_ARGUMENT) {
+    if (scope === SCOPE_ARGUMENT) {
       if (!isICUNameChar(charCode)) {
         throw new ParserError('Expected an category name or option name.', text, nextIndex);
       }
@@ -839,9 +839,9 @@ export function readTokens(text: string, callback: TokenCallback, options: Token
 
       // Start of an category
       if (getCharCodeAt(text, nextIndex) === /* { */ 123) {
-        callback(TOKEN_ICU_CATEGORY_NAME, index, optionNameEndIndex);
+        callback(TOKEN_CATEGORY_NAME, index, optionNameEndIndex);
 
-        scope = scopeStack[++scopeStackCursor] = SCOPE_ICU_CATEGORY;
+        scope = scopeStack[++scopeStackCursor] = SCOPE_CATEGORY;
         textStartIndex = ++nextIndex;
         continue;
       }
@@ -855,7 +855,7 @@ export function readTokens(text: string, callback: TokenCallback, options: Token
       }
 
       // An option
-      callback(TOKEN_ICU_OPTION_NAME, index, optionNameEndIndex);
+      callback(TOKEN_OPTION_NAME, index, optionNameEndIndex);
 
       // Skip spaces after "="
       nextIndex = skipSpaces(text, nextIndex + 1);
@@ -870,8 +870,8 @@ export function readTokens(text: string, callback: TokenCallback, options: Token
         optionValueEndIndex = readChars(text, optionValueStartIndex, isICUNameChar);
         nextIndex = optionValueEndIndex;
       } else if (
-        (quoteCharCode !== /* " */ 34 || scopeStack.lastIndexOf(SCOPE_XML_DOUBLE_QUOTED_ATTRIBUTE_VALUE) === -1) &&
-        (quoteCharCode !== /* ' */ 39 || scopeStack.lastIndexOf(SCOPE_XML_SINGLE_QUOTED_ATTRIBUTE_VALUE) === -1)
+        (quoteCharCode !== /* " */ 34 || scopeStack.lastIndexOf(SCOPE_DOUBLE_QUOTED_ATTRIBUTE_VALUE) === -1) &&
+        (quoteCharCode !== /* ' */ 39 || scopeStack.lastIndexOf(SCOPE_SINGLE_QUOTED_ATTRIBUTE_VALUE) === -1)
       ) {
         // Double or single quoted option value
         optionValueEndIndex = text.indexOf(String.fromCharCode(quoteCharCode), ++optionValueStartIndex);
@@ -882,7 +882,7 @@ export function readTokens(text: string, callback: TokenCallback, options: Token
         throw new ParserError('Unterminated argument.', text, optionValueStartIndex);
       }
 
-      callback(TOKEN_ICU_OPTION_VALUE, optionValueStartIndex, optionValueEndIndex);
+      callback(TOKEN_OPTION_VALUE, optionValueStartIndex, optionValueEndIndex);
 
       // Skip spaces after option value
       textStartIndex = nextIndex = skipSpaces(text, nextIndex);

@@ -49,10 +49,10 @@ export interface TokenizerOptions {
   implicitlyClosedTags?: Record<string, readonly string[]>;
 
   /**
-   * The list of tags for which an opening tag is inserted if an orphan closing tag is met. Otherwise,
+   * The list of tags for which a start tag is inserted if an orphan end tag is met. Otherwise,
    * a {@link ParserError} is thrown.
    *
-   * You can ignore orphan closing tags with {@link isOrphanClosingTagsIgnored}.
+   * You can ignore orphan end tags with {@link isOrphanEndTagsIgnored}.
    *
    * For example, in HTML `p` and `br` tags follow this semantics:
    * ```html
@@ -65,7 +65,7 @@ export interface TokenizerOptions {
    * ['p', 'br']
    * ```
    *
-   * @see {@link isOrphanClosingTagsIgnored}
+   * @see {@link isOrphanEndTagsIgnored}
    */
   implicitlyOpenedTags?: readonly string[];
 
@@ -77,16 +77,16 @@ export interface TokenizerOptions {
   isCaseInsensitiveTags?: boolean;
 
   /**
-   * If `true` then self-closing tags are recognized, otherwise they are treated as opening tags.
+   * If `true` then self-closing tags are recognized, otherwise they are treated as start tags.
    *
    * @default false
    */
   isSelfClosingTagsRecognized?: boolean;
 
   /**
-   * If `true` then unbalanced opening tags are forcefully closed. Otherwise, a {@link ParserError} is thrown.
+   * If `true` then unbalanced start tags are forcefully closed. Otherwise, a {@link ParserError} is thrown.
    *
-   * Use in conjunctions with {@link isOrphanClosingTagsIgnored}.
+   * Use in conjunctions with {@link isOrphanEndTagsIgnored}.
    *
    * ```html
    * <a><b></a></b> → <a><b></b></a></b>
@@ -97,7 +97,7 @@ export interface TokenizerOptions {
   isUnbalancedTagsImplicitlyClosed?: boolean;
 
   /**
-   * If `true` then closing tags that dont have a corresponding closing tag are ignored. Otherwise,
+   * If `true` then end tags that dont have a corresponding start tag are ignored. Otherwise,
    * a {@link ParserError} is thrown.
    *
    * Use in conjunctions with {@link isUnbalancedTagsImplicitlyClosed}.
@@ -108,7 +108,7 @@ export interface TokenizerOptions {
    *
    * @default false
    */
-  isOrphanClosingTagsIgnored?: boolean;
+  isOrphanEndTagsIgnored?: boolean;
 
   /**
    * If `true` then arguments are parsed inside {@link rawTextTags}.
@@ -177,7 +177,7 @@ export function resolveTokenizerOptions(options: TokenizerOptions): ResolvedToke
     isCaseInsensitiveTags,
     isSelfClosingTagsRecognized,
     isUnbalancedTagsImplicitlyClosed,
-    isOrphanClosingTagsIgnored,
+    isOrphanEndTagsIgnored,
     isRawTextInterpolated,
   } = options;
 
@@ -197,7 +197,7 @@ export function resolveTokenizerOptions(options: TokenizerOptions): ResolvedToke
     implicitlyOpenedTags: implicitlyOpenedTags && new Set(implicitlyOpenedTags.map(toHashCode)),
     isSelfClosingTagsRecognized,
     isUnbalancedTagsImplicitlyClosed,
-    isOrphanClosingTagsIgnored,
+    isOrphanEndTagsIgnored,
     isRawTextInterpolated,
   };
 }

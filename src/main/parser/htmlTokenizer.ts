@@ -93,7 +93,7 @@ export const htmlTokenizerOptions: TokenizerOptions = {
   isCaseInsensitiveTags: true,
   isSelfClosingTagsRecognized: false,
   isUnbalancedTagsImplicitlyClosed: true,
-  isOrphanClosingTagsIgnored: true,
+  isOrphanEndTagsIgnored: true,
   isRawTextInterpolated: true,
 };
 
