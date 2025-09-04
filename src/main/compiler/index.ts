@@ -11,7 +11,7 @@ export {
   type CompilerOptions,
   type Preprocessor,
   type Postprocessor,
-  type PreprocessorOptions,
-  type PostprocessorOptions,
+  type PreprocessorParams,
+  type PostprocessorParams,
 } from './createCompiler.js';
 export { defineConfig, type Config, type ResolvedConfig } from './defineConfig.js';

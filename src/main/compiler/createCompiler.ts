@@ -23,7 +23,7 @@ export class CompilerError extends Error {
 /**
  * Options provided to the {@link Preprocessor} by the {@link Compiler}.
  */
-export interface PreprocessorOptions {
+export interface PreprocessorParams {
   /**
    * The message text.
    */
@@ -43,7 +43,7 @@ export interface PreprocessorOptions {
 /**
  * Options provided to the {@link Postprocessor} by the {@link Compiler}.
  */
-export interface PostprocessorOptions {
+export interface PostprocessorParams {
   /**
    * The message text.
    */
@@ -68,18 +68,18 @@ export interface PostprocessorOptions {
 /**
  * Preprocessor that is run before the message text parsing begins.
  *
- * @param options Preprocessor options.
+ * @param params Preprocessor params.
  * @returns The transformed message text.
  */
-export type Preprocessor = (options: PreprocessorOptions) => Promise<string> | string;
+export type Preprocessor = (params: PreprocessorParams) => Promise<string> | string;
 
 /**
  * Preprocessor that is run after the message text parsing.
  *
- * @param options Postprocessor options.
+ * @param params Postprocessor params.
  * @returns The transformed message node.
  */
-export type Postprocessor = (options: PostprocessorOptions) => Promise<MessageNode<any>> | MessageNode<any>;
+export type Postprocessor = (params: PostprocessorParams) => Promise<MessageNode> | MessageNode;
 
 /**
  * Options of {@link createCompiler}.
