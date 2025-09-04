@@ -50,47 +50,71 @@ export function truncateMessage(text: string, charCount = 300, ellipsis = '…')
   return text;
 }
 
-export function collectArgumentNames(node: MessageNode | Child | Child[], argumentNames: Set<string>): void {
+export function collectArgumentTsTypes(
+  node: MessageNode | Child | Child[],
+  getArgumentTsType: (argumentType: string | undefined, argumentName: string) => string | undefined,
+  argumentTypes: Map<string, Set<string>>
+): void {
   if (typeof node === 'string') {
     return;
   }
 
   if (Array.isArray(node)) {
     for (const child of node) {
-      collectArgumentNames(child, argumentNames);
+      collectArgumentTsTypes(child, getArgumentTsType, argumentTypes);
     }
     return;
   }
 
   if (node.nodeType === 'message') {
-    collectArgumentNames(node.children, argumentNames);
+    collectArgumentTsTypes(node.children, getArgumentTsType, argumentTypes);
     return;
   }
 
   if (node.nodeType === 'element') {
     if (node.attributes !== null) {
       for (const key in node.attributes) {
-        collectArgumentNames(node.attributes[key], argumentNames);
+        collectArgumentTsTypes(node.attributes[key], getArgumentTsType, argumentTypes);
       }
     }
+
     if (node.children !== null) {
-      collectArgumentNames(node.children, argumentNames);
+      collectArgumentTsTypes(node.children, getArgumentTsType, argumentTypes);
     }
     return;
   }
 
   if (node.nodeType === 'select') {
-    argumentNames.add(node.argumentName);
+    addArgumentTsType(argumentTypes, node.argumentName, getArgumentTsType(node.type, node.argumentName));
 
     for (const key in node.categories) {
-      collectArgumentNames(node.categories[key], argumentNames);
+      collectArgumentTsTypes(node.categories[key], getArgumentTsType, argumentTypes);
     }
     return;
   }
 
   if (node.nodeType === 'argument') {
-    argumentNames.add(node.name);
+    addArgumentTsType(argumentTypes, node.name, getArgumentTsType(node.type, node.name));
   }
+}
+
+function addArgumentTsType(
+  argumentTsTypes: Map<string, Set<string | undefined>>,
+  argumentName: string,
+  tsType: string | undefined
+) {
+  let tsTypes = argumentTsTypes.get(argumentName);
+
+  if (tsTypes === undefined) {
+    tsTypes = new Set();
+    argumentTsTypes.set(argumentName, tsTypes);
+  }
+
+  if (tsType === undefined || tsType === null || tsType === '') {
+    return;
+  }
+
+  tsTypes.add(tsType);
 }
 
 export function escapeJsIdentifier(str: string): string {

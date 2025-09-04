@@ -1,7 +1,7 @@
 import { Child, MessageNode } from '../ast.js';
 import { Parser } from '../parser/index.js';
 import {
-  collectArgumentNames,
+  collectArgumentTsTypes,
   escapeJsIdentifier,
   formatJSDocComment,
   formatMarkdownBold,
@@ -41,6 +41,26 @@ export interface CompilerOptions {
    * By default, an escaped message key is used as a function name.
    */
   renameMessageFunction?: (messageKey: string) => string;
+
+  /**
+   * Returns the TypeScript type for a given ICU argument type.
+   *
+   * @example
+   * (argumentType, argumentName) => {
+   *   if (argumentType === 'number') {
+   *     return 'number|bigint';
+   *   }
+   *   if (argumentType === 'date') {
+   *     return 'number|Date';
+   *   }
+   *   return 'unknown';
+   * };
+   *
+   * @param argumentType The {@link ParserOptions.renameArgumentType renamed type} of an argument, or `undefined` for
+   * an argument that does not have a type.
+   * @param argumentName The {@link ParserOptions.renameArgument renamed argument}.
+   */
+  getArgumentTsType?: (argumentType: string | undefined, argumentName: string) => string | undefined;
 }
 
 /**
@@ -106,7 +126,13 @@ export async function compileFiles(
   messages: { [locale: string]: { [messageKey: string]: string } },
   options: CompilerOptions
 ): Promise<Record<string, string>> {
-  const { parser, preprocessors, postprocessors, renameMessageFunction = escapeJsIdentifier } = options;
+  const {
+    parser,
+    preprocessors,
+    postprocessors,
+    renameMessageFunction = escapeJsIdentifier,
+    getArgumentTsType = getArgumentNaturalTsType,
+  } = options;
 
   const locales = Object.keys(messages);
 
@@ -133,7 +159,7 @@ export async function compileFiles(
 
   for (const messageKey of messageKeys) {
     const messageNodes: MessageNode[] = [];
-    const argumentNames = new Set<string>();
+    const argumentTsTypes = new Map<string, Set<string>>();
 
     let jsCode = 'export default function(locale){\nreturn ';
     let jsDocComment = formatMarkdownBold('Message key') + '\n' + formatMarkdownFence(messageKey, 'text');
@@ -164,7 +190,7 @@ export async function compileFiles(
           }
         }
 
-        collectArgumentNames(messageNode, argumentNames);
+        collectArgumentTsTypes(messageNode, getArgumentTsType, argumentTsTypes);
       } catch (cause) {
         throw new Error('Cannot compile "' + messageKey + '" message, "' + locale + '" locale', { cause });
       }
@@ -208,7 +234,7 @@ export async function compileFiles(
         '\nexport declare function ' +
         functionName +
         '(locale:string):' +
-        compileMessageType(argumentNames) +
+        compileMessageTsType(argumentTsTypes) +
         ';\n';
     } catch (cause) {
       throw new Error('Cannot compile "' + messageKey + '" message', { cause });
@@ -221,16 +247,58 @@ export async function compileFiles(
   return files;
 }
 
-function compileMessageType(argumentNames: Set<string>): string {
-  if (argumentNames.size === 0) {
+function getArgumentNaturalTsType(argumentType: string | undefined, _argumentName: string): string | undefined {
+  switch (argumentType) {
+    case 'number':
+      return 'number|bigint';
+
+    case 'date':
+    case 'time':
+      return 'number|Date';
+
+    case 'list':
+      return 'unknown[]';
+
+    case 'plural':
+    case 'selectordinal':
+      return 'number';
+
+    case 'select':
+      return 'number|string';
+
+    default:
+      return undefined;
+  }
+}
+
+function compileMessageTsType(argumentTsTypes: Map<string, Set<string>>): string {
+  if (argumentTsTypes.size === 0) {
     return 'MessageNode|null';
   }
 
   let str = '';
   let argumentIndex = 0;
 
-  for (const argumentName of argumentNames) {
-    str += (argumentIndex++ === 0 ? '' : ',') + JSON.stringify(argumentName) + ':unknown';
+  for (const [argumentName, tsTypes] of argumentTsTypes) {
+    str += (argumentIndex++ === 0 ? '' : ';') + JSON.stringify(argumentName) + ':';
+
+    tsTypes.delete('unknown');
+
+    if (tsTypes.size === 0) {
+      str += 'unknown';
+      continue;
+    }
+
+    if (tsTypes.size === 1) {
+      str += tsTypes.values().next().value;
+      continue;
+    }
+
+    let tsTypeIndex = 0;
+
+    for (const tsType of tsTypes) {
+      str += (tsTypeIndex++ === 0 ? '' : '&') + '(' + tsType + ')';
+    }
   }
 
   return 'MessageNode<{' + str + '}>|null';

@@ -284,11 +284,7 @@ function pushChild(
       return;
     }
 
-    if (parent.attributes === null) {
-      parent.attributes = {};
-    }
-
-    parent.attributes[node] = concatChildren(parent.attributes[node], child);
+    (parent.attributes ||= {})[node] = concatChildren(parent.attributes[node], child);
     return;
   }
 
