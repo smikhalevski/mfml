@@ -315,7 +315,7 @@ describe('compileFiles', () => {
         'return locale===LOCALE_EN?M(locale,"Hello"):locale===LOCALE_RU?M(locale,"Привет"):null;\n' +
         '}\n',
 
-      'df80aa4728084514.js':
+      'bafa422d7dced287.js':
         'import{createMessageNode as M,createElementNode as E,createArgumentNode as A,createSelectNode as S}from"mfml";\n' +
         'import{LOCALE_EN,LOCALE_RU}from"./locales.js";\n' +
         '\n' +
@@ -324,7 +324,7 @@ describe('compileFiles', () => {
         ' * ```text\n' +
         ' * bbb\n' +
         ' * ```\n' +
-        ' * **ru**, en\n' +
+        ' * **ru** (Used as a fallback for en)\n' +
         ' * ```html\n' +
         ' * Пока\n' +
         ' * ```\n' +
@@ -334,7 +334,7 @@ describe('compileFiles', () => {
         '}\n',
 
       'index.js':
-        'export{default as aaa}from"./da48dd32158fb414.js";\nexport{default as bbb}from"./df80aa4728084514.js";\n',
+        'export{default as aaa}from"./da48dd32158fb414.js";\nexport{default as bbb}from"./bafa422d7dced287.js";\n',
 
       'index.d.ts':
         'import{MessageNode}from"mfml";\n' +
@@ -360,7 +360,7 @@ describe('compileFiles', () => {
         ' * ```text\n' +
         ' * bbb\n' +
         ' * ```\n' +
-        ' * **ru**, en\n' +
+        ' * **ru** (Used as a fallback for en)\n' +
         ' * ```html\n' +
         ' * Пока\n' +
         ' * ```\n' +
@@ -535,7 +535,7 @@ describe('compileFiles', () => {
         'return locale===LOCALE_EN?M(locale,"Hello"):locale===LOCALE_RU?M(locale,"Привет"):locale===LOCALE_ES?M(locale,"Hola"):null;\n' +
         '}\n',
 
-      '90657e4b25d1765d.js':
+      'a7d0fe00636e93cc.js':
         'import{createMessageNode as M,createElementNode as E,createArgumentNode as A,createSelectNode as S}from"mfml";\n' +
         'import{LOCALE_EN,LOCALE_RU,LOCALE_ES}from"./locales.js";\n' +
         '\n' +
@@ -544,7 +544,7 @@ describe('compileFiles', () => {
         ' * ```text\n' +
         ' * bbb\n' +
         ' * ```\n' +
-        ' * **ru**, en, es\n' +
+        ' * **ru** (Used as a fallback for en, es)\n' +
         ' * ```html\n' +
         ' * Пока\n' +
         ' * ```\n' +
@@ -554,7 +554,7 @@ describe('compileFiles', () => {
         '}\n',
 
       'index.js':
-        'export{default as aaa}from"./ae90451fba08dbc3.js";\nexport{default as bbb}from"./90657e4b25d1765d.js";\n',
+        'export{default as aaa}from"./ae90451fba08dbc3.js";\nexport{default as bbb}from"./a7d0fe00636e93cc.js";\n',
 
       'index.d.ts':
         'import{MessageNode}from"mfml";\n' +
@@ -584,7 +584,7 @@ describe('compileFiles', () => {
         ' * ```text\n' +
         ' * bbb\n' +
         ' * ```\n' +
-        ' * **ru**, en, es\n' +
+        ' * **ru** (Used as a fallback for en, es)\n' +
         ' * ```html\n' +
         ' * Пока\n' +
         ' * ```\n' +
