@@ -491,7 +491,7 @@ describe('readTokens', () => {
     expect(callbackMock).toHaveBeenNthCalledWith(4, 'XML_CLOSING_TAG_NAME', 23, 29);
   });
 
-  test('does not read ICU markup in raw text tag content by default', () => {
+  test('does not read an argument in raw text tag content by default', () => {
     readTokens('<script>{aaa}</script>', callbackMock, resolveTokenizerOptions({ rawTextTags: ['script'] }));
 
     expect(callbackMock).toHaveBeenCalledTimes(4);
@@ -501,7 +501,7 @@ describe('readTokens', () => {
     expect(callbackMock).toHaveBeenNthCalledWith(4, 'XML_CLOSING_TAG_NAME', 15, 21);
   });
 
-  test('reads ICU markup in raw text tag content', () => {
+  test('reads an argument in raw text tag content', () => {
     readTokens(
       '<script>{aaa}</script>',
       callbackMock,
@@ -516,7 +516,7 @@ describe('readTokens', () => {
     expect(callbackMock).toHaveBeenNthCalledWith(5, 'XML_CLOSING_TAG_NAME', 15, 21);
   });
 
-  test('reads an ICU argument in a raw text tag attribute', () => {
+  test('reads an argument in a raw text tag attribute', () => {
     readTokens(
       '<script aaa="{bbb}">{ccc}</script>',
       callbackMock,
@@ -535,7 +535,7 @@ describe('readTokens', () => {
     expect(callbackMock).toHaveBeenNthCalledWith(9, 'XML_CLOSING_TAG_NAME', 27, 33);
   });
 
-  test('reads an ICU select in a raw text tag attribute', () => {
+  test('reads an argument with categories in a raw text tag attribute', () => {
     readTokens(
       '<script aaa="{bbb,xxx,yyy{zzz}ppp{<vvv>qqq</vvv>}}"></script>',
       callbackMock,
@@ -558,7 +558,7 @@ describe('readTokens', () => {
     expect(callbackMock).toHaveBeenNthCalledWith(14, 'XML_CLOSING_TAG_NAME', 54, 60);
   });
 
-  test('reads an ICU argument', () => {
+  test('reads an argument', () => {
     readTokens('{aaa}', callbackMock, {});
 
     expect(callbackMock).toHaveBeenCalledTimes(2);
@@ -566,7 +566,7 @@ describe('readTokens', () => {
     expect(callbackMock).toHaveBeenNthCalledWith(2, 'ICU_ARGUMENT_END', 4, 5);
   });
 
-  test('reads an ICU argument inside a tag', () => {
+  test('reads an argument inside a tag', () => {
     readTokens('<xxx>{aaa}</xxx>', callbackMock, {});
 
     expect(callbackMock).toHaveBeenCalledTimes(5);
@@ -577,7 +577,7 @@ describe('readTokens', () => {
     expect(callbackMock).toHaveBeenNthCalledWith(5, 'XML_CLOSING_TAG_NAME', 12, 15);
   });
 
-  test('reads an ICU argument inside a double-quoted attribute', () => {
+  test('reads an argument inside a double-quoted attribute', () => {
     readTokens('<xxx aaa="{bbb}"></xxx>', callbackMock, {});
 
     expect(callbackMock).toHaveBeenCalledTimes(7);
@@ -590,7 +590,7 @@ describe('readTokens', () => {
     expect(callbackMock).toHaveBeenNthCalledWith(7, 'XML_CLOSING_TAG_NAME', 19, 22);
   });
 
-  test('reads an ICU argument inside a single-quoted attribute', () => {
+  test('reads an argument inside a single-quoted attribute', () => {
     readTokens("<xxx aaa='{bbb}'></xxx>", callbackMock, {});
 
     expect(callbackMock).toHaveBeenCalledTimes(7);
@@ -603,7 +603,7 @@ describe('readTokens', () => {
     expect(callbackMock).toHaveBeenNthCalledWith(7, 'XML_CLOSING_TAG_NAME', 19, 22);
   });
 
-  test('ignores an ICU argument inside an unquoted attribute', () => {
+  test('ignores an argument inside an unquoted attribute', () => {
     readTokens('<xxx aaa={bbb}></xxx>', callbackMock, {});
 
     expect(callbackMock).toHaveBeenCalledTimes(6);
@@ -615,7 +615,7 @@ describe('readTokens', () => {
     expect(callbackMock).toHaveBeenNthCalledWith(6, 'XML_CLOSING_TAG_NAME', 17, 20);
   });
 
-  test('reads an ICU argument with name surrounded by spaces', () => {
+  test('reads an argument with name surrounded by spaces', () => {
     readTokens('{   aaa   }', callbackMock, {});
 
     expect(callbackMock).toHaveBeenCalledTimes(2);
@@ -623,7 +623,7 @@ describe('readTokens', () => {
     expect(callbackMock).toHaveBeenNthCalledWith(2, 'ICU_ARGUMENT_END', 10, 11);
   });
 
-  test('reads an ICU argument and its type', () => {
+  test('reads an argument and its type', () => {
     readTokens('{aaa  ,  bbb   }', callbackMock, {});
 
     expect(callbackMock).toHaveBeenCalledTimes(3);
@@ -632,7 +632,7 @@ describe('readTokens', () => {
     expect(callbackMock).toHaveBeenNthCalledWith(3, 'ICU_ARGUMENT_END', 15, 16);
   });
 
-  test('reads an ICU argument with type and style', () => {
+  test('reads an argument with type and style', () => {
     readTokens('{aaa  ,  bbb   ,   ccc   }', callbackMock, {});
 
     expect(callbackMock).toHaveBeenCalledTimes(4);
@@ -642,7 +642,7 @@ describe('readTokens', () => {
     expect(callbackMock).toHaveBeenNthCalledWith(4, 'ICU_ARGUMENT_END', 25, 26);
   });
 
-  test('reads an ICU argument with type and select', () => {
+  test('reads an argument with type and select', () => {
     readTokens('{aaa,bbb,ccc   {   ddd   }   }', callbackMock, {});
 
     expect(callbackMock).toHaveBeenCalledTimes(6);
@@ -654,7 +654,7 @@ describe('readTokens', () => {
     expect(callbackMock).toHaveBeenNthCalledWith(6, 'ICU_ARGUMENT_END', 29, 30);
   });
 
-  test('reads tags in an ICU argument with type and select', () => {
+  test('reads tags in an argument with type and select', () => {
     readTokens('{aaa,bbb,ccc{<xxx>ddd</xxx>}}', callbackMock, {});
 
     expect(callbackMock).toHaveBeenCalledTimes(9);
@@ -669,14 +669,14 @@ describe('readTokens', () => {
     expect(callbackMock).toHaveBeenNthCalledWith(9, 'ICU_ARGUMENT_END', 28, 29);
   });
 
-  test('reads an ICU octothorpe as text outside of select', () => {
+  test('reads an octothorpe as text outside of select', () => {
     readTokens('aaa # bbb', callbackMock, {});
 
     expect(callbackMock).toHaveBeenCalledTimes(1);
     expect(callbackMock).toHaveBeenNthCalledWith(1, 'TEXT', 0, 9);
   });
 
-  test('reads an ICU octothorpe in a select', () => {
+  test('reads an octothorpe in a select', () => {
     readTokens('{aaa,bbb,ccc{ddd#eee}}', callbackMock, {});
 
     expect(callbackMock).toHaveBeenCalledTimes(8);
@@ -690,7 +690,7 @@ describe('readTokens', () => {
     expect(callbackMock).toHaveBeenNthCalledWith(8, 'ICU_ARGUMENT_END', 21, 22);
   });
 
-  test('reads an ICU octothorpe in a select with spaces', () => {
+  test('reads an octothorpe in a select with spaces', () => {
     readTokens('{   xxx   ,   yyy   ,   zzz   {   #   }   }', callbackMock, {});
 
     expect(callbackMock).toHaveBeenCalledTimes(8);
@@ -704,7 +704,7 @@ describe('readTokens', () => {
     expect(callbackMock).toHaveBeenNthCalledWith(8, 'ICU_ARGUMENT_END', 42, 43);
   });
 
-  test('reads an ICU octothorpe in a nested select', () => {
+  test('reads an octothorpe in a nested select', () => {
     readTokens('{aaa,bbb,ccc{{aaa,bbb,ccc{<zzz>#</zzz>}}}}', callbackMock, {});
 
     expect(callbackMock).toHaveBeenCalledTimes(14);
@@ -724,7 +724,7 @@ describe('readTokens', () => {
     expect(callbackMock).toHaveBeenNthCalledWith(14, 'ICU_ARGUMENT_END', 41, 42);
   });
 
-  test('does not read an ICU octothorpe after select has ended', () => {
+  test('does not read an octothorpe after select has ended', () => {
     readTokens('{aaa,bbb,ccc{#}}#', callbackMock, {});
 
     expect(callbackMock).toHaveBeenCalledTimes(7);
@@ -737,7 +737,7 @@ describe('readTokens', () => {
     expect(callbackMock).toHaveBeenNthCalledWith(7, 'TEXT', 16, 17);
   });
 
-  test('does not read tags in an ICU select in an XML attribute', () => {
+  test('does not read tags in an argument with categories in an attribute', () => {
     readTokens('<aaa xxx="{zzz,yyy,fff{<bbb>bbb</bbb>}}"></aaa>', callbackMock, {});
 
     expect(callbackMock).toHaveBeenCalledTimes(11);
@@ -764,7 +764,7 @@ describe('readTokens', () => {
 
   test('throws if argument type is empty', () => {
     expect(() => readTokens('{xxx,,}', callbackMock, {})).toThrow(
-      new ParserError('An ICU argument type cannot be empty.', '{xxx,,}', 5)
+      new ParserError('An argument type cannot be empty.', '{xxx,,}', 5)
     );
 
     expect(callbackMock).toHaveBeenCalledTimes(1);
@@ -782,7 +782,7 @@ describe('readTokens', () => {
 
   test('throws if argument style is empty', () => {
     expect(() => readTokens('{xxx,yyy,,}', callbackMock, {})).toThrow(
-      new ParserError('Expected an ICU argument style, category name or option name.', '{xxx,yyy,,}', 9)
+      new ParserError('Expected an argument style, category name or option name.', '{xxx,yyy,,}', 9)
     );
 
     expect(callbackMock).toHaveBeenCalledTimes(2);
@@ -790,7 +790,7 @@ describe('readTokens', () => {
     expect(callbackMock).toHaveBeenNthCalledWith(2, 'ICU_ARGUMENT_TYPE', 5, 8);
   });
 
-  test('reads an unquoted ICU option value', () => {
+  test('reads an unquoted option value', () => {
     readTokens('{xxx,yyy , zzz = kkk }', callbackMock, {});
 
     expect(callbackMock).toHaveBeenCalledTimes(5);
@@ -801,7 +801,7 @@ describe('readTokens', () => {
     expect(callbackMock).toHaveBeenNthCalledWith(5, 'ICU_ARGUMENT_END', 21, 22);
   });
 
-  test('reads an empty ICU option value', () => {
+  test('reads an empty option value', () => {
     readTokens('{xxx,yyy , zzz = }', callbackMock, {});
 
     expect(callbackMock).toHaveBeenCalledTimes(5);
@@ -812,7 +812,7 @@ describe('readTokens', () => {
     expect(callbackMock).toHaveBeenNthCalledWith(5, 'ICU_ARGUMENT_END', 17, 18);
   });
 
-  test('reads a double-quoted ICU option value', () => {
+  test('reads a double-quoted option value', () => {
     readTokens('{xxx,yyy , zzz = "kkk\'{,}vvv" }', callbackMock, {});
 
     expect(callbackMock).toHaveBeenCalledTimes(5);
@@ -823,7 +823,7 @@ describe('readTokens', () => {
     expect(callbackMock).toHaveBeenNthCalledWith(5, 'ICU_ARGUMENT_END', 30, 31);
   });
 
-  test('reads a single-quoted ICU option value', () => {
+  test('reads a single-quoted option value', () => {
     readTokens("{xxx,yyy , zzz = 'kkk\"{,}vvv' }", callbackMock, {});
 
     expect(callbackMock).toHaveBeenCalledTimes(5);
@@ -836,7 +836,7 @@ describe('readTokens', () => {
 
   test('throws if a quoted option value is unterminated', () => {
     expect(() => readTokens('{xxx,yyy,zzz="  ', callbackMock, {})).toThrow(
-      new ParserError('Unterminated ICU argument.', '{xxx,yyy,zzz="  ', 14)
+      new ParserError('Unterminated argument.', '{xxx,yyy,zzz="  ', 14)
     );
 
     expect(callbackMock).toHaveBeenCalledTimes(3);
@@ -845,7 +845,7 @@ describe('readTokens', () => {
     expect(callbackMock).toHaveBeenNthCalledWith(3, 'ICU_OPTION_NAME', 9, 12);
   });
 
-  test('reads multiple ICU options', () => {
+  test('reads multiple options', () => {
     readTokens('{xxx,yyy , zzz = \'aaa\' vvv="bbb" ppp=qqq }', callbackMock, {});
 
     expect(callbackMock).toHaveBeenCalledTimes(9);
@@ -860,7 +860,7 @@ describe('readTokens', () => {
     expect(callbackMock).toHaveBeenNthCalledWith(9, 'ICU_ARGUMENT_END', 41, 42);
   });
 
-  test('reads ICU options mixed with categories', () => {
+  test('reads options mixed with categories', () => {
     readTokens('{xxx,yyy , zzz=aaa kkk {ccc} vvv="bbb" }', callbackMock, {});
 
     expect(callbackMock).toHaveBeenCalledTimes(10);
@@ -878,7 +878,7 @@ describe('readTokens', () => {
   test('throws if a style and options are mixed', () => {
     expect(() => readTokens('{xxx,yyy,kkk zzz=vvv}', callbackMock, {})).toThrow(
       new ParserError(
-        'Expected an ICU category start ("{") or an option value start ("=").',
+        'Expected an argument category start ("{") or an option value start ("=").',
         '{xxx,yyy,kkk zzz=vvv}',
         13
       )
@@ -889,9 +889,9 @@ describe('readTokens', () => {
     expect(callbackMock).toHaveBeenNthCalledWith(2, 'ICU_ARGUMENT_TYPE', 5, 8);
   });
 
-  test('reads ICU options in an XML attribute', () => {
+  test('reads options in an attribute', () => {
     expect(() => readTokens('<aaa bbb="{xxx,yyy,zzz=kkk"></aaa>', callbackMock, {})).toThrow(
-      new ParserError('Unterminated ICU argument.', '<aaa bbb="{xxx,yyy,zzz=kkk"></aaa>', 26, 26)
+      new ParserError('Unterminated argument.', '<aaa bbb="{xxx,yyy,zzz=kkk"></aaa>', 26)
     );
 
     expect(callbackMock).toHaveBeenCalledTimes(6);
@@ -903,9 +903,9 @@ describe('readTokens', () => {
     expect(callbackMock).toHaveBeenNthCalledWith(6, 'ICU_OPTION_VALUE', 23, 26);
   });
 
-  test('throws on non-terminated ICU argument in an XML attribute', () => {
+  test('throws on non-terminated argument in an attribute', () => {
     expect(() => readTokens('<aaa bbb="{xxx,"></aaa>', callbackMock, {})).toThrow(
-      new ParserError('An ICU argument type cannot be empty.', '<aaa bbb="{xxx,"></aaa>', 15)
+      new ParserError('An argument type cannot be empty.', '<aaa bbb="{xxx,"></aaa>', 15)
     );
 
     expect(callbackMock).toHaveBeenCalledTimes(3);
@@ -914,9 +914,9 @@ describe('readTokens', () => {
     expect(callbackMock).toHaveBeenNthCalledWith(3, 'ICU_ARGUMENT_NAME', 11, 14);
   });
 
-  test('throws on invalid double-quoted of ICU argument in a double-quoted XML attribute', () => {
+  test('throws on invalid double-quoted argument option in a double-quoted attribute', () => {
     expect(() => readTokens('<aaa bbb="{xxx,yyy,zzz="kkk"}"></aaa>', callbackMock, {})).toThrow(
-      new ParserError('Unterminated ICU argument.', '<aaa bbb="{xxx,yyy,zzz="kkk"}"></aaa>', 23)
+      new ParserError('Unterminated argument.', '<aaa bbb="{xxx,yyy,zzz="kkk"}"></aaa>', 23)
     );
 
     expect(callbackMock).toHaveBeenCalledTimes(5);
@@ -927,9 +927,9 @@ describe('readTokens', () => {
     expect(callbackMock).toHaveBeenNthCalledWith(5, 'ICU_OPTION_NAME', 19, 22);
   });
 
-  test('throws on invalid single-quoted of ICU argument in a single-quoted XML attribute', () => {
+  test('throws on invalid single-quoted argument option in a single-quoted attribute', () => {
     expect(() => readTokens("<aaa bbb='{xxx,yyy,zzz='kkk'}'></aaa>", callbackMock, {})).toThrow(
-      new ParserError('Unterminated ICU argument.', "<aaa bbb='{xxx,yyy,zzz='kkk'}'></aaa>", 23)
+      new ParserError('Unterminated argument.', "<aaa bbb='{xxx,yyy,zzz='kkk'}'></aaa>", 23)
     );
 
     expect(callbackMock).toHaveBeenCalledTimes(5);
@@ -940,9 +940,9 @@ describe('readTokens', () => {
     expect(callbackMock).toHaveBeenNthCalledWith(5, 'ICU_OPTION_NAME', 19, 22);
   });
 
-  test('throws on non-escaped quote in an ICU select inside an attribute', () => {
+  test('throws on non-escaped quote in an argument with categories inside an attribute', () => {
     expect(() => readTokens('<aaa xxx="{zzz,yyy,fff{"}}"></aaa>', callbackMock, {})).toThrow(
-      new ParserError('Unterminated ICU argument.', '<aaa xxx="{zzz,yyy,fff{"}}"></aaa>', 23)
+      new ParserError('Unterminated argument.', '<aaa xxx="{zzz,yyy,fff{"}}"></aaa>', 23)
     );
 
     expect(callbackMock).toHaveBeenCalledTimes(5);
@@ -1213,7 +1213,7 @@ describe('tokenizeMessage', () => {
     expect(callbackMock).toHaveBeenNthCalledWith(6, 'XML_CLOSING_TAG_NAME', 8, 9);
   });
 
-  test('reads ICU select with octothorpe', () => {
+  test('reads an argument with categories with octothorpe', () => {
     tokenizeMessage('{   xxx   ,   yyy   ,   zzz   {   #   }   }', callbackMock);
 
     expect(callbackMock).toHaveBeenCalledTimes(8);
@@ -1236,7 +1236,7 @@ describe('tokenizeMessage', () => {
   test('throws if argument is not ended before EOF', () => {
     expect(() => tokenizeMessage('<aaa>{xxx', callbackMock)).toThrow(
       new ParserError(
-        'Expected an ICU argument type separated by a comma (",") or the end of the argument ("}").',
+        'Expected an argument type separated by a comma (",") or the end of the argument ("}").',
         '<aaa>{xxx',
         9
       )

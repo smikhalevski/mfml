@@ -48,7 +48,7 @@ declare const MESSAGE_VALUES: unique symbol;
 /**
  * The node that describes a parsed message and contains related metadata.
  *
- * @template Values ICU arguments type or `void` if message doesn't have any arguments.
+ * @template Values Type of arguments or `void` if message doesn't require arguments.
  * @group AST
  */
 export interface MessageNode<Values extends object | void = any> {
@@ -162,7 +162,7 @@ export interface AttributeNode extends SourceLocation {
 }
 
 /**
- * The node that describes an ICU argument.
+ * The node that describes an argument.
  *
  * @group AST
  */
@@ -178,7 +178,7 @@ export interface ArgumentNode extends SourceLocation {
   parentNode: ParentNode | null;
 
   /**
-   * The name of the ICU argument.
+   * The name of the argument.
    *
    */
   name: string;
@@ -220,7 +220,7 @@ export interface OctothorpeNode extends SourceLocation {
 }
 
 /**
- * The node that describes an ICU argument option.
+ * The node that describes an argument option.
  *
  * @group AST
  */
@@ -247,7 +247,7 @@ export interface OptionNode extends SourceLocation {
 }
 
 /**
- * The node describes a category selection based on the value of an ICU argument.
+ * The node describes a category selection based on the value of an argument.
  *
  * @group AST
  */

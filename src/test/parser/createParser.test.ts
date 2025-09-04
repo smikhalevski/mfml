@@ -9,6 +9,7 @@ describe('parseMessage', () => {
   test('parses text', () => {
     expect(parseMessage('en', 'aaa', { tokenizer })).toStrictEqual({
       nodeType: 'message',
+      parentNode: null,
       locale: 'en',
       childNodes: [
         {
@@ -27,6 +28,7 @@ describe('parseMessage', () => {
       parseMessage('en', '</aaa>bbb', { tokenizer: createTokenizer({ implicitlyOpenedTags: ['aaa'] }) })
     ).toStrictEqual({
       nodeType: 'message',
+      parentNode: null,
       locale: 'en',
       childNodes: [
         {
@@ -52,6 +54,7 @@ describe('parseMessage', () => {
   test('parses a comment', () => {
     expect(parseMessage('en', 'aaa<!--hidden-->bbb', { tokenizer })).toStrictEqual({
       nodeType: 'message',
+      parentNode: null,
       locale: 'en',
       childNodes: [
         {
@@ -75,6 +78,7 @@ describe('parseMessage', () => {
   test('parses an element', () => {
     expect(parseMessage('en', '<aaa>bbb</aaa>', { tokenizer })).toStrictEqual({
       nodeType: 'message',
+      parentNode: null,
       locale: 'en',
       childNodes: [
         {
@@ -101,6 +105,7 @@ describe('parseMessage', () => {
   test('parses leading and trailing text', () => {
     expect(parseMessage('en', 'aaa<bbb>ccc</bbb>ddd', { tokenizer })).toStrictEqual({
       nodeType: 'message',
+      parentNode: null,
       locale: 'en',
       childNodes: [
         {
@@ -141,6 +146,7 @@ describe('parseMessage', () => {
   test('parses nested elements', () => {
     expect(parseMessage('en', '<aaa>bbb<ccc>ddd</ccc>eee</aaa>', { tokenizer })).toStrictEqual({
       nodeType: 'message',
+      parentNode: null,
       locale: 'en',
       childNodes: [
         {
@@ -191,6 +197,7 @@ describe('parseMessage', () => {
   test('parses an argument', () => {
     expect(parseMessage('en', '{xxx}', { tokenizer })).toStrictEqual({
       nodeType: 'message',
+      parentNode: null,
       locale: 'en',
       childNodes: [
         {
@@ -211,6 +218,7 @@ describe('parseMessage', () => {
   test('parses an argument with a type', () => {
     expect(parseMessage('en', '{   xxx   ,   yyy   }', { tokenizer })).toStrictEqual({
       nodeType: 'message',
+      parentNode: null,
       locale: 'en',
       childNodes: [
         {
@@ -237,6 +245,7 @@ describe('parseMessage', () => {
   test('parses an argument with a type and a style', () => {
     expect(parseMessage('en', '{   xxx   ,   yyy   ,   zzz   }', { tokenizer })).toStrictEqual({
       nodeType: 'message',
+      parentNode: null,
       locale: 'en',
       childNodes: [
         {
@@ -269,6 +278,7 @@ describe('parseMessage', () => {
   test('parses an argument with a category', () => {
     expect(parseMessage('en', '{   xxx   ,   yyy   ,   zzz   {   aaa   }   }', { tokenizer })).toStrictEqual({
       nodeType: 'message',
+      parentNode: null,
       locale: 'en',
       childNodes: [
         {
@@ -312,6 +322,7 @@ describe('parseMessage', () => {
   test('parses an category with an octothorpe', () => {
     expect(parseMessage('en', '{   xxx   ,   yyy   ,   zzz   {   #   }   }', { tokenizer })).toStrictEqual({
       nodeType: 'message',
+      parentNode: null,
       locale: 'en',
       childNodes: [
         {
@@ -368,6 +379,7 @@ describe('parseMessage', () => {
   test('parses argument with multiple categories', () => {
     expect(parseMessage('en', '{xxx,yyy,qqq{aaa}ppp{bbb}}', { tokenizer })).toStrictEqual({
       nodeType: 'message',
+      parentNode: null,
       locale: 'en',
       childNodes: [
         {
@@ -427,6 +439,7 @@ describe('parseMessage', () => {
   test('parses an element nested in a category', () => {
     expect(parseMessage('en', '{xxx,yyy,ppp{<aaa></aaa>bbb}}', { tokenizer })).toStrictEqual({
       nodeType: 'message',
+      parentNode: null,
       locale: 'en',
       childNodes: [
         {
@@ -483,6 +496,7 @@ describe('parseMessage', () => {
       })
     ).toStrictEqual({
       nodeType: 'message',
+      parentNode: null,
       locale: 'en',
       childNodes: [
         {
@@ -578,6 +592,7 @@ describe('parseMessage', () => {
   test('parses argument options', () => {
     expect(parseMessage('en', '{xxx,yyy, aaa=vvv bbb = "ppp"}', { tokenizer })).toStrictEqual({
       nodeType: 'message',
+      parentNode: null,
       locale: 'en',
       childNodes: [
         {

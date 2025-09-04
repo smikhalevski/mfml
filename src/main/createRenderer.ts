@@ -38,7 +38,7 @@ export interface Renderer<Element> {
   ): string;
 
   /**
-   * Returns the selected category depending of an ICU argument value.
+   * Returns the selected category depending of an argument value.
    *
    * @param locale The message locale.
    * @param value The value of an argument.

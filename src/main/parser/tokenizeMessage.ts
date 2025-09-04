@@ -162,7 +162,7 @@ export interface ResolvedTokenizerOptions {
   isOrphanClosingTagsIgnored?: boolean;
 
   /**
-   * If `true` then ICU arguments are parsed inside {@link rawTextTags}.
+   * If `true` then arguments are parsed inside {@link rawTextTags}.
    *
    * @default false
    */
@@ -429,13 +429,13 @@ export function readTokens(text: string, callback: TokenCallback, options: Token
   for (let index = 0, nextIndex = 0; nextIndex < text.length; index = nextIndex) {
     const charCode = text.charCodeAt(nextIndex);
 
-    // End of a quoted XML attribute value
+    // End of a quoted attribute value
     if (
       (charCode === /* " */ 34 && scopeStack.lastIndexOf(SCOPE_XML_DOUBLE_QUOTED_ATTRIBUTE_VALUE) !== -1) ||
       (charCode === /* ' */ 39 && scopeStack.lastIndexOf(SCOPE_XML_SINGLE_QUOTED_ATTRIBUTE_VALUE) !== -1)
     ) {
       if (scopeStack.lastIndexOf(SCOPE_ICU_ARGUMENT) !== -1) {
-        throw new ParserError('Unterminated ICU argument.', text, index);
+        throw new ParserError('Unterminated argument.', text, index);
       }
 
       if (textStartIndex !== index) {
@@ -452,7 +452,7 @@ export function readTokens(text: string, callback: TokenCallback, options: Token
       continue;
     }
 
-    // End of an unquoted XML attribute value
+    // End of an unquoted attribute value
     if (
       scope === SCOPE_XML_UNQUOTED_ATTRIBUTE_VALUE &&
       (charCode === /* / */ 47 || charCode === /* > */ 62 || isSpaceChar(charCode))
@@ -620,7 +620,7 @@ export function readTokens(text: string, callback: TokenCallback, options: Token
       continue;
     }
 
-    // Start of an XML attribute
+    // Start of an attribute
     if (scope === SCOPE_XML_OPENING_TAG && isXMLAttributeNameChar(charCode)) {
       nextIndex = readChars(text, index + 1, isXMLAttributeNameChar);
 
@@ -662,13 +662,13 @@ export function readTokens(text: string, callback: TokenCallback, options: Token
       continue;
     }
 
-    // Disable ICU parsing in raw text tags
+    // Disable arguments parsing in raw text tags
     if (latestRawTextTag !== 0 && !isRawTextInterpolated) {
       ++nextIndex;
       continue;
     }
 
-    // Start of an ICU argument
+    // Start of an argument
     if (
       charCode === /* { */ 123 &&
       (scope === SCOPE_TEXT ||
@@ -687,14 +687,14 @@ export function readTokens(text: string, callback: TokenCallback, options: Token
       nextIndex = readChars(text, nextIndex, isICUNameChar);
 
       if (argumentNameStartIndex === nextIndex) {
-        throw new ParserError('An ICU argument name cannot be empty.', text, nextIndex);
+        throw new ParserError('An argument name cannot be empty.', text, nextIndex);
       }
 
       callback(TOKEN_ICU_ARGUMENT_NAME, argumentNameStartIndex, nextIndex);
 
       nextIndex = skipSpaces(text, nextIndex);
 
-      // End of an ICU argument
+      // End of an argument
       if (getCharCodeAt(text, nextIndex) === /* } */ 125) {
         callback(TOKEN_ICU_ARGUMENT_END, nextIndex, ++nextIndex);
         textStartIndex = nextIndex;
@@ -703,13 +703,13 @@ export function readTokens(text: string, callback: TokenCallback, options: Token
 
       if (getCharCodeAt(text, nextIndex) !== /* , */ 44) {
         throw new ParserError(
-          'Expected an ICU argument type separated by a comma (",") or the end of the argument ("}").',
+          'Expected an argument type separated by a comma (",") or the end of the argument ("}").',
           text,
           nextIndex
         );
       }
 
-      // Start of an ICU argument type
+      // Start of an argument type
 
       nextIndex = skipSpaces(text, nextIndex + 1);
 
@@ -718,13 +718,13 @@ export function readTokens(text: string, callback: TokenCallback, options: Token
       nextIndex = readChars(text, argumentTypeStartIndex, isICUNameChar);
 
       if (argumentTypeStartIndex === nextIndex) {
-        // An ICU argument type is empty
+        // An argument type is empty
 
         if (getCharCodeAt(text, nextIndex) !== /* } */ 125) {
-          throw new ParserError('An ICU argument type cannot be empty.', text, nextIndex);
+          throw new ParserError('An argument type cannot be empty.', text, nextIndex);
         }
 
-        // End of an ICU argument
+        // End of an argument
         callback(TOKEN_ICU_ARGUMENT_END, nextIndex, ++nextIndex);
         textStartIndex = nextIndex;
         continue;
@@ -734,7 +734,7 @@ export function readTokens(text: string, callback: TokenCallback, options: Token
 
       nextIndex = skipSpaces(text, nextIndex);
 
-      // End of an ICU argument and type
+      // End of an argument and type
       if (getCharCodeAt(text, nextIndex) === /* } */ 125) {
         callback(TOKEN_ICU_ARGUMENT_END, nextIndex, ++nextIndex);
         textStartIndex = nextIndex;
@@ -743,13 +743,13 @@ export function readTokens(text: string, callback: TokenCallback, options: Token
 
       if (getCharCodeAt(text, nextIndex) !== /* , */ 44) {
         throw new ParserError(
-          'Expected an ICU argument style, category name, or option name separated by a comma (",") or the end of the argument ("}").',
+          'Expected an argument style, category name, or option name separated by a comma (",") or the end of the argument ("}").',
           text,
           nextIndex
         );
       }
 
-      // Start of an ICU argument style
+      // Start of an argument style
 
       nextIndex = skipSpaces(text, nextIndex + 1);
 
@@ -758,13 +758,13 @@ export function readTokens(text: string, callback: TokenCallback, options: Token
       nextIndex = readChars(text, nextIndex, isICUNameChar);
 
       if (argumentStyleStartIndex === nextIndex) {
-        // An ICU argument style is empty
+        // An argument style is empty
 
         if (getCharCodeAt(text, nextIndex) !== /* } */ 125) {
-          throw new ParserError('Expected an ICU argument style, category name or option name.', text, nextIndex);
+          throw new ParserError('Expected an argument style, category name or option name.', text, nextIndex);
         }
 
-        // End of an ICU argument and type
+        // End of an argument and type
         callback(TOKEN_ICU_ARGUMENT_END, nextIndex, ++nextIndex);
         textStartIndex = nextIndex;
         continue;
@@ -774,7 +774,7 @@ export function readTokens(text: string, callback: TokenCallback, options: Token
 
       nextIndex = skipSpaces(text, nextIndex);
 
-      // End of an ICU argument, type, and style
+      // End of an argument, type, and style
       if (getCharCodeAt(text, nextIndex) === /* } */ 125) {
         callback(TOKEN_ICU_ARGUMENT_STYLE, argumentStyleStartIndex, argumentStyleEndIndex);
         callback(TOKEN_ICU_ARGUMENT_END, nextIndex, ++nextIndex);
@@ -783,14 +783,14 @@ export function readTokens(text: string, callback: TokenCallback, options: Token
         continue;
       }
 
-      // Revert to reading ICU category name and option name in a loop
+      // Revert to reading category name and option name in a loop
       scope = scopeStack[++scopeStackCursor] = SCOPE_ICU_ARGUMENT;
 
       textStartIndex = nextIndex = argumentStyleStartIndex;
       continue;
     }
 
-    // End of an ICU argument
+    // End of an argument
     if (charCode === /* } */ 125 && scope === SCOPE_ICU_ARGUMENT) {
       callback(TOKEN_ICU_ARGUMENT_END, nextIndex, ++nextIndex);
       scopeStack[scopeStackCursor] = 0;
@@ -799,7 +799,7 @@ export function readTokens(text: string, callback: TokenCallback, options: Token
       continue;
     }
 
-    // End of an ICU category
+    // End of an category
     if (charCode === /* } */ 125 && scope === SCOPE_ICU_CATEGORY) {
       if (textStartIndex !== index) {
         callback(TOKEN_TEXT, textStartIndex, index);
@@ -813,7 +813,7 @@ export function readTokens(text: string, callback: TokenCallback, options: Token
       continue;
     }
 
-    // An ICU octothorpe
+    // An octothorpe
     if (charCode === /* # */ 35 && scopeStack.lastIndexOf(SCOPE_ICU_CATEGORY) !== -1) {
       if (textStartIndex !== index) {
         callback(TOKEN_TEXT, textStartIndex, index);
@@ -825,10 +825,10 @@ export function readTokens(text: string, callback: TokenCallback, options: Token
       continue;
     }
 
-    // An ICU category name or option
+    // An category name or option
     if (scope === SCOPE_ICU_ARGUMENT) {
       if (!isICUNameChar(charCode)) {
-        throw new ParserError('Expected an ICU category name or option name.', text, nextIndex);
+        throw new ParserError('Expected an category name or option name.', text, nextIndex);
       }
 
       nextIndex = readChars(text, index + 1, isICUNameChar);
@@ -837,7 +837,7 @@ export function readTokens(text: string, callback: TokenCallback, options: Token
 
       nextIndex = skipSpaces(text, nextIndex);
 
-      // Start of an ICU category
+      // Start of an category
       if (getCharCodeAt(text, nextIndex) === /* { */ 123) {
         callback(TOKEN_ICU_CATEGORY_NAME, index, optionNameEndIndex);
 
@@ -847,10 +847,14 @@ export function readTokens(text: string, callback: TokenCallback, options: Token
       }
 
       if (getCharCodeAt(text, nextIndex) !== /* = */ 61) {
-        throw new ParserError('Expected an ICU category start ("{") or an option value start ("=").', text, nextIndex);
+        throw new ParserError(
+          'Expected an argument category start ("{") or an option value start ("=").',
+          text,
+          nextIndex
+        );
       }
 
-      // An ICU option
+      // An option
       callback(TOKEN_ICU_OPTION_NAME, index, optionNameEndIndex);
 
       // Skip spaces after "="
@@ -862,20 +866,20 @@ export function readTokens(text: string, callback: TokenCallback, options: Token
       const quoteCharCode = getCharCodeAt(text, optionValueStartIndex);
 
       if (quoteCharCode !== /* " */ 34 && quoteCharCode !== /* ' */ 39) {
-        // Unquoted ICU option value
+        // Unquoted option value
         optionValueEndIndex = readChars(text, optionValueStartIndex, isICUNameChar);
         nextIndex = optionValueEndIndex;
       } else if (
         (quoteCharCode !== /* " */ 34 || scopeStack.lastIndexOf(SCOPE_XML_DOUBLE_QUOTED_ATTRIBUTE_VALUE) === -1) &&
         (quoteCharCode !== /* ' */ 39 || scopeStack.lastIndexOf(SCOPE_XML_SINGLE_QUOTED_ATTRIBUTE_VALUE) === -1)
       ) {
-        // Double or single quoted ICU option value
+        // Double or single quoted option value
         optionValueEndIndex = text.indexOf(String.fromCharCode(quoteCharCode), ++optionValueStartIndex);
         nextIndex = optionValueEndIndex + 1;
       }
 
       if (optionValueEndIndex === -1) {
-        throw new ParserError('Unterminated ICU argument.', text, optionValueStartIndex);
+        throw new ParserError('Unterminated argument.', text, optionValueStartIndex);
       }
 
       callback(TOKEN_ICU_OPTION_VALUE, optionValueStartIndex, optionValueEndIndex);

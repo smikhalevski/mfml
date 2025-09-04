@@ -111,7 +111,7 @@ export interface TokenizerOptions {
   isOrphanClosingTagsIgnored?: boolean;
 
   /**
-   * If `true` then ICU arguments are parsed inside {@link rawTextTags}.
+   * If `true` then arguments are parsed inside {@link rawTextTags}.
    *
    * @default false
    */
@@ -137,11 +137,8 @@ export interface Tokenizer {
 /**
  * Reads tokens from text and returns them by invoking a callback.
  *
- * Tokens are guaranteed to be returned in correct order. Missing tokens are inserted and `startIndex === endIndex`
- * for such tokens.
- *
- * The tokenizer doesn't guarantee that contents of returned tokens are consistent. For example, ICU argument type may
- * not properly reflect the consequent ICU category tokens.
+ * Tokens are _guaranteed_ to be returned in correct order. Missing tokens are inserted to restore the correct order if
+ * needed.
  *
  * @example
  * import { createTokenizer, htmlTokenizerOptions } from 'mfml/parser';

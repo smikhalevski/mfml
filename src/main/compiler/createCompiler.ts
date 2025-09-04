@@ -131,7 +131,7 @@ export interface CompilerOptions {
   renameMessageFunction?: (messageKey: string) => string;
 
   /**
-   * Returns the TypeScript type for a given ICU argument type.
+   * Returns the TypeScript type for a given argument type.
    *
    * @example
    * (argumentType, argumentName) => {
