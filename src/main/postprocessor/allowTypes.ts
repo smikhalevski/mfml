@@ -10,32 +10,48 @@ import { walkNode } from '../utils.js';
 import { ParserError } from '../parser/index.js';
 
 /**
+ * Type requirements by type name.
+ */
+export interface AllowedTypes {
+  [type: string]: TypeRequirements;
+}
+
+/**
  * Requirements imposed on a type by {@link allowTypes}.
  */
 export interface TypeRequirements {
   /**
-   * The array of styles that a type supports. If omitted or empty then no styles are allowed.
+   * The array of styles that a type allows, or `true` if any style is allowed.
+   *
+   * If  empty or `false` then no styles are allowed.
    *
    * @example
    * ['decimal', 'percent']
+   * @default false
    */
-  allowedStyles?: string[];
+  allowedStyles?: string[] | boolean;
 
   /**
-   * The array of option names that a type supports. If omitted or empty then options aren't allowed.
+   * The array of option names that a type allows, or `true` if any option is allowed.
+   *
+   * If  empty or `false` then options aren't allowed.
    *
    * @example
    * ['currencyDisplay', 'useGrouping', 'minimumIntegerDigits']
+   * @default false
    */
-  allowedOptions?: string[];
+  allowedOptions?: string[] | boolean;
 
   /**
-   * The array of category names that a type supports. If omitted or empty then categories aren't allowed.
+   * The array of category names that a type allows, or `true` if any category is allowed.
+   *
+   * If  empty or `false` then categories aren't allowed.
    *
    * @example
    * ['one', 'many', 'few', 'other']
+   * @default false
    */
-  allowedCategories?: string[];
+  allowedCategories?: string[] | boolean;
 
   /**
    * The array of categories that are required.
@@ -71,18 +87,24 @@ export interface TypeRequirements {
  *     allowedStyles: ['decimal', 'percent'],
  *     allowedOptions: ['currencyDisplay', 'useGrouping', 'minimumIntegerDigits'],
  *   },
- *   selectordinal: {
+ *   selectOrdinal: {
  *     allowedCategories: ['one', 'many', 'few', 'other'],
  *     requiredCategories: ['other']
  *   }
  * });
  *
+ * @example
+ * import allowTypes, { defaultAllowedTypes } from 'mfml/postprocessor/allowTypes';
+ *
+ * allowTypes(defaultAllowedTypes);
+ *
  * @param allowedTypes Mapping from an attribute type to a set of requirements.
+ * @see {@link defaultAllowedTypes}
  */
 export default function allowTypes(allowedTypes: { [type: string]: TypeRequirements }): Postprocessor {
-  const errors: ParserError[] = [];
-
   return params => {
+    const errors: ParserError[] = [];
+
     walkNode(params.messageNode, node => {
       if (node.nodeType !== 'argument' || node.typeNode === null) {
         return;
@@ -115,10 +137,14 @@ export default function allowTypes(allowedTypes: { [type: string]: TypeRequireme
       const hasOptions = optionNodes !== null && optionNodes.length !== 0;
       const hasCategories = categoryNodes !== null && categoryNodes.length !== 0;
 
-      const hasAllowedStyles = allowedStyles !== undefined && allowedStyles.length !== 0;
-      const hasAllowedOptions = allowedOptions !== undefined && allowedOptions.length !== 0;
-      const hasAllowedCategories = allowedCategories !== undefined && allowedCategories.length !== 0;
-      const hasRequiredCategories = requiredCategories !== undefined && requiredCategories.length !== 0;
+      const hasAllowedStyles = Array.isArray(allowedStyles) && allowedStyles.length !== 0;
+      const hasAllowedOptions = Array.isArray(allowedOptions) && allowedOptions.length !== 0;
+      const hasAllowedCategories = Array.isArray(allowedCategories) && allowedCategories.length !== 0;
+      const hasRequiredCategories = Array.isArray(requiredCategories) && requiredCategories.length !== 0;
+
+      const areStylesAllowed = hasAllowedStyles || allowedStyles === true;
+      const areOptionsAllowed = hasAllowedOptions || allowedOptions === true;
+      const areCategoriesAllowed = hasAllowedCategories || allowedCategories === true;
 
       if (!hasStyle && hasAllowedStyles && isStyleRequired) {
         errors.push(
@@ -131,7 +157,7 @@ export default function allowTypes(allowedTypes: { [type: string]: TypeRequireme
         );
       }
 
-      if (hasStyle && !hasAllowedStyles) {
+      if (hasStyle && !areStylesAllowed) {
         errors.push(
           new ParserError(
             'The argument type "' + typeNode.value + '" does not support styles.',
@@ -159,7 +185,7 @@ export default function allowTypes(allowedTypes: { [type: string]: TypeRequireme
         );
       }
 
-      if (hasOptions && !hasAllowedOptions) {
+      if (hasOptions && !areOptionsAllowed) {
         errors.push(
           new ParserError(
             'The argument type "' + typeNode.value + '" does not allow options.',
@@ -208,7 +234,7 @@ export default function allowTypes(allowedTypes: { [type: string]: TypeRequireme
         );
       }
 
-      if (hasCategories && !hasAllowedCategories) {
+      if (hasCategories && !areCategoriesAllowed) {
         errors.push(
           new ParserError(
             'The argument type "' + typeNode.value + '" does not allow categories.',
@@ -280,3 +306,111 @@ export default function allowTypes(allowedTypes: { [type: string]: TypeRequireme
     return params.messageNode;
   };
 }
+
+/**
+ * Allowed types that can be passed to {@link allowTypes} preprocessor to match
+ * the {@link mfml!defaultArgumentFormatter defaultArgumentFormatter} setup.
+ */
+export const defaultAllowedTypes: AllowedTypes = {
+  number: {
+    allowedStyles: ['decimal', 'integer', 'percent', 'currency'],
+    allowedOptions: [
+      'style',
+      'currency',
+      'currencyDisplay',
+      'currencySign',
+      'useGrouping',
+      'minimumIntegerDigits',
+      'minimumFractionDigits',
+      'maximumFractionDigits',
+      'minimumSignificantDigits',
+      'maximumSignificantDigits',
+      'numberingSystem',
+      'compactDisplay',
+      'notation',
+      'signDisplay',
+      'unit',
+      'unitDisplay',
+    ],
+  },
+  date: {
+    allowedStyles: ['short', 'full', 'long', 'medium'],
+    allowedOptions: [
+      'calendar',
+      'dayPeriod',
+      'numberingSystem',
+      'dateStyle',
+      'timeStyle',
+      'hourCycle',
+      'weekday',
+      'era',
+      'year',
+      'month',
+      'day',
+      'hour',
+      'minute',
+      'second',
+      'timeZoneName',
+      'formatMatcher',
+      'hour12',
+      'timeZone',
+    ],
+  },
+  time: {
+    allowedStyles: ['short', 'full', 'long', 'medium'],
+    allowedOptions: [
+      'calendar',
+      'dayPeriod',
+      'numberingSystem',
+      'dateStyle',
+      'timeStyle',
+      'hourCycle',
+      'weekday',
+      'era',
+      'year',
+      'month',
+      'day',
+      'hour',
+      'minute',
+      'second',
+      'timeZoneName',
+      'formatMatcher',
+      'hour12',
+      'timeZone',
+    ],
+  },
+  conjunction: {
+    allowedStyles: ['long', 'narrow', 'short'],
+    isStyleRequired: true,
+  },
+  disjunction: {
+    allowedStyles: ['long', 'narrow', 'short'],
+    isStyleRequired: true,
+  },
+  plural: {
+    allowedOptions: [
+      'minimumIntegerDigits',
+      'minimumFractionDigits',
+      'maximumFractionDigits',
+      'minimumSignificantDigits',
+      'maximumSignificantDigits',
+    ],
+    allowedCategories: ['zero', 'one', 'two', 'few', 'many', 'other'],
+    requiredCategories: ['other'],
+  },
+  selectOrdinal: {
+    allowedOptions: [
+      'minimumIntegerDigits',
+      'minimumFractionDigits',
+      'maximumFractionDigits',
+      'minimumSignificantDigits',
+      'maximumSignificantDigits',
+    ],
+    allowedCategories: ['zero', 'one', 'two', 'few', 'many', 'other'],
+    requiredCategories: ['other'],
+  },
+  select: {
+    allowedCategories: true,
+    requiredCategories: ['other'],
+  },
+};

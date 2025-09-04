@@ -17,7 +17,7 @@ export interface ArgumentFormatterParams {
   value: unknown;
 
   /**
-   * The type of format to apply ("number", "date", "plural", "selectordinal", "select", etc.) or `null` if type
+   * The type of format to apply ("number", "date", "plural", "selectOrdinal", "select", etc.) or `null` if type
    * wasn't provided.
    */
   type: string | null;

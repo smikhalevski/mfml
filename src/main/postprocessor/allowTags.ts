@@ -9,6 +9,14 @@ import { walkNode } from '../utils.js';
 import { ParserError } from '../parser/index.js';
 
 /**
+ * Mapping from a tag name to a list of allowed attributes, or a boolean. If `true` then a tag and any attributes are
+ * allowed, if `false` then tag is forbidden.
+ */
+export interface AllowedTags {
+  [tagName: string]: string[] | boolean;
+}
+
+/**
  * Restricts what tags and attributes are allowed.
  *
  * @example
@@ -17,10 +25,15 @@ import { ParserError } from '../parser/index.js';
  *   p: true
  * });
  *
- * @param allowedTags Mapping from a tag name to a list of allowed attributes, or a boolean. If `true` then a tag and
- * any attributes are allowed, if `false` then tag is forbidden.
+ * @example
+ * import allowTags, { defaultAllowedTags } from 'mfml/postprocessor/allowTags';
+ *
+ * allowTags(defaultAllowedTags);
+ *
+ * @param allowedTags Allowed tags requirements.
+ * @see {@link defaultAllowedTags}
  */
-export default function allowTags(allowedTags: { [tagName: string]: string[] | boolean }): Postprocessor {
+export default function allowTags(allowedTags: AllowedTags): Postprocessor {
   return params => {
     const errors: ParserError[] = [];
 
@@ -65,3 +78,37 @@ export default function allowTags(allowedTags: { [tagName: string]: string[] | b
     return params.messageNode;
   };
 }
+
+/**
+ * The safe set of tags and attributes, recommended for general use.
+ */
+export const defaultAllowedTags: AllowedTags = {
+  p: ['style', 'class'],
+  br: [],
+  hr: ['style', 'class'],
+  b: ['style', 'class'],
+  u: ['style', 'class'],
+  s: ['style', 'class'],
+  em: ['style', 'class'],
+  strong: ['style', 'class'],
+  del: ['style', 'class'],
+  code: ['style', 'class'],
+  mark: ['style', 'class'],
+  h1: ['id', 'style', 'class'],
+  h2: ['id', 'style', 'class'],
+  h3: ['id', 'style', 'class'],
+  h4: ['id', 'style', 'class'],
+  h5: ['id', 'style', 'class'],
+  h6: ['id', 'style', 'class'],
+  ul: ['id', 'style', 'class'],
+  ol: ['start', 'type', 'style', 'class'],
+  li: ['style', 'class'],
+  a: ['href', 'title', 'target', 'name', 'style', 'class'],
+  blockquote: ['cite', 'style', 'class'],
+  pre: ['style', 'class'],
+  sup: ['style', 'class'],
+  sub: ['style', 'class'],
+  abbr: ['title', 'style', 'class'],
+  kbd: ['style', 'class'],
+  samp: ['style', 'class'],
+};

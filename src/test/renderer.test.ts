@@ -97,7 +97,7 @@ test('selects ordinal category', () => {
     defaultCategorySelector({
       locale: 'ru',
       value: 2,
-      type: 'selectordinal',
+      type: 'selectOrdinal',
       categories: ['one', 'few', 'many', 'other'],
       options: null,
     })
@@ -107,7 +107,7 @@ test('selects ordinal category', () => {
     defaultCategorySelector({
       locale: 'ru',
       value: 3,
-      type: 'selectordinal',
+      type: 'selectOrdinal',
       categories: ['one', 'few', 'many', 'other'],
       options: null,
     })
@@ -117,7 +117,7 @@ test('selects ordinal category', () => {
     defaultCategorySelector({
       locale: 'en',
       value: 3,
-      type: 'selectordinal',
+      type: 'selectOrdinal',
       categories: ['one', 'few', 'many', 'other'],
       options: null,
     })
@@ -129,7 +129,7 @@ test('selects exact value', () => {
     defaultCategorySelector({
       locale: 'ru',
       value: 2,
-      type: 'selectordinal',
+      type: 'selectOrdinal',
       categories: ['=2', 'one', 'few', 'many', 'other'],
       options: null,
     })

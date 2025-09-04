@@ -34,7 +34,7 @@ export interface CategorySelectorParams {
   value: unknown;
 
   /**
-   * The type of the select node ("plural", "selectordinal", "select", etc.)
+   * The type of the select node ("plural", "selectOrdinal", "select", etc.)
    */
   type: string;
 
@@ -89,7 +89,7 @@ export interface Renderer<Element> {
 
 /**
  * Selects a category for an argument value. Follows ICU MessageFormat convention and uses {@link Intl.PluralRules}
- * for "plural" and "selectordinal" argument types.
+ * for "plural" and "selectOrdinal" argument types.
  *
  * @group Renderer
  */
@@ -98,11 +98,11 @@ export const defaultCategorySelector: CategorySelector = params => {
 
   let selectedCategory = '=' + value;
 
-  if ((type === 'plural' || type === 'selectordinal' || type === 'select') && categories.includes(selectedCategory)) {
+  if ((type === 'plural' || type === 'selectOrdinal' || type === 'select') && categories.includes(selectedCategory)) {
     return selectedCategory;
   }
 
-  if ((type === 'plural' || type === 'selectordinal') && typeof value === 'number') {
+  if ((type === 'plural' || type === 'selectOrdinal') && typeof value === 'number') {
     const formatOptions = type === 'plural' ? cardinalOptions : ordinalOptions;
 
     selectedCategory = getPluralRules(locale, mergeOptions(formatOptions, options)).select(value);

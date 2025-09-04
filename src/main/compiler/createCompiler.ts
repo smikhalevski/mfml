@@ -481,7 +481,7 @@ export function getNaturalArgumentTsType(argumentNode: ArgumentNode): string | u
       return 'string[]';
 
     case 'plural':
-    case 'selectordinal':
+    case 'selectOrdinal':
       return 'number';
 
     case 'select':
