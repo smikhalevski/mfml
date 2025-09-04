@@ -1,5 +1,5 @@
 /**
- * The error thrown by a parser if a {@link text} substring is malformed.
+ * The error thrown by a parser if a text substring is malformed.
  */
 export class ParserError extends SyntaxError {
   constructor(
@@ -9,11 +9,11 @@ export class ParserError extends SyntaxError {
      */
     public text: string,
     /**
-     * The index of the first char in {@link text} where an error was detected, inclusive.
+     * The index of the first char in text where an error was detected, inclusive.
      */
     public startIndex = -1,
     /**
-     * The index of the last char in {@link text} where an error was detected, exclusive.
+     * The index of the last char in text where an error was detected, exclusive.
      */
     public endIndex = -1
   ) {

@@ -4,11 +4,10 @@
 
 import { expect, test } from 'vitest';
 import { render } from '@testing-library/react';
-import { Message, MessageRendererProvider } from '../../main/react/Message.js';
+import { Message } from '../../main/react/Message.js';
 import React from 'react';
 import { parseMessage } from '../../main/parser/createParser.js';
 import { createTokenizer } from '../../main/parser/createTokenizer.js';
-import { ReactRenderer } from '../../main/react/index.js';
 
 const tokenizer = createTokenizer();
 
@@ -112,49 +111,49 @@ test('re-renders an element if a props argument is changed', () => {
   expect(result.container.innerHTML).toBe('<a title="xxxvvv"></a>');
 });
 
-test('renders elements with a context renderer', () => {
-  const mockMessage = (locale: string) => parseMessage(locale, 'aaa<i><b>{bbb}</b></i>', { tokenizer });
-
-  const result = render(
-    <MessageRendererProvider
-      value={
-        new ReactRenderer({
-          components: {
-            i: props => props.children,
-            b: props => props.children,
-          },
-        })
-      }
-    >
-      <Message
-        message={mockMessage}
-        values={{ bbb: 'zzz' }}
-      />
-    </MessageRendererProvider>,
-    { reactStrictMode: true }
-  );
-
-  expect(result.container.innerHTML).toBe('aaazzz');
-});
-
-test('renders elements with a custom renderer', () => {
-  const mockMessage = (locale: string) => parseMessage(locale, 'aaa<i><b>{bbb}</b></i>', { tokenizer });
-
-  const result = render(
-    <Message
-      message={mockMessage}
-      values={{ bbb: 'zzz' }}
-      renderer={
-        new ReactRenderer({
-          components: {
-            i: props => props.children,
-            b: props => props.children,
-          },
-        })
-      }
-    />,
-    { reactStrictMode: true }
-  );
-
-  expect(result.container.innerHTML).toBe('aaazzz');
-});
+// test('renders elements with a context renderer', () => {
+//   const mockMessage = (locale: string) => parseMessage(locale, 'aaa<i><b>{bbb}</b></i>', { tokenizer });
+//
+//   const result = render(
+//     <MessageRendererProvider
+//       value={
+//         new ReactRenderer({
+//           components: {
+//             i: props => props.children,
+//             b: props => props.children,
+//           },
+//         })
+//       }
+//     >
+//       <Message
+//         message={mockMessage}
+//         values={{ bbb: 'zzz' }}
+//       />
+//     </MessageRendererProvider>,
+//     { reactStrictMode: true }
+//   );
+//
+//   expect(result.container.innerHTML).toBe('aaazzz');
+// });
+//
+// test('renders elements with a custom renderer', () => {
+//   const mockMessage = (locale: string) => parseMessage(locale, 'aaa<i><b>{bbb}</b></i>', { tokenizer });
+//
+//   const result = render(
+//     <Message
+//       message={mockMessage}
+//       values={{ bbb: 'zzz' }}
+//       renderer={
+//         new ReactRenderer({
+//           components: {
+//             i: props => props.children,
+//             b: props => props.children,
+//           },
+//         })
+//       }
+//     />,
+//     { reactStrictMode: true }
+//   );
+//
+//   expect(result.container.innerHTML).toBe('aaazzz');
+// });

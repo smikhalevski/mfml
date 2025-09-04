@@ -161,7 +161,7 @@ describe('compileFiles', () => {
     ).toStrictEqual({
       'locales.js': 'export const LOCALE_EN_US="en-US";\nexport const LOCALE_RU_RU="ru-RU";\n',
 
-      'ca2cdd8045d8491e.js':
+      '13a21ab9ce3494ec.js':
         'import{M,E,A,V,R,O,C}from"mfml/dsl";\n' +
         'import{LOCALE_EN_US,LOCALE_RU_RU}from"./locales.js";\n' +
         '\n' +
@@ -179,11 +179,11 @@ describe('compileFiles', () => {
         ' * У вас <b>{count, number}</b> непрочитанных сообщений\n' +
         ' * ```\n' +
         ' */\n' +
-        'export default function(locale){\n' +
+        'export default function messageCount(locale){\n' +
         'return locale===LOCALE_EN_US?M(locale,"You have ",E("b",V("count","number"))," unread messages"):locale===LOCALE_RU_RU?M(locale,"У вас ",E("b",V("count","number"))," непрочитанных сообщений"):null;\n' +
         '}\n',
 
-      '4dbd175fc1875370.js':
+      'a3a36ac58fb4ed28.js':
         'import{M,E,A,V,R,O,C}from"mfml/dsl";\n' +
         'import{LOCALE_EN_US,LOCALE_RU_RU}from"./locales.js";\n' +
         '\n' +
@@ -201,13 +201,13 @@ describe('compileFiles', () => {
         ' * {gender, select, male {Он отправил} female {Она отправила} other {Они отправили}} вам сообщение\n' +
         ' * ```\n' +
         ' */\n' +
-        'export default function(locale){\n' +
+        'export default function messageReceived(locale){\n' +
         'return locale===LOCALE_EN_US?M(locale,V("gender","select",C("male","He"),C("female","She"),C("other","They"))," sent you a message"):locale===LOCALE_RU_RU?M(locale,V("gender","select",C("male","Он отправил"),C("female","Она отправила"),C("other","Они отправили"))," вам сообщение"):null;\n' +
         '}\n',
 
       'index.js':
-        'export{default as messageCount}from"./ca2cdd8045d8491e.js";\n' +
-        'export{default as messageReceived}from"./4dbd175fc1875370.js";\n',
+        'export{default as messageCount}from"./13a21ab9ce3494ec.js";\n' +
+        'export{default as messageReceived}from"./a3a36ac58fb4ed28.js";\n',
 
       'index.d.ts':
         'import{MessageNode}from"mfml";\n' +
@@ -256,438 +256,444 @@ describe('compileFiles', () => {
     });
   });
 
-  // test('compiles message that does not support all locales', async () => {
-  //   await expect(
-  //     compileFiles(
-  //       {
-  //         en: {
-  //           aaa: 'Hello',
-  //         },
-  //         ru: {
-  //           aaa: 'Привет',
-  //           bbb: 'Пока',
-  //         },
-  //       },
-  //       {
-  //         parser: createParser({ tokenizer: htmlTokenizer }),
-  //       }
-  //     )
-  //   ).resolves.toStrictEqual({
-  //     'locales.js': 'export const LOCALE_EN="en";\nexport const LOCALE_RU="ru";\n',
-  //
-  //     'da48dd32158fb414.js':
-  //       'import{createMessageNode as M,createElementNode as E,createArgumentNode as A,createSelectNode as S}from"mfml";\n' +
-  //       'import{LOCALE_EN,LOCALE_RU}from"./locales.js";\n' +
-  //       '\n' +
-  //       '/**\n' +
-  //       ' * **Message key**\n' +
-  //       ' * ```text\n' +
-  //       ' * aaa\n' +
-  //       ' * ```\n' +
-  //       ' * **en**\n' +
-  //       ' * ```html\n' +
-  //       ' * Hello\n' +
-  //       ' * ```\n' +
-  //       ' * **ru**\n' +
-  //       ' * ```html\n' +
-  //       ' * Привет\n' +
-  //       ' * ```\n' +
-  //       ' */\n' +
-  //       'export default function(locale){\n' +
-  //       'return locale===LOCALE_EN?M(locale,"Hello"):locale===LOCALE_RU?M(locale,"Привет"):null;\n' +
-  //       '}\n',
-  //
-  //     'f837c12c31f24686.js':
-  //       'import{createMessageNode as M,createElementNode as E,createArgumentNode as A,createSelectNode as S}from"mfml";\n' +
-  //       'import{LOCALE_EN,LOCALE_RU}from"./locales.js";\n' +
-  //       '\n' +
-  //       '/**\n' +
-  //       ' * **Message key**\n' +
-  //       ' * ```text\n' +
-  //       ' * bbb\n' +
-  //       ' * ```\n' +
-  //       ' * **ru**\n' +
-  //       ' * ```html\n' +
-  //       ' * Пока\n' +
-  //       ' * ```\n' +
-  //       ' */\n' +
-  //       'export default function(locale){\n' +
-  //       'return locale===LOCALE_RU?M(locale,"Пока"):null;\n' +
-  //       '}\n',
-  //
-  //     'index.js':
-  //       'export{default as aaa}from"./da48dd32158fb414.js";\nexport{default as bbb}from"./f837c12c31f24686.js";\n',
-  //
-  //     'index.d.ts':
-  //       'import{MessageNode}from"mfml";\n' +
-  //       '\n' +
-  //       '/**\n' +
-  //       ' * **Message key**\n' +
-  //       ' * ```text\n' +
-  //       ' * aaa\n' +
-  //       ' * ```\n' +
-  //       ' * **en**\n' +
-  //       ' * ```html\n' +
-  //       ' * Hello\n' +
-  //       ' * ```\n' +
-  //       ' * **ru**\n' +
-  //       ' * ```html\n' +
-  //       ' * Привет\n' +
-  //       ' * ```\n' +
-  //       ' */\n' +
-  //       'export declare function aaa(locale:string):MessageNode|null;\n' +
-  //       '\n' +
-  //       '/**\n' +
-  //       ' * **Message key**\n' +
-  //       ' * ```text\n' +
-  //       ' * bbb\n' +
-  //       ' * ```\n' +
-  //       ' * **ru**\n' +
-  //       ' * ```html\n' +
-  //       ' * Пока\n' +
-  //       ' * ```\n' +
-  //       ' */\n' +
-  //       'export declare function bbb(locale:string):MessageNode|null;\n',
-  //
-  //     'metadata.d.ts':
-  //       'export type SupportedLocale="en"|"ru";\n' +
-  //       '\n' +
-  //       'export declare const supportedLocales:readonly SupportedLocale[];\n',
-  //
-  //     'metadata.js':
-  //       'import{LOCALE_EN,LOCALE_RU}from"./locales.js";\n\nexport const supportedLocales=[LOCALE_EN,LOCALE_RU];\n',
-  //   });
-  // });
-  //
-  // test('compiles message that does not support all locales and has a fallback', async () => {
-  //   await expect(
-  //     compileFiles(
-  //       {
-  //         en: {
-  //           aaa: 'Hello',
-  //         },
-  //         ru: {
-  //           aaa: 'Привет',
-  //           bbb: 'Пока',
-  //         },
-  //       },
-  //       {
-  //         parser: createParser({ tokenizer: htmlTokenizer }),
-  //         fallbackLocales: {
-  //           en: 'ru',
-  //         },
-  //       }
-  //     )
-  //   ).resolves.toStrictEqual({
-  //     'locales.js': 'export const LOCALE_EN="en";\nexport const LOCALE_RU="ru";\n',
-  //
-  //     'da48dd32158fb414.js':
-  //       'import{createMessageNode as M,createElementNode as E,createArgumentNode as A,createSelectNode as S}from"mfml";\n' +
-  //       'import{LOCALE_EN,LOCALE_RU}from"./locales.js";\n' +
-  //       '\n' +
-  //       '/**\n' +
-  //       ' * **Message key**\n' +
-  //       ' * ```text\n' +
-  //       ' * aaa\n' +
-  //       ' * ```\n' +
-  //       ' * **en**\n' +
-  //       ' * ```html\n' +
-  //       ' * Hello\n' +
-  //       ' * ```\n' +
-  //       ' * **ru**\n' +
-  //       ' * ```html\n' +
-  //       ' * Привет\n' +
-  //       ' * ```\n' +
-  //       ' */\n' +
-  //       'export default function(locale){\n' +
-  //       'return locale===LOCALE_EN?M(locale,"Hello"):locale===LOCALE_RU?M(locale,"Привет"):null;\n' +
-  //       '}\n',
-  //
-  //     'bafa422d7dced287.js':
-  //       'import{createMessageNode as M,createElementNode as E,createArgumentNode as A,createSelectNode as S}from"mfml";\n' +
-  //       'import{LOCALE_EN,LOCALE_RU}from"./locales.js";\n' +
-  //       '\n' +
-  //       '/**\n' +
-  //       ' * **Message key**\n' +
-  //       ' * ```text\n' +
-  //       ' * bbb\n' +
-  //       ' * ```\n' +
-  //       ' * **ru** ← en\n' +
-  //       ' * ```html\n' +
-  //       ' * Пока\n' +
-  //       ' * ```\n' +
-  //       ' */\n' +
-  //       'export default function(locale){\n' +
-  //       'return locale===LOCALE_RU||locale===LOCALE_EN?M(locale,"Пока"):null;\n' +
-  //       '}\n',
-  //
-  //     'index.js':
-  //       'export{default as aaa}from"./da48dd32158fb414.js";\nexport{default as bbb}from"./bafa422d7dced287.js";\n',
-  //
-  //     'index.d.ts':
-  //       'import{MessageNode}from"mfml";\n' +
-  //       '\n' +
-  //       '/**\n' +
-  //       ' * **Message key**\n' +
-  //       ' * ```text\n' +
-  //       ' * aaa\n' +
-  //       ' * ```\n' +
-  //       ' * **en**\n' +
-  //       ' * ```html\n' +
-  //       ' * Hello\n' +
-  //       ' * ```\n' +
-  //       ' * **ru**\n' +
-  //       ' * ```html\n' +
-  //       ' * Привет\n' +
-  //       ' * ```\n' +
-  //       ' */\n' +
-  //       'export declare function aaa(locale:string):MessageNode|null;\n' +
-  //       '\n' +
-  //       '/**\n' +
-  //       ' * **Message key**\n' +
-  //       ' * ```text\n' +
-  //       ' * bbb\n' +
-  //       ' * ```\n' +
-  //       ' * **ru** ← en\n' +
-  //       ' * ```html\n' +
-  //       ' * Пока\n' +
-  //       ' * ```\n' +
-  //       ' */\n' +
-  //       'export declare function bbb(locale:string):MessageNode|null;\n',
-  //
-  //     'metadata.d.ts':
-  //       'export type SupportedLocale="en"|"ru";\n' +
-  //       '\n' +
-  //       'export declare const supportedLocales:readonly SupportedLocale[];\n',
-  //
-  //     'metadata.js':
-  //       'import{LOCALE_EN,LOCALE_RU}from"./locales.js";\n\nexport const supportedLocales=[LOCALE_EN,LOCALE_RU];\n',
-  //   });
-  // });
-  //
-  // test('compiles message that does not support all locales and has a fallback with an infinite loop', async () => {
-  //   await expect(
-  //     compileFiles(
-  //       {
-  //         en: {
-  //           aaa: 'Hello',
-  //         },
-  //         ru: {
-  //           aaa: 'Привет',
-  //           bbb: 'Пока',
-  //         },
-  //       },
-  //       {
-  //         parser: createParser({ tokenizer: htmlTokenizer }),
-  //         fallbackLocales: {
-  //           en: 'en',
-  //         },
-  //       }
-  //     )
-  //   ).resolves.toStrictEqual({
-  //     'locales.js': 'export const LOCALE_EN="en";\nexport const LOCALE_RU="ru";\n',
-  //
-  //     'da48dd32158fb414.js':
-  //       'import{createMessageNode as M,createElementNode as E,createArgumentNode as A,createSelectNode as S}from"mfml";\n' +
-  //       'import{LOCALE_EN,LOCALE_RU}from"./locales.js";\n' +
-  //       '\n' +
-  //       '/**\n' +
-  //       ' * **Message key**\n' +
-  //       ' * ```text\n' +
-  //       ' * aaa\n' +
-  //       ' * ```\n' +
-  //       ' * **en**\n' +
-  //       ' * ```html\n' +
-  //       ' * Hello\n' +
-  //       ' * ```\n' +
-  //       ' * **ru**\n' +
-  //       ' * ```html\n' +
-  //       ' * Привет\n' +
-  //       ' * ```\n' +
-  //       ' */\n' +
-  //       'export default function(locale){\n' +
-  //       'return locale===LOCALE_EN?M(locale,"Hello"):locale===LOCALE_RU?M(locale,"Привет"):null;\n' +
-  //       '}\n',
-  //
-  //     'f837c12c31f24686.js':
-  //       'import{createMessageNode as M,createElementNode as E,createArgumentNode as A,createSelectNode as S}from"mfml";\n' +
-  //       'import{LOCALE_EN,LOCALE_RU}from"./locales.js";\n' +
-  //       '\n' +
-  //       '/**\n' +
-  //       ' * **Message key**\n' +
-  //       ' * ```text\n' +
-  //       ' * bbb\n' +
-  //       ' * ```\n' +
-  //       ' * **ru**\n' +
-  //       ' * ```html\n' +
-  //       ' * Пока\n' +
-  //       ' * ```\n' +
-  //       ' */\n' +
-  //       'export default function(locale){\n' +
-  //       'return locale===LOCALE_RU?M(locale,"Пока"):null;\n' +
-  //       '}\n',
-  //
-  //     'index.js':
-  //       'export{default as aaa}from"./da48dd32158fb414.js";\nexport{default as bbb}from"./f837c12c31f24686.js";\n',
-  //
-  //     'index.d.ts':
-  //       'import{MessageNode}from"mfml";\n' +
-  //       '\n' +
-  //       '/**\n' +
-  //       ' * **Message key**\n' +
-  //       ' * ```text\n' +
-  //       ' * aaa\n' +
-  //       ' * ```\n' +
-  //       ' * **en**\n' +
-  //       ' * ```html\n' +
-  //       ' * Hello\n' +
-  //       ' * ```\n' +
-  //       ' * **ru**\n' +
-  //       ' * ```html\n' +
-  //       ' * Привет\n' +
-  //       ' * ```\n' +
-  //       ' */\n' +
-  //       'export declare function aaa(locale:string):MessageNode|null;\n' +
-  //       '\n' +
-  //       '/**\n' +
-  //       ' * **Message key**\n' +
-  //       ' * ```text\n' +
-  //       ' * bbb\n' +
-  //       ' * ```\n' +
-  //       ' * **ru**\n' +
-  //       ' * ```html\n' +
-  //       ' * Пока\n' +
-  //       ' * ```\n' +
-  //       ' */\n' +
-  //       'export declare function bbb(locale:string):MessageNode|null;\n',
-  //
-  //     'metadata.d.ts':
-  //       'export type SupportedLocale="en"|"ru";\n' +
-  //       '\n' +
-  //       'export declare const supportedLocales:readonly SupportedLocale[];\n',
-  //
-  //     'metadata.js':
-  //       'import{LOCALE_EN,LOCALE_RU}from"./locales.js";\n\nexport const supportedLocales=[LOCALE_EN,LOCALE_RU];\n',
-  //   });
-  // });
-  //
-  // test('compiles message with multiple fallbacks', async () => {
-  //   expect(
-  //     await compileFiles(
-  //       {
-  //         en: {
-  //           aaa: 'Hello',
-  //         },
-  //         ru: {
-  //           aaa: 'Привет',
-  //           bbb: 'Пока',
-  //         },
-  //         es: {
-  //           aaa: 'Hola',
-  //         },
-  //       },
-  //       {
-  //         parser: createParser({ tokenizer: htmlTokenizer }),
-  //         fallbackLocales: {
-  //           en: 'es',
-  //           es: 'ru',
-  //         },
-  //       }
-  //     )
-  //   ).toStrictEqual({
-  //     'locales.js': 'export const LOCALE_EN="en";\nexport const LOCALE_RU="ru";\nexport const LOCALE_ES="es";\n',
-  //
-  //     'ae90451fba08dbc3.js':
-  //       'import{createMessageNode as M,createElementNode as E,createArgumentNode as A,createSelectNode as S}from"mfml";\n' +
-  //       'import{LOCALE_EN,LOCALE_RU,LOCALE_ES}from"./locales.js";\n' +
-  //       '\n' +
-  //       '/**\n' +
-  //       ' * **Message key**\n' +
-  //       ' * ```text\n' +
-  //       ' * aaa\n' +
-  //       ' * ```\n' +
-  //       ' * **en**\n' +
-  //       ' * ```html\n' +
-  //       ' * Hello\n' +
-  //       ' * ```\n' +
-  //       ' * **ru**\n' +
-  //       ' * ```html\n' +
-  //       ' * Привет\n' +
-  //       ' * ```\n' +
-  //       ' * **es**\n' +
-  //       ' * ```html\n' +
-  //       ' * Hola\n' +
-  //       ' * ```\n' +
-  //       ' */\n' +
-  //       'export default function(locale){\n' +
-  //       'return locale===LOCALE_EN?M(locale,"Hello"):locale===LOCALE_RU?M(locale,"Привет"):locale===LOCALE_ES?M(locale,"Hola"):null;\n' +
-  //       '}\n',
-  //
-  //     'a7d0fe00636e93cc.js':
-  //       'import{createMessageNode as M,createElementNode as E,createArgumentNode as A,createSelectNode as S}from"mfml";\n' +
-  //       'import{LOCALE_EN,LOCALE_RU,LOCALE_ES}from"./locales.js";\n' +
-  //       '\n' +
-  //       '/**\n' +
-  //       ' * **Message key**\n' +
-  //       ' * ```text\n' +
-  //       ' * bbb\n' +
-  //       ' * ```\n' +
-  //       ' * **ru** ← en ← es\n' +
-  //       ' * ```html\n' +
-  //       ' * Пока\n' +
-  //       ' * ```\n' +
-  //       ' */\n' +
-  //       'export default function(locale){\n' +
-  //       'return locale===LOCALE_RU||locale===LOCALE_EN||locale===LOCALE_ES?M(locale,"Пока"):null;\n' +
-  //       '}\n',
-  //
-  //     'index.js':
-  //       'export{default as aaa}from"./ae90451fba08dbc3.js";\nexport{default as bbb}from"./a7d0fe00636e93cc.js";\n',
-  //
-  //     'index.d.ts':
-  //       'import{MessageNode}from"mfml";\n' +
-  //       '\n' +
-  //       '/**\n' +
-  //       ' * **Message key**\n' +
-  //       ' * ```text\n' +
-  //       ' * aaa\n' +
-  //       ' * ```\n' +
-  //       ' * **en**\n' +
-  //       ' * ```html\n' +
-  //       ' * Hello\n' +
-  //       ' * ```\n' +
-  //       ' * **ru**\n' +
-  //       ' * ```html\n' +
-  //       ' * Привет\n' +
-  //       ' * ```\n' +
-  //       ' * **es**\n' +
-  //       ' * ```html\n' +
-  //       ' * Hola\n' +
-  //       ' * ```\n' +
-  //       ' */\n' +
-  //       'export declare function aaa(locale:string):MessageNode|null;\n' +
-  //       '\n' +
-  //       '/**\n' +
-  //       ' * **Message key**\n' +
-  //       ' * ```text\n' +
-  //       ' * bbb\n' +
-  //       ' * ```\n' +
-  //       ' * **ru** ← en ← es\n' +
-  //       ' * ```html\n' +
-  //       ' * Пока\n' +
-  //       ' * ```\n' +
-  //       ' */\n' +
-  //       'export declare function bbb(locale:string):MessageNode|null;\n',
-  //
-  //     'metadata.d.ts':
-  //       'export type SupportedLocale="en"|"ru"|"es";\n' +
-  //       '\n' +
-  //       'export declare const supportedLocales:readonly SupportedLocale[];\n',
-  //
-  //     'metadata.js':
-  //       'import{LOCALE_EN,LOCALE_RU,LOCALE_ES}from"./locales.js";\n' +
-  //       '\n' +
-  //       'export const supportedLocales=[LOCALE_EN,LOCALE_RU,LOCALE_ES];\n',
-  //   });
-  // });
+  test('compiles message that does not support all locales', async () => {
+    expect(
+      await compileFiles(
+        {
+          en: {
+            aaa: 'Hello',
+          },
+          ru: {
+            aaa: 'Привет',
+            bbb: 'Пока',
+          },
+        },
+        {
+          parser: createParser({ tokenizer: htmlTokenizer }),
+        }
+      )
+    ).toStrictEqual({
+      'locales.js': 'export const LOCALE_EN="en";\nexport const LOCALE_RU="ru";\n',
+
+      'e46c76abca073d4c.js':
+        'import{M,E,A,V,R,O,C}from"mfml/dsl";\n' +
+        'import{LOCALE_EN,LOCALE_RU}from"./locales.js";\n' +
+        '\n' +
+        '/**\n' +
+        ' * **Message key**\n' +
+        ' * ```text\n' +
+        ' * aaa\n' +
+        ' * ```\n' +
+        ' * **en**\n' +
+        ' * ```html\n' +
+        ' * Hello\n' +
+        ' * ```\n' +
+        ' * **ru**\n' +
+        ' * ```html\n' +
+        ' * Привет\n' +
+        ' * ```\n' +
+        ' */\n' +
+        'export default function aaa(locale){\n' +
+        'return locale===LOCALE_EN?M(locale,"Hello"):locale===LOCALE_RU?M(locale,"Привет"):null;\n' +
+        '}\n',
+
+      'e7828a0beb5f01ff.js':
+        'import{M,E,A,V,R,O,C}from"mfml/dsl";\n' +
+        'import{LOCALE_EN,LOCALE_RU}from"./locales.js";\n' +
+        '\n' +
+        '/**\n' +
+        ' * **Message key**\n' +
+        ' * ```text\n' +
+        ' * bbb\n' +
+        ' * ```\n' +
+        ' * **ru**\n' +
+        ' * ```html\n' +
+        ' * Пока\n' +
+        ' * ```\n' +
+        ' */\n' +
+        'export default function bbb(locale){\n' +
+        'return locale===LOCALE_RU?M(locale,"Пока"):null;\n' +
+        '}\n',
+
+      'index.js':
+        'export{default as aaa}from"./e46c76abca073d4c.js";\n' + 'export{default as bbb}from"./e7828a0beb5f01ff.js";\n',
+
+      'index.d.ts':
+        'import{MessageNode}from"mfml";\n' +
+        '\n' +
+        '/**\n' +
+        ' * **Message key**\n' +
+        ' * ```text\n' +
+        ' * aaa\n' +
+        ' * ```\n' +
+        ' * **en**\n' +
+        ' * ```html\n' +
+        ' * Hello\n' +
+        ' * ```\n' +
+        ' * **ru**\n' +
+        ' * ```html\n' +
+        ' * Привет\n' +
+        ' * ```\n' +
+        ' */\n' +
+        'export declare function aaa(locale:string):MessageNode<void>|null;\n' +
+        '\n' +
+        '/**\n' +
+        ' * **Message key**\n' +
+        ' * ```text\n' +
+        ' * bbb\n' +
+        ' * ```\n' +
+        ' * **ru**\n' +
+        ' * ```html\n' +
+        ' * Пока\n' +
+        ' * ```\n' +
+        ' */\n' +
+        'export declare function bbb(locale:string):MessageNode<void>|null;\n',
+
+      'metadata.js':
+        'import{LOCALE_EN,LOCALE_RU}from"./locales.js";\n' +
+        '\n' +
+        'export const supportedLocales=[LOCALE_EN,LOCALE_RU];\n',
+
+      'metadata.d.ts':
+        'export type SupportedLocale="en"|"ru";\n' +
+        '\n' +
+        'export declare const supportedLocales:readonly SupportedLocale[];\n',
+    });
+  });
+
+  test('compiles message that does not support all locales and has a fallback', async () => {
+    expect(
+      await compileFiles(
+        {
+          en: {
+            aaa: 'Hello',
+          },
+          ru: {
+            aaa: 'Привет',
+            bbb: 'Пока',
+          },
+        },
+        {
+          parser: createParser({ tokenizer: htmlTokenizer }),
+          fallbackLocales: {
+            en: 'ru',
+          },
+        }
+      )
+    ).toStrictEqual({
+      'locales.js': 'export const LOCALE_EN="en";\nexport const LOCALE_RU="ru";\n',
+
+      'e46c76abca073d4c.js':
+        'import{M,E,A,V,R,O,C}from"mfml/dsl";\n' +
+        'import{LOCALE_EN,LOCALE_RU}from"./locales.js";\n' +
+        '\n' +
+        '/**\n' +
+        ' * **Message key**\n' +
+        ' * ```text\n' +
+        ' * aaa\n' +
+        ' * ```\n' +
+        ' * **en**\n' +
+        ' * ```html\n' +
+        ' * Hello\n' +
+        ' * ```\n' +
+        ' * **ru**\n' +
+        ' * ```html\n' +
+        ' * Привет\n' +
+        ' * ```\n' +
+        ' */\n' +
+        'export default function aaa(locale){\n' +
+        'return locale===LOCALE_EN?M(locale,"Hello"):locale===LOCALE_RU?M(locale,"Привет"):null;\n' +
+        '}\n',
+
+      '806661b426cd8693.js':
+        'import{M,E,A,V,R,O,C}from"mfml/dsl";\n' +
+        'import{LOCALE_EN,LOCALE_RU}from"./locales.js";\n' +
+        '\n' +
+        '/**\n' +
+        ' * **Message key**\n' +
+        ' * ```text\n' +
+        ' * bbb\n' +
+        ' * ```\n' +
+        ' * **ru** ← en\n' +
+        ' * ```html\n' +
+        ' * Пока\n' +
+        ' * ```\n' +
+        ' */\n' +
+        'export default function bbb(locale){\n' +
+        'return locale===LOCALE_RU||locale===LOCALE_EN?M(locale,"Пока"):null;\n' +
+        '}\n',
+
+      'index.js':
+        'export{default as aaa}from"./e46c76abca073d4c.js";\n' + 'export{default as bbb}from"./806661b426cd8693.js";\n',
+
+      'index.d.ts':
+        'import{MessageNode}from"mfml";\n' +
+        '\n' +
+        '/**\n' +
+        ' * **Message key**\n' +
+        ' * ```text\n' +
+        ' * aaa\n' +
+        ' * ```\n' +
+        ' * **en**\n' +
+        ' * ```html\n' +
+        ' * Hello\n' +
+        ' * ```\n' +
+        ' * **ru**\n' +
+        ' * ```html\n' +
+        ' * Привет\n' +
+        ' * ```\n' +
+        ' */\n' +
+        'export declare function aaa(locale:string):MessageNode<void>|null;\n' +
+        '\n' +
+        '/**\n' +
+        ' * **Message key**\n' +
+        ' * ```text\n' +
+        ' * bbb\n' +
+        ' * ```\n' +
+        ' * **ru** ← en\n' +
+        ' * ```html\n' +
+        ' * Пока\n' +
+        ' * ```\n' +
+        ' */\n' +
+        'export declare function bbb(locale:string):MessageNode<void>|null;\n',
+
+      'metadata.js':
+        'import{LOCALE_EN,LOCALE_RU}from"./locales.js";\n' +
+        '\n' +
+        'export const supportedLocales=[LOCALE_EN,LOCALE_RU];\n',
+
+      'metadata.d.ts':
+        'export type SupportedLocale="en"|"ru";\n' +
+        '\n' +
+        'export declare const supportedLocales:readonly SupportedLocale[];\n',
+    });
+  });
+
+  test('compiles message that does not support all locales and has a fallback with an infinite loop', async () => {
+    expect(
+      await compileFiles(
+        {
+          en: {
+            aaa: 'Hello',
+          },
+          ru: {
+            aaa: 'Привет',
+            bbb: 'Пока',
+          },
+        },
+        {
+          parser: createParser({ tokenizer: htmlTokenizer }),
+          fallbackLocales: {
+            en: 'en',
+          },
+        }
+      )
+    ).toStrictEqual({
+      'locales.js': 'export const LOCALE_EN="en";\nexport const LOCALE_RU="ru";\n',
+
+      'e46c76abca073d4c.js':
+        'import{M,E,A,V,R,O,C}from"mfml/dsl";\n' +
+        'import{LOCALE_EN,LOCALE_RU}from"./locales.js";\n' +
+        '\n' +
+        '/**\n' +
+        ' * **Message key**\n' +
+        ' * ```text\n' +
+        ' * aaa\n' +
+        ' * ```\n' +
+        ' * **en**\n' +
+        ' * ```html\n' +
+        ' * Hello\n' +
+        ' * ```\n' +
+        ' * **ru**\n' +
+        ' * ```html\n' +
+        ' * Привет\n' +
+        ' * ```\n' +
+        ' */\n' +
+        'export default function aaa(locale){\n' +
+        'return locale===LOCALE_EN?M(locale,"Hello"):locale===LOCALE_RU?M(locale,"Привет"):null;\n' +
+        '}\n',
+
+      'e7828a0beb5f01ff.js':
+        'import{M,E,A,V,R,O,C}from"mfml/dsl";\n' +
+        'import{LOCALE_EN,LOCALE_RU}from"./locales.js";\n' +
+        '\n' +
+        '/**\n' +
+        ' * **Message key**\n' +
+        ' * ```text\n' +
+        ' * bbb\n' +
+        ' * ```\n' +
+        ' * **ru**\n' +
+        ' * ```html\n' +
+        ' * Пока\n' +
+        ' * ```\n' +
+        ' */\n' +
+        'export default function bbb(locale){\n' +
+        'return locale===LOCALE_RU?M(locale,"Пока"):null;\n' +
+        '}\n',
+
+      'index.js':
+        'export{default as aaa}from"./e46c76abca073d4c.js";\n' + 'export{default as bbb}from"./e7828a0beb5f01ff.js";\n',
+
+      'index.d.ts':
+        'import{MessageNode}from"mfml";\n' +
+        '\n' +
+        '/**\n' +
+        ' * **Message key**\n' +
+        ' * ```text\n' +
+        ' * aaa\n' +
+        ' * ```\n' +
+        ' * **en**\n' +
+        ' * ```html\n' +
+        ' * Hello\n' +
+        ' * ```\n' +
+        ' * **ru**\n' +
+        ' * ```html\n' +
+        ' * Привет\n' +
+        ' * ```\n' +
+        ' */\n' +
+        'export declare function aaa(locale:string):MessageNode<void>|null;\n' +
+        '\n' +
+        '/**\n' +
+        ' * **Message key**\n' +
+        ' * ```text\n' +
+        ' * bbb\n' +
+        ' * ```\n' +
+        ' * **ru**\n' +
+        ' * ```html\n' +
+        ' * Пока\n' +
+        ' * ```\n' +
+        ' */\n' +
+        'export declare function bbb(locale:string):MessageNode<void>|null;\n',
+
+      'metadata.js':
+        'import{LOCALE_EN,LOCALE_RU}from"./locales.js";\n' +
+        '\n' +
+        'export const supportedLocales=[LOCALE_EN,LOCALE_RU];\n',
+
+      'metadata.d.ts':
+        'export type SupportedLocale="en"|"ru";\n' +
+        '\n' +
+        'export declare const supportedLocales:readonly SupportedLocale[];\n',
+    });
+  });
+
+  test('compiles message with multiple fallbacks', async () => {
+    expect(
+      await compileFiles(
+        {
+          en: {
+            aaa: 'Hello',
+          },
+          ru: {
+            aaa: 'Привет',
+            bbb: 'Пока',
+          },
+          es: {
+            aaa: 'Hola',
+          },
+        },
+        {
+          parser: createParser({ tokenizer: htmlTokenizer }),
+          fallbackLocales: {
+            en: 'es',
+            es: 'ru',
+          },
+        }
+      )
+    ).toStrictEqual({
+      'locales.js': 'export const LOCALE_EN="en";\nexport const LOCALE_RU="ru";\nexport const LOCALE_ES="es";\n',
+
+      '50b1b1677bcfea54.js':
+        'import{M,E,A,V,R,O,C}from"mfml/dsl";\n' +
+        'import{LOCALE_EN,LOCALE_RU,LOCALE_ES}from"./locales.js";\n' +
+        '\n' +
+        '/**\n' +
+        ' * **Message key**\n' +
+        ' * ```text\n' +
+        ' * aaa\n' +
+        ' * ```\n' +
+        ' * **en**\n' +
+        ' * ```html\n' +
+        ' * Hello\n' +
+        ' * ```\n' +
+        ' * **ru**\n' +
+        ' * ```html\n' +
+        ' * Привет\n' +
+        ' * ```\n' +
+        ' * **es**\n' +
+        ' * ```html\n' +
+        ' * Hola\n' +
+        ' * ```\n' +
+        ' */\n' +
+        'export default function aaa(locale){\n' +
+        'return locale===LOCALE_EN?M(locale,"Hello"):locale===LOCALE_RU?M(locale,"Привет"):locale===LOCALE_ES?M(locale,"Hola"):null;\n' +
+        '}\n',
+
+      '3e1aed2ec3b5cc47.js':
+        'import{M,E,A,V,R,O,C}from"mfml/dsl";\n' +
+        'import{LOCALE_EN,LOCALE_RU,LOCALE_ES}from"./locales.js";\n' +
+        '\n' +
+        '/**\n' +
+        ' * **Message key**\n' +
+        ' * ```text\n' +
+        ' * bbb\n' +
+        ' * ```\n' +
+        ' * **ru** ← en ← es\n' +
+        ' * ```html\n' +
+        ' * Пока\n' +
+        ' * ```\n' +
+        ' */\n' +
+        'export default function bbb(locale){\n' +
+        'return locale===LOCALE_RU||locale===LOCALE_EN||locale===LOCALE_ES?M(locale,"Пока"):null;\n' +
+        '}\n',
+
+      'index.js':
+        'export{default as aaa}from"./50b1b1677bcfea54.js";\n' + 'export{default as bbb}from"./3e1aed2ec3b5cc47.js";\n',
+
+      'index.d.ts':
+        'import{MessageNode}from"mfml";\n' +
+        '\n' +
+        '/**\n' +
+        ' * **Message key**\n' +
+        ' * ```text\n' +
+        ' * aaa\n' +
+        ' * ```\n' +
+        ' * **en**\n' +
+        ' * ```html\n' +
+        ' * Hello\n' +
+        ' * ```\n' +
+        ' * **ru**\n' +
+        ' * ```html\n' +
+        ' * Привет\n' +
+        ' * ```\n' +
+        ' * **es**\n' +
+        ' * ```html\n' +
+        ' * Hola\n' +
+        ' * ```\n' +
+        ' */\n' +
+        'export declare function aaa(locale:string):MessageNode<void>|null;\n' +
+        '\n' +
+        '/**\n' +
+        ' * **Message key**\n' +
+        ' * ```text\n' +
+        ' * bbb\n' +
+        ' * ```\n' +
+        ' * **ru** ← en ← es\n' +
+        ' * ```html\n' +
+        ' * Пока\n' +
+        ' * ```\n' +
+        ' */\n' +
+        'export declare function bbb(locale:string):MessageNode<void>|null;\n',
+
+      'metadata.js':
+        'import{LOCALE_EN,LOCALE_RU,LOCALE_ES}from"./locales.js";\n' +
+        '\n' +
+        'export const supportedLocales=[LOCALE_EN,LOCALE_RU,LOCALE_ES];\n',
+
+      'metadata.d.ts':
+        'export type SupportedLocale="en"|"ru"|"es";\n' +
+        '\n' +
+        'export declare const supportedLocales:readonly SupportedLocale[];\n',
+    });
+  });
 });
