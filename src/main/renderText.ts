@@ -1,6 +1,6 @@
 import { Child, MessageNode } from './ast.js';
 import { StringRenderer } from './StringRenderer.js';
-import { defaultStyles, getMessageNodeOrFallback } from './utils.js';
+import { defaultStyles } from './utils.js';
 import { Renderer } from './AbstractRenderer.js';
 
 const defaultStringRenderer: Renderer<string> = new StringRenderer(defaultStyles);
@@ -36,11 +36,6 @@ export interface RenderTextOptions<
    * Renderer that should be used.
    */
   renderer?: Renderer<string>;
-
-  /**
-   * Fallback locales mapping.
-   */
-  fallbackLocales?: Record<string, string>;
 }
 
 type InferRenderTextOptions<MessageFunction extends (locale: string) => MessageNode<object | void> | null> =
@@ -51,13 +46,12 @@ type InferRenderTextOptions<MessageFunction extends (locale: string) => MessageN
     : never;
 
 /**
- * Renders message node as plain text string.
+ * Renders a message node as a plain text.
  *
  * @example
  * renderText({
  *   message: greeting,
  *   locale: 'en-US',
- *   fallbackLocales: { 'en-US': 'en' },
  *   values: { name: 'Bob' },
  * });
  *
@@ -67,9 +61,9 @@ type InferRenderTextOptions<MessageFunction extends (locale: string) => MessageN
 export function renderText<MessageFunction extends (locale: string) => MessageNode<object | void> | null>(
   options: InferRenderTextOptions<MessageFunction>
 ): string {
-  const { message, locale, fallbackLocales, values, renderer = defaultStringRenderer } = options;
+  const { message, locale, values, renderer = defaultStringRenderer } = options;
 
-  const messageNode = getMessageNodeOrFallback(message, locale, fallbackLocales);
+  const messageNode = message(locale);
 
   if (messageNode === null) {
     return '';

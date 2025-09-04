@@ -2,14 +2,11 @@ import React, { createContext, createElement, Fragment, ReactNode, useContext, u
 import { Child, ElementNode, MessageNode } from '../ast.js';
 import { ReactRenderer } from './ReactRenderer.js';
 import { renderChildrenAsString } from '../renderText.js';
-import { defaultStyles, getMessageNodeOrFallback } from '../utils.js';
+import { defaultStyles } from '../utils.js';
 import { Renderer } from '../AbstractRenderer.js';
 
 const MessageLocaleContext = createContext('en');
 MessageLocaleContext.displayName = 'MessageLocaleContext';
-
-const MessageFallbackLocalesContext = createContext<Record<string, string>>({});
-MessageFallbackLocalesContext.displayName = 'MessageFallbackLocalesContext';
 
 const MessageRendererContext = createContext<Renderer<ReactNode>>(new ReactRenderer(defaultStyles));
 MessageRendererContext.displayName = 'MessageRendererContext';
@@ -23,20 +20,6 @@ MessageValuesContext.displayName = 'MessageValuesContext';
  * @group Message
  */
 export const MessageLocaleProvider = MessageLocaleContext.Provider;
-
-/**
- * Provides a mapping from a locale to fallback locale.
- *
- * @example
- * {
- *   'ru-RU': 'ru',
- *   'en-US': 'en',
- *   'ru': 'en'
- * }
- *
- * @group Message
- */
-export const MessageFallbackLocalesProvider = MessageFallbackLocalesContext.Provider;
 
 /**
  * Provides a message renderer to underlying components.
@@ -80,13 +63,6 @@ export interface MessageProps<
    * By default, a mapping provided by {@link MessageRendererProvider} is used.
    */
   renderer?: Renderer<ReactNode>;
-
-  /**
-   * Fallback locales mapping.
-   *
-   * By default, a mapping provided by {@link MessageFallbackLocalesProvider} is used.
-   */
-  fallbackLocales?: Record<string, string>;
 }
 
 type InferMessageProps<MessageFunction extends (locale: string) => MessageNode<object | void> | null> =
@@ -106,19 +82,12 @@ export function Message<MessageFunction extends (locale: string) => MessageNode<
   props: InferMessageProps<MessageFunction>
 ): ReactNode {
   const contextLocale = useContext(MessageLocaleContext);
-  const contextFallbackLocales = useContext(MessageFallbackLocalesContext);
   const contextRenderer = useContext(MessageRendererContext);
 
-  const {
-    message,
-    locale = contextLocale,
-    fallbackLocales = contextFallbackLocales,
-    values,
-    renderer = contextRenderer,
-  } = props;
+  const { message, locale = contextLocale, values, renderer = contextRenderer } = props;
 
   const children = useMemo(() => {
-    const messageNode = getMessageNodeOrFallback(message, locale, fallbackLocales);
+    const messageNode = message(locale);
 
     if (messageNode === null) {
       return null;
@@ -132,7 +101,7 @@ export function Message<MessageFunction extends (locale: string) => MessageNode<
     }
 
     return children;
-  }, [message, locale, fallbackLocales, renderer]);
+  }, [message, locale, renderer]);
 
   return (
     <MessageValuesContext.Provider value={values as Record<string, unknown> | undefined}>

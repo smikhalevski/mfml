@@ -22,6 +22,25 @@ export interface CompilerOptions {
   parser: Parser;
 
   /**
+   * Mapping from a locale to a corresponding fallback locale.
+   *
+   * For example, let's consider {@link fallbackLocales} are set to:
+   *
+   * ```js
+   * {
+   *   'ru-RU': 'ru',
+   *   'en-US': 'en',
+   *   'ru': 'en'
+   * }
+   * ```
+   *
+   * In this case if a message doesn't support `ru-RU` locale, then compiler would look for `ru` locale. If `ru` locale
+   * isn't supported as well then compiler would fall back to `en` locale. And if `en` isn't supported as well then
+   * `null` would be returned from a message function when called with `ru-RU` locale.
+   */
+  fallbackLocales?: Record<string, string>;
+
+  /**
    * The array of callbacks that are run before message tokenization.
    *
    * For example, preprocessors can be used to transform Markdown messages to HTML.
@@ -129,6 +148,7 @@ export async function compileFiles(
 ): Promise<Record<string, string>> {
   const {
     parser,
+    fallbackLocales,
     preprocessors,
     postprocessors,
     renameMessageFunction = escapeJsIdentifier,
@@ -158,32 +178,74 @@ export async function compileFiles(
 
   const localesJsImport = 'import{' + Object.values(localeVars).join(',') + '}from"./locales.js";';
 
+  // Prevents infinite loop when resolving a fallback locale, reused between messages
+  const visitedFallbackLocales = new Set<string>();
+
   for (const messageKey of messageKeys) {
+    const localeGroups = [];
+
+    // Pick locales supported by a message
+    for (const locale of locales) {
+      if (messages[locale][messageKey] !== undefined) {
+        localeGroups.push([locale]);
+      }
+    }
+
+    if (fallbackLocales !== undefined && localeGroups.length !== locales.length) {
+      // Message doesn't support all locales, detect fallbacks and extent locale groups
+
+      for (const locale of locales) {
+        if (messages[locale][messageKey] !== undefined) {
+          continue;
+        }
+
+        visitedFallbackLocales.clear();
+
+        let fallbackLocale = locale;
+
+        do {
+          fallbackLocale = fallbackLocales[fallbackLocale];
+        } while (
+          fallbackLocale !== undefined &&
+          locales.indexOf(fallbackLocale) !== -1 &&
+          !visitedFallbackLocales.has(fallbackLocale) &&
+          (visitedFallbackLocales.add(fallbackLocale), messages[fallbackLocale][messageKey] === undefined)
+        );
+
+        if (fallbackLocale === undefined || fallbackLocale === locale) {
+          // No fallback
+          continue;
+        }
+
+        for (const localeGroup of localeGroups) {
+          if (localeGroup[0] === fallbackLocale) {
+            localeGroup.push(locale);
+          }
+        }
+      }
+    }
+
     const messageNodes: MessageNode[] = [];
     const argumentTsTypes = new Map<string, Set<string>>();
 
     let jsCode = 'export default function(locale){\nreturn ';
     let jsDocComment = formatMarkdownBold('Message key') + '\n' + formatMarkdownFence(messageKey, 'text');
 
-    for (const locale of locales) {
-      let text = messages[locale][messageKey];
+    // Parse message text for each locale
+    for (const localeGroup of localeGroups) {
+      const baseLocale = localeGroup[0];
 
-      if (text === undefined) {
-        continue;
-      }
-
-      jsDocComment += '\n' + formatMarkdownBold(locale) + '\n' + formatMarkdownFence(truncateMessage(text), 'html');
-
+      let text = messages[baseLocale][messageKey];
       let messageNode;
 
       try {
         if (preprocessors !== undefined) {
           for (const preprocessor of preprocessors) {
-            text = await preprocessor(text, locale, messageKey);
+            text = await preprocessor(text, baseLocale, messageKey);
           }
         }
 
-        messageNode = parser.parse(locale, text);
+        messageNode = parser.parse(baseLocale, text);
 
         if (postprocessors !== undefined) {
           for (const postprocessor of postprocessors) {
@@ -193,24 +255,33 @@ export async function compileFiles(
 
         collectArgumentTsTypes(messageNode, getArgumentTsType, argumentTsTypes);
       } catch (cause) {
-        throw new Error('Cannot compile "' + messageKey + '" message for "' + locale + '" locale', { cause });
+        throw new Error('Cannot compile "' + messageKey + '" message for locale ' + baseLocale, { cause });
       }
 
       messageNodes.push(messageNode);
+
+      jsDocComment +=
+        '\n' +
+        formatMarkdownBold(baseLocale) +
+        (localeGroup.length === 1 ? '' : ', ' + localeGroup.slice(1).join(', ')) +
+        '\n' +
+        formatMarkdownFence(truncateMessage(text), 'html');
     }
 
-    for (const messageNode of messageNodes) {
-      const localeVar = localeVars[messageNode.locale];
+    // Build a ternary that selects a message node depending on a requested locale
+    for (let i = 0; i < localeGroups.length; ++i) {
+      for (let j = 0; j < localeGroups[i].length; ++j) {
+        jsCode += (j === 0 ? '' : '||') + 'locale===' + localeVars[localeGroups[i][j]];
+      }
 
       try {
-        jsCode += 'locale===' + localeVar + '?' + compileMessageNode(localeVar, messageNode) + ':';
+        jsCode += '?' + compileMessageNode('locale', messageNodes[i]) + ':';
       } catch (cause) {
-        throw new Error('Cannot compile "' + messageKey + '" message for "' + messageNode.locale + '" locale', {
-          cause,
-        });
+        throw new Error('Cannot compile "' + messageKey + '" message for locale ' + localeGroups[i][0], { cause });
       }
     }
 
+    // Return null from a message function for an unknown or unsupported locale
     jsCode += 'null;\n}\n';
 
     jsDocComment = formatJSDocComment(jsDocComment);
