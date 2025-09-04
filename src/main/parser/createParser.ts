@@ -1,15 +1,29 @@
 import { Tokenizer } from './createTokenizer.js';
 import { ParserError, TokenCallback } from './tokenizeMessage.js';
 import {
-  Child,
   createArgumentNode,
+  createAttributeNode,
+  createCategoryNode,
   createElementNode,
+  createLiteralNode,
   createMessageNode,
-  createSelectNode,
+  createOctothorpeNode,
+  createOptionNode,
+  createTextNode,
+} from '../dsl.js';
+import {
+  ArgumentNode,
+  AttributeNode,
+  CategoryNode,
   ElementNode,
+  LiteralNode,
   MessageNode,
-  SelectNode,
-} from '../ast.js';
+  OctothorpeNode,
+  OptionNode,
+  ParentNode,
+  SourceLocation,
+  TextNode,
+} from '../types.js';
 
 /**
  * Options of the {@link createParser}.
@@ -23,67 +37,6 @@ export interface ParserOptions {
    * @see {@link createTokenizer}
    */
   tokenizer: Tokenizer;
-
-  /**
-   * Renames an XML tag.
-   *
-   * @param tagName A tag to rename.
-   * @returns The new tag name.
-   */
-  renameTag?: (tagName: string) => string;
-
-  /**
-   * Renames an XML attribute.
-   *
-   * @param attributeName An attribute to rename.
-   * @param tagName An tag name that was processed with {@link renameTag}.
-   * @returns The new attribute name.
-   */
-  renameAttribute?: (attributeName: string, tagName: string) => string;
-
-  /**
-   * Renames an ICU arguments.
-   *
-   * @param argumentName An argument to rename.
-   * @returns The new argument name.
-   */
-  renameArgument?: (argumentName: string) => string;
-
-  /**
-   * Renames an ICU argument type.
-   *
-   * @param argumentType An argument type to rename ("number", "date", "time").
-   * @param argumentName An argument name that was processed with {@link renameArgument}.
-   * @returns The new argument type name.
-   */
-  renameArgumentType?: (argumentType: string, argumentName: string) => string;
-
-  /**
-   * Renames an ICU argument style.
-   *
-   * @param argumentStyle An argument style to rename.
-   * @param argumentType An argument type that was processed with {@link renameArgumentType}.
-   * @returns The new argument style name.
-   */
-  renameArgumentStyle?: (argumentStyle: string, argumentType: string) => string;
-
-  /**
-   * Renames an ICU select category.
-   *
-   * @param selectType The type of the select ("plural", "selectordinal", "select").
-   * @param argumentName An argument name that was processed with {@link renameArgument}.
-   * @returns The new select type name.
-   */
-  renameSelectType?: (selectType: string, argumentName: string) => string;
-
-  /**
-   * Renames an ICU select category.
-   *
-   * @param selectCategory A category to rename ("one", "many", "other", "=5").
-   * @param selectType A type of the select ("plural", "selectordinal") processed with {@link renameSelectType}.
-   * @returns The new select category name.
-   */
-  renameSelectCategory?: (selectCategory: string, selectType: string) => string;
 
   /**
    * Decode text content before it is pushed to an MFML AST node. Use this method to decode HTML entities.
@@ -106,7 +59,7 @@ export interface Parser {
    * @param text The message text to parse.
    * @returns The message node that describes the message contents.
    */
-  parse(locale: string, text: string): MessageNode<any>;
+  parse(locale: string, text: string): MessageNode;
 }
 
 /**
@@ -145,125 +98,129 @@ export function createParser(options: ParserOptions): Parser {
  * @param options Parser options.
  * @returns The message node that describes the message contents.
  */
-export function parseMessage(locale: string, text: string, options: ParserOptions): MessageNode<any> {
-  const {
-    tokenizer,
-    renameTag = identity,
-    renameAttribute = identity,
-    renameArgument = identity,
-    renameArgumentType = identity,
-    renameArgumentStyle = identity,
-    renameSelectType = identity,
-    renameSelectCategory = identity,
-    decodeText = identity,
-  } = options;
-
-  let tagName: string;
-  let argumentName: string | undefined;
-  let rawArgumentType: string | undefined;
-  let rawArgumentStyle: string | undefined;
-  let stackCursor = 0;
+export function parseMessage(locale: string, text: string, options: ParserOptions): MessageNode {
+  const { tokenizer, decodeText = identity } = options;
 
   const messageNode = createMessageNode(locale);
-  const stack: Array<MessageNode | ElementNode | SelectNode | string> = [messageNode];
+
+  let parentNode: MessageNode | NestableNode = messageNode;
 
   const tokenCallback: TokenCallback = (token, startIndex, endIndex) => {
-    try {
-      switch (token) {
-        case 'TEXT':
-          pushChild(stack, stackCursor, decodeText(text.substring(startIndex, endIndex)));
-          break;
+    switch (token) {
+      case 'TEXT':
+        let value = text.substring(startIndex, endIndex);
 
-        case 'XML_OPENING_TAG_NAME':
-          tagName = renameTag(text.substring(startIndex, endIndex));
-          pushChild(stack, stackCursor, (stack[++stackCursor] = createElementNode(tagName)));
-          break;
+        try {
+          value = decodeText(value);
+        } catch (error) {
+          throw new ParserError('Cannot decode text: ' + error, text, startIndex, endIndex);
+        }
 
-        case 'XML_OPENING_TAG_END':
-          break;
+        (parentNode as ParentNode).childNodes = pushChild(
+          parentNode,
+          (parentNode as ParentNode).childNodes,
+          setSourceLocation(createTextNode(value), startIndex, endIndex)
+        );
+        break;
 
-        case 'XML_OPENING_TAG_SELF_CLOSE':
-        case 'XML_CLOSING_TAG_NAME':
-          --stackCursor;
-          break;
+      case 'XML_OPENING_TAG_NAME':
+        (parentNode as ParentNode).childNodes = pushChild(
+          parentNode,
+          (parentNode as ParentNode).childNodes,
+          (parentNode = setSourceLocation(
+            createElementNode(text.substring(startIndex, endIndex)),
+            startIndex,
+            endIndex
+          ))
+        );
+        break;
 
-        case 'XML_ATTRIBUTE_NAME':
-          stack[++stackCursor] = renameAttribute(text.substring(startIndex, endIndex), tagName);
-          pushChild(stack, stackCursor, '');
-          break;
+      case 'XML_OPENING_TAG_END':
+        break;
 
-        case 'XML_ATTRIBUTE_END':
-          --stackCursor;
-          break;
+      case 'XML_OPENING_TAG_SELF_CLOSE':
+      case 'XML_CLOSING_TAG_NAME':
+      case 'XML_ATTRIBUTE_END':
+      case 'ICU_ARGUMENT_END':
+      case 'ICU_CATEGORY_END':
+        parentNode = (parentNode as ElementNode | AttributeNode | ArgumentNode | CategoryNode).parentNode!;
+        break;
 
-        case 'ICU_ARGUMENT_NAME':
-          argumentName = renameArgument(text.substring(startIndex, endIndex));
-          rawArgumentType = undefined;
-          rawArgumentStyle = undefined;
-          break;
+      case 'XML_ATTRIBUTE_NAME':
+        (parentNode as ElementNode).attributeNodes = pushChild(
+          parentNode,
+          (parentNode as ElementNode).attributeNodes,
+          (parentNode = setSourceLocation(
+            createAttributeNode(text.substring(startIndex, endIndex)),
+            startIndex,
+            endIndex
+          ))
+        );
+        break;
 
-        case 'ICU_ARGUMENT_TYPE':
-          rawArgumentType = text.substring(startIndex, endIndex);
-          break;
+      case 'ICU_ARGUMENT_NAME':
+        (parentNode as ParentNode).childNodes = pushChild(
+          parentNode,
+          (parentNode as ParentNode).childNodes,
+          (parentNode = setSourceLocation(
+            createArgumentNode(text.substring(startIndex, endIndex)),
+            startIndex,
+            endIndex
+          ))
+        );
+        break;
 
-        case 'ICU_ARGUMENT_STYLE':
-          rawArgumentStyle = text.substring(startIndex, endIndex);
-          break;
+      case 'ICU_ARGUMENT_TYPE':
+        ((parentNode as ArgumentNode).typeNode = setSourceLocation(
+          createLiteralNode(text.substring(startIndex, endIndex)),
+          startIndex,
+          endIndex
+        )).parentNode = parentNode as ArgumentNode;
+        break;
 
-        case 'ICU_ARGUMENT_END':
-          if (argumentName === undefined) {
-            // No argument name means that a select node was already put on the stack
-            --stackCursor;
-            break;
-          }
+      case 'ICU_ARGUMENT_STYLE':
+        ((parentNode as ArgumentNode).styleNode = setSourceLocation(
+          createLiteralNode(text.substring(startIndex, endIndex)),
+          startIndex,
+          endIndex
+        )).parentNode = parentNode as ArgumentNode;
+        break;
 
-          const argumentType = rawArgumentType && renameArgumentType(rawArgumentType, argumentName);
-          const argumentStyle = rawArgumentStyle && renameArgumentStyle(rawArgumentStyle, argumentType!);
+      case 'ICU_CATEGORY_NAME':
+        (parentNode as ArgumentNode).categoryNodes = pushChild(
+          parentNode,
+          (parentNode as ArgumentNode).categoryNodes,
+          (parentNode = setSourceLocation(
+            createCategoryNode(text.substring(startIndex, endIndex)),
+            startIndex,
+            endIndex
+          ))
+        );
+        break;
 
-          pushChild(stack, stackCursor, createArgumentNode(argumentName, argumentType, argumentStyle));
-          break;
+      case 'ICU_OPTION_NAME':
+        (parentNode as ArgumentNode).optionNodes = pushChild(
+          parentNode,
+          (parentNode as ArgumentNode).optionNodes,
+          (parentNode = setSourceLocation(createOptionNode(text.substring(startIndex, endIndex)), startIndex, endIndex))
+        );
+        break;
 
-        case 'ICU_CATEGORY_NAME':
-          const parent = stack[stackCursor];
+      case 'ICU_OPTION_VALUE':
+        parentNode = (((parentNode as OptionNode).valueNode = setSourceLocation(
+          createLiteralNode(text.substring(startIndex, endIndex)),
+          startIndex,
+          endIndex
+        )).parentNode = parentNode as OptionNode).parentNode!;
+        break;
 
-          if (typeof parent === 'string' || parent.nodeType !== 'select') {
-            const selectType = renameSelectType(rawArgumentType!, argumentName!);
-
-            pushChild(stack, stackCursor, (stack[++stackCursor] = createSelectNode(argumentName!, selectType, {})));
-            argumentName = undefined;
-          }
-
-          stack[++stackCursor] = renameSelectCategory(
-            text.substring(startIndex, endIndex),
-            (parent as SelectNode).type
-          );
-
-          pushChild(stack, stackCursor, '');
-          break;
-
-        case 'ICU_CATEGORY_END':
-          --stackCursor;
-          break;
-
-        case 'ICU_OCTOTHORPE':
-          for (let index = stackCursor; index > -1; --index) {
-            const node = stack[index];
-
-            if (typeof node === 'string' || node.nodeType !== 'select') {
-              continue;
-            }
-
-            // Use argument of the enclosing select to replace an octothorpe
-            pushChild(stack, stackCursor, createArgumentNode(node.argumentName));
-            break;
-          }
-          break;
-      }
-    } catch (error) {
-      if (error instanceof ParserError) {
-        throw error;
-      }
-      throw new ParserError('Failed to parse ' + token + ': ' + error, text, startIndex, endIndex);
+      case 'ICU_OCTOTHORPE':
+        (parentNode as ParentNode).childNodes = pushChild(
+          parentNode,
+          (parentNode as ParentNode).childNodes,
+          setSourceLocation(createOctothorpeNode(), startIndex, endIndex)
+        );
+        break;
     }
   };
 
@@ -272,51 +229,37 @@ export function parseMessage(locale: string, text: string, options: ParserOption
   return messageNode;
 }
 
-function pushChild(
-  stack: Array<MessageNode | ElementNode | SelectNode | string>,
-  stackCursor: number,
-  child: Child
-): void {
-  const node = stack[stackCursor];
+type NestableNode =
+  | TextNode
+  | ElementNode
+  | AttributeNode
+  | ArgumentNode
+  | OctothorpeNode
+  | OptionNode
+  | CategoryNode
+  | LiteralNode;
 
-  if (typeof node === 'string') {
-    const parent = stack[stackCursor - 1] as ElementNode | SelectNode;
+function pushChild<T extends NestableNode>(
+  parentNode: MessageNode | NestableNode,
+  childNodes: T[] | null,
+  node: T
+): T[] {
+  node.parentNode = parentNode as typeof node.parentNode;
 
-    if (parent.nodeType === 'select') {
-      parent.categories[node] = concatChildren(parent.categories[node], child);
-      return;
-    }
-
-    if (parent.attributes === null) {
-      parent.attributes = {};
-    }
-
-    parent.attributes[node] = concatChildren(parent.attributes[node], child);
-    return;
+  if (childNodes === null) {
+    return [node];
   }
 
-  if (node.nodeType === 'message' || node.nodeType === 'element') {
-    node.children = concatChildren(node.children, child);
-  }
+  childNodes.push(node);
+
+  return childNodes;
 }
 
-function concatChildren(children: Child[] | string | null, child: Child): Child[] | string {
-  if (children === '' || children === null || children === undefined) {
-    return typeof child === 'string' ? child : [child];
-  }
+function setSourceLocation<T extends SourceLocation>(node: T, startIndex: number, endIndex: number): T {
+  node.startIndex = startIndex;
+  node.endIndex = endIndex;
 
-  if (typeof children === 'string') {
-    return typeof child === 'string' ? children + child : [children, child];
-  }
-
-  if (typeof child === 'string' && typeof children[children.length - 1] === 'string') {
-    children[children.length - 1] += child;
-    return children;
-  }
-
-  children.push(child);
-
-  return children;
+  return node;
 }
 
 function identity(value: string): string {

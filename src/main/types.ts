@@ -1,12 +1,12 @@
 /**
- * The node that can be a child of a message.
+ * The node that can be a child node of a {@link ParentNode parent node}.
  *
  * @group AST
  */
-export type ChildNode = TextNode | ElementNode | ArgumentNode;
+export type ChildNode = TextNode | ElementNode | ArgumentNode | OctothorpeNode;
 
 /**
- * The node that can be a parent for other nodes.
+ * The node that can contain {@link ChildNode child nodes}.
  *
  * @group AST
  */
@@ -18,7 +18,14 @@ export type ParentNode = MessageNode | ElementNode | AttributeNode | CategoryNod
  * @group AST
  */
 export interface SourceLocation {
+  /**
+   * The index at which a node value starts (inclusive).
+   */
   startIndex?: number;
+
+  /**
+   * The index at which a node value ends (exclusive).
+   */
   endIndex?: number;
 }
 
@@ -33,7 +40,7 @@ declare const MESSAGE_VALUES: unique symbol;
  * @template Values ICU arguments type or `void` if message doesn't have any arguments.
  * @group AST
  */
-export interface MessageNode<Values extends object | void = void> {
+export interface MessageNode<Values extends object | void = any> {
   /**
    * The node type.
    */
@@ -47,7 +54,7 @@ export interface MessageNode<Values extends object | void = void> {
   /**
    * The child nodes.
    */
-  children: ChildNode[];
+  childNodes: ChildNode[];
 
   /**
    * Type-only property that holds types of the message arguments.
@@ -71,12 +78,12 @@ export interface TextNode extends SourceLocation {
   /**
    * The parent node.
    */
-  parent: ParentNode | null;
+  parentNode: ParentNode | null;
 
   /**
    * The decoded text.
    */
-  text: string;
+  value: string;
 }
 
 /**
@@ -93,7 +100,7 @@ export interface ElementNode extends SourceLocation {
   /**
    * The parent node.
    */
-  parent: ParentNode | null;
+  parentNode: ParentNode | null;
 
   /**
    * The name of the element tag.
@@ -103,12 +110,12 @@ export interface ElementNode extends SourceLocation {
   /**
    * The array of attributes nodes.
    */
-  attributes: AttributeNode[] | null;
+  attributeNodes: AttributeNode[] | null;
 
   /**
    * The array of child nodes.
    */
-  children: ChildNode[] | null;
+  childNodes: ChildNode[] | null;
 }
 
 /**
@@ -125,7 +132,7 @@ export interface AttributeNode extends SourceLocation {
   /**
    * The parent node.
    */
-  parent: ElementNode | null;
+  parentNode: ElementNode | null;
 
   /**
    * The name of the attribute.
@@ -135,7 +142,7 @@ export interface AttributeNode extends SourceLocation {
   /**
    * The array of child nodes.
    */
-  children: ChildNode[] | null;
+  childNodes: ChildNode[] | null;
 }
 
 /**
@@ -152,7 +159,7 @@ export interface ArgumentNode extends SourceLocation {
   /**
    * The parent node.
    */
-  parent: ParentNode | null;
+  parentNode: ParentNode | null;
 
   /**
    * The name of the ICU argument.
@@ -182,6 +189,21 @@ export interface ArgumentNode extends SourceLocation {
 }
 
 /**
+ * The node that descries an argument reference in a category.
+ */
+export interface OctothorpeNode extends SourceLocation {
+  /**
+   * The node type.
+   */
+  nodeType: 'octothorpe';
+
+  /**
+   * The parent node.
+   */
+  parentNode: ParentNode | null;
+}
+
+/**
  * The node that describes an ICU argument option.
  *
  * @group AST
@@ -193,6 +215,11 @@ export interface OptionNode extends SourceLocation {
   nodeType: 'option';
 
   /**
+   * The parent node.
+   */
+  parentNode: ArgumentNode | null;
+
+  /**
    * The option name.
    */
   name: string;
@@ -200,7 +227,7 @@ export interface OptionNode extends SourceLocation {
   /**
    * The option value.
    */
-  value: LiteralNode;
+  valueNode: LiteralNode | null;
 }
 
 /**
@@ -217,7 +244,7 @@ export interface CategoryNode extends SourceLocation {
   /**
    * The parent node.
    */
-  parent: ArgumentNode | null;
+  parentNode: ArgumentNode | null;
 
   /**
    * The category name.
@@ -227,7 +254,7 @@ export interface CategoryNode extends SourceLocation {
   /**
    * The array of child nodes.
    */
-  children: ChildNode[];
+  childNodes: ChildNode[];
 }
 
 /**
@@ -240,6 +267,11 @@ export interface LiteralNode extends SourceLocation {
    * The node type.
    */
   nodeType: 'literal';
+
+  /**
+   * The parent node.
+   */
+  parentNode: ArgumentNode | OptionNode | null;
 
   /**
    * The node value.

@@ -772,7 +772,7 @@ export function readTokens(text: string, callback: TokenCallback, options: Token
       // Revert to reading ICU category name and option name in a loop
       scope = scopeStack[++scopeStackCursor] = SCOPE_ICU_ARGUMENT;
 
-      nextIndex = argumentStyleStartIndex;
+      textStartIndex = nextIndex = argumentStyleStartIndex;
       continue;
     }
 
@@ -843,41 +843,31 @@ export function readTokens(text: string, callback: TokenCallback, options: Token
       nextIndex = skipSpaces(text, nextIndex + 1);
 
       let optionValueStartIndex = nextIndex;
-      let optionValueEndIndex = nextIndex;
+      let optionValueEndIndex = -1;
 
       const quoteCharCode = getCharCodeAt(text, optionValueStartIndex);
 
-      if (quoteCharCode === /* " */ 34 || quoteCharCode === /* ' */ 39) {
-        // Quoted ICU option value
-
-        if (
-          (quoteCharCode === /* " */ 34 && scopeStack.lastIndexOf(SCOPE_XML_DOUBLE_QUOTED_ATTRIBUTE_VALUE) !== -1) ||
-          (quoteCharCode === /* ' */ 39 && scopeStack.lastIndexOf(SCOPE_XML_SINGLE_QUOTED_ATTRIBUTE_VALUE) !== -1)
-        ) {
-          // Ensure XML is valid
-          throw new ParserError(
-            'ICU option value must use different quotes than the enclosing XML attribute.',
-            text,
-            optionValueStartIndex
-          );
-        }
-
-        optionValueEndIndex = text.indexOf(String.fromCharCode(quoteCharCode), ++optionValueStartIndex);
-        nextIndex = optionValueEndIndex + 1;
-      } else {
+      if (quoteCharCode !== /* " */ 34 && quoteCharCode !== /* ' */ 39) {
         // Unquoted ICU option value
         optionValueEndIndex = readChars(text, optionValueStartIndex, isICUNameChar);
         nextIndex = optionValueEndIndex;
+      } else if (
+        (quoteCharCode !== /* " */ 34 || scopeStack.lastIndexOf(SCOPE_XML_DOUBLE_QUOTED_ATTRIBUTE_VALUE) === -1) &&
+        (quoteCharCode !== /* ' */ 39 || scopeStack.lastIndexOf(SCOPE_XML_SINGLE_QUOTED_ATTRIBUTE_VALUE) === -1)
+      ) {
+        // Double or single quoted ICU option value
+        optionValueEndIndex = text.indexOf(String.fromCharCode(quoteCharCode), ++optionValueStartIndex);
+        nextIndex = optionValueEndIndex + 1;
       }
 
       if (optionValueEndIndex === -1) {
-        throw new ParserError('Unterminated ICU option value.', text, optionValueStartIndex, text.length);
+        throw new ParserError('Unterminated ICU argument.', text, optionValueStartIndex);
       }
 
       callback(TOKEN_ICU_OPTION_VALUE, optionValueStartIndex, optionValueEndIndex);
 
       // Skip spaces after option value
-      nextIndex = skipSpaces(text, nextIndex);
+      textStartIndex = nextIndex = skipSpaces(text, nextIndex);
       continue;
     }
 

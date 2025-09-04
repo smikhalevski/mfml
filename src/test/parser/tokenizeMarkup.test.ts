@@ -836,7 +836,7 @@ describe('readTokens', () => {
 
   test('throws if a quoted option value is unterminated', () => {
     expect(() => readTokens('{xxx,yyy,zzz="  ', callbackMock, {})).toThrow(
-      new ParserError('Unterminated ICU option value.', '{xxx,yyy,zzz="  ', 14, 16)
+      new ParserError('Unterminated ICU argument.', '{xxx,yyy,zzz="  ', 14)
     );
 
     expect(callbackMock).toHaveBeenCalledTimes(3);
@@ -916,11 +916,7 @@ describe('readTokens', () => {
 
   test('throws on invalid double-quoted of ICU argument in a double-quoted XML attribute', () => {
     expect(() => readTokens('<aaa bbb="{xxx,yyy,zzz="kkk"}"></aaa>', callbackMock, {})).toThrow(
-      new ParserError(
-        'ICU option value must use different quotes than the enclosing XML attribute.',
-        '<aaa bbb="{xxx,yyy,zzz="kkk"}"></aaa>',
-        23
-      )
+      new ParserError('Unterminated ICU argument.', '<aaa bbb="{xxx,yyy,zzz="kkk"}"></aaa>', 23)
     );
 
     expect(callbackMock).toHaveBeenCalledTimes(5);
@@ -933,11 +929,7 @@ describe('readTokens', () => {
 
   test('throws on invalid single-quoted of ICU argument in a single-quoted XML attribute', () => {
     expect(() => readTokens("<aaa bbb='{xxx,yyy,zzz='kkk'}'></aaa>", callbackMock, {})).toThrow(
-      new ParserError(
-        'ICU option value must use different quotes than the enclosing XML attribute.',
-        "<aaa bbb='{xxx,yyy,zzz='kkk'}'></aaa>",
-        23
-      )
+      new ParserError('Unterminated ICU argument.', "<aaa bbb='{xxx,yyy,zzz='kkk'}'></aaa>", 23)
     );
 
     expect(callbackMock).toHaveBeenCalledTimes(5);
