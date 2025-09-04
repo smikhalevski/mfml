@@ -43,14 +43,14 @@ export interface ElementNode {
   /**
    * The name of the element tag.
    *
-   * @see {@link ParserOptions.renameTag}
+   * @see {@link mfml/parser!ParserOptions.renameTag ParserOptions.renameTag}
    */
   tagName: string;
 
   /**
    * Mapping from an attribute name to children, or `null` if there are no attributes.
    *
-   * @see {@link ParserOptions.renameAttribute}
+   * @see {@link mfml/parser!ParserOptions.renameAttribute ParserOptions.renameAttribute}
    */
   attributes: Record<string, Child[] | string> | null;
 
@@ -71,22 +71,22 @@ export interface ArgumentNode {
   /**
    * The name of the ICU attribute.
    *
-   * @see {@link ParserOptions.renameArgument}
+   * @see {@link mfml/parser!ParserOptions.renameArgument ParserOptions.renameArgument}
    */
   name: string;
 
   /**
    * The data type of the argument.
    *
-   * @example "number"
-   * @see {@link ParserOptions.renameArgumentType}
+   * @example 'number'
+   * @see {@link mfml/parser!ParserOptions.renameArgumentType ParserOptions.renameArgumentType}
    */
   type: string | undefined;
 
   /**
    * The style that should be used for argument formatting, varies depending on an argument {@link type}.
    *
-   * @see {@link ParserOptions.renameArgumentStyle}
+   * @see {@link mfml/parser!ParserOptions.renameArgumentStyle ParserOptions.renameArgumentStyle}
    */
   style: string | undefined;
 }
@@ -102,21 +102,21 @@ export interface SelectNode {
   /**
    * The name of the ICU argument.
    *
-   * @see {@link ParserOptions.renameArgument}
+   * @see {@link mfml/parser!ParserOptions.renameArgument ParserOptions.renameArgument}
    */
   argumentName: string;
 
   /**
    * The type of the select node.
    *
-   * @example "plural"
+   * @example 'plural'
    */
   type: string;
 
   /**
    * Mapping from an argument value or a category name to children that should be rendered when the category is matched.
    *
-   * @see {@link ParserOptions.renameSelectCategory}
+   * @see {@link mfml/parser!ParserOptions.renameSelectCategory ParserOptions.renameSelectCategory}
    */
   categories: Record<string, Child[] | string>;
 }

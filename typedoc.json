@@ -17,5 +17,6 @@
     "./src/main/react/index.ts",
     "./src/main/index.ts"
   ],
+  "intentionallyNotExported": ["InferRenderTextOptions", "InferMessageProps"],
   "plugin": ["typedoc-plugin-mdn-links"]
 }

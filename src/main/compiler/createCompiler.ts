@@ -56,9 +56,9 @@ export interface CompilerOptions {
    *   return 'unknown';
    * };
    *
-   * @param argumentType The {@link ParserOptions.renameArgumentType renamed type} of an argument, or `undefined` for
+   * @param argumentType The {@link mfml/parser!ParserOptions.renameArgumentType renamed type} of an argument, or `undefined` for
    * an argument that does not have a type.
-   * @param argumentName The {@link ParserOptions.renameArgument renamed argument}.
+   * @param argumentName The {@link mfml/parser!ParserOptions.renameArgument renamed argument}.
    */
   getArgumentTsType?: (argumentType: string | undefined, argumentName: string) => string | undefined;
 }
@@ -82,21 +82,22 @@ export interface Compiler {
  * Creates a compiler that converts MFML to a source code.
  *
  * @example
+ * import * as fs from 'node:fs';
  * import { createParser, htmlTokenizer } from 'mfml/parser';
  * import { compileFiles } from 'mfml/compiler';
  *
- * const compiler = createCompiler({
- *   parser: createParser({ tokenizer: htmlTokenizer })
- * });
+ * const parser = createParser({ tokenizer: htmlTokenizer });
+ *
+ * const compiler = createCompiler({ parser });
  *
  * const files = await compiler.compile({
- *   "en-US": {
- *     "messageCount": "You have <b>{count, number}</b> unread messages",
- *     "messageReceived": "{gender, select, male {He} female {She} other {They}} sent you a message",
+ *   'en-US': {
+ *     messageCount: 'You have <b>{count, number}</b> unread messages',
+ *     messageReceived: '{gender, select, male {He} female {She} other {They}} sent you a message',
  *   },
- *   "ru-RU": {
- *     "messageCount": "У вас <b>{count, number}</b> непрочитанных сообщений",
- *     "messageReceived": "{gender, select, male {Он отправил} female {Она отправила} other {Они отправили}} вам сообщение",
+ *   'ru-RU': {
+ *     messageCount: 'У вас <b>{count, number}</b> непрочитанных сообщений',
+ *     messageReceived: '{gender, select, male {Он отправил} female {Она отправила} other {Они отправили}} вам сообщение',
  *   }
  * });
  *

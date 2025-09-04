@@ -47,7 +47,7 @@ export interface ResolvedTokenizerOptions {
    * tag and the end tag).
    *
    * @example
-   * ["link", "meta"]
+   * ['link', 'meta']
    * @see [HTML5 Void Elements](https://www.w3.org/TR/2010/WD-html5-20101019/syntax.html#void-elements)
    */
   voidTags?: Set<number>;
@@ -56,7 +56,7 @@ export interface ResolvedTokenizerOptions {
    * The list of tags which content is interpreted as plain text.
    *
    * @example
-   * ["script", "style"]
+   * ['script', 'style']
    * @see [HTML5 Raw Text Elements](https://www.w3.org/TR/2010/WD-html5-20101019/syntax.html#raw-text-elements)
    */
   rawTextTags?: Set<number>;

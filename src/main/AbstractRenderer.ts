@@ -77,7 +77,7 @@ export interface AbstractRendererOptions {
 }
 
 /**
- * The message renderer the provides the default implementation of argument formatting and select matching.
+ * The message renderer that provides the default implementation of argument formatting and select matching.
  *
  * @template Element The type of a rendered element.
  * @group Renderer
