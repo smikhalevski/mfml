@@ -9,22 +9,22 @@ export function getOctothorpeArgument(octothorpeNode: OctothorpeNode | null): Ar
   return null;
 }
 
-export function walkNode(node: AnyNode[] | AnyNode | null, callback: (node: AnyNode) => void): void {
+/**
+ * Walks the AST and invokes callback for each node in a tree in depth-first order.
+ *
+ * @param node The node to walk.
+ * @param callback The callback to invoke.
+ * @group Utils
+ */
+export function walkNode(node: AnyNode | null, callback: (node: AnyNode) => void): void {
   if (node === null) {
-    return;
-  }
-
-  if (Array.isArray(node)) {
-    for (let i = 0; i < node.length; ++i) {
-      walkNode(node[i], callback);
-    }
     return;
   }
 
   switch (node.nodeType) {
     case 'message':
       callback(node);
-      walkNode(node.childNodes, callback);
+      walkNodeArray(node.childNodes, callback);
       return;
 
     case 'text':
@@ -33,21 +33,21 @@ export function walkNode(node: AnyNode[] | AnyNode | null, callback: (node: AnyN
 
     case 'element':
       callback(node);
-      walkNode(node.attributeNodes, callback);
-      walkNode(node.childNodes, callback);
+      walkNodeArray(node.attributeNodes, callback);
+      walkNodeArray(node.childNodes, callback);
       return;
 
     case 'attribute':
       callback(node);
-      walkNode(node.childNodes, callback);
+      walkNodeArray(node.childNodes, callback);
       return;
 
     case 'argument':
       callback(node);
       walkNode(node.typeNode, callback);
       walkNode(node.styleNode, callback);
-      walkNode(node.optionNodes, callback);
-      walkNode(node.categoryNodes, callback);
+      walkNodeArray(node.optionNodes, callback);
+      walkNodeArray(node.categoryNodes, callback);
       return;
 
     case 'octothorpe':
@@ -61,11 +61,21 @@ export function walkNode(node: AnyNode[] | AnyNode | null, callback: (node: AnyN
 
     case 'category':
       callback(node);
-      walkNode(node.childNodes, callback);
+      walkNodeArray(node.childNodes, callback);
       return;
 
     case 'literal':
       callback(node);
       return;
+  }
+}
+
+function walkNodeArray(nodes: AnyNode[] | null, callback: (node: AnyNode) => void): void {
+  if (nodes === null) {
+    return;
+  }
+
+  for (let i = 0; i < nodes.length; ++i) {
+    walkNode(nodes[i], callback);
   }
 }

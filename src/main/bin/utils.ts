@@ -22,14 +22,14 @@ export function printError(error: unknown): void {
 
 export function formatError(error: unknown): string {
   if (error instanceof AggregateError) {
-    return '\n' + error.errors.map(formatError).join('\n\n');
+    return error.errors.map(formatError).join('\n\n');
   }
 
   if (error instanceof CompilerError) {
     const prefix = dim(error.locale) + ':' + dim(error.messageKey) + ' - ' + red('error') + ' ';
 
     if (error.cause instanceof AggregateError) {
-      return '\n' + error.cause.errors.map(error => prefix + formatError(error)).join('\n\n');
+      return error.cause.errors.map(error => prefix + formatError(error)).join('\n\n');
     }
 
     return prefix + formatError(error.cause);

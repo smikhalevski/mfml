@@ -21,4 +21,4 @@ export type {
   CategoryNode,
   LiteralNode,
 } from './types.js';
-export { walkNode, getOctothorpeArgument } from './utils.js';
+export { walkNode } from './utils.js';

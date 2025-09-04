@@ -24,7 +24,7 @@ export type AnyNode =
   | LiteralNode;
 
 /**
- * The indices of a node position in a message text
+ * The indices of a node position in a message text.
  *
  * @group AST
  */

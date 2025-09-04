@@ -241,13 +241,13 @@ export default function allowTypes(allowedTypes: { [type: string]: TypeRequireme
         if (hasCategories) {
           missingCategories = [];
 
-          nextRequiredCategory: for (const categoryName of requiredCategories) {
+          nextRequiredCategory: for (const category of requiredCategories) {
             for (const categoryNode of categoryNodes) {
-              if (categoryNode.name === categoryName) {
+              if (categoryNode.name === category) {
                 continue nextRequiredCategory;
               }
             }
-            missingCategories.push(categoryName);
+            missingCategories.push(category);
           }
         } else {
           missingCategories = requiredCategories;

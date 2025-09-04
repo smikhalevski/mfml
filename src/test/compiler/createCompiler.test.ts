@@ -1,5 +1,11 @@
 import { describe, expect, test } from 'vitest';
-import { compileFiles, compileNode, compileMessageTsType } from '../../main/compiler/createCompiler.js';
+import {
+  compileFiles,
+  compileNode,
+  compileMessageTsType,
+  collectArgumentTsTypes,
+  getArgumentNaturalTsType,
+} from '../../main/compiler/createCompiler.js';
 import { createParser, parseMessage } from '../../main/parser/createParser.js';
 import { createTokenizer, htmlTokenizer } from '../../main/parser/index.js';
 
@@ -46,6 +52,95 @@ describe('compileMessageTsType', () => {
   });
 });
 
+describe('collectArgumentTsTypes', () => {
+  test('empty is no arguments', () => {
+    const messageNode = parseMessage('en', '', { tokenizer: htmlTokenizer });
+    const argumentTsTypes = new Map();
+
+    collectArgumentTsTypes(messageNode, getArgumentNaturalTsType, argumentTsTypes);
+
+    expect(argumentTsTypes).toEqual(new Map());
+  });
+
+  test('collects untyped argument types', () => {
+    const messageNode = parseMessage('en', '{xxx}{yyy}', { tokenizer: htmlTokenizer });
+    const argumentTsTypes = new Map();
+
+    collectArgumentTsTypes(messageNode, getArgumentNaturalTsType, argumentTsTypes);
+
+    expect(argumentTsTypes).toEqual(
+      new Map([
+        ['xxx', new Set()],
+        ['yyy', new Set()],
+      ])
+    );
+  });
+
+  test('collects typed and untyped argument types', () => {
+    const messageNode = parseMessage('en', '{xxx,time}{xxx}', { tokenizer: htmlTokenizer });
+    const argumentTsTypes = new Map();
+
+    collectArgumentTsTypes(messageNode, getArgumentNaturalTsType, argumentTsTypes);
+
+    expect(argumentTsTypes).toEqual(new Map([['xxx', new Set(['number|Date'])]]));
+  });
+
+  test('collects differently typed argument types', () => {
+    const messageNode = parseMessage('en', '{xxx,time}{xxx,number}', { tokenizer: htmlTokenizer });
+    const argumentTsTypes = new Map();
+
+    collectArgumentTsTypes(messageNode, getArgumentNaturalTsType, argumentTsTypes);
+
+    expect(argumentTsTypes).toEqual(new Map([['xxx', new Set(['number|Date', 'number|bigint'])]]));
+  });
+
+  test('collects argument types from attributes', () => {
+    const messageNode = parseMessage('en', '<a title="{xxx,time}">', { tokenizer: htmlTokenizer });
+    const argumentTsTypes = new Map();
+
+    collectArgumentTsTypes(messageNode, getArgumentNaturalTsType, argumentTsTypes);
+
+    expect(argumentTsTypes).toEqual(new Map([['xxx', new Set(['number|Date'])]]));
+  });
+
+  test('collects argument types from tag children', () => {
+    const messageNode = parseMessage('en', '<a>{xxx,time}', { tokenizer: htmlTokenizer });
+    const argumentTsTypes = new Map();
+
+    collectArgumentTsTypes(messageNode, getArgumentNaturalTsType, argumentTsTypes);
+
+    expect(argumentTsTypes).toEqual(new Map([['xxx', new Set(['number|Date'])]]));
+  });
+
+  test('collects argument types from categories', () => {
+    const messageNode = parseMessage('en', '{yyy,select,zzz{{xxx,time}} vvv{}}', { tokenizer: htmlTokenizer });
+    const argumentTsTypes = new Map();
+
+    collectArgumentTsTypes(messageNode, getArgumentNaturalTsType, argumentTsTypes);
+
+    expect(argumentTsTypes).toEqual(
+      new Map([
+        ['yyy', new Set(['"zzz"|"vvv"'])],
+        ['xxx', new Set(['number|Date'])],
+      ])
+    );
+  });
+
+  test('collects argument types from categories and other', () => {
+    const messageNode = parseMessage('en', '{yyy,select,zzz{{xxx,time}} vvv{} other{}}', { tokenizer: htmlTokenizer });
+    const argumentTsTypes = new Map();
+
+    collectArgumentTsTypes(messageNode, getArgumentNaturalTsType, argumentTsTypes);
+
+    expect(argumentTsTypes).toEqual(
+      new Map([
+        ['yyy', new Set(['"zzz"|"vvv"|(string&{})'])],
+        ['xxx', new Set(['number|Date'])],
+      ])
+    );
+  });
+});
+
 describe('compileFiles', () => {
   test('compiles messages as a node_module', async () => {
     expect(
@@ -64,7 +159,7 @@ describe('compileFiles', () => {
         { parser: createParser({ tokenizer: htmlTokenizer }) }
       )
     ).toStrictEqual({
-      'locales.js': 'export const LOCALE_EN_US="en-US";\nexport const LOCALE_RU_RU="ru-RU";\n' + '',
+      'locales.js': 'export const LOCALE_EN_US="en-US";\nexport const LOCALE_RU_RU="ru-RU";\n',
 
       'ca2cdd8045d8491e.js':
         'import{M,E,A,V,R,O,C}from"mfml/dsl";\n' +
@@ -147,7 +242,7 @@ describe('compileFiles', () => {
         ' * {gender, select, male {Он отправил} female {Она отправила} other {Они отправили}} вам сообщение\n' +
         ' * ```\n' +
         ' */\n' +
-        'export declare function messageReceived(locale:string):MessageNode<{"gender":number|string}>|null;\n',
+        'export declare function messageReceived(locale:string):MessageNode<{"gender":"male"|"female"|(string&{})}>|null;\n',
 
       'metadata.js':
         'import{LOCALE_EN_US,LOCALE_RU_RU}from"./locales.js";\n' +

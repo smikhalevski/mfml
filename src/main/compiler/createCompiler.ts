@@ -1,4 +1,4 @@
-import { AnyNode, MessageNode } from '../types.js';
+import { AnyNode, ArgumentNode, MessageNode } from '../types.js';
 import { Parser } from '../parser/index.js';
 import {
   escapeJsIdentifier,
@@ -10,10 +10,24 @@ import {
 } from './utils.js';
 import { getOctothorpeArgument, walkNode } from '../utils.js';
 
+/**
+ * The error thrown by a compiler if a message text cannot be processed.
+ *
+ * @group Compiler
+ */
 export class CompilerError extends Error {
   constructor(
+    /**
+     * The message key for which an error occurred.
+     */
     readonly messageKey: string,
+    /**
+     * The message locale.
+     */
     readonly locale: string,
+    /**
+     * The cause of a compilation error.
+     */
     readonly cause: unknown
   ) {
     super();
@@ -21,7 +35,9 @@ export class CompilerError extends Error {
 }
 
 /**
- * Options provided to the {@link Preprocessor} by the {@link Compiler}.
+ * Params provided to the {@link Preprocessor} by the {@link Compiler}.
+ *
+ * @group Compiler
  */
 export interface PreprocessorParams {
   /**
@@ -41,7 +57,9 @@ export interface PreprocessorParams {
 }
 
 /**
- * Options provided to the {@link Postprocessor} by the {@link Compiler}.
+ * Params provided to the {@link Postprocessor} by the {@link Compiler}.
+ *
+ * @group Compiler
  */
 export interface PostprocessorParams {
   /**
@@ -70,6 +88,7 @@ export interface PostprocessorParams {
  *
  * @param params Preprocessor params.
  * @returns The transformed message text.
+ * @group Compiler
  */
 export type Preprocessor = (params: PreprocessorParams) => Promise<string> | string;
 
@@ -78,6 +97,7 @@ export type Preprocessor = (params: PreprocessorParams) => Promise<string> | str
  *
  * @param params Postprocessor params.
  * @returns The transformed message node.
+ * @group Compiler
  */
 export type Postprocessor = (params: PostprocessorParams) => Promise<MessageNode> | MessageNode;
 
@@ -95,7 +115,7 @@ export interface CompilerOptions {
   /**
    * Mapping from a locale to a corresponding fallback locale.
    *
-   * For example, let's consider {@link fallbackLocales} are set to:
+   * For example, let's consider {@link fallbackLocales} set to:
    *
    * ```js
    * {
@@ -105,21 +125,25 @@ export interface CompilerOptions {
    * }
    * ```
    *
-   * In this case if a message doesn't support `ru-RU` locale, then compiler would look for `ru` locale. If `ru` locale
-   * isn't supported as well then compiler would fall back to `en` locale. And if `en` isn't supported as well then
-   * `null` would be returned from a message function when called with `ru-RU` locale.
+   * In this case:
+   * - if a message doesn't support `ru-RU` locale, then compiler would look for `ru` locale.
+   * - if `ru` locale isn't supported as well then a compiler would fall back to `en` locale.
+   * - if `en` isn't supported as well then `null` would be returned from a message function when called with `ru-RU`
+   * locale.
    */
   fallbackLocales?: Record<string, string>;
 
   /**
-   * The array of callbacks that are run before message tokenization.
+   * The array of callbacks that are run before message parsing.
    *
-   * For example, preprocessors can be used to transform Markdown messages to HTML.
+   * Preprocessors can be used to transform Markdown messages to HTML, or other text-based transformations.
    */
   preprocessors?: Preprocessor[];
 
   /**
    * The array of callbacks that are run after the message was parsed as an MFML AST.
+   *
+   * Preprocessors can be used to validate messages, rename arguments, or for other AST-based transformations.
    */
   postprocessors?: Postprocessor[];
 
@@ -131,24 +155,19 @@ export interface CompilerOptions {
   renameMessageFunction?: (messageKey: string) => string;
 
   /**
-   * Returns the TypeScript type for a given argument type.
+   * Returns the TypeScript type for a given argument.
    *
    * @example
-   * (argumentType, argumentName) => {
-   *   if (argumentType === 'number') {
+   * argumentNode => {
+   *   if (argumentNode.typeNode?.value === 'number') {
    *     return 'number|bigint';
    *   }
-   *   if (argumentType === 'date') {
+   *   if (argumentNode.typeNode?.value === 'date') {
    *     return 'number|Date';
    *   }
-   *   return 'unknown';
    * };
-   *
-   * @param argumentType The {@link mfml/parser!ParserOptions.renameArgumentType renamed type} of an argument, or `undefined` for
-   * an argument that does not have a type.
-   * @param argumentName The {@link mfml/parser!ParserOptions.renameArgument renamed argument}.
    */
-  getArgumentTsType?: (argumentType: string | undefined, argumentName: string) => string | undefined;
+  getArgumentTsType?: (argumentNode: ArgumentNode) => string | undefined;
 }
 
 /**
@@ -205,7 +224,7 @@ export function createCompiler(options: CompilerOptions): Compiler {
 }
 
 /**
- * Compiles MFML AST as a source code.
+ * Compiles MFML messages to a source code.
  *
  * @param messages Messages arranged by a locale.
  * @param options Compilation options.
@@ -253,6 +272,7 @@ export async function compileFiles(
   const visitedFallbackLocales = new Set<string>();
 
   nextMessageKey: for (const messageKey of messageKeys) {
+    // Locale group includes all locales for which the same message text is returned
     const localeGroups = [];
 
     // Pick locales supported by a message
@@ -342,9 +362,7 @@ export async function compileFiles(
 
     // Build a ternary that selects a message node depending on a requested locale
     for (let i = 0; i < localeGroups.length; ++i) {
-      for (let j = 0; j < localeGroups[i].length; ++j) {
-        jsCode += (j === 0 ? '' : '||') + 'locale===' + localeVars[localeGroups[i][j]];
-      }
+      jsCode += localeGroups[i].map(locale => 'locale===' + localeVars[locale]).join('||');
 
       try {
         jsCode += '?' + compileNode(messageNodes[i]) + ':';
@@ -403,11 +421,11 @@ export async function compileFiles(
 }
 
 export function collectArgumentTsTypes(
-  node: AnyNode,
-  getArgumentTsType: typeof getArgumentNaturalTsType,
+  messageNode: MessageNode,
+  getArgumentTsType: (argumentNode: ArgumentNode) => string | undefined,
   argumentTsTypes: Map<string, Set<string>>
 ): void {
-  walkNode(node, node => {
+  walkNode(messageNode, node => {
     if (node.nodeType === 'octothorpe') {
       node = getOctothorpeArgument(node)!;
     }
@@ -416,7 +434,7 @@ export function collectArgumentTsTypes(
       return;
     }
 
-    const tsType = getArgumentTsType(node.typeNode?.value, node.name);
+    const tsType = getArgumentTsType(node);
 
     let tsTypes = argumentTsTypes.get(node.name);
 
@@ -433,8 +451,8 @@ export function collectArgumentTsTypes(
   });
 }
 
-export function getArgumentNaturalTsType(argumentType: string | undefined, _argumentName: string): string | undefined {
-  switch (argumentType) {
+export function getArgumentNaturalTsType(argumentNode: ArgumentNode): string | undefined {
+  switch (argumentNode.typeNode?.value) {
     case 'number':
       return 'number|bigint';
 
@@ -450,10 +468,30 @@ export function getArgumentNaturalTsType(argumentType: string | undefined, _argu
       return 'number';
 
     case 'select':
-      return 'number|string';
+      if (argumentNode.categoryNodes === null || argumentNode.categoryNodes.length === 0) {
+        return 'string';
+      }
 
-    default:
-      return undefined;
+      const categoriesTsTypes = [];
+
+      let hasOtherCategory = false;
+
+      for (const categoryNode of argumentNode.categoryNodes) {
+        if (categoryNode.name === 'other') {
+          hasOtherCategory = true;
+          continue;
+        }
+
+        categoriesTsTypes.push(
+          JSON.stringify(categoryNode.name.charAt(0) === '=' ? categoryNode.name.substring(1) : categoryNode.name)
+        );
+      }
+
+      if (hasOtherCategory) {
+        categoriesTsTypes.push('(string&{})');
+      }
+
+      return categoriesTsTypes.join('|');
   }
 }
 
@@ -462,38 +500,35 @@ export function compileMessageTsType(argumentTsTypes: Map<string, Set<string>>):
     return 'MessageNode<void>|null';
   }
 
-  let str = '';
-  let argumentIndex = 0;
+  let tsCode = '';
 
   for (const [argumentName, tsTypes] of argumentTsTypes) {
-    str += (argumentIndex++ === 0 ? '' : ';') + JSON.stringify(argumentName) + ':';
+    tsCode += JSON.stringify(argumentName) + ':';
 
     tsTypes.delete('unknown');
 
     if (tsTypes.size === 0) {
-      str += 'unknown';
+      tsCode += 'unknown';
       continue;
     }
 
     if (tsTypes.size === 1) {
-      str += tsTypes.values().next().value;
+      tsCode += tsTypes.values().next().value;
       continue;
     }
 
-    let tsTypeIndex = 0;
-
-    for (const tsType of tsTypes) {
-      str += (tsTypeIndex++ === 0 ? '' : '&') + '(' + tsType + ')';
-    }
+    tsCode += Array.from(tsTypes)
+      .map(tsType => '(' + tsType + ')')
+      .join('&');
   }
 
-  return 'MessageNode<{' + str + '}>|null';
+  return 'MessageNode<{' + tsCode + '}>|null';
 }
 
 export function compileNode(node: AnyNode): string {
   switch (node.nodeType) {
     case 'message':
-      return 'M(locale' + compileRestNodes(node.childNodes) + ')';
+      return 'M(locale' + compileNodeArray(node.childNodes) + ')';
 
     case 'text':
     case 'literal':
@@ -503,22 +538,22 @@ export function compileNode(node: AnyNode): string {
       return (
         'E(' +
         JSON.stringify(node.tagName) +
-        compileRestNodes(node.attributeNodes) +
-        compileRestNodes(node.childNodes) +
+        compileNodeArray(node.attributeNodes) +
+        compileNodeArray(node.childNodes) +
         ')'
       );
 
     case 'attribute':
-      return 'A(' + JSON.stringify(node.name) + compileRestNodes(node.childNodes) + ')';
+      return 'A(' + JSON.stringify(node.name) + compileNodeArray(node.childNodes) + ')';
 
     case 'argument':
       return (
         'V(' +
         JSON.stringify(node.name) +
-        compileNullableNode(node.typeNode) +
-        compileNullableNode(node.styleNode) +
-        compileRestNodes(node.optionNodes) +
-        compileRestNodes(node.categoryNodes) +
+        compileOptionalNode(node.typeNode) +
+        compileOptionalNode(node.styleNode) +
+        compileNodeArray(node.optionNodes) +
+        compileNodeArray(node.categoryNodes) +
         ')'
       );
 
@@ -526,27 +561,27 @@ export function compileNode(node: AnyNode): string {
       return 'R()';
 
     case 'option':
-      return 'O(' + JSON.stringify(node.name) + compileNullableNode(node.valueNode) + ')';
+      return 'O(' + JSON.stringify(node.name) + compileOptionalNode(node.valueNode) + ')';
 
     case 'category':
-      return 'C(' + JSON.stringify(node.name) + compileRestNodes(node.childNodes) + ')';
+      return 'C(' + JSON.stringify(node.name) + compileNodeArray(node.childNodes) + ')';
   }
 }
 
-function compileRestNodes<T extends AnyNode[]>(nodes: T | null): string {
+function compileNodeArray<T extends AnyNode[]>(nodes: T | null): string {
   if (nodes === null) {
     return '';
   }
 
-  let str = '';
+  let jsCode = '';
 
   for (let i = 0; i < nodes.length; ++i) {
-    str += ',' + compileNode(nodes[i]);
+    jsCode += ',' + compileNode(nodes[i]);
   }
 
-  return str;
+  return jsCode;
 }
 
-function compileNullableNode(node: AnyNode | null): string {
+function compileOptionalNode(node: AnyNode | null): string {
   return node === null ? '' : ',' + compileNode(node);
 }

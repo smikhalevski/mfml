@@ -4,17 +4,14 @@
 export class ParserError extends SyntaxError {
   constructor(
     message: string,
-
     /**
      * The text where an error was detected.
      */
     public text: string,
-
     /**
      * The index of the first char in {@link text} where an error was detected, inclusive.
      */
     public startIndex = -1,
-
     /**
      * The index of the last char in {@link text} where an error was detected, exclusive.
      */
