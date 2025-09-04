@@ -1,5 +1,5 @@
 import React, { ComponentType, createContext, createElement, Fragment, ReactNode, useContext, useMemo } from 'react';
-import { Renderer, naturalCategorySelector, ElementRenderer, defaultFormatter } from '../createRenderer.js';
+import { Renderer, defaultCategorySelector, ElementRenderer, defaultArgumentFormatter } from '../renderer.js';
 import { AttributeNode, ChildNode, MessageNode } from '../types.js';
 import { renderAttributes } from '../renderToString.js';
 import {
@@ -20,10 +20,14 @@ import {
  *   return <div title={props.title}>{props.children}</div>;
  * }
  *
- * createReactDOMElementRenderer({
- *   p: 'br'
- *   abbr: Tooltip,
+ * const coolRenderer = createReactDOMElementRenderer({
+ *   p: 'div',
+ *   Tooltip,
  * });
+ *
+ * <MessageRendererProvider value={coolRenderer}>
+ *   {...}
+ * </MessageRendererProvider>
  *
  * @param components A mapping from an element tag name to a component.
  * @group Message
@@ -57,9 +61,9 @@ const MessageLocaleContext = createContext('en');
 MessageLocaleContext.displayName = 'MessageLocaleContext';
 
 const MessageRendererContext = createContext<Renderer<ReactNode>>({
-  elementRenderer: createReactDOMElementRenderer(),
-  formatter: defaultFormatter,
-  categorySelector: naturalCategorySelector,
+  renderElement: createReactDOMElementRenderer(),
+  formatArgument: defaultArgumentFormatter,
+  selectCategory: defaultCategorySelector,
 });
 
 MessageRendererContext.displayName = 'MessageRendererContext';
@@ -179,10 +183,12 @@ function renderChild(node: ChildNode, locale: string, renderer: Renderer<ReactNo
 
   if (node.nodeType === 'element') {
     if (!hasInterpolatedAttributes(node.attributeNodes)) {
-      return renderer.elementRenderer(
-        node.tagName,
-        renderAttributes(node.attributeNodes, locale, undefined, renderer),
-        renderChildren(node.childNodes, locale, renderer)
+      return (
+        renderer.renderElement(
+          node.tagName,
+          renderAttributes(node.attributeNodes, locale, undefined, renderer),
+          renderChildren(node.childNodes, locale, renderer)
+        ) || null
       );
     }
 
@@ -190,11 +196,11 @@ function renderChild(node: ChildNode, locale: string, renderer: Renderer<ReactNo
     return (
       <MessageValuesContext.Consumer>
         {values =>
-          renderer.elementRenderer(
+          renderer.renderElement(
             node.tagName,
             renderAttributes(node.attributeNodes, locale, values, renderer),
             renderChildren(node.childNodes, locale, renderer)
-          )
+          ) || null
         }
       </MessageValuesContext.Consumer>
     );
@@ -213,10 +219,10 @@ function renderChild(node: ChildNode, locale: string, renderer: Renderer<ReactNo
           const value = values?.[name];
 
           if (type === null || categories === null) {
-            return renderer.formatter({ locale, value, type, style, options });
+            return renderer.formatArgument({ locale, value, type, style, options }) || null;
           }
 
-          const category = renderer.categorySelector({ locale, value, type, categories, options });
+          const category = renderer.selectCategory({ locale, value, type, categories, options });
 
           if (category === undefined) {
             return null;
@@ -248,7 +254,7 @@ function renderChild(node: ChildNode, locale: string, renderer: Renderer<ReactNo
 
     return (
       <MessageValuesContext.Consumer>
-        {values => renderer.formatter({ locale, value: values?.[name], type, style, options })}
+        {values => renderer.formatArgument({ locale, value: values?.[name], type, style, options }) || null}
       </MessageValuesContext.Consumer>
     );
   }

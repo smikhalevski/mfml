@@ -8,15 +8,16 @@ export {
   createListFormatter,
   createDateTimeFormatter,
   createNumberFormatter,
-  combineFormatters,
-  naturalCategorySelector,
+  enqueueFormatters,
+  defaultArgumentFormatter,
+  defaultCategorySelector,
   type Renderer,
-  type FormatterParams,
+  type ArgumentFormatterParams,
   type CategorySelectorParams,
-  type Formatter,
+  type ArgumentFormatter,
   type CategorySelector,
   type ElementRenderer,
-} from './createRenderer.js';
+} from './renderer.js';
 export { renderToString, type RenderToStringOptions } from './renderToString.js';
 export type {
   ChildNode,

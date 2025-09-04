@@ -1,4 +1,4 @@
-import { defaultFormatter, naturalCategorySelector, Renderer } from './createRenderer.js';
+import { defaultArgumentFormatter, defaultCategorySelector, Renderer } from './renderer.js';
 import { AttributeNode, ChildNode, MessageNode } from './types.js';
 import {
   getArgumentByOctothorpe,
@@ -10,10 +10,10 @@ import {
   isLowerCaseAlpha,
 } from './utils.js';
 
-const defaultRenderer: Renderer<string> = {
-  elementRenderer: (tagName, _attributes, children) => (isLowerCaseAlpha(tagName) ? children.join('') : ''),
-  formatter: defaultFormatter,
-  categorySelector: naturalCategorySelector,
+const defaultStringRenderer: Renderer<string> = {
+  renderElement: (tagName, _attributes, children) => (isLowerCaseAlpha(tagName) ? children.join('') : ''),
+  formatArgument: defaultArgumentFormatter,
+  selectCategory: defaultCategorySelector,
 };
 
 /**
@@ -72,7 +72,7 @@ type InferRenderToStringOptions<MessageFunction extends (locale: string) => Mess
 export function renderToString<MessageFunction extends (locale: string) => MessageNode | null>(
   options: InferRenderToStringOptions<MessageFunction>
 ): string {
-  const { message, locale, values, renderer = defaultRenderer } = options;
+  const { message, locale, values, renderer = defaultStringRenderer } = options;
 
   const messageNode = message(locale);
 
@@ -126,7 +126,7 @@ function renderChild(node: ChildNode, locale: string, values: any, renderer: Ren
 
   if (node.nodeType === 'element') {
     return (
-      renderer.elementRenderer(
+      renderer.renderElement(
         node.tagName,
         renderAttributes(node.attributeNodes, locale, values, renderer),
         renderChildren(node.childNodes, locale, values, renderer)
@@ -142,10 +142,10 @@ function renderChild(node: ChildNode, locale: string, values: any, renderer: Ren
     const categories = getArgumentCategories(node);
 
     if (type === null || categories === null) {
-      return renderer.formatter({ locale, value, type, style, options }) || '';
+      return renderer.formatArgument({ locale, value, type, style, options }) || '';
     }
 
-    const category = renderer.categorySelector({ locale, value, type, categories, options });
+    const category = renderer.selectCategory({ locale, value, type, categories, options });
 
     if (category === undefined) {
       return '';
@@ -168,7 +168,7 @@ function renderChild(node: ChildNode, locale: string, values: any, renderer: Ren
     }
 
     return (
-      renderer.formatter({
+      renderer.formatArgument({
         locale,
         value: values?.[argumentNode.name],
         type: getArgumentType(argumentNode),

@@ -457,6 +457,9 @@ export function collectArgumentTsTypes(
   });
 }
 
+/**
+ * Returns the TypeScript type of an argument that matches the Intl formatter.
+ */
 export function getNaturalArgumentTsType(argumentNode: ArgumentNode): string | undefined {
   switch (argumentNode.typeNode?.value) {
     case 'number':
