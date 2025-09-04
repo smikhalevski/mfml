@@ -11,7 +11,7 @@ export interface ReactRendererOptions extends AbstractRendererOptions {
   /**
    * Mapping from a tag name to a React component that should be rendered.
    */
-  components?: Record<string, ComponentType<any>>;
+  components?: Record<string, ComponentType<any> | string>;
 }
 
 /**
@@ -23,7 +23,7 @@ export class ReactRenderer extends AbstractRenderer<ReactNode> {
   /**
    * Mapping from a tag name to a React component that should be rendered.
    */
-  components: Record<string, ComponentType<any> | string>;
+  components;
 
   /**
    * Creates a new instance of {@link ReactRenderer}.

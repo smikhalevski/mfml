@@ -4,19 +4,20 @@
 
 import { expect, test } from 'vitest';
 import { render } from '@testing-library/react';
-import { Message } from '../../main/react/Message.js';
+import { Message, MessageRendererProvider } from '../../main/react/Message.js';
 import React from 'react';
 import { parseMessage } from '../../main/parser/createParser.js';
 import { createTokenizer } from '../../main/parser/createTokenizer.js';
+import { ReactRenderer } from '../../main/react/index.js';
 
 const tokenizer = createTokenizer();
 
 test('renders a message node', () => {
-  const message = (locale: string) => parseMessage(locale, 'aaa{bbb}', { tokenizer });
+  const mockMessage = (locale: string) => parseMessage(locale, 'aaa{bbb}', { tokenizer });
 
   const result = render(
     <Message
-      message={message}
+      message={mockMessage}
       values={{ bbb: 'zzz' }}
     />,
     { reactStrictMode: true }
@@ -26,11 +27,11 @@ test('renders a message node', () => {
 });
 
 test('renders nested elements', () => {
-  const message = (locale: string) => parseMessage(locale, 'aaa<i><b>{bbb}</b></i>', { tokenizer });
+  const mockMessage = (locale: string) => parseMessage(locale, 'aaa<i><b>{bbb}</b></i>', { tokenizer });
 
   const result = render(
     <Message
-      message={message}
+      message={mockMessage}
       values={{ bbb: 'zzz' }}
     />,
     { reactStrictMode: true }
@@ -40,11 +41,11 @@ test('renders nested elements', () => {
 });
 
 test('re-renders nested elements when argument value is chaged', () => {
-  const message = (locale: string) => parseMessage(locale, 'aaa<i><b>{bbb}</b></i>', { tokenizer });
+  const mockMessage = (locale: string) => parseMessage(locale, 'aaa<i><b>{bbb}</b></i>', { tokenizer });
 
   const result = render(
     <Message
-      message={message}
+      message={mockMessage}
       values={{ bbb: 'zzz' }}
     />,
     { reactStrictMode: true }
@@ -52,7 +53,7 @@ test('re-renders nested elements when argument value is chaged', () => {
 
   result.rerender(
     <Message
-      message={message}
+      message={mockMessage}
       values={{ bbb: 'vvv' }}
     />
   );
@@ -61,27 +62,27 @@ test('re-renders nested elements when argument value is chaged', () => {
 });
 
 test('renders children array', () => {
-  const message = (locale: string) => parseMessage(locale, '<i>aaa</i><b>bbb</b>', { tokenizer });
+  const mockMessage = (locale: string) => parseMessage(locale, '<i>aaa</i><b>bbb</b>', { tokenizer });
 
-  const result = render(<Message message={message} />, { reactStrictMode: true });
+  const result = render(<Message message={mockMessage} />, { reactStrictMode: true });
 
   expect(result.container.innerHTML).toBe('<i>aaa</i><b>bbb</b>');
 });
 
 test('renders nested children array', () => {
-  const message = (locale: string) => parseMessage(locale, '<a><i>aaa</i><b>bbb</b></a>', { tokenizer });
+  const mockMessage = (locale: string) => parseMessage(locale, '<a><i>aaa</i><b>bbb</b></a>', { tokenizer });
 
-  const result = render(<Message message={message} />, { reactStrictMode: true });
+  const result = render(<Message message={mockMessage} />, { reactStrictMode: true });
 
   expect(result.container.innerHTML).toBe('<a><i>aaa</i><b>bbb</b></a>');
 });
 
 test('renders argument as a prop', () => {
-  const message = (locale: string) => parseMessage(locale, '<a title="xxx{bbb}"></a>', { tokenizer });
+  const mockMessage = (locale: string) => parseMessage(locale, '<a title="xxx{bbb}"></a>', { tokenizer });
 
   const result = render(
     <Message
-      message={message}
+      message={mockMessage}
       values={{ bbb: 'zzz' }}
     />,
     { reactStrictMode: true }
@@ -91,11 +92,11 @@ test('renders argument as a prop', () => {
 });
 
 test('re-renders an element if a props argument is changed', () => {
-  const message = (locale: string) => parseMessage(locale, '<a title="xxx{bbb}"></a>', { tokenizer });
+  const mockMessage = (locale: string) => parseMessage(locale, '<a title="xxx{bbb}"></a>', { tokenizer });
 
   const result = render(
     <Message
-      message={message}
+      message={mockMessage}
       values={{ bbb: 'zzz' }}
     />,
     { reactStrictMode: true }
@@ -103,10 +104,57 @@ test('re-renders an element if a props argument is changed', () => {
 
   result.rerender(
     <Message
-      message={message}
+      message={mockMessage}
       values={{ bbb: 'vvv' }}
     />
   );
 
   expect(result.container.innerHTML).toBe('<a title="xxxvvv"></a>');
+});
+
+test('renders elements with a context renderer', () => {
+  const mockMessage = (locale: string) => parseMessage(locale, 'aaa<i><b>{bbb}</b></i>', { tokenizer });
+
+  const result = render(
+    <MessageRendererProvider
+      value={
+        new ReactRenderer({
+          components: {
+            i: props => props.children,
+            b: props => props.children,
+          },
+        })
+      }
+    >
+      <Message
+        message={mockMessage}
+        values={{ bbb: 'zzz' }}
+      />
+    </MessageRendererProvider>,
+    { reactStrictMode: true }
+  );
+
+  expect(result.container.innerHTML).toBe('aaazzz');
+});
+
+test('renders elements with a custom renderer', () => {
+  const mockMessage = (locale: string) => parseMessage(locale, 'aaa<i><b>{bbb}</b></i>', { tokenizer });
+
+  const result = render(
+    <Message
+      message={mockMessage}
+      values={{ bbb: 'zzz' }}
+      renderer={
+        new ReactRenderer({
+          components: {
+            i: props => props.children,
+            b: props => props.children,
+          },
+        })
+      }
+    />,
+    { reactStrictMode: true }
+  );
+
+  expect(result.container.innerHTML).toBe('aaazzz');
 });
