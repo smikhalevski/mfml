@@ -1,19 +1,21 @@
-import { describe, expect, test, vi } from 'vitest';
+import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { readTokens, tokenize } from '../main/tokenize.js';
 import { parseConfig } from '../main/parseConfig.js';
 
+const callbackMock = vi.fn();
+
+beforeEach(() => {
+  callbackMock.mockReset();
+});
+
 describe('readTokens', () => {
   test('reads empty string', () => {
-    const callbackMock = vi.fn();
-
     readTokens('', callbackMock, {});
 
     expect(callbackMock).toHaveBeenCalledTimes(0);
   });
 
   test('reads text', () => {
-    const callbackMock = vi.fn();
-
     readTokens('aaa', callbackMock, {});
 
     expect(callbackMock).toHaveBeenCalledTimes(1);
@@ -21,8 +23,6 @@ describe('readTokens', () => {
   });
 
   test('reads the leading lt as text', () => {
-    const callbackMock = vi.fn();
-
     readTokens('>aaa>', callbackMock, {});
 
     expect(callbackMock).toHaveBeenCalledTimes(1);
@@ -30,8 +30,6 @@ describe('readTokens', () => {
   });
 
   test('treats gt followed by non tag name character as text', () => {
-    const callbackMock = vi.fn();
-
     readTokens('aaa<+ccc', callbackMock, {});
 
     expect(callbackMock).toHaveBeenCalledTimes(1);
@@ -39,8 +37,6 @@ describe('readTokens', () => {
   });
 
   test('reads the opening tag that starts with the weird char as a text', () => {
-    const callbackMock = vi.fn();
-
     readTokens('<@#$%*>', callbackMock, {});
 
     expect(callbackMock).toHaveBeenCalledTimes(1);
@@ -48,8 +44,6 @@ describe('readTokens', () => {
   });
 
   test('reads the opening tag that starts with the weird char as a text', () => {
-    const callbackMock = vi.fn();
-
     readTokens('<xxx@#$%*>', callbackMock, {});
 
     expect(callbackMock).toHaveBeenCalledTimes(2);
@@ -58,8 +52,6 @@ describe('readTokens', () => {
   });
 
   test('ignores bullshit in closing tags', () => {
-    const callbackMock = vi.fn();
-
     readTokens('</xxx @#$%*/>', callbackMock, {});
 
     expect(callbackMock).toHaveBeenCalledTimes(1);
@@ -67,8 +59,6 @@ describe('readTokens', () => {
   });
 
   test('reads the opening tag in double brackets', () => {
-    const callbackMock = vi.fn();
-
     readTokens('<<xxx>>aaa</xxx>', callbackMock, {});
 
     expect(callbackMock).toHaveBeenCalledTimes(5);
@@ -80,8 +70,6 @@ describe('readTokens', () => {
   });
 
   test('reads empty tag names as text', () => {
-    const callbackMock = vi.fn();
-
     readTokens('< ></ >', callbackMock, {});
 
     expect(callbackMock).toHaveBeenCalledTimes(1);
@@ -89,8 +77,6 @@ describe('readTokens', () => {
   });
 
   test('reads non-alpha tag names as text', () => {
-    const callbackMock = vi.fn();
-
     readTokens('<111></111>', callbackMock, {});
 
     expect(callbackMock).toHaveBeenCalledTimes(1);
@@ -98,8 +84,6 @@ describe('readTokens', () => {
   });
 
   test('reads the malformed closing tag as a text', () => {
-    const callbackMock = vi.fn();
-
     readTokens('</ xxx>', callbackMock, {});
 
     expect(callbackMock).toHaveBeenCalledTimes(1);
@@ -107,8 +91,6 @@ describe('readTokens', () => {
   });
 
   test('reads unterminated opening tags', () => {
-    const callbackMock = vi.fn();
-
     readTokens('<aaa', callbackMock, {});
 
     expect(callbackMock).toHaveBeenCalledTimes(1);
@@ -116,8 +98,6 @@ describe('readTokens', () => {
   });
 
   test('reads unterminated attributes', () => {
-    const callbackMock = vi.fn();
-
     readTokens('<aaa xxx="zzz', callbackMock, {});
 
     expect(callbackMock).toHaveBeenCalledTimes(3);
@@ -127,8 +107,6 @@ describe('readTokens', () => {
   });
 
   test('reads unterminated closing tags', () => {
-    const callbackMock = vi.fn();
-
     readTokens('</aaa', callbackMock, {});
 
     expect(callbackMock).toHaveBeenCalledTimes(1);
@@ -136,8 +114,6 @@ describe('readTokens', () => {
   });
 
   test('reads opening and closing tags', () => {
-    const callbackMock = vi.fn();
-
     readTokens('aaa<xxx>bbb</xxx>ccc', callbackMock, {});
 
     expect(callbackMock).toHaveBeenCalledTimes(6);
@@ -150,8 +126,6 @@ describe('readTokens', () => {
   });
 
   test('does not reads emojis as tag names', () => {
-    const callbackMock = vi.fn();
-
     readTokens('aaa<❤️>bbb</👨‍❤️‍💋‍👨>ccc', callbackMock, {});
 
     expect(callbackMock).toHaveBeenCalledTimes(1);
@@ -159,8 +133,6 @@ describe('readTokens', () => {
   });
 
   test('reads lt as an attribute name', () => {
-    const callbackMock = vi.fn();
-
     readTokens('<aaa <></aaa>', callbackMock, {});
 
     expect(callbackMock).toHaveBeenCalledTimes(5);
@@ -172,8 +144,6 @@ describe('readTokens', () => {
   });
 
   test('ignores redundant spaces before opening tag end', () => {
-    const callbackMock = vi.fn();
-
     readTokens('aaa<xxx   >bbb', callbackMock, {});
 
     expect(callbackMock).toHaveBeenCalledTimes(4);
@@ -184,8 +154,6 @@ describe('readTokens', () => {
   });
 
   test('ignores redundant spaces before closing tag end', () => {
-    const callbackMock = vi.fn();
-
     readTokens('aaa</xxx   >bbb', callbackMock, {});
 
     expect(callbackMock).toHaveBeenCalledTimes(3);
@@ -195,8 +163,6 @@ describe('readTokens', () => {
   });
 
   test('reads nested tags', () => {
-    const callbackMock = vi.fn();
-
     readTokens('aaa<yyy>bbb<xxx>ccc</xxx>ddd</yyy>', callbackMock, {});
 
     expect(callbackMock).toHaveBeenCalledTimes(10);
@@ -213,8 +179,6 @@ describe('readTokens', () => {
   });
 
   test('reads single-quoted attributes', () => {
-    const callbackMock = vi.fn();
-
     readTokens("<xxx yyy='aaa\"bbb' zzz='aaa\"bbb'>", callbackMock, {});
 
     // expect(callbackMock).toHaveBeenCalledTimes(8);
@@ -229,8 +193,6 @@ describe('readTokens', () => {
   });
 
   test('reads double-quoted attributes', () => {
-    const callbackMock = vi.fn();
-
     readTokens('<xxx yyy="aaa\'bbb" zzz="aaa\'bbb">', callbackMock, {});
 
     expect(callbackMock).toHaveBeenCalledTimes(8);
@@ -245,8 +207,6 @@ describe('readTokens', () => {
   });
 
   test('reads unquoted attributes', () => {
-    const callbackMock = vi.fn();
-
     readTokens('<xxx yyy=aaa"bbb\'ccc>', callbackMock, {});
 
     expect(callbackMock).toHaveBeenCalledTimes(5);
@@ -258,8 +218,6 @@ describe('readTokens', () => {
   });
 
   test('reads valueless attributes', () => {
-    const callbackMock = vi.fn();
-
     readTokens('<xxx aaa bbb>', callbackMock, {});
 
     expect(callbackMock).toHaveBeenCalledTimes(6);
@@ -272,8 +230,6 @@ describe('readTokens', () => {
   });
 
   test('reads valueless unquoted attributes', () => {
-    const callbackMock = vi.fn();
-
     readTokens('<xxx aaa= bbb=>', callbackMock, {});
 
     expect(callbackMock).toHaveBeenCalledTimes(5);
@@ -285,8 +241,6 @@ describe('readTokens', () => {
   });
 
   test('reads entities in attributes', () => {
-    const callbackMock = vi.fn();
-
     readTokens('<xxx aaa=&amp; bbb="&amp;" ccc=\'&amp;\' ddd=>', callbackMock, {});
 
     expect(callbackMock).toHaveBeenCalledTimes(13);
@@ -306,8 +260,6 @@ describe('readTokens', () => {
   });
 
   test('ignores leading slash in an attribute name', () => {
-    const callbackMock = vi.fn();
-
     readTokens('<aaa /xxx></xxx aaa>bbb', callbackMock, {});
 
     expect(callbackMock).toHaveBeenCalledTimes(6);
@@ -320,8 +272,6 @@ describe('readTokens', () => {
   });
 
   test('reads bullshit attribute names', () => {
-    const callbackMock = vi.fn();
-
     readTokens("<xxx < = '' fff>vvv</xxx>", callbackMock, {});
 
     expect(callbackMock).toHaveBeenCalledTimes(8);
@@ -336,8 +286,6 @@ describe('readTokens', () => {
   });
 
   test('reads attributes with unbalanced end quotes', () => {
-    const callbackMock = vi.fn();
-
     readTokens('<xxx yyy="aaa"bbb">', callbackMock, {});
 
     expect(callbackMock).toHaveBeenCalledTimes(7);
@@ -351,8 +299,6 @@ describe('readTokens', () => {
   });
 
   test('does not read self-closing tags by default', () => {
-    const callbackMock = vi.fn();
-
     readTokens('<xxx/>', callbackMock, {});
 
     expect(callbackMock).toHaveBeenCalledTimes(2);
@@ -361,8 +307,6 @@ describe('readTokens', () => {
   });
 
   test('reads self-closing tag', () => {
-    const callbackMock = vi.fn();
-
     readTokens('<xxx/>', callbackMock, { enableSelfClosingTags: true });
 
     expect(callbackMock).toHaveBeenCalledTimes(2);
@@ -371,8 +315,6 @@ describe('readTokens', () => {
   });
 
   test('does not read self-closing tag with the unquoted attribute that ends with a slash', () => {
-    const callbackMock = vi.fn();
-
     readTokens('<xxx aaa=bbb//>', callbackMock, { enableSelfClosingTags: true });
 
     expect(callbackMock).toHaveBeenCalledTimes(5);
@@ -384,8 +326,6 @@ describe('readTokens', () => {
   });
 
   test('ignores redundant spaces in attributes', () => {
-    const callbackMock = vi.fn();
-
     readTokens('aaa<yyy xxx   =   "zzz">bbb', callbackMock, {});
 
     expect(callbackMock).toHaveBeenCalledTimes(7);
@@ -399,8 +339,6 @@ describe('readTokens', () => {
   });
 
   test('does not read tags in quoted attributes', () => {
-    const callbackMock = vi.fn();
-
     readTokens('<aaa xxx="bbb<zzz>ccc</zzz>">', callbackMock, {});
 
     expect(callbackMock).toHaveBeenCalledTimes(5);
@@ -412,8 +350,6 @@ describe('readTokens', () => {
   });
 
   test('does not read tags in curly braces attributes by default', () => {
-    const callbackMock = vi.fn();
-
     readTokens('<aaa xxx={bbb<zzz>ccc</zzz>}></aaa>', callbackMock, {});
 
     expect(callbackMock).toHaveBeenCalledTimes(9);
@@ -429,8 +365,6 @@ describe('readTokens', () => {
   });
 
   test('reads opening tag with attributes in a curly braces attribute', () => {
-    const callbackMock = vi.fn();
-
     readTokens('<aaa xxx={<zzz vvv=yyy>}>', callbackMock, { enableJSXAttributes: true });
 
     expect(callbackMock).toHaveBeenCalledTimes(9);
@@ -446,8 +380,6 @@ describe('readTokens', () => {
   });
 
   test('escape char escapes opening tag start', () => {
-    const callbackMock = vi.fn();
-
     readTokens('\\<aaa>', callbackMock, {});
 
     expect(callbackMock).toHaveBeenCalledTimes(1);
@@ -455,8 +387,6 @@ describe('readTokens', () => {
   });
 
   test('escapes opening tag', () => {
-    const callbackMock = vi.fn();
-
     readTokens('\\<aaa>', callbackMock, {});
 
     expect(callbackMock).toHaveBeenCalledTimes(1);
@@ -464,8 +394,6 @@ describe('readTokens', () => {
   });
 
   test('escapes inside curly braces attribute', () => {
-    const callbackMock = vi.fn();
-
     readTokens('<aaa xxx={zzz\\}yyy}>', callbackMock, { enableJSXAttributes: true });
 
     expect(callbackMock).toHaveBeenCalledTimes(6);
@@ -477,8 +405,6 @@ describe('readTokens', () => {
   });
 
   test('does not escape char in a tag name', () => {
-    const callbackMock = vi.fn();
-
     readTokens('<a\\aa>', callbackMock, {});
 
     expect(callbackMock).toHaveBeenCalledTimes(2);
@@ -487,8 +413,6 @@ describe('readTokens', () => {
   });
 
   test('does not escape char in an attribute name', () => {
-    const callbackMock = vi.fn();
-
     readTokens('<aaa b\\bb>', callbackMock, {});
 
     expect(callbackMock).toHaveBeenCalledTimes(4);
@@ -499,8 +423,6 @@ describe('readTokens', () => {
   });
 
   test('reads an ICU argument', () => {
-    const callbackMock = vi.fn();
-
     readTokens('{aaa}', callbackMock, {});
 
     expect(callbackMock).toHaveBeenCalledTimes(2);
@@ -509,8 +431,6 @@ describe('readTokens', () => {
   });
 
   test('reads an ICU argument inside a tag', () => {
-    const callbackMock = vi.fn();
-
     readTokens('<xxx>{aaa}</xxx>', callbackMock, {});
 
     expect(callbackMock).toHaveBeenCalledTimes(5);
@@ -522,8 +442,6 @@ describe('readTokens', () => {
   });
 
   test('reads an ICU argument with name surrounded by spaces', () => {
-    const callbackMock = vi.fn();
-
     readTokens('{   aaa   }', callbackMock, {});
 
     expect(callbackMock).toHaveBeenCalledTimes(2);
@@ -532,8 +450,6 @@ describe('readTokens', () => {
   });
 
   test('reads an ICU argument with type', () => {
-    const callbackMock = vi.fn();
-
     readTokens('{aaa  ,  bbb   }', callbackMock, {});
 
     expect(callbackMock).toHaveBeenCalledTimes(3);
@@ -543,8 +459,6 @@ describe('readTokens', () => {
   });
 
   test('reads an ICU argument with type and style', () => {
-    const callbackMock = vi.fn();
-
     readTokens('{aaa  ,  bbb   ,   ccc   }', callbackMock, {});
 
     expect(callbackMock).toHaveBeenCalledTimes(4);
@@ -555,8 +469,6 @@ describe('readTokens', () => {
   });
 
   test('reads an ICU argument with type and choice', () => {
-    const callbackMock = vi.fn();
-
     readTokens('{aaa,bbb,ccc   {   ddd   }   }', callbackMock, {});
 
     expect(callbackMock).toHaveBeenCalledTimes(6);
@@ -569,8 +481,6 @@ describe('readTokens', () => {
   });
 
   test('reads tags in an ICU argument with type and choice', () => {
-    const callbackMock = vi.fn();
-
     readTokens('{aaa,bbb,ccc{<xxx>ddd</xxx>}}', callbackMock, {});
 
     expect(callbackMock).toHaveBeenCalledTimes(9);
@@ -586,8 +496,6 @@ describe('readTokens', () => {
   });
 
   test('reads an ICU octothorpe as text outside of choice', () => {
-    const callbackMock = vi.fn();
-
     readTokens('aaa # bbb', callbackMock, {});
 
     expect(callbackMock).toHaveBeenCalledTimes(1);
@@ -595,8 +503,6 @@ describe('readTokens', () => {
   });
 
   test('reads an ICU octothorpe in a choice', () => {
-    const callbackMock = vi.fn();
-
     readTokens('{aaa,bbb,ccc{ddd#eee}}', callbackMock, {});
 
     expect(callbackMock).toHaveBeenCalledTimes(8);
@@ -611,8 +517,6 @@ describe('readTokens', () => {
   });
 
   test('reads an ICU octothorpe in a nested choice', () => {
-    const callbackMock = vi.fn();
-
     readTokens('{aaa,bbb,ccc{{aaa,bbb,ccc{<zzz>#</zzz>}}}}', callbackMock, {});
 
     expect(callbackMock).toHaveBeenCalledTimes(14);
@@ -635,9 +539,7 @@ describe('readTokens', () => {
 
 describe('tokenize', () => {
   test('reads the balanced start tag', () => {
-    const callbackMock = vi.fn();
-
-    tokenize('<aaa>bbb</aaa>', callbackMock, {});
+    tokenize('<aaa>bbb</aaa>', callbackMock);
 
     expect(callbackMock).toHaveBeenCalledTimes(4);
     expect(callbackMock).toHaveBeenNthCalledWith(1, 'XML_OPENING_TAG_START', 1, 4);
@@ -647,8 +549,6 @@ describe('tokenize', () => {
   });
 
   test('reads the unbalanced start tag', () => {
-    const callbackMock = vi.fn();
-
     tokenize('<aaa><bbb>ccc', callbackMock, { autoBalanceClosingTags: true });
 
     expect(callbackMock).toHaveBeenCalledTimes(7);
@@ -662,8 +562,6 @@ describe('tokenize', () => {
   });
 
   test('auto closes the immediate parent', () => {
-    const callbackMock = vi.fn();
-
     tokenize(
       '<aaa>bbb<ccc>ddd',
       callbackMock,
@@ -682,8 +580,6 @@ describe('tokenize', () => {
   });
 
   test('auto closes the ancestor', () => {
-    const callbackMock = vi.fn();
-
     tokenize(
       '<aaa>bbb<ccc>ddd<eee>',
       callbackMock,
@@ -705,8 +601,6 @@ describe('tokenize', () => {
   });
 
   test('auto closes the topmost ancestor', () => {
-    const callbackMock = vi.fn();
-
     tokenize(
       '<aaa>bbb<ccc>ddd<eee>fff<ggg>',
       callbackMock,
@@ -732,8 +626,6 @@ describe('tokenize', () => {
   });
 
   test('reads the void tag', () => {
-    const callbackMock = vi.fn();
-
     tokenize('<aaa>bbb', callbackMock, parseConfig({ voidTags: ['aaa'] }));
 
     expect(callbackMock).toHaveBeenCalledTimes(4);
@@ -744,8 +636,6 @@ describe('tokenize', () => {
   });
 
   test('reads consequent void tags', () => {
-    const callbackMock = vi.fn();
-
     tokenize('<aaa><bbb>', callbackMock, parseConfig({ voidTags: ['aaa', 'bbb'] }));
 
     expect(callbackMock).toHaveBeenCalledTimes(6);
@@ -758,8 +648,6 @@ describe('tokenize', () => {
   });
 
   test('reads the void tag in the container', () => {
-    const callbackMock = vi.fn();
-
     tokenize('<aaa><bbb></aaa>', callbackMock, parseConfig({ voidTags: ['bbb'] }));
 
     expect(callbackMock).toHaveBeenCalledTimes(6);
@@ -772,8 +660,6 @@ describe('tokenize', () => {
   });
 
   test('auto closes a tag', () => {
-    const callbackMock = vi.fn();
-
     tokenize('<aaa><bbb></aaa>', callbackMock, parseConfig({ autoBalanceClosingTags: true }));
 
     expect(callbackMock).toHaveBeenCalledTimes(6);
@@ -786,16 +672,12 @@ describe('tokenize', () => {
   });
 
   test('ignores an orphan closing tag', () => {
-    const callbackMock = vi.fn();
-
     tokenize('</aaa>', callbackMock, parseConfig({ ignoreOrphanClosingTags: true }));
 
     expect(callbackMock).toHaveBeenCalledTimes(0);
   });
 
   test('ignores an orphan closing tag in a container', () => {
-    const callbackMock = vi.fn();
-
     tokenize('<aaa></bbb></aaa>', callbackMock, parseConfig({ ignoreOrphanClosingTags: true }));
 
     expect(callbackMock).toHaveBeenCalledTimes(3);
@@ -805,8 +687,6 @@ describe('tokenize', () => {
   });
 
   test('inserts opening tags for orphan closing tags', () => {
-    const callbackMock = vi.fn();
-
     tokenize('</aaa>', callbackMock, parseConfig({ forceOpeningTags: ['aaa'] }));
 
     expect(callbackMock).toHaveBeenCalledTimes(3);
@@ -816,8 +696,6 @@ describe('tokenize', () => {
   });
 
   test('inserts opening tag that forcefully closes preceding tag', () => {
-    const callbackMock = vi.fn();
-
     tokenize(
       '<aaa></bbb>',
       callbackMock,
@@ -834,8 +712,6 @@ describe('tokenize', () => {
   });
 
   test('inserts opening tags and closing tags during nesting of the same tag', () => {
-    const callbackMock = vi.fn();
-
     tokenize(
       'aaa<xxx>bbb<xxx>ccc</xxx>ddd</xxx>eee',
       callbackMock,
@@ -860,8 +736,6 @@ describe('tokenize', () => {
   });
 
   test('reads case-sensitive closing tags by default', () => {
-    const callbackMock = vi.fn();
-
     tokenize('<aaa></AAA>', callbackMock, { autoBalanceClosingTags: true, ignoreOrphanClosingTags: true });
 
     expect(callbackMock).toHaveBeenCalledTimes(3);
@@ -871,8 +745,6 @@ describe('tokenize', () => {
   });
 
   test('reads case-insensitive closing tags', () => {
-    const callbackMock = vi.fn();
-
     tokenize('<aaa></AAA>', callbackMock, parseConfig({ isCaseInsensitiveTags: true }));
 
     expect(callbackMock).toHaveBeenCalledTimes(3);
@@ -882,8 +754,6 @@ describe('tokenize', () => {
   });
 
   test('read non ASCII alpha-chars as case-sensitive in case-insensitive tag matching mode', () => {
-    const callbackMock = vi.fn();
-
     tokenize(
       '<aaaффф></AAAФФФ>',
       callbackMock,
@@ -894,5 +764,13 @@ describe('tokenize', () => {
     expect(callbackMock).toHaveBeenNthCalledWith(1, 'XML_OPENING_TAG_START', 1, 7);
     expect(callbackMock).toHaveBeenNthCalledWith(2, 'XML_OPENING_TAG_END', 7, 8);
     expect(callbackMock).toHaveBeenNthCalledWith(3, 'XML_CLOSING_TAG', 17, 17);
+  });
+
+  test('throws if opening tag is not ended before EOF', () => {
+    expect(() => tokenize('<aaa xxx="bbb"', callbackMock)).toThrow(new SyntaxError('Unexpected EOF'));
+  });
+
+  test('throws if argument is not ended before EOF', () => {
+    expect(() => tokenize('<aaa>{xxx', callbackMock)).toThrow(new SyntaxError('Unexpected ICU syntax at 9'));
   });
 });

@@ -12,7 +12,7 @@ export interface Config {
   ignoreOrphanClosingTags?: boolean;
 }
 
-export function parseConfig(config: Config = {}): TokenizeOptions {
+export function parseConfig(config: Config): TokenizeOptions {
   const {
     voidTags,
     forceClosingTags,

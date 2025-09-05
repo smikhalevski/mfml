@@ -28,7 +28,7 @@ export interface TokenizeOptions {
   ignoreOrphanClosingTags?: boolean;
 }
 
-export function tokenize(text: string, callback: TokenCallback, options: TokenizeOptions): void {
+export function tokenize(text: string, callback: TokenCallback, options: TokenizeOptions = {}): void {
   const {
     readTag = getCaseSensitiveHashCode,
     voidTags,
@@ -41,8 +41,11 @@ export function tokenize(text: string, callback: TokenCallback, options: Tokeniz
   const tagStack = [0, 0, 0, 0, 0, 0, 0, 0];
 
   let tagStackCursor = -1;
+  let canEOF = true;
 
   const readTokensCallback: TokenCallback = (token, startIndex, endIndex) => {
+    canEOF = false;
+
     switch (token) {
       case TOKEN_XML_OPENING_TAG_START:
         const openingTag = readTag(text, startIndex, endIndex);
@@ -62,6 +65,8 @@ export function tokenize(text: string, callback: TokenCallback, options: Tokeniz
         break;
 
       case TOKEN_XML_OPENING_TAG_END:
+        canEOF = true;
+
         callback(TOKEN_XML_OPENING_TAG_END, startIndex, endIndex);
 
         if (voidTags !== undefined && voidTags.has(tagStack[tagStackCursor])) {
@@ -76,6 +81,8 @@ export function tokenize(text: string, callback: TokenCallback, options: Tokeniz
         break;
 
       case TOKEN_XML_CLOSING_TAG:
+        canEOF = true;
+
         const closingTag = readTag(text, startIndex, endIndex);
 
         if (tagStackCursor !== -1 && tagStack[tagStackCursor] === closingTag) {
@@ -138,6 +145,13 @@ export function tokenize(text: string, callback: TokenCallback, options: Tokeniz
         --tagStackCursor;
         break;
 
+      case TOKEN_TEXT:
+      case TOKEN_ICU_ARGUMENT_END:
+        canEOF = true;
+
+        callback(token, startIndex, endIndex);
+        break;
+
       default:
         callback(token, startIndex, endIndex);
         break;
@@ -149,7 +163,9 @@ export function tokenize(text: string, callback: TokenCallback, options: Tokeniz
   if (tagStackCursor === -1) {
     return;
   }
-
+  if (!canEOF) {
+    throw new SyntaxError('Unexpected EOF');
+  }
   if (!autoBalanceClosingTags) {
     throw new SyntaxError('Unbalanced closing tag at ' + text.length);
   }
