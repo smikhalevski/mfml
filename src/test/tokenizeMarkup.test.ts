@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
-import { readTokens, tokenize } from '../main/tokenize.js';
+import { readTokens, tokenizeMarkup } from '../main/tokenizeMarkup.js';
 import { parseConfig } from '../main/parseConfig.js';
 
 const callbackMock = vi.fn();
@@ -307,7 +307,7 @@ describe('readTokens', () => {
   });
 
   test('reads self-closing tag', () => {
-    readTokens('<xxx/>', callbackMock, { enableSelfClosingTags: true });
+    readTokens('<xxx/>', callbackMock, { isSelfClosingTagsRecognized: true });
 
     expect(callbackMock).toHaveBeenCalledTimes(2);
     expect(callbackMock).toHaveBeenNthCalledWith(1, 'XML_OPENING_TAG_START', 1, 4);
@@ -315,7 +315,7 @@ describe('readTokens', () => {
   });
 
   test('does not read self-closing tag with the unquoted attribute that ends with a slash', () => {
-    readTokens('<xxx aaa=bbb//>', callbackMock, { enableSelfClosingTags: true });
+    readTokens('<xxx aaa=bbb//>', callbackMock, { isSelfClosingTagsRecognized: true });
 
     expect(callbackMock).toHaveBeenCalledTimes(5);
     expect(callbackMock).toHaveBeenNthCalledWith(1, 'XML_OPENING_TAG_START', 1, 4);
@@ -365,7 +365,7 @@ describe('readTokens', () => {
   });
 
   test('reads opening tag with attributes in a curly braces attribute', () => {
-    readTokens('<aaa xxx={<zzz vvv=yyy>}>', callbackMock, { enableJSXAttributes: true });
+    readTokens('<aaa xxx={<zzz vvv=yyy>}>', callbackMock, { isJSXAttributesRecognized: true });
 
     expect(callbackMock).toHaveBeenCalledTimes(9);
     expect(callbackMock).toHaveBeenNthCalledWith(1, 'XML_OPENING_TAG_START', 1, 4);
@@ -394,7 +394,7 @@ describe('readTokens', () => {
   });
 
   test('escapes inside curly braces attribute', () => {
-    readTokens('<aaa xxx={zzz\\}yyy}>', callbackMock, { enableJSXAttributes: true });
+    readTokens('<aaa xxx={zzz\\}yyy}>', callbackMock, { isJSXAttributesRecognized: true });
 
     expect(callbackMock).toHaveBeenCalledTimes(6);
     expect(callbackMock).toHaveBeenNthCalledWith(1, 'XML_OPENING_TAG_START', 1, 4);
@@ -449,7 +449,7 @@ describe('readTokens', () => {
     expect(callbackMock).toHaveBeenNthCalledWith(2, 'ICU_ARGUMENT_END', 10, 11);
   });
 
-  test('reads an ICU argument with type', () => {
+  test('reads an ICU argument and its type', () => {
     readTokens('{aaa  ,  bbb   }', callbackMock, {});
 
     expect(callbackMock).toHaveBeenCalledTimes(3);
@@ -468,7 +468,7 @@ describe('readTokens', () => {
     expect(callbackMock).toHaveBeenNthCalledWith(4, 'ICU_ARGUMENT_END', 25, 26);
   });
 
-  test('reads an ICU argument with type and choice', () => {
+  test('reads an ICU argument with type and select', () => {
     readTokens('{aaa,bbb,ccc   {   ddd   }   }', callbackMock, {});
 
     expect(callbackMock).toHaveBeenCalledTimes(6);
@@ -480,7 +480,7 @@ describe('readTokens', () => {
     expect(callbackMock).toHaveBeenNthCalledWith(6, 'ICU_ARGUMENT_END', 29, 30);
   });
 
-  test('reads tags in an ICU argument with type and choice', () => {
+  test('reads tags in an ICU argument with type and select', () => {
     readTokens('{aaa,bbb,ccc{<xxx>ddd</xxx>}}', callbackMock, {});
 
     expect(callbackMock).toHaveBeenCalledTimes(9);
@@ -495,14 +495,14 @@ describe('readTokens', () => {
     expect(callbackMock).toHaveBeenNthCalledWith(9, 'ICU_ARGUMENT_END', 28, 29);
   });
 
-  test('reads an ICU octothorpe as text outside of choice', () => {
+  test('reads an ICU octothorpe as text outside of select', () => {
     readTokens('aaa # bbb', callbackMock, {});
 
     expect(callbackMock).toHaveBeenCalledTimes(1);
     expect(callbackMock).toHaveBeenNthCalledWith(1, 'TEXT', 0, 9);
   });
 
-  test('reads an ICU octothorpe in a choice', () => {
+  test('reads an ICU octothorpe in a select', () => {
     readTokens('{aaa,bbb,ccc{ddd#eee}}', callbackMock, {});
 
     expect(callbackMock).toHaveBeenCalledTimes(8);
@@ -516,7 +516,21 @@ describe('readTokens', () => {
     expect(callbackMock).toHaveBeenNthCalledWith(8, 'ICU_ARGUMENT_END', 21, 22);
   });
 
-  test('reads an ICU octothorpe in a nested choice', () => {
+  test('reads an ICU octothorpe in a select with spaces', () => {
+    readTokens('{   xxx   ,   yyy   ,   zzz   {   #   }   }', callbackMock, {});
+
+    expect(callbackMock).toHaveBeenCalledTimes(8);
+    expect(callbackMock).toHaveBeenNthCalledWith(1, 'ICU_ARGUMENT_START', 4, 7);
+    expect(callbackMock).toHaveBeenNthCalledWith(2, 'ICU_ARGUMENT_TYPE', 14, 17);
+    expect(callbackMock).toHaveBeenNthCalledWith(3, 'ICU_CASE_START', 24, 27);
+    expect(callbackMock).toHaveBeenNthCalledWith(4, 'TEXT', 31, 34);
+    expect(callbackMock).toHaveBeenNthCalledWith(5, 'ICU_OCTOTHORPE', 34, 35);
+    expect(callbackMock).toHaveBeenNthCalledWith(6, 'TEXT', 35, 38);
+    expect(callbackMock).toHaveBeenNthCalledWith(7, 'ICU_CASE_END', 38, 39);
+    expect(callbackMock).toHaveBeenNthCalledWith(8, 'ICU_ARGUMENT_END', 42, 43);
+  });
+
+  test('reads an ICU octothorpe in a nested select', () => {
     readTokens('{aaa,bbb,ccc{{aaa,bbb,ccc{<zzz>#</zzz>}}}}', callbackMock, {});
 
     expect(callbackMock).toHaveBeenCalledTimes(14);
@@ -537,9 +551,9 @@ describe('readTokens', () => {
   });
 });
 
-describe('tokenize', () => {
+describe('tokenizeMarkup', () => {
   test('reads the balanced start tag', () => {
-    tokenize('<aaa>bbb</aaa>', callbackMock);
+    tokenizeMarkup('<aaa>bbb</aaa>', callbackMock);
 
     expect(callbackMock).toHaveBeenCalledTimes(4);
     expect(callbackMock).toHaveBeenNthCalledWith(1, 'XML_OPENING_TAG_START', 1, 4);
@@ -549,7 +563,7 @@ describe('tokenize', () => {
   });
 
   test('reads the unbalanced start tag', () => {
-    tokenize('<aaa><bbb>ccc', callbackMock, { autoBalanceClosingTags: true });
+    tokenizeMarkup('<aaa><bbb>ccc', callbackMock, { isUnbalancedTagsAutoClosed: true });
 
     expect(callbackMock).toHaveBeenCalledTimes(7);
     expect(callbackMock).toHaveBeenNthCalledWith(1, 'XML_OPENING_TAG_START', 1, 4);
@@ -562,10 +576,10 @@ describe('tokenize', () => {
   });
 
   test('auto closes the immediate parent', () => {
-    tokenize(
+    tokenizeMarkup(
       '<aaa>bbb<ccc>ddd',
       callbackMock,
-      parseConfig({ autoBalanceClosingTags: true, forceClosingTags: { ccc: ['aaa'] } })
+      parseConfig({ isUnbalancedTagsAutoClosed: true, forceClosedTags: { ccc: ['aaa'] } })
     );
 
     expect(callbackMock).toHaveBeenCalledTimes(8);
@@ -580,10 +594,10 @@ describe('tokenize', () => {
   });
 
   test('auto closes the ancestor', () => {
-    tokenize(
+    tokenizeMarkup(
       '<aaa>bbb<ccc>ddd<eee>',
       callbackMock,
-      parseConfig({ autoBalanceClosingTags: true, forceClosingTags: { eee: ['aaa'] } })
+      parseConfig({ isUnbalancedTagsAutoClosed: true, forceClosedTags: { eee: ['aaa'] } })
     );
 
     expect(callbackMock).toHaveBeenCalledTimes(11);
@@ -601,10 +615,10 @@ describe('tokenize', () => {
   });
 
   test('auto closes the topmost ancestor', () => {
-    tokenize(
+    tokenizeMarkup(
       '<aaa>bbb<ccc>ddd<eee>fff<ggg>',
       callbackMock,
-      parseConfig({ autoBalanceClosingTags: true, forceClosingTags: { ggg: ['aaa', 'eee'] } })
+      parseConfig({ isUnbalancedTagsAutoClosed: true, forceClosedTags: { ggg: ['aaa', 'eee'] } })
     );
 
     expect(callbackMock).toHaveBeenCalledTimes(15);
@@ -626,7 +640,7 @@ describe('tokenize', () => {
   });
 
   test('reads the void tag', () => {
-    tokenize('<aaa>bbb', callbackMock, parseConfig({ voidTags: ['aaa'] }));
+    tokenizeMarkup('<aaa>bbb', callbackMock, parseConfig({ voidTags: ['aaa'] }));
 
     expect(callbackMock).toHaveBeenCalledTimes(4);
     expect(callbackMock).toHaveBeenNthCalledWith(1, 'XML_OPENING_TAG_START', 1, 4);
@@ -636,7 +650,7 @@ describe('tokenize', () => {
   });
 
   test('reads consequent void tags', () => {
-    tokenize('<aaa><bbb>', callbackMock, parseConfig({ voidTags: ['aaa', 'bbb'] }));
+    tokenizeMarkup('<aaa><bbb>', callbackMock, parseConfig({ voidTags: ['aaa', 'bbb'] }));
 
     expect(callbackMock).toHaveBeenCalledTimes(6);
     expect(callbackMock).toHaveBeenNthCalledWith(1, 'XML_OPENING_TAG_START', 1, 4);
@@ -648,7 +662,7 @@ describe('tokenize', () => {
   });
 
   test('reads the void tag in the container', () => {
-    tokenize('<aaa><bbb></aaa>', callbackMock, parseConfig({ voidTags: ['bbb'] }));
+    tokenizeMarkup('<aaa><bbb></aaa>', callbackMock, parseConfig({ voidTags: ['bbb'] }));
 
     expect(callbackMock).toHaveBeenCalledTimes(6);
     expect(callbackMock).toHaveBeenNthCalledWith(1, 'XML_OPENING_TAG_START', 1, 4);
@@ -660,7 +674,7 @@ describe('tokenize', () => {
   });
 
   test('auto closes a tag', () => {
-    tokenize('<aaa><bbb></aaa>', callbackMock, parseConfig({ autoBalanceClosingTags: true }));
+    tokenizeMarkup('<aaa><bbb></aaa>', callbackMock, parseConfig({ isUnbalancedTagsAutoClosed: true }));
 
     expect(callbackMock).toHaveBeenCalledTimes(6);
     expect(callbackMock).toHaveBeenNthCalledWith(1, 'XML_OPENING_TAG_START', 1, 4);
@@ -672,13 +686,13 @@ describe('tokenize', () => {
   });
 
   test('ignores an orphan closing tag', () => {
-    tokenize('</aaa>', callbackMock, parseConfig({ ignoreOrphanClosingTags: true }));
+    tokenizeMarkup('</aaa>', callbackMock, parseConfig({ isOrphanClosingTagsIgnored: true }));
 
     expect(callbackMock).toHaveBeenCalledTimes(0);
   });
 
   test('ignores an orphan closing tag in a container', () => {
-    tokenize('<aaa></bbb></aaa>', callbackMock, parseConfig({ ignoreOrphanClosingTags: true }));
+    tokenizeMarkup('<aaa></bbb></aaa>', callbackMock, parseConfig({ isOrphanClosingTagsIgnored: true }));
 
     expect(callbackMock).toHaveBeenCalledTimes(3);
     expect(callbackMock).toHaveBeenNthCalledWith(1, 'XML_OPENING_TAG_START', 1, 4);
@@ -687,7 +701,7 @@ describe('tokenize', () => {
   });
 
   test('inserts opening tags for orphan closing tags', () => {
-    tokenize('</aaa>', callbackMock, parseConfig({ forceOpeningTags: ['aaa'] }));
+    tokenizeMarkup('</aaa>', callbackMock, parseConfig({ reopenedOrphanClosingTags: ['aaa'] }));
 
     expect(callbackMock).toHaveBeenCalledTimes(3);
     expect(callbackMock).toHaveBeenNthCalledWith(1, 'XML_OPENING_TAG_START', 0, 0);
@@ -696,10 +710,10 @@ describe('tokenize', () => {
   });
 
   test('inserts opening tag that forcefully closes preceding tag', () => {
-    tokenize(
+    tokenizeMarkup(
       '<aaa></bbb>',
       callbackMock,
-      parseConfig({ forceClosingTags: { bbb: ['aaa'] }, forceOpeningTags: ['bbb'] })
+      parseConfig({ forceClosedTags: { bbb: ['aaa'] }, reopenedOrphanClosingTags: ['bbb'] })
     );
 
     expect(callbackMock).toHaveBeenCalledTimes(6);
@@ -712,10 +726,10 @@ describe('tokenize', () => {
   });
 
   test('inserts opening tags and closing tags during nesting of the same tag', () => {
-    tokenize(
+    tokenizeMarkup(
       'aaa<xxx>bbb<xxx>ccc</xxx>ddd</xxx>eee',
       callbackMock,
-      parseConfig({ forceClosingTags: { xxx: ['xxx'] }, forceOpeningTags: ['xxx'] })
+      parseConfig({ forceClosedTags: { xxx: ['xxx'] }, reopenedOrphanClosingTags: ['xxx'] })
     );
 
     expect(callbackMock).toHaveBeenCalledTimes(14);
@@ -736,7 +750,7 @@ describe('tokenize', () => {
   });
 
   test('reads case-sensitive closing tags by default', () => {
-    tokenize('<aaa></AAA>', callbackMock, { autoBalanceClosingTags: true, ignoreOrphanClosingTags: true });
+    tokenizeMarkup('<aaa></AAA>', callbackMock, { isUnbalancedTagsAutoClosed: true, isOrphanClosingTagsIgnored: true });
 
     expect(callbackMock).toHaveBeenCalledTimes(3);
     expect(callbackMock).toHaveBeenNthCalledWith(1, 'XML_OPENING_TAG_START', 1, 4);
@@ -745,7 +759,7 @@ describe('tokenize', () => {
   });
 
   test('reads case-insensitive closing tags', () => {
-    tokenize('<aaa></AAA>', callbackMock, parseConfig({ isCaseInsensitiveTags: true }));
+    tokenizeMarkup('<aaa></AAA>', callbackMock, parseConfig({ isCaseInsensitiveTags: true }));
 
     expect(callbackMock).toHaveBeenCalledTimes(3);
     expect(callbackMock).toHaveBeenNthCalledWith(1, 'XML_OPENING_TAG_START', 1, 4);
@@ -754,10 +768,10 @@ describe('tokenize', () => {
   });
 
   test('read non ASCII alpha-chars as case-sensitive in case-insensitive tag matching mode', () => {
-    tokenize(
+    tokenizeMarkup(
       '<aaaффф></AAAФФФ>',
       callbackMock,
-      parseConfig({ isCaseInsensitiveTags: true, autoBalanceClosingTags: true, ignoreOrphanClosingTags: true })
+      parseConfig({ isCaseInsensitiveTags: true, isUnbalancedTagsAutoClosed: true, isOrphanClosingTagsIgnored: true })
     );
 
     expect(callbackMock).toHaveBeenCalledTimes(3);
@@ -766,11 +780,41 @@ describe('tokenize', () => {
     expect(callbackMock).toHaveBeenNthCalledWith(3, 'XML_CLOSING_TAG', 17, 17);
   });
 
+  test('closes unbalanced tags', () => {
+    tokenizeMarkup(
+      '<a><b></a></b>',
+      callbackMock,
+      parseConfig({ isUnbalancedTagsAutoClosed: true, isOrphanClosingTagsIgnored: true })
+    );
+
+    expect(callbackMock).toHaveBeenCalledTimes(6);
+    expect(callbackMock).toHaveBeenNthCalledWith(1, 'XML_OPENING_TAG_START', 1, 2);
+    expect(callbackMock).toHaveBeenNthCalledWith(2, 'XML_OPENING_TAG_END', 2, 3);
+    expect(callbackMock).toHaveBeenNthCalledWith(3, 'XML_OPENING_TAG_START', 4, 5);
+    expect(callbackMock).toHaveBeenNthCalledWith(4, 'XML_OPENING_TAG_END', 5, 6);
+    expect(callbackMock).toHaveBeenNthCalledWith(5, 'XML_CLOSING_TAG', 6, 6);
+    expect(callbackMock).toHaveBeenNthCalledWith(6, 'XML_CLOSING_TAG', 8, 9);
+  });
+
+  test('reads ICU select with octothorpe', () => {
+    tokenizeMarkup('{   xxx   ,   yyy   ,   zzz   {   #   }   }', callbackMock);
+
+    expect(callbackMock).toHaveBeenCalledTimes(8);
+    expect(callbackMock).toHaveBeenNthCalledWith(1, 'ICU_ARGUMENT_START', 4, 7);
+    expect(callbackMock).toHaveBeenNthCalledWith(2, 'ICU_ARGUMENT_TYPE', 14, 17);
+    expect(callbackMock).toHaveBeenNthCalledWith(3, 'ICU_CASE_START', 24, 27);
+    expect(callbackMock).toHaveBeenNthCalledWith(4, 'TEXT', 31, 34);
+    expect(callbackMock).toHaveBeenNthCalledWith(5, 'ICU_OCTOTHORPE', 34, 35);
+    expect(callbackMock).toHaveBeenNthCalledWith(6, 'TEXT', 35, 38);
+    expect(callbackMock).toHaveBeenNthCalledWith(7, 'ICU_CASE_END', 38, 39);
+    expect(callbackMock).toHaveBeenNthCalledWith(8, 'ICU_ARGUMENT_END', 42, 43);
+  });
+
   test('throws if opening tag is not ended before EOF', () => {
-    expect(() => tokenize('<aaa xxx="bbb"', callbackMock)).toThrow(new SyntaxError('Unexpected EOF'));
+    expect(() => tokenizeMarkup('<aaa xxx="bbb"', callbackMock)).toThrow(new SyntaxError('Unexpected EOF'));
   });
 
   test('throws if argument is not ended before EOF', () => {
-    expect(() => tokenize('<aaa>{xxx', callbackMock)).toThrow(new SyntaxError('Unexpected ICU syntax at 9'));
+    expect(() => tokenizeMarkup('<aaa>{xxx', callbackMock)).toThrow(new SyntaxError('Unexpected ICU syntax at 9'));
   });
 });

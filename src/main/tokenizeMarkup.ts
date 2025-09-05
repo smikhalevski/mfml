@@ -1,3 +1,6 @@
+/**
+ * A token that can be read from a text.
+ */
 export type Token =
   | 'TEXT'
   | 'XML_OPENING_TAG_START'
@@ -14,28 +17,134 @@ export type Token =
   | 'ICU_CASE_END'
   | 'ICU_OCTOTHORPE';
 
+/**
+ * A callback that is invoked when a token is read from a text.
+ *
+ * @param token The token that was read.
+ * @param startIndex The start index of the first meaningful token char (inclusive).
+ * @param endIndex The end index of the last meaningful token char (exclusive).
+ */
 export type TokenCallback = (token: Token, startIndex: number, endIndex: number) => void;
 
-export interface TokenizeOptions {
+/**
+ * Options of {@link tokenizeMarkup}.
+ */
+export interface TokenizeMarkupOptions {
+  /**
+   * Reads a tag name as a unique hash code.
+   *
+   * @param text The string containing a tag.
+   * @param startIndex The tag name start index.
+   * @param endIndex The tag name end index.
+   */
   readTag?: (text: string, startIndex: number, endIndex: number) => number;
+
+  /**
+   * List of tags that cannot have any content and are always closed after being opening tag.
+   */
   voidTags?: Set<number>;
-  forceClosingTags?: Map<number, Set<number>>;
-  forceOpeningTags?: Set<number>;
+
+  /**
+   * The map from a tag (A) to a list of tags that must be forcefully closed if tag (A) is opened.
+   *
+   * For example, in HTML `p`, `table`, and many other tags follow this semantics:
+   * ```html
+   * <p>foo<h1>bar → <p>foo</p><h1>bar</h1>
+   * ```
+   *
+   * To achieve this behavior, set this option to:
+   * ```ts
+   * { h1: ['p'] }
+   * ```
+   */
+  forceClosedTags?: Map<number, Set<number>>;
+
+  /**
+   * The list of tags for which an opening tag is inserted if an orphan closing tag is met. Otherwise,
+   * a {@link SyntaxError} is thrown.
+   *
+   * You can ignore orphan closing tags with {@link isOrphanClosingTagsIgnored}.
+   *
+   * For example, in HTML `p` and `br` tags follow this semantics:
+   * ```html
+   * </p>  → <p></p>
+   * </br> → <br/>
+   * ```
+   *
+   * @see {@link isOrphanClosingTagsIgnored}
+   */
+  reopenedOrphanClosingTags?: Set<number>;
+
+  /**
+   * A character that prevent the following character to be treated as plain text.
+   *
+   * @default "\"
+   */
   escapeChar?: string;
-  enableJSXAttributes?: boolean;
-  enableSelfClosingTags?: boolean;
-  autoBalanceClosingTags?: boolean;
-  ignoreOrphanClosingTags?: boolean;
+
+  /**
+   * If `true` then JSX-styles attributes are recognized and their content may contain nested XML and ICU markup.
+   *
+   * @default false
+   */
+  isJSXAttributesRecognized?: boolean;
+
+  /**
+   * If `true` then self-closing tags are recognized, otherwise they are treated as opening tags.
+   *
+   * @default false
+   */
+  isSelfClosingTagsRecognized?: boolean;
+
+  /**
+   * If `true` then unbalanced opening tags are forcefully closed. Otherwise, a {@link SyntaxError} is thrown.
+   *
+   * Use in conjunctions with {@link isOrphanClosingTagsIgnored}.
+   *
+   * ```html
+   * <a><b></a></b> → <a><b></b></a></b>
+   * ```
+   *
+   * @default false
+   */
+  isUnbalancedTagsAutoClosed?: boolean;
+
+  /**
+   * If `true` then closing tags that dont have a corresponding closing tag are ignored. Otherwise,
+   * a {@link SyntaxError} is thrown.
+   *
+   * Use in conjunctions with {@link isUnbalancedTagsAutoClosed}.
+   *
+   * ```html
+   * <a></b></a> → <a></a>
+   * ```
+   *
+   * @default false
+   */
+  isOrphanClosingTagsIgnored?: boolean;
 }
 
-export function tokenize(text: string, callback: TokenCallback, options: TokenizeOptions = {}): void {
+/**
+ * Reads tokens from text and returns the by invoking a callback.
+ *
+ * Tokens are guaranteed to be returned in correct order. Missing tokens are inserted and `startIndex === endIndex`
+ * for such tokens.
+ *
+ * This method doesn't guarantee that contents of returned tokens is consistent. For example, ICU argument type may not
+ * properly reflect the consequent ICU case tokens.
+ *
+ * @param text The text string to read tokens from.
+ * @param callback The callback that is invoked when a token is read.
+ * @param options Tokenization options.
+ */
+export function tokenizeMarkup(text: string, callback: TokenCallback, options: TokenizeMarkupOptions = {}): void {
   const {
     readTag = getCaseSensitiveHashCode,
     voidTags,
-    forceClosingTags,
-    forceOpeningTags,
-    autoBalanceClosingTags = false,
-    ignoreOrphanClosingTags = false,
+    forceClosedTags,
+    reopenedOrphanClosingTags,
+    isUnbalancedTagsAutoClosed = false,
+    isOrphanClosingTagsIgnored = false,
   } = options;
 
   const tagStack = [0, 0, 0, 0, 0, 0, 0, 0];
@@ -43,16 +152,16 @@ export function tokenize(text: string, callback: TokenCallback, options: Tokeniz
   let tagStackCursor = -1;
   let canEOF = true;
 
-  const readTokensCallback: TokenCallback = (token, startIndex, endIndex) => {
+  const tokenCallback: TokenCallback = (token, startIndex, endIndex) => {
     canEOF = false;
 
     switch (token) {
       case TOKEN_XML_OPENING_TAG_START:
         const openingTag = readTag(text, startIndex, endIndex);
 
-        if (forceClosingTags !== undefined) {
+        if (forceClosedTags !== undefined) {
           tagStackCursor = insertClosingTags(
-            forceClosingTags.get(openingTag),
+            forceClosedTags.get(openingTag),
             tagStack,
             tagStackCursor,
             callback,
@@ -101,8 +210,8 @@ export function tokenize(text: string, callback: TokenCallback, options: Tokeniz
 
         // Found an opening tag
         if (index !== -1) {
-          if (!autoBalanceClosingTags && index !== tagStackCursor) {
-            throw new SyntaxError('Unbalanced closing tag at ' + closingTagStartIndex);
+          if (!isUnbalancedTagsAutoClosed && index !== tagStackCursor) {
+            throw new SyntaxError('Missing closing tag at ' + closingTagStartIndex);
           }
           // Insert unbalanced closing tags
           while (index < tagStackCursor) {
@@ -115,16 +224,16 @@ export function tokenize(text: string, callback: TokenCallback, options: Tokeniz
           break;
         }
 
-        if (forceOpeningTags === undefined || !forceOpeningTags.has(closingTag)) {
-          if (!ignoreOrphanClosingTags) {
-            throw new SyntaxError('Unexpected closing tag at ' + closingTagStartIndex);
+        if (reopenedOrphanClosingTags === undefined || !reopenedOrphanClosingTags.has(closingTag)) {
+          if (!isOrphanClosingTagsIgnored) {
+            throw new SyntaxError('Orphan closing tag at ' + closingTagStartIndex);
           }
           break;
         }
 
-        if (forceClosingTags !== undefined) {
+        if (forceClosedTags !== undefined) {
           tagStackCursor = insertClosingTags(
-            forceClosingTags.get(closingTag),
+            forceClosedTags.get(closingTag),
             tagStack,
             tagStackCursor,
             callback,
@@ -138,10 +247,12 @@ export function tokenize(text: string, callback: TokenCallback, options: Tokeniz
         break;
 
       case TOKEN_ICU_CASE_START:
+        callback(token, startIndex, endIndex);
         tagStack[++tagStackCursor] = ISOLATED_BLOCK_MARKER;
         break;
 
       case TOKEN_ICU_CASE_END:
+        callback(token, startIndex, endIndex);
         --tagStackCursor;
         break;
 
@@ -158,16 +269,18 @@ export function tokenize(text: string, callback: TokenCallback, options: Tokeniz
     }
   };
 
-  readTokens(text, readTokensCallback, options);
+  readTokens(text, tokenCallback, options);
 
   if (tagStackCursor === -1) {
     return;
   }
+
   if (!canEOF) {
     throw new SyntaxError('Unexpected EOF');
   }
-  if (!autoBalanceClosingTags) {
-    throw new SyntaxError('Unbalanced closing tag at ' + text.length);
+
+  if (!isUnbalancedTagsAutoClosed) {
+    throw new SyntaxError('Missing closing tag at ' + text.length);
   }
 
   while (tagStackCursor !== -1) {
@@ -235,12 +348,17 @@ const ICU_ERROR_MESSAGE = 'Unexpected ICU syntax at ';
 
 export interface ReadTokensOptions {
   escapeChar?: string;
-  enableJSXAttributes?: boolean;
-  enableSelfClosingTags?: boolean;
+  isJSXAttributesRecognized?: boolean;
+  isSelfClosingTagsRecognized?: boolean;
 }
 
+/**
+ * Reads tokens from the text and returns tokens by invoking a callback.
+ *
+ * Tokens returned in the same order they are listed in text.
+ */
 export function readTokens(text: string, callback: TokenCallback, options: ReadTokensOptions): void {
-  const { escapeChar = '\\', enableJSXAttributes = false, enableSelfClosingTags = false } = options;
+  const { escapeChar = '\\', isJSXAttributesRecognized = false, isSelfClosingTagsRecognized = false } = options;
 
   const escapeCharCode = getCharCodeAt(escapeChar, 0);
 
@@ -284,6 +402,8 @@ export function readTokens(text: string, callback: TokenCallback, options: ReadT
       }
 
       callback(TOKEN_XML_ATTRIBUTE_END, index, index);
+
+      // Intended fallthrough: the non-attribute character should be processed
     }
 
     // XML tags
@@ -357,7 +477,7 @@ export function readTokens(text: string, callback: TokenCallback, options: ReadT
 
     // Self-closing XML tags
     if (
-      enableSelfClosingTags &&
+      isSelfClosingTagsRecognized &&
       charCode === /* / */ 47 &&
       scope === SCOPE_XML_OPENING_TAG &&
       getCharCodeAt(text, index + 1) === /* > */ 62
@@ -378,7 +498,7 @@ export function readTokens(text: string, callback: TokenCallback, options: ReadT
     }
 
     // JSX attributes
-    if (enableJSXAttributes && charCode === /* } */ 125 && scope === SCOPE_JSX_CURLY_BRACES_ATTRIBUTE_VALUE) {
+    if (isJSXAttributesRecognized && charCode === /* } */ 125 && scope === SCOPE_JSX_CURLY_BRACES_ATTRIBUTE_VALUE) {
       if (textStartIndex !== index) {
         callback(TOKEN_TEXT, textStartIndex, index);
       }
@@ -440,7 +560,7 @@ export function readTokens(text: string, callback: TokenCallback, options: ReadT
       }
 
       // JSX attribute
-      if (enableJSXAttributes && quoteCharCode === /* { */ 123) {
+      if (isJSXAttributesRecognized && quoteCharCode === /* { */ 123) {
         scope = scopeStack[scopeStackCursor] = SCOPE_JSX_CURLY_BRACES_ATTRIBUTE_VALUE;
         textStartIndex = ++nextIndex;
         continue;
@@ -511,7 +631,7 @@ export function readTokens(text: string, callback: TokenCallback, options: ReadT
         throw new SyntaxError(ICU_ERROR_MESSAGE + nextIndex);
       }
 
-      // ICU argument style or choice
+      // ICU argument style or select
 
       nextIndex = skipSpaces(text, nextIndex + 1);
 
@@ -536,7 +656,7 @@ export function readTokens(text: string, callback: TokenCallback, options: ReadT
         continue;
       }
 
-      // ICU choice
+      // ICU select
       if (getCharCodeAt(text, nextIndex) === /* { */ 123) {
         callback(TOKEN_ICU_CASE_START, argumentStyleStartIndex, argumentStyleEndIndex);
 
@@ -621,7 +741,7 @@ export function getCaseInsensitiveHashCode(text: string, startIndex: number, end
     hashCode = (hashCode << 5) - hashCode + (charCode < 65 || charCode > 90 ? charCode : charCode + 32);
   }
 
-  return hashCode >>> 0;
+  return hashCode;
 }
 
 export function getCaseSensitiveHashCode(text: string, startIndex: number, endIndex: number): number {
@@ -631,7 +751,7 @@ export function getCaseSensitiveHashCode(text: string, startIndex: number, endIn
     hashCode = (hashCode << 5) - hashCode + text.charCodeAt(i);
   }
 
-  return hashCode >>> 0;
+  return hashCode;
 }
 
 function readXMLTagName(text: string, index: number): number {
