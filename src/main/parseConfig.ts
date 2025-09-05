@@ -2,41 +2,45 @@ import { TokenizeOptions } from './tokenize.js';
 
 export interface Config {
   voidTags?: readonly string[];
-  autoClosingTags?: Record<string, readonly string[]>;
-  autoOpeningTags?: readonly string[];
-  isCaseSensitive?: boolean;
+  forceClosingTags?: Record<string, readonly string[]>;
+  forceOpeningTags?: readonly string[];
   escapeChar?: string;
+  isCaseSensitiveTags?: boolean;
   enableJSXAttributes?: boolean;
-  enableSelfClosing?: boolean;
+  enableSelfClosingTags?: boolean;
+  autoBalanceClosingTags?: boolean;
+  ignoreOrphanClosingTags?: boolean;
 }
 
 export function parseConfig(config: Config = {}): TokenizeOptions {
   const {
     voidTags,
-    autoClosingTags,
-    autoOpeningTags,
-    isCaseSensitive = false,
-    escapeChar = '\\',
-    enableJSXAttributes = false,
-    enableSelfClosing = false,
+    forceClosingTags,
+    forceOpeningTags,
+    escapeChar,
+    isCaseSensitiveTags,
+    enableJSXAttributes,
+    enableSelfClosingTags,
+    autoBalanceClosingTags,
+    ignoreOrphanClosingTags,
   } = config;
 
-  const getHashCode = isCaseSensitive ? getCaseSensitiveHashCode : getCaseInsensitiveHashCode;
+  const getHashCode = isCaseSensitiveTags ? getCaseSensitiveHashCode : getCaseInsensitiveHashCode;
 
   const toHashCode = (str: string) => getHashCode(str, 0, str.length);
 
   return {
-    voidTags: new Set(voidTags?.map(toHashCode)),
-    autoClosingTags: new Map(
-      autoClosingTags === null || autoClosingTags === undefined
-        ? undefined
-        : Object.entries(autoClosingTags).map(entry => [toHashCode(entry[0]), new Set(entry[1].map(toHashCode))])
-    ),
-    autoOpeningTags: new Set(autoOpeningTags?.map(toHashCode)),
-    getHashCode,
+    readTag: getHashCode,
+    voidTags: voidTags && new Set(voidTags.map(toHashCode)),
+    forceClosingTags:
+      forceClosingTags &&
+      new Map(Object.entries(forceClosingTags).map(entry => [toHashCode(entry[0]), new Set(entry[1].map(toHashCode))])),
+    forceOpeningTags: forceOpeningTags && new Set(forceOpeningTags.map(toHashCode)),
     escapeChar,
     enableJSXAttributes,
-    enableSelfClosing,
+    enableSelfClosingTags,
+    autoBalanceClosingTags,
+    ignoreOrphanClosingTags,
   };
 }
 

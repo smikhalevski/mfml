@@ -363,7 +363,7 @@ describe('readTokens', () => {
   test('reads self-closing tag', () => {
     const callbackMock = vi.fn();
 
-    readTokens('<xxx/>', callbackMock, { enableSelfClosing: true });
+    readTokens('<xxx/>', callbackMock, { enableSelfClosingTags: true });
 
     expect(callbackMock).toHaveBeenCalledTimes(2);
     expect(callbackMock).toHaveBeenNthCalledWith(1, 'XML_OPENING_TAG_START', 1, 4);
@@ -373,7 +373,7 @@ describe('readTokens', () => {
   test('does not read self-closing tag with the unquoted attribute that ends with a slash', () => {
     const callbackMock = vi.fn();
 
-    readTokens('<xxx aaa=bbb//>', callbackMock, { enableSelfClosing: true });
+    readTokens('<xxx aaa=bbb//>', callbackMock, { enableSelfClosingTags: true });
 
     expect(callbackMock).toHaveBeenCalledTimes(5);
     expect(callbackMock).toHaveBeenNthCalledWith(1, 'XML_OPENING_TAG_START', 1, 4);
@@ -637,7 +637,7 @@ describe('tokenize', () => {
   test('', () => {
     const callbackMock = vi.fn();
 
-    tokenize('<p>aaa<p>bbb', callbackMock, parseConfig({ autoClosingTags: { p: ['p'] } }));
+    tokenize('<p>aaa<p>bbb', callbackMock, parseConfig({ forceClosingTags: { p: ['p'] } }));
 
     expect(callbackMock).toHaveBeenCalledTimes(7);
     expect(callbackMock).toHaveBeenNthCalledWith(1, 'XML_OPENING_TAG_START', 1, 2);

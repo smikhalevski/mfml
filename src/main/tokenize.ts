@@ -16,15 +16,27 @@ export type Token =
 
 export type TokenCallback = (token: Token, startIndex: number, endIndex: number) => void;
 
-export interface TokenizeOptions extends ReadTokensOptions {
-  getHashCode: (text: string, startIndex: number, endIndex: number) => number;
-  voidTags: Set<number>;
-  autoClosingTags: Map<number, Set<number>>;
-  autoOpeningTags: Set<number>;
+export interface TokenizeOptions {
+  readTag: (text: string, startIndex: number, endIndex: number) => number;
+  voidTags?: Set<number>;
+  forceClosingTags?: Map<number, Set<number>>;
+  forceOpeningTags?: Set<number>;
+  escapeChar?: string;
+  enableJSXAttributes?: boolean;
+  enableSelfClosingTags?: boolean;
+  autoBalanceClosingTags?: boolean;
+  ignoreOrphanClosingTags?: boolean;
 }
 
 export function tokenize(text: string, callback: TokenCallback, options: TokenizeOptions): void {
-  const { getHashCode, voidTags, autoClosingTags, autoOpeningTags } = options;
+  const {
+    readTag,
+    voidTags,
+    forceClosingTags,
+    forceOpeningTags,
+    autoBalanceClosingTags = false,
+    ignoreOrphanClosingTags = false,
+  } = options;
 
   const tagStack = [0, 0, 0, 0, 0, 0, 0, 0];
 
@@ -33,15 +45,17 @@ export function tokenize(text: string, callback: TokenCallback, options: Tokeniz
   const readTokensCallback: TokenCallback = (token, startIndex, endIndex) => {
     switch (token) {
       case TOKEN_XML_OPENING_TAG_START:
-        const openingTag = getHashCode(text, startIndex, endIndex);
+        const openingTag = readTag(text, startIndex, endIndex);
 
-        tagStackCursor = insertAutoClosingTags(
-          autoClosingTags.get(openingTag),
-          tagStack,
-          tagStackCursor,
-          callback,
-          startIndex - 1
-        );
+        if (forceClosingTags !== undefined) {
+          tagStackCursor = insertClosingTags(
+            forceClosingTags.get(openingTag),
+            tagStack,
+            tagStackCursor,
+            callback,
+            startIndex - 1
+          );
+        }
 
         callback(TOKEN_XML_OPENING_TAG_START, startIndex, endIndex);
         tagStack[++tagStackCursor] = openingTag;
@@ -50,7 +64,7 @@ export function tokenize(text: string, callback: TokenCallback, options: Tokeniz
       case TOKEN_XML_OPENING_TAG_END:
         callback(TOKEN_XML_OPENING_TAG_END, startIndex, endIndex);
 
-        if (voidTags.has(tagStack[tagStackCursor])) {
+        if (voidTags !== undefined && voidTags.has(tagStack[tagStackCursor])) {
           callback(TOKEN_XML_CLOSING_TAG, endIndex, endIndex);
           --tagStackCursor;
         }
@@ -62,7 +76,17 @@ export function tokenize(text: string, callback: TokenCallback, options: Tokeniz
         break;
 
       case TOKEN_XML_CLOSING_TAG:
-        const closingTag = getHashCode(text, startIndex, endIndex);
+        const closingTag = readTag(text, startIndex, endIndex);
+
+        if (tagStackCursor !== -1 && tagStack[tagStackCursor] === closingTag) {
+          callback(TOKEN_XML_CLOSING_TAG, startIndex, endIndex);
+          --tagStackCursor;
+          break;
+        }
+
+        if (!autoBalanceClosingTags) {
+          throw new SyntaxError('Unexpected closing tag at ' + (startIndex - 2));
+        }
 
         let index = tagStackCursor;
 
@@ -83,21 +107,26 @@ export function tokenize(text: string, callback: TokenCallback, options: Tokeniz
           break;
         }
 
-        if (!autoOpeningTags.has(closingTag)) {
-          // Ignore orphan closing tag
+        if (forceOpeningTags === undefined || !forceOpeningTags.has(closingTag)) {
+          if (!ignoreOrphanClosingTags) {
+            throw new SyntaxError('Unexpected closing tag at ' + (startIndex - 2));
+          }
           break;
         }
 
-        tagStackCursor = insertAutoClosingTags(
-          autoClosingTags.get(closingTag),
-          tagStack,
-          tagStackCursor,
-          callback,
-          startIndex - 2
-        );
+        if (forceClosingTags !== undefined) {
+          tagStackCursor = insertClosingTags(
+            forceClosingTags.get(closingTag),
+            tagStack,
+            tagStackCursor,
+            callback,
+            startIndex - 2
+          );
+        }
 
         callback(TOKEN_XML_OPENING_TAG_START, startIndex, endIndex);
-        callback(TOKEN_XML_OPENING_TAG_SELF_CLOSE, endIndex, endIndex);
+        callback(TOKEN_XML_OPENING_TAG_END, endIndex, endIndex);
+        callback(TOKEN_XML_CLOSING_TAG, endIndex, endIndex);
         break;
 
       case TOKEN_ICU_CASE_START:
@@ -117,7 +146,7 @@ export function tokenize(text: string, callback: TokenCallback, options: Tokeniz
   readTokens(text, readTokensCallback, options);
 }
 
-function insertAutoClosingTags(
+function insertClosingTags(
   tagsToClose: Set<number> | undefined,
   tagStack: number[],
   tagStackCursor: number,
@@ -176,11 +205,11 @@ const ICU_ERROR_MESSAGE = 'Unexpected ICU syntax at ';
 export interface ReadTokensOptions {
   escapeChar?: string;
   enableJSXAttributes?: boolean;
-  enableSelfClosing?: boolean;
+  enableSelfClosingTags?: boolean;
 }
 
 export function readTokens(text: string, callback: TokenCallback, options: ReadTokensOptions): void {
-  const { escapeChar = '\\', enableJSXAttributes = false, enableSelfClosing = false } = options;
+  const { escapeChar = '\\', enableJSXAttributes = false, enableSelfClosingTags = false } = options;
 
   const escapeCharCode = getCharCodeAt(escapeChar, 0);
 
@@ -297,7 +326,7 @@ export function readTokens(text: string, callback: TokenCallback, options: ReadT
 
     // Self-closing XML tags
     if (
-      enableSelfClosing &&
+      enableSelfClosingTags &&
       charCode === /* / */ 47 &&
       scope === SCOPE_XML_OPENING_TAG &&
       getCharCodeAt(text, index + 1) === /* > */ 62
