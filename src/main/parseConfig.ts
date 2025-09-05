@@ -1,11 +1,11 @@
-import { TokenizeOptions } from './tokenize.js';
+import { getCaseInsensitiveHashCode, getCaseSensitiveHashCode, TokenizeOptions } from './tokenize.js';
 
 export interface Config {
   voidTags?: readonly string[];
   forceClosingTags?: Record<string, readonly string[]>;
   forceOpeningTags?: readonly string[];
   escapeChar?: string;
-  isCaseSensitiveTags?: boolean;
+  isCaseInsensitiveTags?: boolean;
   enableJSXAttributes?: boolean;
   enableSelfClosingTags?: boolean;
   autoBalanceClosingTags?: boolean;
@@ -18,14 +18,14 @@ export function parseConfig(config: Config = {}): TokenizeOptions {
     forceClosingTags,
     forceOpeningTags,
     escapeChar,
-    isCaseSensitiveTags,
+    isCaseInsensitiveTags,
     enableJSXAttributes,
     enableSelfClosingTags,
     autoBalanceClosingTags,
     ignoreOrphanClosingTags,
   } = config;
 
-  const getHashCode = isCaseSensitiveTags ? getCaseSensitiveHashCode : getCaseInsensitiveHashCode;
+  const getHashCode = isCaseInsensitiveTags ? getCaseInsensitiveHashCode : getCaseSensitiveHashCode;
 
   const toHashCode = (str: string) => getHashCode(str, 0, str.length);
 
@@ -42,25 +42,4 @@ export function parseConfig(config: Config = {}): TokenizeOptions {
     autoBalanceClosingTags,
     ignoreOrphanClosingTags,
   };
-}
-
-export function getCaseInsensitiveHashCode(text: string, startIndex: number, endIndex: number): number {
-  let hashCode = 0;
-
-  for (let i = startIndex; i < endIndex; ++i) {
-    const charCode = text.charCodeAt(i);
-    hashCode = (hashCode << 5) - hashCode + (charCode < 65 || charCode > 90 ? charCode : charCode + 32);
-  }
-
-  return hashCode >>> 0;
-}
-
-export function getCaseSensitiveHashCode(text: string, startIndex: number, endIndex: number): number {
-  let hashCode = 0;
-
-  for (let i = startIndex; i < endIndex; ++i) {
-    hashCode = (hashCode << 5) - hashCode + text.charCodeAt(i);
-  }
-
-  return hashCode >>> 0;
 }

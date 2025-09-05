@@ -17,7 +17,7 @@ export type Token =
 export type TokenCallback = (token: Token, startIndex: number, endIndex: number) => void;
 
 export interface TokenizeOptions {
-  readTag: (text: string, startIndex: number, endIndex: number) => number;
+  readTag?: (text: string, startIndex: number, endIndex: number) => number;
   voidTags?: Set<number>;
   forceClosingTags?: Map<number, Set<number>>;
   forceOpeningTags?: Set<number>;
@@ -30,7 +30,7 @@ export interface TokenizeOptions {
 
 export function tokenize(text: string, callback: TokenCallback, options: TokenizeOptions): void {
   const {
-    readTag,
+    readTag = getCaseSensitiveHashCode,
     voidTags,
     forceClosingTags,
     forceOpeningTags,
@@ -84,9 +84,7 @@ export function tokenize(text: string, callback: TokenCallback, options: Tokeniz
           break;
         }
 
-        if (!autoBalanceClosingTags) {
-          throw new SyntaxError('Unexpected closing tag at ' + (startIndex - 2));
-        }
+        const closingTagStartIndex = startIndex - 2;
 
         let index = tagStackCursor;
 
@@ -96,9 +94,12 @@ export function tokenize(text: string, callback: TokenCallback, options: Tokeniz
 
         // Found an opening tag
         if (index !== -1) {
+          if (!autoBalanceClosingTags && index !== tagStackCursor) {
+            throw new SyntaxError('Unbalanced closing tag at ' + closingTagStartIndex);
+          }
           // Insert unbalanced closing tags
           while (index < tagStackCursor) {
-            callback(TOKEN_XML_CLOSING_TAG, startIndex - 2, startIndex - 2);
+            callback(TOKEN_XML_CLOSING_TAG, closingTagStartIndex, closingTagStartIndex);
             --tagStackCursor;
           }
 
@@ -109,7 +110,7 @@ export function tokenize(text: string, callback: TokenCallback, options: Tokeniz
 
         if (forceOpeningTags === undefined || !forceOpeningTags.has(closingTag)) {
           if (!ignoreOrphanClosingTags) {
-            throw new SyntaxError('Unexpected closing tag at ' + (startIndex - 2));
+            throw new SyntaxError('Unexpected closing tag at ' + closingTagStartIndex);
           }
           break;
         }
@@ -120,13 +121,13 @@ export function tokenize(text: string, callback: TokenCallback, options: Tokeniz
             tagStack,
             tagStackCursor,
             callback,
-            startIndex - 2
+            closingTagStartIndex
           );
         }
 
-        callback(TOKEN_XML_OPENING_TAG_START, startIndex, endIndex);
-        callback(TOKEN_XML_OPENING_TAG_END, endIndex, endIndex);
-        callback(TOKEN_XML_CLOSING_TAG, endIndex, endIndex);
+        callback(TOKEN_XML_OPENING_TAG_START, closingTagStartIndex, closingTagStartIndex);
+        callback(TOKEN_XML_OPENING_TAG_END, closingTagStartIndex, closingTagStartIndex);
+        callback(TOKEN_XML_CLOSING_TAG, startIndex, endIndex);
         break;
 
       case TOKEN_ICU_CASE_START:
@@ -144,6 +145,20 @@ export function tokenize(text: string, callback: TokenCallback, options: Tokeniz
   };
 
   readTokens(text, readTokensCallback, options);
+
+  if (tagStackCursor === -1) {
+    return;
+  }
+
+  if (!autoBalanceClosingTags) {
+    throw new SyntaxError('Unbalanced closing tag at ' + text.length);
+  }
+
+  while (tagStackCursor !== -1) {
+    callback(TOKEN_XML_CLOSING_TAG, text.length, text.length);
+
+    --tagStackCursor;
+  }
 }
 
 function insertClosingTags(
@@ -580,6 +595,27 @@ export function readTokens(text: string, callback: TokenCallback, options: ReadT
   if (textStartIndex !== text.length) {
     callback(TOKEN_TEXT, textStartIndex, text.length);
   }
+}
+
+export function getCaseInsensitiveHashCode(text: string, startIndex: number, endIndex: number): number {
+  let hashCode = 0;
+
+  for (let i = startIndex; i < endIndex; ++i) {
+    const charCode = text.charCodeAt(i);
+    hashCode = (hashCode << 5) - hashCode + (charCode < 65 || charCode > 90 ? charCode : charCode + 32);
+  }
+
+  return hashCode >>> 0;
+}
+
+export function getCaseSensitiveHashCode(text: string, startIndex: number, endIndex: number): number {
+  let hashCode = 0;
+
+  for (let i = startIndex; i < endIndex; ++i) {
+    hashCode = (hashCode << 5) - hashCode + text.charCodeAt(i);
+  }
+
+  return hashCode >>> 0;
 }
 
 function readXMLTagName(text: string, index: number): number {
