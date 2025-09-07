@@ -623,7 +623,7 @@ describe('tokenizeMarkup', () => {
   });
 
   test('reads the unbalanced start tag', () => {
-    tokenizeMarkup('<aaa><bbb>ccc', callbackMock, { isUnbalancedTagsAutoClosed: true });
+    tokenizeMarkup('<aaa><bbb>ccc', callbackMock, { isUnbalancedTagsImplicitlyClosed: true });
 
     expect(callbackMock).toHaveBeenCalledTimes(7);
     expect(callbackMock).toHaveBeenNthCalledWith(1, 'XML_OPENING_TAG_START', 1, 4);
@@ -635,11 +635,11 @@ describe('tokenizeMarkup', () => {
     expect(callbackMock).toHaveBeenNthCalledWith(7, 'XML_CLOSING_TAG', 13, 13);
   });
 
-  test('auto closes the immediate parent', () => {
+  test('implicitly closes the immediate parent', () => {
     tokenizeMarkup(
       '<aaa>bbb<ccc>ddd',
       callbackMock,
-      parseConfig({ isUnbalancedTagsAutoClosed: true, forceClosedTags: { ccc: ['aaa'] } })
+      parseConfig({ isUnbalancedTagsImplicitlyClosed: true, implicitlyClosedTags: { ccc: ['aaa'] } })
     );
 
     expect(callbackMock).toHaveBeenCalledTimes(8);
@@ -653,11 +653,11 @@ describe('tokenizeMarkup', () => {
     expect(callbackMock).toHaveBeenNthCalledWith(8, 'XML_CLOSING_TAG', 16, 16);
   });
 
-  test('auto closes the ancestor', () => {
+  test('implicitly closes the ancestor', () => {
     tokenizeMarkup(
       '<aaa>bbb<ccc>ddd<eee>',
       callbackMock,
-      parseConfig({ isUnbalancedTagsAutoClosed: true, forceClosedTags: { eee: ['aaa'] } })
+      parseConfig({ isUnbalancedTagsImplicitlyClosed: true, implicitlyClosedTags: { eee: ['aaa'] } })
     );
 
     expect(callbackMock).toHaveBeenCalledTimes(11);
@@ -674,11 +674,11 @@ describe('tokenizeMarkup', () => {
     expect(callbackMock).toHaveBeenNthCalledWith(11, 'XML_CLOSING_TAG', 21, 21);
   });
 
-  test('auto closes the topmost ancestor', () => {
+  test('implicitly closes the topmost ancestor', () => {
     tokenizeMarkup(
       '<aaa>bbb<ccc>ddd<eee>fff<ggg>',
       callbackMock,
-      parseConfig({ isUnbalancedTagsAutoClosed: true, forceClosedTags: { ggg: ['aaa', 'eee'] } })
+      parseConfig({ isUnbalancedTagsImplicitlyClosed: true, implicitlyClosedTags: { ggg: ['aaa', 'eee'] } })
     );
 
     expect(callbackMock).toHaveBeenCalledTimes(15);
@@ -733,8 +733,8 @@ describe('tokenizeMarkup', () => {
     expect(callbackMock).toHaveBeenNthCalledWith(6, 'XML_CLOSING_TAG', 12, 15);
   });
 
-  test('auto closes a tag', () => {
-    tokenizeMarkup('<aaa><bbb></aaa>', callbackMock, parseConfig({ isUnbalancedTagsAutoClosed: true }));
+  test('implicitly closes a tag', () => {
+    tokenizeMarkup('<aaa><bbb></aaa>', callbackMock, parseConfig({ isUnbalancedTagsImplicitlyClosed: true }));
 
     expect(callbackMock).toHaveBeenCalledTimes(6);
     expect(callbackMock).toHaveBeenNthCalledWith(1, 'XML_OPENING_TAG_START', 1, 4);
@@ -761,7 +761,7 @@ describe('tokenizeMarkup', () => {
   });
 
   test('inserts opening tags for orphan closing tags', () => {
-    tokenizeMarkup('</aaa>', callbackMock, parseConfig({ reopenedOrphanClosingTags: ['aaa'] }));
+    tokenizeMarkup('</aaa>', callbackMock, parseConfig({ implicitlyOpenedTags: ['aaa'] }));
 
     expect(callbackMock).toHaveBeenCalledTimes(3);
     expect(callbackMock).toHaveBeenNthCalledWith(1, 'XML_OPENING_TAG_START', 0, 0);
@@ -773,7 +773,7 @@ describe('tokenizeMarkup', () => {
     tokenizeMarkup(
       '<aaa></bbb>',
       callbackMock,
-      parseConfig({ forceClosedTags: { bbb: ['aaa'] }, reopenedOrphanClosingTags: ['bbb'] })
+      parseConfig({ implicitlyClosedTags: { bbb: ['aaa'] }, implicitlyOpenedTags: ['bbb'] })
     );
 
     expect(callbackMock).toHaveBeenCalledTimes(6);
@@ -789,7 +789,7 @@ describe('tokenizeMarkup', () => {
     tokenizeMarkup(
       'aaa<xxx>bbb<xxx>ccc</xxx>ddd</xxx>eee',
       callbackMock,
-      parseConfig({ forceClosedTags: { xxx: ['xxx'] }, reopenedOrphanClosingTags: ['xxx'] })
+      parseConfig({ implicitlyClosedTags: { xxx: ['xxx'] }, implicitlyOpenedTags: ['xxx'] })
     );
 
     expect(callbackMock).toHaveBeenCalledTimes(14);
@@ -810,7 +810,10 @@ describe('tokenizeMarkup', () => {
   });
 
   test('reads case-sensitive closing tags by default', () => {
-    tokenizeMarkup('<aaa></AAA>', callbackMock, { isUnbalancedTagsAutoClosed: true, isOrphanClosingTagsIgnored: true });
+    tokenizeMarkup('<aaa></AAA>', callbackMock, {
+      isUnbalancedTagsImplicitlyClosed: true,
+      isOrphanClosingTagsIgnored: true,
+    });
 
     expect(callbackMock).toHaveBeenCalledTimes(3);
     expect(callbackMock).toHaveBeenNthCalledWith(1, 'XML_OPENING_TAG_START', 1, 4);
@@ -831,7 +834,11 @@ describe('tokenizeMarkup', () => {
     tokenizeMarkup(
       '<aaaффф></AAAФФФ>',
       callbackMock,
-      parseConfig({ isCaseInsensitiveTags: true, isUnbalancedTagsAutoClosed: true, isOrphanClosingTagsIgnored: true })
+      parseConfig({
+        isCaseInsensitiveTags: true,
+        isUnbalancedTagsImplicitlyClosed: true,
+        isOrphanClosingTagsIgnored: true,
+      })
     );
 
     expect(callbackMock).toHaveBeenCalledTimes(3);
@@ -844,7 +851,7 @@ describe('tokenizeMarkup', () => {
     tokenizeMarkup(
       '<a><b></a></b>',
       callbackMock,
-      parseConfig({ isUnbalancedTagsAutoClosed: true, isOrphanClosingTagsIgnored: true })
+      parseConfig({ isUnbalancedTagsImplicitlyClosed: true, isOrphanClosingTagsIgnored: true })
     );
 
     expect(callbackMock).toHaveBeenCalledTimes(6);

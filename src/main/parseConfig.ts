@@ -7,7 +7,7 @@ export interface Config {
   voidTags?: readonly string[];
 
   /**
-   * The map from a tag (A) to a list of tags that must be forcefully closed if tag (A) is opened.
+   * The map from a tag (A) to a list of tags that must be closed if tag (A) is opened.
    *
    * For example, in HTML `p`, `table`, and many other tags follow this semantics:
    * ```html
@@ -19,9 +19,9 @@ export interface Config {
    * { h1: ['p'] }
    * ```
    *
-   * Use in conjunctions with {@link isUnbalancedTagsAutoClosed}.
+   * Use in conjunctions with {@link isUnbalancedTagsImplicitlyClosed}.
    */
-  forceClosedTags?: Record<string, readonly string[]>;
+  implicitlyClosedTags?: Record<string, readonly string[]>;
 
   /**
    * The list of tags for which an opening tag is inserted if an orphan closing tag is met. Otherwise,
@@ -42,7 +42,7 @@ export interface Config {
    *
    * @see {@link isOrphanClosingTagsIgnored}
    */
-  reopenedOrphanClosingTags?: readonly string[];
+  implicitlyOpenedTags?: readonly string[];
 
   /**
    * A character that prevent the following character to be treated as plain text.
@@ -76,13 +76,13 @@ export interface Config {
    *
    * @default false
    */
-  isUnbalancedTagsAutoClosed?: boolean;
+  isUnbalancedTagsImplicitlyClosed?: boolean;
 
   /**
    * If `true` then closing tags that dont have a corresponding closing tag are ignored. Otherwise,
    * a {@link SyntaxError} is thrown.
    *
-   * Use in conjunctions with {@link isUnbalancedTagsAutoClosed}.
+   * Use in conjunctions with {@link isUnbalancedTagsImplicitlyClosed}.
    *
    * ```html
    * <a></b></a> → <a></a>
@@ -96,12 +96,12 @@ export interface Config {
 export function parseConfig(config: Config): TokenizeMarkupOptions {
   const {
     voidTags,
-    forceClosedTags,
-    reopenedOrphanClosingTags,
+    implicitlyClosedTags,
+    implicitlyOpenedTags,
     escapeChar,
     isCaseInsensitiveTags,
     isSelfClosingTagsRecognized,
-    isUnbalancedTagsAutoClosed,
+    isUnbalancedTagsImplicitlyClosed,
     isOrphanClosingTagsIgnored,
   } = config;
 
@@ -112,13 +112,15 @@ export function parseConfig(config: Config): TokenizeMarkupOptions {
   return {
     readTag: getHashCode,
     voidTags: voidTags && new Set(voidTags.map(toHashCode)),
-    forceClosedTags:
-      forceClosedTags &&
-      new Map(Object.entries(forceClosedTags).map(entry => [toHashCode(entry[0]), new Set(entry[1].map(toHashCode))])),
-    reopenedOrphanClosingTags: reopenedOrphanClosingTags && new Set(reopenedOrphanClosingTags.map(toHashCode)),
+    implicitlyClosedTags:
+      implicitlyClosedTags &&
+      new Map(
+        Object.entries(implicitlyClosedTags).map(entry => [toHashCode(entry[0]), new Set(entry[1].map(toHashCode))])
+      ),
+    implicitlyOpenedTags: implicitlyOpenedTags && new Set(implicitlyOpenedTags.map(toHashCode)),
     escapeChar,
     isSelfClosingTagsRecognized,
-    isUnbalancedTagsAutoClosed,
+    isUnbalancedTagsImplicitlyClosed,
     isOrphanClosingTagsIgnored,
   };
 }

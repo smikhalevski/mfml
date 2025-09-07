@@ -45,7 +45,7 @@ export interface TokenizeMarkupOptions {
   voidTags?: Set<number>;
 
   /**
-   * The map from a tag (A) to a list of tags that must be forcefully closed if tag (A) is opened.
+   * The map from a tag (A) to a list of tags that must be closed if tag (A) is opened.
    *
    * For example, in HTML `p`, `table`, and many other tags follow this semantics:
    * ```html
@@ -57,7 +57,7 @@ export interface TokenizeMarkupOptions {
    * { h1: ['p'] }
    * ```
    */
-  forceClosedTags?: Map<number, Set<number>>;
+  implicitlyClosedTags?: Map<number, Set<number>>;
 
   /**
    * The list of tags for which an opening tag is inserted if an orphan closing tag is met. Otherwise,
@@ -73,7 +73,7 @@ export interface TokenizeMarkupOptions {
    *
    * @see {@link isOrphanClosingTagsIgnored}
    */
-  reopenedOrphanClosingTags?: Set<number>;
+  implicitlyOpenedTags?: Set<number>;
 
   /**
    * A character that prevent the following character to be treated as plain text.
@@ -100,13 +100,13 @@ export interface TokenizeMarkupOptions {
    *
    * @default false
    */
-  isUnbalancedTagsAutoClosed?: boolean;
+  isUnbalancedTagsImplicitlyClosed?: boolean;
 
   /**
    * If `true` then closing tags that dont have a corresponding closing tag are ignored. Otherwise,
    * a {@link SyntaxError} is thrown.
    *
-   * Use in conjunctions with {@link isUnbalancedTagsAutoClosed}.
+   * Use in conjunctions with {@link isUnbalancedTagsImplicitlyClosed}.
    *
    * ```html
    * <a></b></a> → <a></a>
@@ -134,9 +134,9 @@ export function tokenizeMarkup(text: string, callback: TokenCallback, options: T
   const {
     readTag = getCaseSensitiveHashCode,
     voidTags,
-    forceClosedTags,
-    reopenedOrphanClosingTags,
-    isUnbalancedTagsAutoClosed = false,
+    implicitlyClosedTags,
+    implicitlyOpenedTags,
+    isUnbalancedTagsImplicitlyClosed = false,
     isOrphanClosingTagsIgnored = false,
   } = options;
 
@@ -152,9 +152,9 @@ export function tokenizeMarkup(text: string, callback: TokenCallback, options: T
       case TOKEN_XML_OPENING_TAG_START:
         const openingTag = readTag(text, startIndex, endIndex);
 
-        if (forceClosedTags !== undefined) {
+        if (implicitlyClosedTags !== undefined) {
           tagStackCursor = insertClosingTags(
-            forceClosedTags.get(openingTag),
+            implicitlyClosedTags.get(openingTag),
             tagStack,
             tagStackCursor,
             callback,
@@ -203,7 +203,7 @@ export function tokenizeMarkup(text: string, callback: TokenCallback, options: T
 
         // Found an opening tag
         if (index !== -1) {
-          if (!isUnbalancedTagsAutoClosed && index !== tagStackCursor) {
+          if (!isUnbalancedTagsImplicitlyClosed && index !== tagStackCursor) {
             throw new SyntaxError('Missing closing tag at ' + closingTagStartIndex);
           }
           // Insert unbalanced closing tags
@@ -217,16 +217,16 @@ export function tokenizeMarkup(text: string, callback: TokenCallback, options: T
           break;
         }
 
-        if (reopenedOrphanClosingTags === undefined || !reopenedOrphanClosingTags.has(closingTag)) {
+        if (implicitlyOpenedTags === undefined || !implicitlyOpenedTags.has(closingTag)) {
           if (!isOrphanClosingTagsIgnored) {
             throw new SyntaxError('Orphan closing tag at ' + closingTagStartIndex);
           }
           break;
         }
 
-        if (forceClosedTags !== undefined) {
+        if (implicitlyClosedTags !== undefined) {
           tagStackCursor = insertClosingTags(
-            forceClosedTags.get(closingTag),
+            implicitlyClosedTags.get(closingTag),
             tagStack,
             tagStackCursor,
             callback,
@@ -272,7 +272,7 @@ export function tokenizeMarkup(text: string, callback: TokenCallback, options: T
     throw new SyntaxError('Unexpected EOF');
   }
 
-  if (!isUnbalancedTagsAutoClosed) {
+  if (!isUnbalancedTagsImplicitlyClosed) {
     throw new SyntaxError('Missing closing tag at ' + text.length);
   }
 
