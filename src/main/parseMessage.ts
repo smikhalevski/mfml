@@ -97,7 +97,7 @@ export function parseMessage(locale: string, text: string, options: TokenizeMark
         isArgumentPushed = true;
         break;
 
-      case 'ICU_CASE_START':
+      case 'ICU_CATEGORY_START':
         const caseValue = text.substring(startIndex, endIndex);
 
         if (selectNode === undefined) {
@@ -113,7 +113,7 @@ export function parseMessage(locale: string, text: string, options: TokenizeMark
         children = selectNode.cases[caseValue] = [];
         break;
 
-      case 'ICU_CASE_END':
+      case 'ICU_CATEGORY_END':
         break;
 
       case 'ICU_OCTOTHORPE':

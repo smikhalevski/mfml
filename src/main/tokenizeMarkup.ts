@@ -13,8 +13,8 @@ export type Token =
   | 'ICU_ARGUMENT_END'
   | 'ICU_ARGUMENT_TYPE'
   | 'ICU_ARGUMENT_STYLE'
-  | 'ICU_CASE_START'
-  | 'ICU_CASE_END'
+  | 'ICU_CATEGORY_START'
+  | 'ICU_CATEGORY_END'
   | 'ICU_OCTOTHORPE';
 
 /**
@@ -83,13 +83,6 @@ export interface TokenizeMarkupOptions {
   escapeChar?: string;
 
   /**
-   * If `true` then JSX-styles attributes are recognized and their content may contain nested XML and ICU markup.
-   *
-   * @default false
-   */
-  isJSXAttributesRecognized?: boolean;
-
-  /**
    * If `true` then self-closing tags are recognized, otherwise they are treated as opening tags.
    *
    * @default false
@@ -131,7 +124,7 @@ export interface TokenizeMarkupOptions {
  * for such tokens.
  *
  * This method doesn't guarantee that contents of returned tokens is consistent. For example, ICU argument type may not
- * properly reflect the consequent ICU case tokens.
+ * properly reflect the consequent ICU category tokens.
  *
  * @param text The text string to read tokens from.
  * @param callback The callback that is invoked when a token is read.
@@ -246,12 +239,12 @@ export function tokenizeMarkup(text: string, callback: TokenCallback, options: T
         callback(TOKEN_XML_CLOSING_TAG, startIndex, endIndex);
         break;
 
-      case TOKEN_ICU_CASE_START:
+      case TOKEN_ICU_CATEGORY_START:
         callback(token, startIndex, endIndex);
         tagStack[++tagStackCursor] = ISOLATED_BLOCK_MARKER;
         break;
 
-      case TOKEN_ICU_CASE_END:
+      case TOKEN_ICU_CATEGORY_END:
         callback(token, startIndex, endIndex);
         --tagStackCursor;
         break;
@@ -324,10 +317,11 @@ const ISOLATED_BLOCK_MARKER = -1;
 const SCOPE_TEXT = 0;
 const SCOPE_XML_OPENING_TAG = 1;
 const SCOPE_XML_ATTRIBUTE = 2;
-const SCOPE_XML_UNQUOTED_ATTRIBUTE_VALUE = 3;
-const SCOPE_JSX_CURLY_BRACES_ATTRIBUTE_VALUE = 4;
-const SCOPE_ICU_ARGUMENT = 5;
-const SCOPE_ICU_CASE = 6;
+const SCOPE_XML_DOUBLE_QUOTED_ATTRIBUTE_VALUE = 3;
+const SCOPE_XML_SINGLE_QUOTED_ATTRIBUTE_VALUE = 4;
+const SCOPE_XML_UNQUOTED_ATTRIBUTE_VALUE = 5;
+const SCOPE_ICU_ARGUMENT = 6;
+const SCOPE_ICU_CATEGORY = 7;
 
 const TOKEN_TEXT = 'TEXT';
 const TOKEN_XML_OPENING_TAG_START = 'XML_OPENING_TAG_START';
@@ -340,15 +334,14 @@ const TOKEN_ICU_ARGUMENT_START = 'ICU_ARGUMENT_START';
 const TOKEN_ICU_ARGUMENT_END = 'ICU_ARGUMENT_END';
 const TOKEN_ICU_ARGUMENT_TYPE = 'ICU_ARGUMENT_TYPE';
 const TOKEN_ICU_ARGUMENT_STYLE = 'ICU_ARGUMENT_STYLE';
-const TOKEN_ICU_CASE_START = 'ICU_CASE_START';
-const TOKEN_ICU_CASE_END = 'ICU_CASE_END';
+const TOKEN_ICU_CATEGORY_START = 'ICU_CATEGORY_START';
+const TOKEN_ICU_CATEGORY_END = 'ICU_CATEGORY_END';
 const TOKEN_ICU_OCTOTHORPE = 'ICU_OCTOTHORPE';
 
 const ICU_ERROR_MESSAGE = 'Unexpected ICU syntax at ';
 
 export interface ReadTokensOptions {
   escapeChar?: string;
-  isJSXAttributesRecognized?: boolean;
   isSelfClosingTagsRecognized?: boolean;
 }
 
@@ -358,7 +351,7 @@ export interface ReadTokensOptions {
  * Tokens returned in the same order they are listed in text.
  */
 export function readTokens(text: string, callback: TokenCallback, options: ReadTokensOptions): void {
-  const { escapeChar = '\\', isJSXAttributesRecognized = false, isSelfClosingTagsRecognized = false } = options;
+  const { escapeChar = '\\', isSelfClosingTagsRecognized = false } = options;
 
   const escapeCharCode = getCharCodeAt(escapeChar, 0);
 
@@ -376,7 +369,10 @@ export function readTokens(text: string, callback: TokenCallback, options: ReadT
     // Escape char
     if (
       charCode === escapeCharCode &&
-      (scope === SCOPE_TEXT || scope === SCOPE_ICU_CASE || scope === SCOPE_JSX_CURLY_BRACES_ATTRIBUTE_VALUE)
+      (scope === SCOPE_TEXT ||
+        scope === SCOPE_ICU_CATEGORY ||
+        scope === SCOPE_XML_SINGLE_QUOTED_ATTRIBUTE_VALUE ||
+        scope === SCOPE_XML_DOUBLE_QUOTED_ATTRIBUTE_VALUE)
     ) {
       if (textStartIndex !== index) {
         callback(TOKEN_TEXT, textStartIndex, index);
@@ -387,6 +383,24 @@ export function readTokens(text: string, callback: TokenCallback, options: ReadT
 
       // Skip next char
       ++nextIndex;
+      continue;
+    }
+
+    // End of double-quoted or single-quoted XML attribute value
+    if (
+      (charCode === /* " */ 34 && scope === SCOPE_XML_DOUBLE_QUOTED_ATTRIBUTE_VALUE) ||
+      (charCode === /* ' */ 39 && scope === SCOPE_XML_SINGLE_QUOTED_ATTRIBUTE_VALUE)
+    ) {
+      if (textStartIndex !== index) {
+        callback(TOKEN_TEXT, textStartIndex, index);
+      }
+
+      ++nextIndex;
+
+      callback(TOKEN_XML_ATTRIBUTE_END, index, nextIndex);
+
+      scope = scopeStack[--scopeStackCursor];
+      nextIndex = skipSpaces(text, nextIndex);
       continue;
     }
 
@@ -403,15 +417,14 @@ export function readTokens(text: string, callback: TokenCallback, options: ReadT
 
       callback(TOKEN_XML_ATTRIBUTE_END, index, index);
 
-      // Intended fallthrough: the non-attribute character should be processed
+      // Fallthrough: the non-attribute character should be processed
     }
 
     // XML tags
-    if (charCode === /* < */ 60 && scope !== SCOPE_XML_OPENING_TAG && scope !== SCOPE_XML_UNQUOTED_ATTRIBUTE_VALUE) {
+    if (charCode === /* < */ 60 && (scope === SCOPE_TEXT || scope === SCOPE_ICU_CATEGORY)) {
       let tagNameStartIndex = ++nextIndex;
 
       // Closing tag
-
       if (getCharCodeAt(text, nextIndex) === /* / */ 47) {
         // Skip "/"
         tagNameStartIndex = ++nextIndex;
@@ -442,7 +455,7 @@ export function readTokens(text: string, callback: TokenCallback, options: ReadT
         continue;
       }
 
-      // Opening tag
+      // Start of an opening tag
 
       nextIndex = readXMLTagName(text, nextIndex);
 
@@ -475,7 +488,7 @@ export function readTokens(text: string, callback: TokenCallback, options: ReadT
       continue;
     }
 
-    // Self-closing XML tags
+    // Self-closing XML tag
     if (
       isSelfClosingTagsRecognized &&
       charCode === /* / */ 47 &&
@@ -497,22 +510,7 @@ export function readTokens(text: string, callback: TokenCallback, options: ReadT
       continue;
     }
 
-    // JSX attributes
-    if (isJSXAttributesRecognized && charCode === /* } */ 125 && scope === SCOPE_JSX_CURLY_BRACES_ATTRIBUTE_VALUE) {
-      if (textStartIndex !== index) {
-        callback(TOKEN_TEXT, textStartIndex, index);
-      }
-
-      ++nextIndex;
-
-      callback(TOKEN_XML_ATTRIBUTE_END, index, nextIndex);
-
-      scope = scopeStack[--scopeStackCursor];
-      nextIndex = skipSpaces(text, nextIndex);
-      continue;
-    }
-
-    // XML attribute
+    // Start of an XML attribute
     if (scope === SCOPE_XML_OPENING_TAG && isXMLAttributeNameChar(charCode)) {
       nextIndex = readChars(text, index + 1, isXMLAttributeNameChar);
 
@@ -533,49 +531,33 @@ export function readTokens(text: string, callback: TokenCallback, options: ReadT
 
       const quoteCharCode = getCharCodeAt(text, nextIndex);
 
-      // Quoted attribute value
-      if (quoteCharCode === /* " */ 34 || quoteCharCode === /* ' */ 39) {
-        // Skip opening quote
-        textStartIndex = ++nextIndex;
-
-        // Lookup closing quote
-        nextIndex = text.indexOf(quoteCharCode === /* " */ 34 ? '"' : "'", nextIndex);
-
-        if (nextIndex === -1) {
-          // No closing quote
-          nextIndex = text.length;
-          continue;
-        }
-
-        if (textStartIndex !== nextIndex) {
-          callback(TOKEN_TEXT, textStartIndex, nextIndex);
-        }
-
-        callback(TOKEN_XML_ATTRIBUTE_END, nextIndex, nextIndex + 1);
-
-        scope = scopeStack[--scopeStackCursor];
-
-        textStartIndex = nextIndex = skipSpaces(text, nextIndex + 1);
-        continue;
-      }
-
-      // JSX attribute
-      if (isJSXAttributesRecognized && quoteCharCode === /* { */ 123) {
-        scope = scopeStack[scopeStackCursor] = SCOPE_JSX_CURLY_BRACES_ATTRIBUTE_VALUE;
+      if (quoteCharCode === /* " */ 34) {
+        // Double-quoted value
+        scope = scopeStack[scopeStackCursor] = SCOPE_XML_DOUBLE_QUOTED_ATTRIBUTE_VALUE;
         textStartIndex = ++nextIndex;
         continue;
       }
 
-      // Unquoted attribute
+      if (quoteCharCode === /* ' */ 39) {
+        // Single-quoted value
+        scope = scopeStack[scopeStackCursor] = SCOPE_XML_SINGLE_QUOTED_ATTRIBUTE_VALUE;
+        textStartIndex = ++nextIndex;
+        continue;
+      }
+
+      // Unquoted value
       scope = scopeStack[scopeStackCursor] = SCOPE_XML_UNQUOTED_ATTRIBUTE_VALUE;
       textStartIndex = nextIndex;
       continue;
     }
 
-    // ICU argument
+    // Start of an ICU argument
     if (
       charCode === /* { */ 123 &&
-      (scope === SCOPE_TEXT || scope === SCOPE_JSX_CURLY_BRACES_ATTRIBUTE_VALUE || scope === SCOPE_ICU_CASE)
+      (scope === SCOPE_TEXT ||
+        scope === SCOPE_XML_DOUBLE_QUOTED_ATTRIBUTE_VALUE ||
+        scope === SCOPE_XML_SINGLE_QUOTED_ATTRIBUTE_VALUE ||
+        scope === SCOPE_ICU_CATEGORY)
     ) {
       if (textStartIndex !== index) {
         callback(TOKEN_TEXT, textStartIndex, index);
@@ -658,10 +640,10 @@ export function readTokens(text: string, callback: TokenCallback, options: ReadT
 
       // ICU select
       if (getCharCodeAt(text, nextIndex) === /* { */ 123) {
-        callback(TOKEN_ICU_CASE_START, argumentStyleStartIndex, argumentStyleEndIndex);
+        callback(TOKEN_ICU_CATEGORY_START, argumentStyleStartIndex, argumentStyleEndIndex);
 
         scopeStack[++scopeStackCursor] = SCOPE_ICU_ARGUMENT;
-        scope = scopeStack[++scopeStackCursor] = SCOPE_ICU_CASE;
+        scope = scopeStack[++scopeStackCursor] = SCOPE_ICU_CATEGORY;
         textStartIndex = ++nextIndex;
         continue;
       }
@@ -669,30 +651,28 @@ export function readTokens(text: string, callback: TokenCallback, options: ReadT
       throw new SyntaxError(ICU_ERROR_MESSAGE + nextIndex);
     }
 
-    if (charCode === /* } */ 125) {
-      // End of an ICU argument
-      if (scope === SCOPE_ICU_ARGUMENT) {
-        callback(TOKEN_ICU_ARGUMENT_END, nextIndex, ++nextIndex);
-        scope = scopeStack[--scopeStackCursor];
-        textStartIndex = nextIndex;
-        continue;
+    // End of an ICU argument
+    if (charCode === /* } */ 125 && scope === SCOPE_ICU_ARGUMENT) {
+      callback(TOKEN_ICU_ARGUMENT_END, nextIndex, ++nextIndex);
+      scope = scopeStack[--scopeStackCursor];
+      textStartIndex = nextIndex;
+      continue;
+    }
+
+    // End of an ICU category
+    if (charCode === /* } */ 125 && scope === SCOPE_ICU_CATEGORY) {
+      if (textStartIndex !== index) {
+        callback(TOKEN_TEXT, textStartIndex, index);
       }
 
-      // End of an ICU case
-      if (scope === SCOPE_ICU_CASE) {
-        if (textStartIndex !== index) {
-          callback(TOKEN_TEXT, textStartIndex, index);
-        }
-
-        callback(TOKEN_ICU_CASE_END, nextIndex, ++nextIndex);
-        scope = scopeStack[--scopeStackCursor];
-        textStartIndex = nextIndex = skipSpaces(text, nextIndex);
-        continue;
-      }
+      callback(TOKEN_ICU_CATEGORY_END, nextIndex, ++nextIndex);
+      scope = scopeStack[--scopeStackCursor];
+      textStartIndex = nextIndex = skipSpaces(text, nextIndex);
+      continue;
     }
 
     // ICU octothorpe
-    if (charCode === /* # */ 35 && scopeStack.indexOf(SCOPE_ICU_CASE) !== -1) {
+    if (charCode === /* # */ 35 && scopeStack.indexOf(SCOPE_ICU_CATEGORY) !== -1) {
       if (textStartIndex !== index) {
         callback(TOKEN_TEXT, textStartIndex, index);
       }
@@ -703,7 +683,7 @@ export function readTokens(text: string, callback: TokenCallback, options: ReadT
       continue;
     }
 
-    // Start of an ICU case
+    // Start of an ICU category
     if (scope === SCOPE_ICU_ARGUMENT) {
       if (!isICUNameChar(charCode)) {
         throw new SyntaxError(ICU_ERROR_MESSAGE + index);
@@ -711,7 +691,7 @@ export function readTokens(text: string, callback: TokenCallback, options: ReadT
 
       nextIndex = readChars(text, index + 1, isICUNameChar);
 
-      callback(TOKEN_ICU_CASE_START, index, nextIndex);
+      callback(TOKEN_ICU_CATEGORY_START, index, nextIndex);
 
       nextIndex = skipSpaces(text, nextIndex);
 
@@ -719,7 +699,7 @@ export function readTokens(text: string, callback: TokenCallback, options: ReadT
         throw new SyntaxError(ICU_ERROR_MESSAGE + nextIndex);
       }
 
-      scope = scopeStack[++scopeStackCursor] = SCOPE_ICU_CASE;
+      scope = scopeStack[++scopeStackCursor] = SCOPE_ICU_CATEGORY;
       textStartIndex = ++nextIndex;
       continue;
     }

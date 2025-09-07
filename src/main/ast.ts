@@ -23,7 +23,16 @@ export interface ArgumentNode {
 export interface SelectNode {
   nodeType: 'select';
   argumentName: string;
+
+  // select selectordinal plural
   type: string;
+
+  // zero
+  // one (singular)
+  // two (dual)
+  // few (paucal)
+  // many (also used for fractions if they have a separate class)
+  // other (required—general plural form—also used if the language only has a single form)
   cases: Record<string, Child[]>;
 }
 

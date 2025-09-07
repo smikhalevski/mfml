@@ -59,13 +59,6 @@ export interface Config {
   isCaseInsensitiveTags?: boolean;
 
   /**
-   * If `true` then JSX-styles attributes are recognized and their content may contain nested XML and ICU markup.
-   *
-   * @default false
-   */
-  isJSXAttributesRecognized?: boolean;
-
-  /**
    * If `true` then self-closing tags are recognized, otherwise they are treated as opening tags.
    *
    * @default false
@@ -107,7 +100,6 @@ export function parseConfig(config: Config): TokenizeMarkupOptions {
     reopenedOrphanClosingTags,
     escapeChar,
     isCaseInsensitiveTags,
-    isJSXAttributesRecognized,
     isSelfClosingTagsRecognized,
     isUnbalancedTagsAutoClosed,
     isOrphanClosingTagsIgnored,
@@ -125,7 +117,6 @@ export function parseConfig(config: Config): TokenizeMarkupOptions {
       new Map(Object.entries(forceClosedTags).map(entry => [toHashCode(entry[0]), new Set(entry[1].map(toHashCode))])),
     reopenedOrphanClosingTags: reopenedOrphanClosingTags && new Set(reopenedOrphanClosingTags.map(toHashCode)),
     escapeChar,
-    isJSXAttributesRecognized,
     isSelfClosingTagsRecognized,
     isUnbalancedTagsAutoClosed,
     isOrphanClosingTagsIgnored,
