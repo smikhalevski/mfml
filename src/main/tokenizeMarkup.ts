@@ -424,8 +424,26 @@ export function readTokens(text: string, callback: TokenCallback, options: ReadT
     if (charCode === /* < */ 60 && (scope === SCOPE_TEXT || scope === SCOPE_ICU_CATEGORY)) {
       let tagNameStartIndex = ++nextIndex;
 
+      const nextCharCode = getCharCodeAt(text, nextIndex);
+
+      // Skip XML comments
+      if (
+        nextCharCode === /* ! */ 47 &&
+        getCharCodeAt(text, nextIndex + 1) === /* - */ 45 &&
+        getCharCodeAt(text, nextIndex + 2) === /* - */ 45
+      ) {
+        if (textStartIndex !== index) {
+          callback(TOKEN_TEXT, textStartIndex, index);
+        }
+
+        nextIndex = text.indexOf('-->');
+
+        textStartIndex = nextIndex = nextIndex === -1 ? text.length : nextIndex + 3;
+        break;
+      }
+
       // Closing tag
-      if (getCharCodeAt(text, nextIndex) === /* / */ 47) {
+      if (nextCharCode === /* / */ 47) {
         // Skip "/"
         tagNameStartIndex = ++nextIndex;
 

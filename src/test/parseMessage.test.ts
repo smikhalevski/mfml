@@ -1,12 +1,13 @@
 import { expect, test } from 'vitest';
 import { parseMessage } from '../main/parseMessage.js';
+import { MessageNode } from '../main/ast.js';
 
 test('parses text', () => {
   expect(parseMessage('en', 'aaa')).toStrictEqual({
     nodeType: 'message',
     locale: 'en',
-    children: ['aaa'],
-  });
+    children: 'aaa',
+  } satisfies MessageNode);
 });
 
 test('parses an element', () => {
@@ -17,11 +18,11 @@ test('parses an element', () => {
       {
         nodeType: 'element',
         tagName: 'aaa',
-        attributes: {},
-        children: ['bbb'],
+        attributes: null,
+        children: 'bbb',
       },
     ],
-  });
+  } satisfies MessageNode);
 });
 
 test('parses leading and trailing text', () => {
@@ -33,12 +34,12 @@ test('parses leading and trailing text', () => {
       {
         nodeType: 'element',
         tagName: 'bbb',
-        attributes: {},
-        children: ['ccc'],
+        attributes: null,
+        children: 'ccc',
       },
       'ddd',
     ],
-  });
+  } satisfies MessageNode);
 });
 
 test('parses nested elements', () => {
@@ -49,20 +50,20 @@ test('parses nested elements', () => {
       {
         nodeType: 'element',
         tagName: 'aaa',
-        attributes: {},
+        attributes: null,
         children: [
           'bbb',
           {
             nodeType: 'element',
             tagName: 'ccc',
-            attributes: {},
-            children: ['ddd'],
+            attributes: null,
+            children: 'ddd',
           },
           'eee',
         ],
       },
     ],
-  });
+  } satisfies MessageNode);
 });
 
 test('parses an argument', () => {
@@ -77,7 +78,7 @@ test('parses an argument', () => {
         style: undefined,
       },
     ],
-  });
+  } satisfies MessageNode);
 });
 
 test('parses an argument with type', () => {
@@ -92,7 +93,7 @@ test('parses an argument with type', () => {
         style: undefined,
       },
     ],
-  });
+  } satisfies MessageNode);
 });
 
 test('parses an argument with type and style', () => {
@@ -107,7 +108,7 @@ test('parses an argument with type and style', () => {
         style: 'zzz',
       },
     ],
-  });
+  } satisfies MessageNode);
 });
 
 test('parses select', () => {
@@ -119,12 +120,12 @@ test('parses select', () => {
         nodeType: 'select',
         argumentName: 'xxx',
         type: 'yyy',
-        cases: {
-          zzz: ['   aaa   '],
+        categories: {
+          zzz: '   aaa   ',
         },
       },
     ],
-  });
+  } satisfies MessageNode);
 });
 
 test('parses select with octothorpe', () => {
@@ -136,7 +137,7 @@ test('parses select with octothorpe', () => {
         nodeType: 'select',
         argumentName: 'xxx',
         type: 'yyy',
-        cases: {
+        categories: {
           zzz: [
             '   ',
             {
@@ -150,10 +151,10 @@ test('parses select with octothorpe', () => {
         },
       },
     ],
-  });
+  } satisfies MessageNode);
 });
 
-test('parses select multiple cases', () => {
+test('parses select multiple categories', () => {
   expect(parseMessage('en', '{xxx,yyy,qqq{aaa}ppp{bbb}}')).toStrictEqual({
     nodeType: 'message',
     locale: 'en',
@@ -162,13 +163,13 @@ test('parses select multiple cases', () => {
         nodeType: 'select',
         argumentName: 'xxx',
         type: 'yyy',
-        cases: {
-          ppp: ['bbb'],
-          qqq: ['aaa'],
+        categories: {
+          ppp: 'bbb',
+          qqq: 'aaa',
         },
       },
     ],
-  });
+  } satisfies MessageNode);
 });
 
 test('parses select case with an element', () => {
@@ -180,23 +181,23 @@ test('parses select case with an element', () => {
         nodeType: 'select',
         argumentName: 'xxx',
         type: 'yyy',
-        cases: {
+        categories: {
           ppp: [
             {
               nodeType: 'element',
               tagName: 'aaa',
-              attributes: {},
-              children: [],
+              attributes: null,
+              children: null,
             },
             'bbb',
           ],
         },
       },
     ],
-  });
+  } satisfies MessageNode);
 });
 
-test('parses select multiple cases mixed with elements', () => {
+test('parses select multiple categories mixed with elements', () => {
   expect(
     parseMessage('en', '<eee>{xxx,yyy,ppp{<fff/>bbb}qqq{<kkk>aaa</kkk>}}</eee>vvv', {
       isSelfClosingTagsRecognized: true,
@@ -208,19 +209,19 @@ test('parses select multiple cases mixed with elements', () => {
       {
         nodeType: 'element',
         tagName: 'eee',
-        attributes: {},
+        attributes: null,
         children: [
           {
             nodeType: 'select',
             argumentName: 'xxx',
             type: 'yyy',
-            cases: {
+            categories: {
               ppp: [
                 {
                   nodeType: 'element',
                   tagName: 'fff',
-                  attributes: {},
-                  children: [],
+                  attributes: null,
+                  children: null,
                 },
                 'bbb',
               ],
@@ -228,8 +229,8 @@ test('parses select multiple cases mixed with elements', () => {
                 {
                   nodeType: 'element',
                   tagName: 'kkk',
-                  attributes: {},
-                  children: ['aaa'],
+                  attributes: null,
+                  children: 'aaa',
                 },
               ],
             },
@@ -238,5 +239,5 @@ test('parses select multiple cases mixed with elements', () => {
       },
       'vvv',
     ],
-  });
+  } satisfies MessageNode);
 });

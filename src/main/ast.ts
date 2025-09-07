@@ -3,14 +3,14 @@ export type Child = ElementNode | ArgumentNode | SelectNode | string;
 export interface MessageNode {
   nodeType: 'message';
   locale: string;
-  children: Child[];
+  children: Child[] | string | null;
 }
 
 export interface ElementNode {
   nodeType: 'element';
   tagName: string;
-  attributes: Record<string, Child[] | string>;
-  children: Child[];
+  attributes: Record<string, Child[] | string> | null;
+  children: Child[] | string | null;
 }
 
 export interface ArgumentNode {
@@ -33,25 +33,54 @@ export interface SelectNode {
   // few (paucal)
   // many (also used for fractions if they have a separate class)
   // other (required—general plural form—also used if the language only has a single form)
-  cases: Record<string, Child[]>;
+  categories: Record<string, Child[] | string>;
 }
 
-export function createMessageNode(locale: string, ...children: Child[]): MessageNode {
-  return { nodeType: 'message', locale, children };
+export function createMessageNode(locale: string, ...children: Child[]): MessageNode;
+
+export function createMessageNode(locale: string): MessageNode {
+  const node: MessageNode = { nodeType: 'message', locale, children: null };
+
+  if (arguments.length > 1) {
+    const children = [];
+
+    for (let i = 1; i < arguments.length; ++i) {
+      children.push(arguments[i]);
+    }
+    node.children = children;
+  }
+
+  return node;
 }
 
 export function createElementNode(
   tagName: string,
-  attributes: Record<string, Child[] | string> = {},
+  attributes?: Record<string, Child[] | string> | null,
   ...children: Child[]
+): ElementNode;
+
+export function createElementNode(
+  tagName: string,
+  attributes: Record<string, Child[] | string> | null = null
 ): ElementNode {
-  return { nodeType: 'element', tagName, attributes, children };
+  const node: ElementNode = { nodeType: 'element', tagName, attributes, children: null };
+
+  if (arguments.length > 2) {
+    const children = [];
+
+    for (let i = 2; i < arguments.length; ++i) {
+      children.push(arguments[i]);
+    }
+    node.children = children;
+  }
+
+  return node;
 }
 
 export function createArgumentNode(name: string, type?: string, style?: string): ArgumentNode {
   return { nodeType: 'argument', name, type, style };
 }
 
-export function createSelectNode(argumentName: string, type: string, cases: Record<string, Child[]>): SelectNode {
-  return { nodeType: 'select', argumentName, type, cases };
+export function createSelectNode(argumentName: string, type: string, categories: Record<string, Child[]>): SelectNode {
+  return { nodeType: 'select', argumentName, type, categories };
 }

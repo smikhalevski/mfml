@@ -125,6 +125,19 @@ describe('readTokens', () => {
     expect(callbackMock).toHaveBeenNthCalledWith(6, 'TEXT', 17, 20);
   });
 
+  test('ignores comments', () => {
+    readTokens('aaa<xxx>bbb<!--</xxx>ccc--></xxx>', callbackMock, {});
+
+    expect(callbackMock).toHaveBeenCalledTimes(7);
+    expect(callbackMock).toHaveBeenNthCalledWith(1, 'TEXT', 0, 3);
+    expect(callbackMock).toHaveBeenNthCalledWith(2, 'XML_OPENING_TAG_START', 4, 7);
+    expect(callbackMock).toHaveBeenNthCalledWith(3, 'XML_OPENING_TAG_END', 7, 8);
+    expect(callbackMock).toHaveBeenNthCalledWith(4, 'TEXT', 8, 15);
+    expect(callbackMock).toHaveBeenNthCalledWith(5, 'XML_CLOSING_TAG', 17, 20);
+    expect(callbackMock).toHaveBeenNthCalledWith(6, 'TEXT', 21, 27);
+    expect(callbackMock).toHaveBeenNthCalledWith(7, 'XML_CLOSING_TAG', 29, 32);
+  });
+
   test('does not reads emojis as tag names', () => {
     readTokens('aaa<❤️>bbb</👨‍❤️‍💋‍👨>ccc', callbackMock, {});
 

@@ -13,29 +13,25 @@ import {
 export function parseMessage(locale: string, text: string, options: TokenizeMarkupOptions = {}): MessageNode {
   const messageNode = createMessageNode(locale);
 
-  const nodeStack: Array<MessageNode | ElementNode | SelectNode> = [messageNode];
+  const nodeStack: NodeStack = [messageNode];
 
   let nodeStackCursor = 0;
 
-  let elementNode: ElementNode;
-  let selectNode: SelectNode | undefined;
-
-  let children = messageNode.children;
-  let argumentName: string;
-  let argumentType: string;
-  let isArgumentPushed = false;
+  let argumentName: string | undefined;
+  let argumentType: string | undefined;
 
   const tokenCallback: TokenCallback = (token, startIndex, endIndex) => {
     switch (token) {
       case 'TEXT':
-        children.push(text.substring(startIndex, endIndex));
+        pushChild(nodeStack, nodeStackCursor, text.substring(startIndex, endIndex));
         break;
 
       case 'XML_OPENING_TAG_START':
-        elementNode = createElementNode(text.substring(startIndex, endIndex));
-        nodeStack[++nodeStackCursor] = elementNode;
-        children.push(elementNode);
-        children = elementNode.children;
+        pushChild(
+          nodeStack,
+          nodeStackCursor,
+          (nodeStack[++nodeStackCursor] = createElementNode(text.substring(startIndex, endIndex)))
+        );
         break;
 
       case 'XML_OPENING_TAG_END':
@@ -43,48 +39,28 @@ export function parseMessage(locale: string, text: string, options: TokenizeMark
 
       case 'XML_OPENING_TAG_SELF_CLOSE':
       case 'XML_CLOSING_TAG':
-        const parentNode = nodeStack[--nodeStackCursor];
-
-        if (parentNode.nodeType === 'element') {
-          elementNode = parentNode;
-          children = parentNode.children;
-          break;
-        }
-
-        if (parentNode.nodeType === 'message') {
-          children = parentNode.children;
-        }
+        --nodeStackCursor;
         break;
 
       case 'XML_ATTRIBUTE_START':
-        children = elementNode.attributes[text.substring(startIndex, endIndex)] = [];
+        nodeStack[++nodeStackCursor] = text.substring(startIndex, endIndex);
+        pushChild(nodeStack, nodeStackCursor, '');
         break;
 
       case 'XML_ATTRIBUTE_END':
-        children = elementNode.children;
+        --nodeStackCursor;
         break;
 
       case 'ICU_ARGUMENT_START':
-        isArgumentPushed = false;
         argumentName = text.substring(startIndex, endIndex);
+        argumentType = undefined;
         break;
 
       case 'ICU_ARGUMENT_END':
-        if (!isArgumentPushed) {
-          children.push(createArgumentNode(argumentName, argumentType));
-        }
-
-        if (nodeStack[nodeStackCursor].nodeType === 'select') {
-          selectNode = undefined;
-
-          for (let i = --nodeStackCursor; i > -1; --i) {
-            const parentNode = nodeStack[nodeStackCursor];
-
-            if (parentNode.nodeType === 'select') {
-              selectNode = parentNode;
-              break;
-            }
-          }
+        if (argumentName === undefined) {
+          --nodeStackCursor;
+        } else {
+          pushChild(nodeStack, nodeStackCursor, createArgumentNode(argumentName, argumentType));
         }
         break;
 
@@ -93,31 +69,43 @@ export function parseMessage(locale: string, text: string, options: TokenizeMark
         break;
 
       case 'ICU_ARGUMENT_STYLE':
-        children.push(createArgumentNode(argumentName, argumentType, text.substring(startIndex, endIndex)));
-        isArgumentPushed = true;
+        pushChild(
+          nodeStack,
+          nodeStackCursor,
+          createArgumentNode(argumentName!, argumentType, text.substring(startIndex, endIndex))
+        );
+        argumentName = undefined;
         break;
 
       case 'ICU_CATEGORY_START':
-        const caseValue = text.substring(startIndex, endIndex);
+        const prevNode = nodeStack[nodeStackCursor];
 
-        if (selectNode === undefined) {
-          isArgumentPushed = true;
-          const caseChildren: Child[] = [];
-          selectNode = createSelectNode(argumentName, argumentType, { [caseValue]: caseChildren });
-          nodeStack[++nodeStackCursor] = selectNode;
-          children.push(selectNode);
-          children = caseChildren;
-          break;
+        if (typeof prevNode !== 'string' && prevNode.nodeType !== 'select') {
+          pushChild(
+            nodeStack,
+            nodeStackCursor,
+            (nodeStack[++nodeStackCursor] = createSelectNode(argumentName!, argumentType!, {}))
+          );
+          argumentName = undefined;
         }
 
-        children = selectNode.cases[caseValue] = [];
+        nodeStack[++nodeStackCursor] = text.substring(startIndex, endIndex);
+        pushChild(nodeStack, nodeStackCursor, '');
         break;
 
       case 'ICU_CATEGORY_END':
+        --nodeStackCursor;
         break;
 
       case 'ICU_OCTOTHORPE':
-        children.push(createArgumentNode(selectNode!.argumentName));
+        for (let i = nodeStackCursor; i > -1; --i) {
+          const node = nodeStack[i];
+
+          if (typeof node !== 'string' && node.nodeType === 'select') {
+            pushChild(nodeStack, nodeStackCursor, createArgumentNode(node.argumentName));
+            break;
+          }
+        }
         break;
     }
   };
@@ -125,4 +113,59 @@ export function parseMessage(locale: string, text: string, options: TokenizeMark
   tokenizeMarkup(text, tokenCallback, options);
 
   return messageNode;
+}
+
+type NodeStack = Array<MessageNode | ElementNode | SelectNode | string>;
+
+function pushChild(nodeStack: NodeStack, nodeStackCursor: number, child: Child): void {
+  const node = nodeStack[nodeStackCursor];
+
+  if (typeof node === 'string') {
+    const prevNode = nodeStack[nodeStackCursor - 1] as MessageNode | ElementNode | SelectNode;
+
+    if (prevNode.nodeType === 'element') {
+      prevNode.attributes ||= {};
+      prevNode.attributes[node] = concatChildren(prevNode.attributes[node], child);
+    }
+    if (prevNode.nodeType === 'select') {
+      prevNode.categories[node] = concatChildren(prevNode.categories[node], child);
+    }
+    return;
+  }
+
+  if (node.nodeType === 'message' || node.nodeType === 'element') {
+    node.children = concatChildren(node.children, child);
+  }
+}
+
+function concatChildren(children: Child[] | string | null, child: Child): Child[] | string {
+  if (children === '') {
+    children = null;
+  }
+
+  if (children === null || children === undefined) {
+    if (typeof child === 'string') {
+      return child;
+    }
+    return [child];
+  }
+
+  if (typeof children === 'string') {
+    if (typeof child === 'string') {
+      return children + child;
+    }
+    return [children, child];
+  }
+
+  if (typeof child === 'string') {
+    const lastChild = children[children.length - 1];
+
+    if (typeof lastChild === 'string') {
+      children[children.length - 1] += child;
+      return children;
+    }
+  }
+
+  children.push(child);
+  return children;
 }
