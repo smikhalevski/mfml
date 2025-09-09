@@ -115,11 +115,11 @@ export interface TokenizeMarkupOptions {
   isOrphanClosingTagsIgnored?: boolean;
 
   /**
-   * If `true` then ICU arguments are parsed inside {@link cdataTags CDATA tags} and CDATA sections.
+   * If `true` then ICU arguments are parsed inside {@link cdataTags CDATA tags}.
    *
    * @default false
    */
-  isICUInCDATARecognized?: boolean;
+  isCDATAInterpolated?: boolean;
 }
 
 /**
@@ -353,7 +353,7 @@ export interface ReadTokensOptions {
   readTag?: (text: string, startIndex: number, endIndex: number) => number;
   cdataTags?: Set<number>;
   isSelfClosingTagsRecognized?: boolean;
-  isICUInCDATARecognized?: boolean;
+  isCDATAInterpolated?: boolean;
 }
 
 /**
@@ -366,7 +366,7 @@ export function readTokens(text: string, callback: TokenCallback, options: ReadT
     readTag = getCaseSensitiveHashCode,
     cdataTags,
     isSelfClosingTagsRecognized = false,
-    isICUInCDATARecognized = false,
+    isCDATAInterpolated = false,
   } = options;
 
   let region = REGION_ROOT;
@@ -611,8 +611,8 @@ export function readTokens(text: string, callback: TokenCallback, options: ReadT
       continue;
     }
 
-    // ICU is treated as plain text in CDATA sections
-    if (!isICUInCDATARecognized && region === REGION_CDATA_TAG_CONTENT) {
+    if (region === REGION_CDATA_TAG_CONTENT && !isCDATAInterpolated) {
+      // Disable ICU parsing in CDATA tags
       ++nextIndex;
       continue;
     }

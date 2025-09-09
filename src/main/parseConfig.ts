@@ -91,11 +91,11 @@ export interface Config {
   isOrphanClosingTagsIgnored?: boolean;
 
   /**
-   * If `true` then ICU arguments are parsed inside {@link cdataTags CDATA tags} and CDATA sections.
+   * If `true` then ICU arguments are parsed inside {@link cdataTags CDATA tags}.
    *
    * @default false
    */
-  isICUInCDATARecognized?: boolean;
+  isCDATAInterpolated?: boolean;
 }
 
 export function parseConfig(config: Config): TokenizeMarkupOptions {
@@ -108,7 +108,7 @@ export function parseConfig(config: Config): TokenizeMarkupOptions {
     isSelfClosingTagsRecognized,
     isUnbalancedTagsImplicitlyClosed,
     isOrphanClosingTagsIgnored,
-    isICUInCDATARecognized,
+    isCDATAInterpolated,
   } = config;
 
   const getHashCode = isCaseInsensitiveTags ? getCaseInsensitiveHashCode : getCaseSensitiveHashCode;
@@ -128,6 +128,6 @@ export function parseConfig(config: Config): TokenizeMarkupOptions {
     isSelfClosingTagsRecognized,
     isUnbalancedTagsImplicitlyClosed,
     isOrphanClosingTagsIgnored,
-    isICUInCDATARecognized,
+    isCDATAInterpolated,
   };
 }

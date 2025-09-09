@@ -501,7 +501,7 @@ describe('readTokens', () => {
     readTokens(
       '<script>{aaa}</script>',
       callbackMock,
-      parseConfig({ cdataTags: ['script'], isICUInCDATARecognized: true })
+      parseConfig({ cdataTags: ['script'], isCDATAInterpolated: true })
     );
 
     expect(callbackMock).toHaveBeenCalledTimes(5);
@@ -516,7 +516,7 @@ describe('readTokens', () => {
     readTokens(
       '<script aaa="{bbb}">{ccc}</script>',
       callbackMock,
-      parseConfig({ cdataTags: ['script'], isICUInCDATARecognized: true })
+      parseConfig({ cdataTags: ['script'], isCDATAInterpolated: true })
     );
 
     expect(callbackMock).toHaveBeenCalledTimes(9);
