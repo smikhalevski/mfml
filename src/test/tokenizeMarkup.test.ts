@@ -697,6 +697,19 @@ describe('readTokens', () => {
     expect(callbackMock).toHaveBeenNthCalledWith(14, 'ICU_ARGUMENT_END', 41, 42);
   });
 
+  test('does not read an ICU octothorpe after select has ended', () => {
+    readTokens('{aaa,bbb,ccc{#}}#', callbackMock, {});
+
+    expect(callbackMock).toHaveBeenCalledTimes(7);
+    expect(callbackMock).toHaveBeenNthCalledWith(1, 'ICU_ARGUMENT_START', 1, 4);
+    expect(callbackMock).toHaveBeenNthCalledWith(2, 'ICU_ARGUMENT_TYPE', 5, 8);
+    expect(callbackMock).toHaveBeenNthCalledWith(3, 'ICU_CATEGORY_START', 9, 12);
+    expect(callbackMock).toHaveBeenNthCalledWith(4, 'ICU_OCTOTHORPE', 13, 14);
+    expect(callbackMock).toHaveBeenNthCalledWith(5, 'ICU_CATEGORY_END', 14, 15);
+    expect(callbackMock).toHaveBeenNthCalledWith(6, 'ICU_ARGUMENT_END', 15, 16);
+    expect(callbackMock).toHaveBeenNthCalledWith(7, 'TEXT', 16, 17);
+  });
+
   test('does not read tags in an ICU select in an XML attribute', () => {
     readTokens('<aaa xxx="{zzz,yyy,fff{<bbb>bbb</bbb>}}"></aaa>', callbackMock, {});
 

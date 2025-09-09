@@ -114,6 +114,11 @@ export interface TokenizeMarkupOptions {
    */
   isOrphanClosingTagsIgnored?: boolean;
 
+  /**
+   * If `true` then ICU arguments are parsed inside {@link cdataTags CDATA tags} and CDATA sections.
+   *
+   * @default false
+   */
   isICUInCDATARecognized?: boolean;
 }
 
@@ -325,7 +330,7 @@ const SCOPE_ICU_CATEGORY = 7;
 
 const REGION_ROOT = 0;
 const REGION_ATTRIBUTE = 1;
-const REGION_CDATA_TAG = 2;
+const REGION_CDATA_TAG_CONTENT = 2;
 
 const TOKEN_TEXT = 'TEXT';
 const TOKEN_XML_OPENING_TAG_START = 'XML_OPENING_TAG_START';
@@ -413,10 +418,10 @@ export function readTokens(text: string, callback: TokenCallback, options: ReadT
       // Fallthrough: the non-attribute character should be processed
     }
 
-    // XML tags
+    // XML markup
     if (
       charCode === /* < */ 60 &&
-      (((region === REGION_ROOT || region === REGION_CDATA_TAG) && scope === SCOPE_TEXT) ||
+      (((region === REGION_ROOT || region === REGION_CDATA_TAG_CONTENT) && scope === SCOPE_TEXT) ||
         (region === REGION_ROOT && scope === SCOPE_ICU_CATEGORY))
     ) {
       // Skip "<"
@@ -424,7 +429,7 @@ export function readTokens(text: string, callback: TokenCallback, options: ReadT
 
       const nextCharCode = getCharCodeAt(text, nextIndex);
 
-      // Skip XML comments, XML processing instructions and DTD
+      // Skip XML comments, XML processing instructions, DTD and CDATA sections
       if (region === REGION_ROOT && (nextCharCode === /* ! */ 33 || nextCharCode === /* ? */ 63)) {
         if (textStartIndex !== index) {
           callback(TOKEN_TEXT, textStartIndex, index);
@@ -456,13 +461,14 @@ export function readTokens(text: string, callback: TokenCallback, options: ReadT
         // Skip "/"
         tagNameStartIndex = ++nextIndex;
 
-        nextIndex = readXMLTagName(text, tagNameStartIndex);
+        nextIndex = readXMLName(text, tagNameStartIndex);
 
         if (
           // Not a tag
           tagNameStartIndex === nextIndex ||
           // Doesn't match the current CDATA tag
-          (region === REGION_CDATA_TAG && (cdataTag === 0 || cdataTag !== readTag(text, tagNameStartIndex, nextIndex)))
+          (region === REGION_CDATA_TAG_CONTENT &&
+            (cdataTag === 0 || cdataTag !== readTag(text, tagNameStartIndex, nextIndex)))
         ) {
           continue;
         }
@@ -497,7 +503,7 @@ export function readTokens(text: string, callback: TokenCallback, options: ReadT
         continue;
       }
 
-      nextIndex = readXMLTagName(text, nextIndex);
+      nextIndex = readXMLName(text, nextIndex);
 
       if (tagNameStartIndex === nextIndex) {
         // No opening tag name, ignore "<"
@@ -526,9 +532,9 @@ export function readTokens(text: string, callback: TokenCallback, options: ReadT
 
       callback(TOKEN_XML_OPENING_TAG_END, index, nextIndex);
 
-      // Start of a CDATA tag
+      // Start of a CDATA tag content
       if (cdataTag !== 0) {
-        region = REGION_CDATA_TAG;
+        region = REGION_CDATA_TAG_CONTENT;
       }
 
       scopeStack[scopeStackCursor] = 0;
@@ -605,8 +611,8 @@ export function readTokens(text: string, callback: TokenCallback, options: ReadT
       continue;
     }
 
-    // ICU is plain text in CDATA sections
-    if (!isICUInCDATARecognized && region === REGION_CDATA_TAG) {
+    // ICU is treated as plain text in CDATA sections
+    if (!isICUInCDATARecognized && region === REGION_CDATA_TAG_CONTENT) {
       ++nextIndex;
       continue;
     }
@@ -797,12 +803,13 @@ export function getCaseSensitiveHashCode(text: string, startIndex: number, endIn
   return hashCode;
 }
 
-function readXMLTagName(text: string, index: number): number {
-  return isXMLTagNameStartChar(getCharCodeAt(text, index)) ? readChars(text, index + 1, isXMLTagNameChar) : index;
+// https://www.w3.org/TR/xml/#NT-Name
+function readXMLName(text: string, index: number): number {
+  return isXMLNameStartChar(getCharCodeAt(text, index)) ? readChars(text, index + 1, isXMLNameChar) : index;
 }
 
 // https://www.w3.org/TR/xml/#NT-NameStartChar
-function isXMLTagNameStartChar(charCode: number): boolean {
+function isXMLNameStartChar(charCode: number): boolean {
   return (
     (charCode >= /* a */ 97 && charCode <= /* z */ 122) ||
     (charCode >= /* A */ 65 && charCode <= /* Z */ 90) ||
@@ -823,7 +830,8 @@ function isXMLTagNameStartChar(charCode: number): boolean {
   );
 }
 
-function isXMLTagNameChar(charCode: number): boolean {
+// https://www.w3.org/TR/xml/#NT-NameChar
+function isXMLNameChar(charCode: number): boolean {
   return !(charCode === /* / */ 47 || charCode === /* > */ 62 || isSpaceChar(charCode));
 }
 

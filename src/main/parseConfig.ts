@@ -90,6 +90,11 @@ export interface Config {
    */
   isOrphanClosingTagsIgnored?: boolean;
 
+  /**
+   * If `true` then ICU arguments are parsed inside {@link cdataTags CDATA tags} and CDATA sections.
+   *
+   * @default false
+   */
   isICUInCDATARecognized?: boolean;
 }
 
