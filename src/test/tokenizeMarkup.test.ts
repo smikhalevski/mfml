@@ -128,14 +128,64 @@ describe('readTokens', () => {
   test('ignores comments', () => {
     readTokens('aaa<xxx>bbb<!--</xxx>ccc--></xxx>', callbackMock, {});
 
-    expect(callbackMock).toHaveBeenCalledTimes(7);
+    expect(callbackMock).toHaveBeenCalledTimes(5);
     expect(callbackMock).toHaveBeenNthCalledWith(1, 'TEXT', 0, 3);
     expect(callbackMock).toHaveBeenNthCalledWith(2, 'XML_OPENING_TAG_START', 4, 7);
     expect(callbackMock).toHaveBeenNthCalledWith(3, 'XML_OPENING_TAG_END', 7, 8);
-    expect(callbackMock).toHaveBeenNthCalledWith(4, 'TEXT', 8, 15);
-    expect(callbackMock).toHaveBeenNthCalledWith(5, 'XML_CLOSING_TAG', 17, 20);
-    expect(callbackMock).toHaveBeenNthCalledWith(6, 'TEXT', 21, 27);
-    expect(callbackMock).toHaveBeenNthCalledWith(7, 'XML_CLOSING_TAG', 29, 32);
+    expect(callbackMock).toHaveBeenNthCalledWith(4, 'TEXT', 8, 11);
+    expect(callbackMock).toHaveBeenNthCalledWith(5, 'XML_CLOSING_TAG', 29, 32);
+  });
+
+  test('ignores empty comments', () => {
+    readTokens('aaa<!---->bbb', callbackMock, {});
+
+    expect(callbackMock).toHaveBeenCalledTimes(2);
+    expect(callbackMock).toHaveBeenNthCalledWith(1, 'TEXT', 0, 3);
+    expect(callbackMock).toHaveBeenNthCalledWith(2, 'TEXT', 10, 13);
+  });
+
+  test('ignores DTD', () => {
+    readTokens('aaa<xxx>bbb<!</xxx>ccc--></xxx>', callbackMock, {});
+
+    expect(callbackMock).toHaveBeenCalledTimes(6);
+    expect(callbackMock).toHaveBeenNthCalledWith(1, 'TEXT', 0, 3);
+    expect(callbackMock).toHaveBeenNthCalledWith(2, 'XML_OPENING_TAG_START', 4, 7);
+    expect(callbackMock).toHaveBeenNthCalledWith(3, 'XML_OPENING_TAG_END', 7, 8);
+    expect(callbackMock).toHaveBeenNthCalledWith(4, 'TEXT', 8, 11);
+    expect(callbackMock).toHaveBeenNthCalledWith(5, 'TEXT', 19, 25);
+    expect(callbackMock).toHaveBeenNthCalledWith(6, 'XML_CLOSING_TAG', 27, 30);
+  });
+
+  test('ignores empty DTD', () => {
+    readTokens('aaa<!>bbb', callbackMock, {});
+
+    expect(callbackMock).toHaveBeenCalledTimes(2);
+    expect(callbackMock).toHaveBeenNthCalledWith(1, 'TEXT', 0, 3);
+    expect(callbackMock).toHaveBeenNthCalledWith(2, 'TEXT', 6, 9);
+  });
+
+  test('ignores empty DTD', () => {
+    readTokens('aaa<!>bbb', callbackMock, {});
+
+    expect(callbackMock).toHaveBeenCalledTimes(2);
+    expect(callbackMock).toHaveBeenNthCalledWith(1, 'TEXT', 0, 3);
+    expect(callbackMock).toHaveBeenNthCalledWith(2, 'TEXT', 6, 9);
+  });
+
+  test('ignores processing instructions', () => {
+    readTokens('aaa<?xml version="1.0"?>bbb', callbackMock, {});
+
+    expect(callbackMock).toHaveBeenCalledTimes(2);
+    expect(callbackMock).toHaveBeenNthCalledWith(1, 'TEXT', 0, 3);
+    expect(callbackMock).toHaveBeenNthCalledWith(2, 'TEXT', 24, 27);
+  });
+
+  test('ignores empty processing instructions', () => {
+    readTokens('aaa<?>bbb', callbackMock, {});
+
+    expect(callbackMock).toHaveBeenCalledTimes(2);
+    expect(callbackMock).toHaveBeenNthCalledWith(1, 'TEXT', 0, 3);
+    expect(callbackMock).toHaveBeenNthCalledWith(2, 'TEXT', 6, 9);
   });
 
   test('does not reads emojis as tag names', () => {

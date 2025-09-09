@@ -392,24 +392,36 @@ export function readTokens(text: string, callback: TokenCallback, options: ReadT
 
     // XML tags
     if (charCode === /* < */ 60 && (scope === SCOPE_TEXT || scope === SCOPE_ICU_CATEGORY)) {
+      // Skip "<"
       let tagNameStartIndex = ++nextIndex;
 
       const nextCharCode = getCharCodeAt(text, nextIndex);
 
-      // Skip XML comments
-      if (
-        nextCharCode === /* ! */ 47 &&
-        getCharCodeAt(text, nextIndex + 1) === /* - */ 45 &&
-        getCharCodeAt(text, nextIndex + 2) === /* - */ 45
-      ) {
+      // Skip XML comments, XML processing instructions and DTD
+      if (nextCharCode === /* ! */ 33 || nextCharCode === /* ? */ 63) {
         if (textStartIndex !== index) {
           callback(TOKEN_TEXT, textStartIndex, index);
         }
 
-        nextIndex = text.indexOf('-->');
+        // XML comment
+        if (
+          nextCharCode === /* ! */ 33 &&
+          getCharCodeAt(text, nextIndex + 1) === /* - */ 45 &&
+          getCharCodeAt(text, nextIndex + 2) === /* - */ 45
+        ) {
+          // Skip "!--"
+          nextIndex = text.indexOf('-->', nextIndex + 3);
 
-        textStartIndex = nextIndex = nextIndex === -1 ? text.length : nextIndex + 3;
-        break;
+          textStartIndex = nextIndex = nextIndex === -1 ? text.length : nextIndex + 3;
+          continue;
+        }
+
+        // Processing instruction or DTD (browsers treat them as comments in document fragments)
+        // Skip "!"
+        nextIndex = text.indexOf('>', nextIndex + 1);
+
+        textStartIndex = nextIndex = nextIndex === -1 ? text.length : nextIndex + 1;
+        continue;
       }
 
       // Closing tag
