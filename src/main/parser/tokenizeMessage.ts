@@ -27,9 +27,9 @@ export type Token =
 export type TokenCallback = (token: Token, startIndex: number, endIndex: number) => void;
 
 /**
- * Options of {@link tokenizeMarkup}.
+ * Options of {@link tokenizeMessage}.
  */
-export interface TokenizeMarkupOptions {
+export interface TokenizeMessageOptions {
   /**
    * Reads a tag name as a unique hash code.
    *
@@ -135,7 +135,7 @@ export interface TokenizeMarkupOptions {
  * @param callback The callback that is invoked when a token is read.
  * @param options Tokenization options.
  */
-export function tokenizeMarkup(text: string, callback: TokenCallback, options: TokenizeMarkupOptions = {}): void {
+export function tokenizeMessage(text: string, callback: TokenCallback, options: TokenizeMessageOptions = {}): void {
   const {
     readTag = getCaseSensitiveHashCode,
     voidTags,

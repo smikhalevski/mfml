@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
-import { readTokens, tokenizeMarkup } from '../main/tokenizeMarkup.js';
-import { parseConfig } from '../main/parseConfig.js';
+import { readTokens, tokenizeMessage } from '../../main/parser/tokenizeMessage.js';
+import { parseConfig } from '../../main/parser/parseConfig.js';
 
 const callbackMock = vi.fn();
 
@@ -728,9 +728,9 @@ describe('readTokens', () => {
   });
 });
 
-describe('tokenizeMarkup', () => {
+describe('tokenizeMessage', () => {
   test('reads the balanced start tag', () => {
-    tokenizeMarkup('<aaa>bbb</aaa>', callbackMock);
+    tokenizeMessage('<aaa>bbb</aaa>', callbackMock);
 
     expect(callbackMock).toHaveBeenCalledTimes(4);
     expect(callbackMock).toHaveBeenNthCalledWith(1, 'XML_OPENING_TAG_START', 1, 4);
@@ -740,7 +740,7 @@ describe('tokenizeMarkup', () => {
   });
 
   test('reads the unbalanced start tag', () => {
-    tokenizeMarkup('<aaa><bbb>ccc', callbackMock, { isUnbalancedTagsImplicitlyClosed: true });
+    tokenizeMessage('<aaa><bbb>ccc', callbackMock, { isUnbalancedTagsImplicitlyClosed: true });
 
     expect(callbackMock).toHaveBeenCalledTimes(7);
     expect(callbackMock).toHaveBeenNthCalledWith(1, 'XML_OPENING_TAG_START', 1, 4);
@@ -753,7 +753,7 @@ describe('tokenizeMarkup', () => {
   });
 
   test('implicitly closes the immediate parent', () => {
-    tokenizeMarkup(
+    tokenizeMessage(
       '<aaa>bbb<ccc>ddd',
       callbackMock,
       parseConfig({ isUnbalancedTagsImplicitlyClosed: true, implicitlyClosedTags: { ccc: ['aaa'] } })
@@ -771,7 +771,7 @@ describe('tokenizeMarkup', () => {
   });
 
   test('implicitly closes the ancestor', () => {
-    tokenizeMarkup(
+    tokenizeMessage(
       '<aaa>bbb<ccc>ddd<eee>',
       callbackMock,
       parseConfig({ isUnbalancedTagsImplicitlyClosed: true, implicitlyClosedTags: { eee: ['aaa'] } })
@@ -792,7 +792,7 @@ describe('tokenizeMarkup', () => {
   });
 
   test('implicitly closes the topmost ancestor', () => {
-    tokenizeMarkup(
+    tokenizeMessage(
       '<aaa>bbb<ccc>ddd<eee>fff<ggg>',
       callbackMock,
       parseConfig({ isUnbalancedTagsImplicitlyClosed: true, implicitlyClosedTags: { ggg: ['aaa', 'eee'] } })
@@ -817,7 +817,7 @@ describe('tokenizeMarkup', () => {
   });
 
   test('reads the void tag', () => {
-    tokenizeMarkup('<aaa>bbb', callbackMock, parseConfig({ voidTags: ['aaa'] }));
+    tokenizeMessage('<aaa>bbb', callbackMock, parseConfig({ voidTags: ['aaa'] }));
 
     expect(callbackMock).toHaveBeenCalledTimes(4);
     expect(callbackMock).toHaveBeenNthCalledWith(1, 'XML_OPENING_TAG_START', 1, 4);
@@ -827,7 +827,7 @@ describe('tokenizeMarkup', () => {
   });
 
   test('reads consequent void tags', () => {
-    tokenizeMarkup('<aaa><bbb>', callbackMock, parseConfig({ voidTags: ['aaa', 'bbb'] }));
+    tokenizeMessage('<aaa><bbb>', callbackMock, parseConfig({ voidTags: ['aaa', 'bbb'] }));
 
     expect(callbackMock).toHaveBeenCalledTimes(6);
     expect(callbackMock).toHaveBeenNthCalledWith(1, 'XML_OPENING_TAG_START', 1, 4);
@@ -839,7 +839,7 @@ describe('tokenizeMarkup', () => {
   });
 
   test('reads the void tag in the container', () => {
-    tokenizeMarkup('<aaa><bbb></aaa>', callbackMock, parseConfig({ voidTags: ['bbb'] }));
+    tokenizeMessage('<aaa><bbb></aaa>', callbackMock, parseConfig({ voidTags: ['bbb'] }));
 
     expect(callbackMock).toHaveBeenCalledTimes(6);
     expect(callbackMock).toHaveBeenNthCalledWith(1, 'XML_OPENING_TAG_START', 1, 4);
@@ -851,7 +851,7 @@ describe('tokenizeMarkup', () => {
   });
 
   test('implicitly closes a tag', () => {
-    tokenizeMarkup('<aaa><bbb></aaa>', callbackMock, parseConfig({ isUnbalancedTagsImplicitlyClosed: true }));
+    tokenizeMessage('<aaa><bbb></aaa>', callbackMock, parseConfig({ isUnbalancedTagsImplicitlyClosed: true }));
 
     expect(callbackMock).toHaveBeenCalledTimes(6);
     expect(callbackMock).toHaveBeenNthCalledWith(1, 'XML_OPENING_TAG_START', 1, 4);
@@ -863,13 +863,13 @@ describe('tokenizeMarkup', () => {
   });
 
   test('ignores an orphan closing tag', () => {
-    tokenizeMarkup('</aaa>', callbackMock, parseConfig({ isOrphanClosingTagsIgnored: true }));
+    tokenizeMessage('</aaa>', callbackMock, parseConfig({ isOrphanClosingTagsIgnored: true }));
 
     expect(callbackMock).toHaveBeenCalledTimes(0);
   });
 
   test('ignores an orphan closing tag in a container', () => {
-    tokenizeMarkup('<aaa></bbb></aaa>', callbackMock, parseConfig({ isOrphanClosingTagsIgnored: true }));
+    tokenizeMessage('<aaa></bbb></aaa>', callbackMock, parseConfig({ isOrphanClosingTagsIgnored: true }));
 
     expect(callbackMock).toHaveBeenCalledTimes(3);
     expect(callbackMock).toHaveBeenNthCalledWith(1, 'XML_OPENING_TAG_START', 1, 4);
@@ -878,7 +878,7 @@ describe('tokenizeMarkup', () => {
   });
 
   test('inserts opening tags for orphan closing tags', () => {
-    tokenizeMarkup('</aaa>', callbackMock, parseConfig({ implicitlyOpenedTags: ['aaa'] }));
+    tokenizeMessage('</aaa>', callbackMock, parseConfig({ implicitlyOpenedTags: ['aaa'] }));
 
     expect(callbackMock).toHaveBeenCalledTimes(3);
     expect(callbackMock).toHaveBeenNthCalledWith(1, 'XML_OPENING_TAG_START', 0, 0);
@@ -887,7 +887,7 @@ describe('tokenizeMarkup', () => {
   });
 
   test('inserts opening tag that forcefully closes preceding tag', () => {
-    tokenizeMarkup(
+    tokenizeMessage(
       '<aaa></bbb>',
       callbackMock,
       parseConfig({ implicitlyClosedTags: { bbb: ['aaa'] }, implicitlyOpenedTags: ['bbb'] })
@@ -903,7 +903,7 @@ describe('tokenizeMarkup', () => {
   });
 
   test('inserts opening tags and closing tags during nesting of the same tag', () => {
-    tokenizeMarkup(
+    tokenizeMessage(
       'aaa<xxx>bbb<xxx>ccc</xxx>ddd</xxx>eee',
       callbackMock,
       parseConfig({ implicitlyClosedTags: { xxx: ['xxx'] }, implicitlyOpenedTags: ['xxx'] })
@@ -927,7 +927,7 @@ describe('tokenizeMarkup', () => {
   });
 
   test('reads case-sensitive closing tags by default', () => {
-    tokenizeMarkup('<aaa></AAA>', callbackMock, {
+    tokenizeMessage('<aaa></AAA>', callbackMock, {
       isUnbalancedTagsImplicitlyClosed: true,
       isOrphanClosingTagsIgnored: true,
     });
@@ -939,7 +939,7 @@ describe('tokenizeMarkup', () => {
   });
 
   test('reads case-insensitive closing tags', () => {
-    tokenizeMarkup('<aaa></AAA>', callbackMock, parseConfig({ isCaseInsensitiveTags: true }));
+    tokenizeMessage('<aaa></AAA>', callbackMock, parseConfig({ isCaseInsensitiveTags: true }));
 
     expect(callbackMock).toHaveBeenCalledTimes(3);
     expect(callbackMock).toHaveBeenNthCalledWith(1, 'XML_OPENING_TAG_START', 1, 4);
@@ -948,7 +948,7 @@ describe('tokenizeMarkup', () => {
   });
 
   test('read non ASCII alpha-chars as case-sensitive in case-insensitive tag matching mode', () => {
-    tokenizeMarkup(
+    tokenizeMessage(
       '<aaaффф></AAAФФФ>',
       callbackMock,
       parseConfig({
@@ -965,7 +965,7 @@ describe('tokenizeMarkup', () => {
   });
 
   test('closes unbalanced tags', () => {
-    tokenizeMarkup(
+    tokenizeMessage(
       '<a><b></a></b>',
       callbackMock,
       parseConfig({ isUnbalancedTagsImplicitlyClosed: true, isOrphanClosingTagsIgnored: true })
@@ -981,7 +981,7 @@ describe('tokenizeMarkup', () => {
   });
 
   test('reads ICU select with octothorpe', () => {
-    tokenizeMarkup('{   xxx   ,   yyy   ,   zzz   {   #   }   }', callbackMock);
+    tokenizeMessage('{   xxx   ,   yyy   ,   zzz   {   #   }   }', callbackMock);
 
     expect(callbackMock).toHaveBeenCalledTimes(8);
     expect(callbackMock).toHaveBeenNthCalledWith(1, 'ICU_ARGUMENT_START', 4, 7);
@@ -995,10 +995,10 @@ describe('tokenizeMarkup', () => {
   });
 
   test('throws if opening tag is not ended before EOF', () => {
-    expect(() => tokenizeMarkup('<aaa xxx="bbb"', callbackMock)).toThrow(new SyntaxError('Missing closing tag at 14'));
+    expect(() => tokenizeMessage('<aaa xxx="bbb"', callbackMock)).toThrow(new SyntaxError('Missing closing tag at 14'));
   });
 
   test('throws if argument is not ended before EOF', () => {
-    expect(() => tokenizeMarkup('<aaa>{xxx', callbackMock)).toThrow(new SyntaxError('Unexpected ICU syntax at 9'));
+    expect(() => tokenizeMessage('<aaa>{xxx', callbackMock)).toThrow(new SyntaxError('Unexpected ICU syntax at 9'));
   });
 });

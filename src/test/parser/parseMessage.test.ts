@@ -1,6 +1,6 @@
 import { expect, test } from 'vitest';
-import { parseMessage } from '../main/parseMessage.js';
-import { MessageNode } from '../main/ast.js';
+import { parseMessage } from '../../main/parser/index.js';
+import { MessageNode } from '../../main/ast.js';
 
 test('parses text', () => {
   expect(parseMessage('en', 'aaa')).toStrictEqual({

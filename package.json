@@ -7,6 +7,10 @@
   "types": "./index.d.ts",
   "exports": {
     ".": "./index.js",
+    "./compiler": "./compiler/index.js",
+    "./parser": "./parser/index.js",
+    "./ast": "./ast.js",
+    "./react": "./react/index.js",
     "./package.json": "./package.json"
   },
   "sideEffects": false,
@@ -59,6 +63,11 @@
   },
   "peerDependencies": {
     "react": ">=18.0.0"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    }
   },
   "dependencies": {
     "parallel-universe": "^6.1.2"

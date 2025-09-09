@@ -1,9 +1,16 @@
+/**
+ * MFML AST nodes and factories.
+ *
+ * @module mfml/ast
+ */
+
 export type Child = ElementNode | ArgumentNode | SelectNode | string;
 
-export interface MessageNode {
+export interface MessageNode<Values extends object = {}> {
   nodeType: 'message';
   locale: string;
-  children: Child[] | string | null;
+  children: Child[] | string;
+  __values?: Values;
 }
 
 export interface ElementNode {
@@ -30,14 +37,21 @@ export interface SelectNode {
 export function createMessageNode(locale: string, ...children: Child[]): MessageNode;
 
 export function createMessageNode(locale: string): MessageNode {
-  const node: MessageNode = { nodeType: 'message', locale, children: null };
+  const node: MessageNode = { nodeType: 'message', locale, children: '' };
 
-  if (arguments.length > 1) {
-    node.children = [];
+  if (arguments.length <= 1) {
+    return node;
+  }
 
-    for (let index = 1; index < arguments.length; ++index) {
-      node.children.push(arguments[index]);
-    }
+  if (arguments.length === 2 && typeof arguments[1] === 'string') {
+    node.children = arguments[1];
+    return node;
+  }
+
+  node.children = [];
+
+  for (let index = 1; index < arguments.length; ++index) {
+    node.children.push(arguments[index]);
   }
 
   return node;
@@ -55,12 +69,19 @@ export function createElementNode(
 ): ElementNode {
   const node: ElementNode = { nodeType: 'element', tagName, attributes, children: null };
 
-  if (arguments.length > 2) {
-    node.children = [];
+  if (arguments.length <= 2) {
+    return node;
+  }
 
-    for (let index = 2; index < arguments.length; ++index) {
-      node.children.push(arguments[index]);
-    }
+  if (arguments.length === 3 && typeof arguments[2] === 'string') {
+    node.children = arguments[2];
+    return node;
+  }
+
+  node.children = [];
+
+  for (let index = 2; index < arguments.length; ++index) {
+    node.children.push(arguments[index]);
   }
 
   return node;

@@ -1,7 +1,7 @@
-import { getCaseInsensitiveHashCode, getCaseSensitiveHashCode } from './tokenizeMarkup.js';
+import { getCaseInsensitiveHashCode, getCaseSensitiveHashCode } from './tokenizeMessage.js';
 import { ParseMessageOptions } from './parseMessage.js';
 
-export interface Config {
+export interface ParserConfig {
   /**
    * List of tag that cannot have any content and are always closed after being opening tag.
    */
@@ -140,9 +140,19 @@ export interface Config {
    * @returns The new argument style name.
    */
   renameArgumentStyle?: (argumentStyle: string, argumentType: string) => string;
+
+  /**
+   * Rewrite text content before it is pushed to a node. Use this method to decode HTML entities.
+   *
+   * @param text Text to rewrite.
+   */
+  processText?: (text: string) => string;
 }
 
-export function parseConfig(config: Config): ParseMessageOptions {
+/**
+ * Converts parser configuration into options consumed by {@link parseMessage} and {@link tokenizeMessage}.
+ */
+export function parseConfig(config: ParserConfig): ParseMessageOptions {
   const {
     voidTags,
     cdataTags,
@@ -158,6 +168,7 @@ export function parseConfig(config: Config): ParseMessageOptions {
     renameArgumentStyle,
     renameTag,
     renameAttribute,
+    processText,
   } = config;
 
   const getHashCode = isCaseInsensitiveTags ? getCaseInsensitiveHashCode : getCaseSensitiveHashCode;
@@ -183,5 +194,6 @@ export function parseConfig(config: Config): ParseMessageOptions {
     renameArgument,
     renameArgumentType,
     renameArgumentStyle,
+    processText,
   };
 }

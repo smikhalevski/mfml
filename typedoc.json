@@ -11,6 +11,12 @@
   "navigation": {
     "includeFolders": false
   },
-  "entryPoints": ["./src/main/index.ts"],
+  "entryPoints": [
+    "./src/main/compiler/index.ts",
+    "./src/main/parser/index.ts",
+    "./src/main/ast.ts",
+    "./src/main/index.ts",
+    "./src/main/react/index.ts"
+  ],
   "plugin": ["typedoc-plugin-mdn-links"]
 }

@@ -1,4 +1,4 @@
-import { TokenCallback, tokenizeMarkup, TokenizeMarkupOptions } from './tokenizeMarkup.js';
+import { TokenCallback, tokenizeMessage, TokenizeMessageOptions } from './tokenizeMessage.js';
 import {
   Child,
   createArgumentNode,
@@ -8,12 +8,12 @@ import {
   ElementNode,
   MessageNode,
   SelectNode,
-} from './ast.js';
+} from '../ast.js';
 
 /**
  * Options of {@link parseMessage}.
  */
-export interface ParseMessageOptions extends TokenizeMarkupOptions {
+export interface ParseMessageOptions extends TokenizeMessageOptions {
   /**
    * Renames an XML tag.
    *
@@ -176,7 +176,7 @@ export function parseMessage(locale: string, text: string, options: ParseMessage
     }
   };
 
-  tokenizeMarkup(text, tokenCallback, options);
+  tokenizeMessage(text, tokenCallback, options);
 
   return messageNode;
 }
@@ -227,6 +227,6 @@ function concatChildren(children: Child[] | string | null, child: Child): Child[
   return children;
 }
 
-function identity<T>(value: T): T {
+export function identity<T>(value: T): T {
   return value;
 }
