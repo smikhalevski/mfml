@@ -437,34 +437,98 @@ describe('readTokens', () => {
     expect(callbackMock).toHaveBeenNthCalledWith(8, 'TEXT', 26, 27);
   });
 
-  test('escapes inside a unquoted attribute', () => {
-    readTokens('<aaa xxx=zzz\\{yyy></aaa>', callbackMock, {});
-
-    expect(callbackMock).toHaveBeenCalledTimes(6);
-    expect(callbackMock).toHaveBeenNthCalledWith(1, 'XML_OPENING_TAG_START', 1, 4);
-    expect(callbackMock).toHaveBeenNthCalledWith(2, 'XML_ATTRIBUTE_START', 5, 8);
-    expect(callbackMock).toHaveBeenNthCalledWith(3, 'TEXT', 9, 17);
-    expect(callbackMock).toHaveBeenNthCalledWith(4, 'XML_ATTRIBUTE_END', 17, 17);
-    expect(callbackMock).toHaveBeenNthCalledWith(5, 'XML_OPENING_TAG_END', 17, 18);
-    expect(callbackMock).toHaveBeenNthCalledWith(6, 'XML_CLOSING_TAG', 20, 23);
-  });
-
-  test('does not escape char in a tag name', () => {
-    readTokens('<a\\aa>', callbackMock, {});
-
-    expect(callbackMock).toHaveBeenCalledTimes(2);
-    expect(callbackMock).toHaveBeenNthCalledWith(1, 'XML_OPENING_TAG_START', 1, 5);
-    expect(callbackMock).toHaveBeenNthCalledWith(2, 'XML_OPENING_TAG_END', 5, 6);
-  });
-
-  test('does not escape char in an attribute name', () => {
-    readTokens('<aaa b\\bb>', callbackMock, {});
+  test('ignores tags in CDATA tags', () => {
+    readTokens('<script><aaa>bbb</aaa></script>', callbackMock, parseConfig({ cdataTags: ['script'] }));
 
     expect(callbackMock).toHaveBeenCalledTimes(4);
-    expect(callbackMock).toHaveBeenNthCalledWith(1, 'XML_OPENING_TAG_START', 1, 4);
-    expect(callbackMock).toHaveBeenNthCalledWith(2, 'XML_ATTRIBUTE_START', 5, 9);
-    expect(callbackMock).toHaveBeenNthCalledWith(3, 'XML_ATTRIBUTE_END', 9, 9);
-    expect(callbackMock).toHaveBeenNthCalledWith(4, 'XML_OPENING_TAG_END', 9, 10);
+    expect(callbackMock).toHaveBeenNthCalledWith(1, 'XML_OPENING_TAG_START', 1, 7);
+    expect(callbackMock).toHaveBeenNthCalledWith(2, 'XML_OPENING_TAG_END', 7, 8);
+    expect(callbackMock).toHaveBeenNthCalledWith(3, 'TEXT', 8, 22);
+    expect(callbackMock).toHaveBeenNthCalledWith(4, 'XML_CLOSING_TAG', 24, 30);
+  });
+
+  test('reads attributes of a CDATA tag', () => {
+    readTokens('<script aaa="xxx" ccc="yyy">zzz</script>', callbackMock, parseConfig({ cdataTags: ['script'] }));
+
+    expect(callbackMock).toHaveBeenCalledTimes(10);
+    expect(callbackMock).toHaveBeenNthCalledWith(1, 'XML_OPENING_TAG_START', 1, 7);
+    expect(callbackMock).toHaveBeenNthCalledWith(2, 'XML_ATTRIBUTE_START', 8, 11);
+    expect(callbackMock).toHaveBeenNthCalledWith(3, 'TEXT', 13, 16);
+    expect(callbackMock).toHaveBeenNthCalledWith(4, 'XML_ATTRIBUTE_END', 16, 17);
+    expect(callbackMock).toHaveBeenNthCalledWith(5, 'XML_ATTRIBUTE_START', 18, 21);
+    expect(callbackMock).toHaveBeenNthCalledWith(6, 'TEXT', 23, 26);
+    expect(callbackMock).toHaveBeenNthCalledWith(7, 'XML_ATTRIBUTE_END', 26, 27);
+    expect(callbackMock).toHaveBeenNthCalledWith(8, 'XML_OPENING_TAG_END', 27, 28);
+    expect(callbackMock).toHaveBeenNthCalledWith(9, 'TEXT', 28, 31);
+    expect(callbackMock).toHaveBeenNthCalledWith(10, 'XML_CLOSING_TAG', 33, 39);
+  });
+
+  test('ignores comments in CDATA tags', () => {
+    readTokens('<script><!-->bbb</--></script>', callbackMock, parseConfig({ cdataTags: ['script'] }));
+
+    expect(callbackMock).toHaveBeenCalledTimes(4);
+    expect(callbackMock).toHaveBeenNthCalledWith(1, 'XML_OPENING_TAG_START', 1, 7);
+    expect(callbackMock).toHaveBeenNthCalledWith(2, 'XML_OPENING_TAG_END', 7, 8);
+    expect(callbackMock).toHaveBeenNthCalledWith(3, 'TEXT', 8, 21);
+    expect(callbackMock).toHaveBeenNthCalledWith(4, 'XML_CLOSING_TAG', 23, 29);
+  });
+
+  test('matches case-insensitive closing CDATA tags', () => {
+    readTokens(
+      '<script><!-->bbb</--></SCRIPT>',
+      callbackMock,
+      parseConfig({ cdataTags: ['script'], isCaseInsensitiveTags: true })
+    );
+
+    expect(callbackMock).toHaveBeenCalledTimes(4);
+    expect(callbackMock).toHaveBeenNthCalledWith(1, 'XML_OPENING_TAG_START', 1, 7);
+    expect(callbackMock).toHaveBeenNthCalledWith(2, 'XML_OPENING_TAG_END', 7, 8);
+    expect(callbackMock).toHaveBeenNthCalledWith(3, 'TEXT', 8, 21);
+    expect(callbackMock).toHaveBeenNthCalledWith(4, 'XML_CLOSING_TAG', 23, 29);
+  });
+
+  test('does not read ICU markup in CDATA tag content by default', () => {
+    readTokens('<script>{aaa}</script>', callbackMock, parseConfig({ cdataTags: ['script'] }));
+
+    expect(callbackMock).toHaveBeenCalledTimes(4);
+    expect(callbackMock).toHaveBeenNthCalledWith(1, 'XML_OPENING_TAG_START', 1, 7);
+    expect(callbackMock).toHaveBeenNthCalledWith(2, 'XML_OPENING_TAG_END', 7, 8);
+    expect(callbackMock).toHaveBeenNthCalledWith(3, 'TEXT', 8, 13);
+    expect(callbackMock).toHaveBeenNthCalledWith(4, 'XML_CLOSING_TAG', 15, 21);
+  });
+
+  test('reads ICU markup in CDATA tag content', () => {
+    readTokens(
+      '<script>{aaa}</script>',
+      callbackMock,
+      parseConfig({ cdataTags: ['script'], isICUInCDATARecognized: true })
+    );
+
+    expect(callbackMock).toHaveBeenCalledTimes(5);
+    expect(callbackMock).toHaveBeenNthCalledWith(1, 'XML_OPENING_TAG_START', 1, 7);
+    expect(callbackMock).toHaveBeenNthCalledWith(2, 'XML_OPENING_TAG_END', 7, 8);
+    expect(callbackMock).toHaveBeenNthCalledWith(3, 'ICU_ARGUMENT_START', 9, 12);
+    expect(callbackMock).toHaveBeenNthCalledWith(4, 'ICU_ARGUMENT_END', 12, 13);
+    expect(callbackMock).toHaveBeenNthCalledWith(5, 'XML_CLOSING_TAG', 15, 21);
+  });
+
+  test('reads ICU markup in CDATA tag attributes', () => {
+    readTokens(
+      '<script aaa="{bbb}">{ccc}</script>',
+      callbackMock,
+      parseConfig({ cdataTags: ['script'], isICUInCDATARecognized: true })
+    );
+
+    expect(callbackMock).toHaveBeenCalledTimes(9);
+    expect(callbackMock).toHaveBeenNthCalledWith(1, 'XML_OPENING_TAG_START', 1, 7);
+    expect(callbackMock).toHaveBeenNthCalledWith(2, 'XML_ATTRIBUTE_START', 8, 11);
+    expect(callbackMock).toHaveBeenNthCalledWith(3, 'ICU_ARGUMENT_START', 14, 17);
+    expect(callbackMock).toHaveBeenNthCalledWith(4, 'ICU_ARGUMENT_END', 17, 18);
+    expect(callbackMock).toHaveBeenNthCalledWith(5, 'XML_ATTRIBUTE_END', 18, 19);
+    expect(callbackMock).toHaveBeenNthCalledWith(6, 'XML_OPENING_TAG_END', 19, 20);
+    expect(callbackMock).toHaveBeenNthCalledWith(7, 'ICU_ARGUMENT_START', 21, 24);
+    expect(callbackMock).toHaveBeenNthCalledWith(8, 'ICU_ARGUMENT_END', 24, 25);
+    expect(callbackMock).toHaveBeenNthCalledWith(9, 'XML_CLOSING_TAG', 27, 33);
   });
 
   test('reads an ICU argument', () => {
@@ -631,6 +695,23 @@ describe('readTokens', () => {
     expect(callbackMock).toHaveBeenNthCalledWith(12, 'ICU_ARGUMENT_END', 39, 40);
     expect(callbackMock).toHaveBeenNthCalledWith(13, 'ICU_CATEGORY_END', 40, 41);
     expect(callbackMock).toHaveBeenNthCalledWith(14, 'ICU_ARGUMENT_END', 41, 42);
+  });
+
+  test('does not read tags in an ICU select in an XML attribute', () => {
+    readTokens('<aaa xxx="{zzz,yyy,fff{<bbb>bbb</bbb>}}"></aaa>', callbackMock, {});
+
+    expect(callbackMock).toHaveBeenCalledTimes(11);
+    expect(callbackMock).toHaveBeenNthCalledWith(1, 'XML_OPENING_TAG_START', 1, 4);
+    expect(callbackMock).toHaveBeenNthCalledWith(2, 'XML_ATTRIBUTE_START', 5, 8);
+    expect(callbackMock).toHaveBeenNthCalledWith(3, 'ICU_ARGUMENT_START', 11, 14);
+    expect(callbackMock).toHaveBeenNthCalledWith(4, 'ICU_ARGUMENT_TYPE', 15, 18);
+    expect(callbackMock).toHaveBeenNthCalledWith(5, 'ICU_CATEGORY_START', 19, 22);
+    expect(callbackMock).toHaveBeenNthCalledWith(6, 'TEXT', 23, 37);
+    expect(callbackMock).toHaveBeenNthCalledWith(7, 'ICU_CATEGORY_END', 37, 38);
+    expect(callbackMock).toHaveBeenNthCalledWith(8, 'ICU_ARGUMENT_END', 38, 39);
+    expect(callbackMock).toHaveBeenNthCalledWith(9, 'XML_ATTRIBUTE_END', 39, 40);
+    expect(callbackMock).toHaveBeenNthCalledWith(10, 'XML_OPENING_TAG_END', 40, 41);
+    expect(callbackMock).toHaveBeenNthCalledWith(11, 'XML_CLOSING_TAG', 43, 46);
   });
 });
 

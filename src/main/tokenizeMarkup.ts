@@ -40,9 +40,14 @@ export interface TokenizeMarkupOptions {
   readTag?: (text: string, startIndex: number, endIndex: number) => number;
 
   /**
-   * List of tags that cannot have any content and are always closed after being opening tag.
+   * The list of tags that cannot have any content and are always closed after being opening tag.
    */
   voidTags?: Set<number>;
+
+  /**
+   * The list CDATA tags. The content of these tags is interpreted as plain text. Ex. `script`, `style`, etc.
+   */
+  cdataTags?: Set<number>;
 
   /**
    * The map from a tag (A) to a list of tags that must be closed if tag (A) is opened.
@@ -108,6 +113,8 @@ export interface TokenizeMarkupOptions {
    * @default false
    */
   isOrphanClosingTagsIgnored?: boolean;
+
+  isICUInCDATARecognized?: boolean;
 }
 
 /**
@@ -316,6 +323,10 @@ const SCOPE_XML_UNQUOTED_ATTRIBUTE_VALUE = 5;
 const SCOPE_ICU_ARGUMENT = 6;
 const SCOPE_ICU_CATEGORY = 7;
 
+const REGION_ROOT = 0;
+const REGION_ATTRIBUTE = 1;
+const REGION_CDATA_TAG = 2;
+
 const TOKEN_TEXT = 'TEXT';
 const TOKEN_XML_OPENING_TAG_START = 'XML_OPENING_TAG_START';
 const TOKEN_XML_OPENING_TAG_END = 'XML_OPENING_TAG_END';
@@ -334,7 +345,10 @@ const TOKEN_ICU_OCTOTHORPE = 'ICU_OCTOTHORPE';
 const ICU_ERROR_MESSAGE = 'Unexpected ICU syntax at ';
 
 export interface ReadTokensOptions {
+  readTag?: (text: string, startIndex: number, endIndex: number) => number;
+  cdataTags?: Set<number>;
   isSelfClosingTagsRecognized?: boolean;
+  isICUInCDATARecognized?: boolean;
 }
 
 /**
@@ -343,15 +357,20 @@ export interface ReadTokensOptions {
  * Tokens returned in the same order they are listed in text.
  */
 export function readTokens(text: string, callback: TokenCallback, options: ReadTokensOptions): void {
-  const { isSelfClosingTagsRecognized = false } = options;
+  const {
+    readTag = getCaseSensitiveHashCode,
+    cdataTags,
+    isSelfClosingTagsRecognized = false,
+    isICUInCDATARecognized = false,
+  } = options;
 
+  let region = REGION_ROOT;
   let scope = SCOPE_TEXT;
-
-  const scopeStack = [scope, 0, 0, 0, 0, 0, 0, 0];
-
+  let cdataTag = 0;
+  let textStartIndex = 0;
   let scopeStackCursor = 0;
 
-  let textStartIndex = 0;
+  const scopeStack = [scope, 0, 0, 0, 0, 0, 0, 0];
 
   for (let index = 0, nextIndex = 0; nextIndex < text.length; index = nextIndex) {
     const charCode = text.charCodeAt(nextIndex);
@@ -369,6 +388,8 @@ export function readTokens(text: string, callback: TokenCallback, options: ReadT
 
       callback(TOKEN_XML_ATTRIBUTE_END, index, nextIndex);
 
+      region = REGION_ROOT;
+      scopeStack[scopeStackCursor] = 0;
       scope = scopeStack[--scopeStackCursor];
       nextIndex = skipSpaces(text, nextIndex);
       continue;
@@ -379,26 +400,32 @@ export function readTokens(text: string, callback: TokenCallback, options: ReadT
       scope === SCOPE_XML_UNQUOTED_ATTRIBUTE_VALUE &&
       (charCode === /* / */ 47 || charCode === /* > */ 62 || isSpaceChar(charCode))
     ) {
-      scope = scopeStack[--scopeStackCursor];
-
       if (textStartIndex !== index) {
         callback(TOKEN_TEXT, textStartIndex, index);
       }
 
       callback(TOKEN_XML_ATTRIBUTE_END, index, index);
 
+      region = REGION_ROOT;
+      scopeStack[scopeStackCursor] = 0;
+      scope = scopeStack[--scopeStackCursor];
+
       // Fallthrough: the non-attribute character should be processed
     }
 
     // XML tags
-    if (charCode === /* < */ 60 && (scope === SCOPE_TEXT || scope === SCOPE_ICU_CATEGORY)) {
+    if (
+      charCode === /* < */ 60 &&
+      (((region === REGION_ROOT || region === REGION_CDATA_TAG) && scope === SCOPE_TEXT) ||
+        (region === REGION_ROOT && scope === SCOPE_ICU_CATEGORY))
+    ) {
       // Skip "<"
       let tagNameStartIndex = ++nextIndex;
 
       const nextCharCode = getCharCodeAt(text, nextIndex);
 
       // Skip XML comments, XML processing instructions and DTD
-      if (nextCharCode === /* ! */ 33 || nextCharCode === /* ? */ 63) {
+      if (region === REGION_ROOT && (nextCharCode === /* ! */ 33 || nextCharCode === /* ? */ 63)) {
         if (textStartIndex !== index) {
           callback(TOKEN_TEXT, textStartIndex, index);
         }
@@ -431,9 +458,17 @@ export function readTokens(text: string, callback: TokenCallback, options: ReadT
 
         nextIndex = readXMLTagName(text, tagNameStartIndex);
 
-        if (tagNameStartIndex === nextIndex) {
+        if (
+          // Not a tag
+          tagNameStartIndex === nextIndex ||
+          // Doesn't match the current CDATA tag
+          (region === REGION_CDATA_TAG && (cdataTag === 0 || cdataTag !== readTag(text, tagNameStartIndex, nextIndex)))
+        ) {
           continue;
         }
+
+        cdataTag = 0;
+        region = REGION_ROOT;
 
         if (textStartIndex !== index) {
           callback(TOKEN_TEXT, textStartIndex, index);
@@ -457,6 +492,11 @@ export function readTokens(text: string, callback: TokenCallback, options: ReadT
 
       // Start of an opening tag
 
+      if (region !== REGION_ROOT) {
+        ++nextIndex;
+        continue;
+      }
+
       nextIndex = readXMLTagName(text, nextIndex);
 
       if (tagNameStartIndex === nextIndex) {
@@ -470,8 +510,11 @@ export function readTokens(text: string, callback: TokenCallback, options: ReadT
 
       callback(TOKEN_XML_OPENING_TAG_START, tagNameStartIndex, nextIndex);
 
-      scope = scopeStack[++scopeStackCursor] = SCOPE_XML_OPENING_TAG;
+      if (cdataTags === undefined || !cdataTags.has((cdataTag = readTag(text, tagNameStartIndex, nextIndex)))) {
+        cdataTag = 0;
+      }
 
+      scope = scopeStack[++scopeStackCursor] = SCOPE_XML_OPENING_TAG;
       nextIndex = skipSpaces(text, nextIndex);
       textStartIndex = nextIndex;
       continue;
@@ -483,6 +526,12 @@ export function readTokens(text: string, callback: TokenCallback, options: ReadT
 
       callback(TOKEN_XML_OPENING_TAG_END, index, nextIndex);
 
+      // Start of a CDATA tag
+      if (cdataTag !== 0) {
+        region = REGION_CDATA_TAG;
+      }
+
+      scopeStack[scopeStackCursor] = 0;
       scope = scopeStack[--scopeStackCursor];
       textStartIndex = nextIndex;
       continue;
@@ -499,6 +548,7 @@ export function readTokens(text: string, callback: TokenCallback, options: ReadT
 
       callback(TOKEN_XML_OPENING_TAG_SELF_CLOSE, index, nextIndex);
 
+      scopeStack[scopeStackCursor] = 0;
       scope = scopeStack[--scopeStackCursor];
       textStartIndex = nextIndex;
       continue;
@@ -523,6 +573,7 @@ export function readTokens(text: string, callback: TokenCallback, options: ReadT
       if (getCharCodeAt(text, nextIndex) !== /* = */ 61) {
         // No attribute value
         callback(TOKEN_XML_ATTRIBUTE_END, nextIndex, nextIndex);
+        scopeStack[scopeStackCursor] = 0;
         scope = scopeStack[--scopeStackCursor];
         continue;
       }
@@ -533,6 +584,7 @@ export function readTokens(text: string, callback: TokenCallback, options: ReadT
 
       if (quoteCharCode === /* " */ 34) {
         // Double-quoted value
+        region = REGION_ATTRIBUTE;
         scope = scopeStack[scopeStackCursor] = SCOPE_XML_DOUBLE_QUOTED_ATTRIBUTE_VALUE;
         textStartIndex = ++nextIndex;
         continue;
@@ -540,14 +592,22 @@ export function readTokens(text: string, callback: TokenCallback, options: ReadT
 
       if (quoteCharCode === /* ' */ 39) {
         // Single-quoted value
+        region = REGION_ATTRIBUTE;
         scope = scopeStack[scopeStackCursor] = SCOPE_XML_SINGLE_QUOTED_ATTRIBUTE_VALUE;
         textStartIndex = ++nextIndex;
         continue;
       }
 
       // Unquoted value
+      region = REGION_ATTRIBUTE;
       scope = scopeStack[scopeStackCursor] = SCOPE_XML_UNQUOTED_ATTRIBUTE_VALUE;
       textStartIndex = nextIndex;
+      continue;
+    }
+
+    // ICU is plain text in CDATA sections
+    if (!isICUInCDATARecognized && region === REGION_CDATA_TAG) {
+      ++nextIndex;
       continue;
     }
 
@@ -654,6 +714,7 @@ export function readTokens(text: string, callback: TokenCallback, options: ReadT
     // End of an ICU argument
     if (charCode === /* } */ 125 && scope === SCOPE_ICU_ARGUMENT) {
       callback(TOKEN_ICU_ARGUMENT_END, nextIndex, ++nextIndex);
+      scopeStack[scopeStackCursor] = 0;
       scope = scopeStack[--scopeStackCursor];
       textStartIndex = nextIndex;
       continue;
@@ -666,6 +727,8 @@ export function readTokens(text: string, callback: TokenCallback, options: ReadT
       }
 
       callback(TOKEN_ICU_CATEGORY_END, nextIndex, ++nextIndex);
+
+      scopeStack[scopeStackCursor] = 0;
       scope = scopeStack[--scopeStackCursor];
       textStartIndex = nextIndex = skipSpaces(text, nextIndex);
       continue;

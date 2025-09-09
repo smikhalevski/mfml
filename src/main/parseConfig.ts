@@ -7,6 +7,11 @@ export interface Config {
   voidTags?: readonly string[];
 
   /**
+   * The list CDATA tags. The content of these tags is interpreted as plain text. Ex. `script`, `style`, etc.
+   */
+  cdataTags?: readonly string[];
+
+  /**
    * The map from a tag (A) to a list of tags that must be closed if tag (A) is opened.
    *
    * For example, in HTML `p`, `table`, and many other tags follow this semantics:
@@ -84,17 +89,21 @@ export interface Config {
    * @default false
    */
   isOrphanClosingTagsIgnored?: boolean;
+
+  isICUInCDATARecognized?: boolean;
 }
 
 export function parseConfig(config: Config): TokenizeMarkupOptions {
   const {
     voidTags,
+    cdataTags,
     implicitlyClosedTags,
     implicitlyOpenedTags,
     isCaseInsensitiveTags,
     isSelfClosingTagsRecognized,
     isUnbalancedTagsImplicitlyClosed,
     isOrphanClosingTagsIgnored,
+    isICUInCDATARecognized,
   } = config;
 
   const getHashCode = isCaseInsensitiveTags ? getCaseInsensitiveHashCode : getCaseSensitiveHashCode;
@@ -104,6 +113,7 @@ export function parseConfig(config: Config): TokenizeMarkupOptions {
   return {
     readTag: getHashCode,
     voidTags: voidTags && new Set(voidTags.map(toHashCode)),
+    cdataTags: cdataTags && new Set(cdataTags.map(toHashCode)),
     implicitlyClosedTags:
       implicitlyClosedTags &&
       new Map(
@@ -113,5 +123,6 @@ export function parseConfig(config: Config): TokenizeMarkupOptions {
     isSelfClosingTagsRecognized,
     isUnbalancedTagsImplicitlyClosed,
     isOrphanClosingTagsIgnored,
+    isICUInCDATARecognized,
   };
 }
