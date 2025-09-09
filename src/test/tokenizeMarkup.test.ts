@@ -387,33 +387,6 @@ describe('readTokens', () => {
     expect(callbackMock).toHaveBeenNthCalledWith(8, 'TEXT', 26, 27);
   });
 
-  test('escape char escapes opening tag start', () => {
-    readTokens('\\<aaa>', callbackMock, {});
-
-    expect(callbackMock).toHaveBeenCalledTimes(1);
-    expect(callbackMock).toHaveBeenNthCalledWith(1, 'TEXT', 1, 6);
-  });
-
-  test('escapes opening tag', () => {
-    readTokens('\\<aaa>', callbackMock, {});
-
-    expect(callbackMock).toHaveBeenCalledTimes(1);
-    expect(callbackMock).toHaveBeenNthCalledWith(1, 'TEXT', 1, 6);
-  });
-
-  test('escapes inside a double-quoted attribute', () => {
-    readTokens('<aaa xxx="zzz\\{yyy"></aaa>', callbackMock, {});
-
-    expect(callbackMock).toHaveBeenCalledTimes(7);
-    expect(callbackMock).toHaveBeenNthCalledWith(1, 'XML_OPENING_TAG_START', 1, 4);
-    expect(callbackMock).toHaveBeenNthCalledWith(2, 'XML_ATTRIBUTE_START', 5, 8);
-    expect(callbackMock).toHaveBeenNthCalledWith(3, 'TEXT', 10, 13);
-    expect(callbackMock).toHaveBeenNthCalledWith(4, 'TEXT', 14, 18);
-    expect(callbackMock).toHaveBeenNthCalledWith(5, 'XML_ATTRIBUTE_END', 18, 19);
-    expect(callbackMock).toHaveBeenNthCalledWith(6, 'XML_OPENING_TAG_END', 19, 20);
-    expect(callbackMock).toHaveBeenNthCalledWith(7, 'XML_CLOSING_TAG', 22, 25);
-  });
-
   test('escapes inside a unquoted attribute', () => {
     readTokens('<aaa xxx=zzz\\{yyy></aaa>', callbackMock, {});
 
@@ -608,19 +581,6 @@ describe('readTokens', () => {
     expect(callbackMock).toHaveBeenNthCalledWith(12, 'ICU_ARGUMENT_END', 39, 40);
     expect(callbackMock).toHaveBeenNthCalledWith(13, 'ICU_CATEGORY_END', 40, 41);
     expect(callbackMock).toHaveBeenNthCalledWith(14, 'ICU_ARGUMENT_END', 41, 42);
-  });
-
-  test('escapes inside an ICU category', () => {
-    readTokens('{xxx,yyy,zzz{\\{kkk}}}', callbackMock, {});
-
-    expect(callbackMock).toHaveBeenCalledTimes(7);
-    expect(callbackMock).toHaveBeenNthCalledWith(1, 'ICU_ARGUMENT_START', 1, 4);
-    expect(callbackMock).toHaveBeenNthCalledWith(2, 'ICU_ARGUMENT_TYPE', 5, 8);
-    expect(callbackMock).toHaveBeenNthCalledWith(3, 'ICU_CATEGORY_START', 9, 12);
-    expect(callbackMock).toHaveBeenNthCalledWith(4, 'TEXT', 14, 18);
-    expect(callbackMock).toHaveBeenNthCalledWith(5, 'ICU_CATEGORY_END', 18, 19);
-    expect(callbackMock).toHaveBeenNthCalledWith(6, 'ICU_ARGUMENT_END', 19, 20);
-    expect(callbackMock).toHaveBeenNthCalledWith(7, 'TEXT', 20, 21);
   });
 });
 

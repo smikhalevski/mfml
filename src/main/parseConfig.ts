@@ -45,13 +45,6 @@ export interface Config {
   implicitlyOpenedTags?: readonly string[];
 
   /**
-   * A character that prevent the following character to be treated as plain text.
-   *
-   * @default "\"
-   */
-  escapeChar?: string;
-
-  /**
    * If `true` then ASCII alpha characters are case-insensitive in tag names.
    *
    * @default false
@@ -98,7 +91,6 @@ export function parseConfig(config: Config): TokenizeMarkupOptions {
     voidTags,
     implicitlyClosedTags,
     implicitlyOpenedTags,
-    escapeChar,
     isCaseInsensitiveTags,
     isSelfClosingTagsRecognized,
     isUnbalancedTagsImplicitlyClosed,
@@ -118,7 +110,6 @@ export function parseConfig(config: Config): TokenizeMarkupOptions {
         Object.entries(implicitlyClosedTags).map(entry => [toHashCode(entry[0]), new Set(entry[1].map(toHashCode))])
       ),
     implicitlyOpenedTags: implicitlyOpenedTags && new Set(implicitlyOpenedTags.map(toHashCode)),
-    escapeChar,
     isSelfClosingTagsRecognized,
     isUnbalancedTagsImplicitlyClosed,
     isOrphanClosingTagsIgnored,

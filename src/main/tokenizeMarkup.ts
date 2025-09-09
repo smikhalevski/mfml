@@ -76,13 +76,6 @@ export interface TokenizeMarkupOptions {
   implicitlyOpenedTags?: Set<number>;
 
   /**
-   * A character that prevent the following character to be treated as plain text.
-   *
-   * @default "\"
-   */
-  escapeChar?: string;
-
-  /**
    * If `true` then self-closing tags are recognized, otherwise they are treated as opening tags.
    *
    * @default false
@@ -341,7 +334,6 @@ const TOKEN_ICU_OCTOTHORPE = 'ICU_OCTOTHORPE';
 const ICU_ERROR_MESSAGE = 'Unexpected ICU syntax at ';
 
 export interface ReadTokensOptions {
-  escapeChar?: string;
   isSelfClosingTagsRecognized?: boolean;
 }
 
@@ -351,9 +343,7 @@ export interface ReadTokensOptions {
  * Tokens returned in the same order they are listed in text.
  */
 export function readTokens(text: string, callback: TokenCallback, options: ReadTokensOptions): void {
-  const { escapeChar = '\\', isSelfClosingTagsRecognized = false } = options;
-
-  const escapeCharCode = getCharCodeAt(escapeChar, 0);
+  const { isSelfClosingTagsRecognized = false } = options;
 
   let scope = SCOPE_TEXT;
 
@@ -366,27 +356,7 @@ export function readTokens(text: string, callback: TokenCallback, options: ReadT
   for (let index = 0, nextIndex = 0; nextIndex < text.length; index = nextIndex) {
     const charCode = text.charCodeAt(nextIndex);
 
-    // Escape char
-    if (
-      charCode === escapeCharCode &&
-      (scope === SCOPE_TEXT ||
-        scope === SCOPE_ICU_CATEGORY ||
-        scope === SCOPE_XML_SINGLE_QUOTED_ATTRIBUTE_VALUE ||
-        scope === SCOPE_XML_DOUBLE_QUOTED_ATTRIBUTE_VALUE)
-    ) {
-      if (textStartIndex !== index) {
-        callback(TOKEN_TEXT, textStartIndex, index);
-      }
-
-      // Ignore escape char
-      textStartIndex = ++nextIndex;
-
-      // Skip next char
-      ++nextIndex;
-      continue;
-    }
-
-    // End of double-quoted or single-quoted XML attribute value
+    // End of a quoted XML attribute value
     if (
       (charCode === /* " */ 34 && scope === SCOPE_XML_DOUBLE_QUOTED_ATTRIBUTE_VALUE) ||
       (charCode === /* ' */ 39 && scope === SCOPE_XML_SINGLE_QUOTED_ATTRIBUTE_VALUE)
@@ -404,7 +374,7 @@ export function readTokens(text: string, callback: TokenCallback, options: ReadT
       continue;
     }
 
-    // End of unquoted XML attribute value
+    // End of an unquoted XML attribute value
     if (
       scope === SCOPE_XML_UNQUOTED_ATTRIBUTE_VALUE &&
       (charCode === /* / */ 47 || charCode === /* > */ 62 || isSpaceChar(charCode))
