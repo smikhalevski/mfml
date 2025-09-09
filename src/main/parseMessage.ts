@@ -10,28 +10,97 @@ import {
   SelectNode,
 } from './ast.js';
 
-export function parseMessage(locale: string, text: string, options: TokenizeMarkupOptions = {}): MessageNode {
-  const messageNode = createMessageNode(locale);
+/**
+ * Options of {@link parseMessage}.
+ */
+export interface ParseMessageOptions extends TokenizeMarkupOptions {
+  /**
+   * Renames an XML tag.
+   *
+   * @param tagName A tag to rename.
+   * @returns The new tag name.
+   */
+  renameTag?: (tagName: string) => string;
 
-  const nodeStack: NodeStack = [messageNode];
+  /**
+   * Renames an XML attribute.
+   *
+   * @param attributeName An attribute to rename.
+   * @param tagName An tag name that was processed with {@link renameTag}.
+   * @returns The new attribute name.
+   */
+  renameAttribute?: (attributeName: string, tagName: string) => string;
 
-  let nodeStackCursor = 0;
+  /**
+   * Renames an ICU arguments.
+   *
+   * @param argumentName An argument to rename.
+   * @returns The new argument name.
+   */
+  renameArgument?: (argumentName: string) => string;
 
+  /**
+   * Renames an ICU argument type.
+   *
+   * @param argumentType An argument type to rename.
+   * @param argumentName An argument name that was processed with {@link renameArgument}.
+   * @returns The new argument type name.
+   */
+  renameArgumentType?: (argumentType: string, argumentName: string) => string;
+
+  /**
+   * Renames an ICU argument style.
+   *
+   * @param argumentStyle An argument style to rename.
+   * @param argumentType An argument type that was processed with {@link renameArgumentType}.
+   * @returns The new argument style name.
+   */
+  renameArgumentStyle?: (argumentStyle: string, argumentType: string) => string;
+
+  /**
+   * Rewrite text content before it is pushed to a node. Use this method to decode HTML entities.
+   *
+   * @param text Text to rewrite.
+   */
+  processText?: (text: string) => string;
+}
+
+/**
+ * Parses text message to an AST.
+ *
+ * @param locale The message locale.
+ * @param text The message text to parse.
+ * @param options Parsing options.
+ * @returns The message node that describes the message contents.
+ */
+export function parseMessage(locale: string, text: string, options: ParseMessageOptions = {}): MessageNode {
+  const {
+    renameTag = identity,
+    renameAttribute = identity,
+    renameArgument = identity,
+    renameArgumentType = identity,
+    renameArgumentStyle = identity,
+    processText = identity,
+  } = options;
+
+  let tagName: string;
   let argumentName: string | undefined;
   let argumentType: string | undefined;
+  let argumentStyle: string | undefined;
+  let stackCursor = 0;
+
+  const messageNode = createMessageNode(locale);
+  const stack: Array<MessageNode | ElementNode | SelectNode | string> = [messageNode];
 
   const tokenCallback: TokenCallback = (token, startIndex, endIndex) => {
     switch (token) {
       case 'TEXT':
-        pushChild(nodeStack, nodeStackCursor, text.substring(startIndex, endIndex));
+        pushChild(stack, stackCursor, processText(text.substring(startIndex, endIndex)));
         break;
 
       case 'XML_OPENING_TAG_START':
-        pushChild(
-          nodeStack,
-          nodeStackCursor,
-          (nodeStack[++nodeStackCursor] = createElementNode(text.substring(startIndex, endIndex)))
-        );
+        tagName = renameTag(text.substring(startIndex, endIndex));
+        pushChild(stack, stackCursor, (stack[++stackCursor] = createElementNode(tagName)));
         break;
 
       case 'XML_OPENING_TAG_END':
@@ -39,72 +108,69 @@ export function parseMessage(locale: string, text: string, options: TokenizeMark
 
       case 'XML_OPENING_TAG_SELF_CLOSE':
       case 'XML_CLOSING_TAG':
-        --nodeStackCursor;
+        --stackCursor;
         break;
 
       case 'XML_ATTRIBUTE_START':
-        nodeStack[++nodeStackCursor] = text.substring(startIndex, endIndex);
-        pushChild(nodeStack, nodeStackCursor, '');
+        stack[++stackCursor] = renameAttribute(text.substring(startIndex, endIndex), tagName);
+        pushChild(stack, stackCursor, '');
         break;
 
       case 'XML_ATTRIBUTE_END':
-        --nodeStackCursor;
+        --stackCursor;
         break;
 
       case 'ICU_ARGUMENT_START':
-        argumentName = text.substring(startIndex, endIndex);
+        argumentName = renameArgument(text.substring(startIndex, endIndex));
         argumentType = undefined;
+        argumentStyle = undefined;
+        break;
+
+      case 'ICU_ARGUMENT_TYPE':
+        argumentType = renameArgumentType(text.substring(startIndex, endIndex), argumentName!);
+        break;
+
+      case 'ICU_ARGUMENT_STYLE':
+        argumentStyle = renameArgumentStyle(text.substring(startIndex, endIndex), argumentType!);
         break;
 
       case 'ICU_ARGUMENT_END':
         if (argumentName === undefined) {
-          --nodeStackCursor;
-        } else {
-          pushChild(nodeStack, nodeStackCursor, createArgumentNode(argumentName, argumentType));
+          // No argument name means that a select node was pun on the stack
+          --stackCursor;
+          break;
         }
-        break;
 
-      case 'ICU_ARGUMENT_TYPE':
-        argumentType = text.substring(startIndex, endIndex);
-        break;
-
-      case 'ICU_ARGUMENT_STYLE':
-        pushChild(
-          nodeStack,
-          nodeStackCursor,
-          createArgumentNode(argumentName!, argumentType, text.substring(startIndex, endIndex))
-        );
-        argumentName = undefined;
+        pushChild(stack, stackCursor, createArgumentNode(argumentName, argumentType, argumentStyle));
         break;
 
       case 'ICU_CATEGORY_START':
-        const prevNode = nodeStack[nodeStackCursor];
+        const parent = stack[stackCursor];
 
-        if (typeof prevNode !== 'string' && prevNode.nodeType !== 'select') {
-          pushChild(
-            nodeStack,
-            nodeStackCursor,
-            (nodeStack[++nodeStackCursor] = createSelectNode(argumentName!, argumentType!, {}))
-          );
+        if (typeof parent === 'string' || parent.nodeType !== 'select') {
+          pushChild(stack, stackCursor, (stack[++stackCursor] = createSelectNode(argumentName!, argumentType!, {})));
           argumentName = undefined;
         }
 
-        nodeStack[++nodeStackCursor] = text.substring(startIndex, endIndex);
-        pushChild(nodeStack, nodeStackCursor, '');
+        stack[++stackCursor] = text.substring(startIndex, endIndex);
+        pushChild(stack, stackCursor, '');
         break;
 
       case 'ICU_CATEGORY_END':
-        --nodeStackCursor;
+        --stackCursor;
         break;
 
       case 'ICU_OCTOTHORPE':
-        for (let i = nodeStackCursor; i > -1; --i) {
-          const node = nodeStack[i];
+        for (let index = stackCursor; index > -1; --index) {
+          const node = stack[index];
 
-          if (typeof node !== 'string' && node.nodeType === 'select') {
-            pushChild(nodeStack, nodeStackCursor, createArgumentNode(node.argumentName));
-            break;
+          if (typeof node === 'string' || node.nodeType !== 'select') {
+            continue;
           }
+
+          // Use argument of the enclosing select to replace an octothorpe
+          pushChild(stack, stackCursor, createArgumentNode(node.argumentName));
+          break;
         }
         break;
     }
@@ -115,21 +181,26 @@ export function parseMessage(locale: string, text: string, options: TokenizeMark
   return messageNode;
 }
 
-type NodeStack = Array<MessageNode | ElementNode | SelectNode | string>;
-
-function pushChild(nodeStack: NodeStack, nodeStackCursor: number, child: Child): void {
-  const node = nodeStack[nodeStackCursor];
+function pushChild(
+  stack: Array<MessageNode | ElementNode | SelectNode | string>,
+  stackCursor: number,
+  child: Child
+): void {
+  const node = stack[stackCursor];
 
   if (typeof node === 'string') {
-    const prevNode = nodeStack[nodeStackCursor - 1] as MessageNode | ElementNode | SelectNode;
+    const parent = stack[stackCursor - 1] as ElementNode | SelectNode;
 
-    if (prevNode.nodeType === 'element') {
-      prevNode.attributes ||= {};
-      prevNode.attributes[node] = concatChildren(prevNode.attributes[node], child);
+    if (parent.nodeType === 'select') {
+      parent.categories[node] = concatChildren(parent.categories[node], child);
+      return;
     }
-    if (prevNode.nodeType === 'select') {
-      prevNode.categories[node] = concatChildren(prevNode.categories[node], child);
+
+    if (parent.attributes === null) {
+      parent.attributes = {};
     }
+
+    parent.attributes[node] = concatChildren(parent.attributes[node], child);
     return;
   }
 
@@ -139,33 +210,23 @@ function pushChild(nodeStack: NodeStack, nodeStackCursor: number, child: Child):
 }
 
 function concatChildren(children: Child[] | string | null, child: Child): Child[] | string {
-  if (children === '') {
-    children = null;
-  }
-
-  if (children === null || children === undefined) {
-    if (typeof child === 'string') {
-      return child;
-    }
-    return [child];
+  if (children === '' || children === null || children === undefined) {
+    return typeof child === 'string' ? child : [child];
   }
 
   if (typeof children === 'string') {
-    if (typeof child === 'string') {
-      return children + child;
-    }
-    return [children, child];
+    return typeof child === 'string' ? children + child : [children, child];
   }
 
-  if (typeof child === 'string') {
-    const lastChild = children[children.length - 1];
-
-    if (typeof lastChild === 'string') {
-      children[children.length - 1] += child;
-      return children;
-    }
+  if (typeof child === 'string' && typeof children[children.length - 1] === 'string') {
+    children[children.length - 1] += child;
+    return children;
   }
 
   children.push(child);
   return children;
+}
+
+function identity<T>(value: T): T {
+  return value;
 }

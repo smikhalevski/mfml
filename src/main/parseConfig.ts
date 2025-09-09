@@ -1,4 +1,5 @@
-import { getCaseInsensitiveHashCode, getCaseSensitiveHashCode, TokenizeMarkupOptions } from './tokenizeMarkup.js';
+import { getCaseInsensitiveHashCode, getCaseSensitiveHashCode } from './tokenizeMarkup.js';
+import { ParseMessageOptions } from './parseMessage.js';
 
 export interface Config {
   /**
@@ -96,9 +97,52 @@ export interface Config {
    * @default false
    */
   isCDATAInterpolated?: boolean;
+
+  /**
+   * Renames an XML tag.
+   *
+   * @param tagName A tag to rename.
+   * @returns The new tag name.
+   */
+  renameTag?: (tagName: string) => string;
+
+  /**
+   * Renames an XML attribute.
+   *
+   * @param attributeName An attribute to rename.
+   * @param tagName An tag name that was processed with {@link renameTag}.
+   * @returns The new attribute name.
+   */
+  renameAttribute?: (attributeName: string, tagName: string) => string;
+
+  /**
+   * Renames an ICU arguments.
+   *
+   * @param argumentName An argument to rename.
+   * @returns The new argument name.
+   */
+  renameArgument?: (argumentName: string) => string;
+
+  /**
+   * Renames an ICU argument type.
+   *
+   * @param argumentType An argument type to rename.
+   * @param argumentName An argument name that was processed with {@link renameArgument}.
+   * @returns The new argument type name.
+   */
+  renameArgumentType?: (argumentType: string, argumentName: string) => string;
+
+  /**
+   * Renames an ICU argument style.
+   *
+   * @param argumentStyle An argument style to rename.
+   * @param argumentType An argument type that was processed with {@link renameArgumentType}.
+   * @returns The new argument style name.
+   */
+  renameArgumentStyle?: (argumentStyle: string, argumentType: string) => string;
 }
 
-export function parseConfig(config: Config): TokenizeMarkupOptions {
+export function parseConfig(config: Config): ParseMessageOptions {
   const {
     voidTags,
     cdataTags,
@@ -109,6 +153,11 @@ export function parseConfig(config: Config): TokenizeMarkupOptions {
     isUnbalancedTagsImplicitlyClosed,
     isOrphanClosingTagsIgnored,
     isCDATAInterpolated,
+    renameArgument,
+    renameArgumentType,
+    renameArgumentStyle,
+    renameTag,
+    renameAttribute,
   } = config;
 
   const getHashCode = isCaseInsensitiveTags ? getCaseInsensitiveHashCode : getCaseSensitiveHashCode;
@@ -129,5 +178,10 @@ export function parseConfig(config: Config): TokenizeMarkupOptions {
     isUnbalancedTagsImplicitlyClosed,
     isOrphanClosingTagsIgnored,
     isCDATAInterpolated,
+    renameTag,
+    renameAttribute,
+    renameArgument,
+    renameArgumentType,
+    renameArgumentStyle,
   };
 }

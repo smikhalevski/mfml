@@ -23,16 +23,7 @@ export interface ArgumentNode {
 export interface SelectNode {
   nodeType: 'select';
   argumentName: string;
-
-  // select selectordinal plural
   type: string;
-
-  // zero
-  // one (singular)
-  // two (dual)
-  // few (paucal)
-  // many (also used for fractions if they have a separate class)
-  // other (required—general plural form—also used if the language only has a single form)
   categories: Record<string, Child[] | string>;
 }
 
@@ -42,12 +33,11 @@ export function createMessageNode(locale: string): MessageNode {
   const node: MessageNode = { nodeType: 'message', locale, children: null };
 
   if (arguments.length > 1) {
-    const children = [];
+    node.children = [];
 
-    for (let i = 1; i < arguments.length; ++i) {
-      children.push(arguments[i]);
+    for (let index = 1; index < arguments.length; ++index) {
+      node.children.push(arguments[index]);
     }
-    node.children = children;
   }
 
   return node;
@@ -66,12 +56,11 @@ export function createElementNode(
   const node: ElementNode = { nodeType: 'element', tagName, attributes, children: null };
 
   if (arguments.length > 2) {
-    const children = [];
+    node.children = [];
 
-    for (let i = 2; i < arguments.length; ++i) {
-      children.push(arguments[i]);
+    for (let index = 2; index < arguments.length; ++index) {
+      node.children.push(arguments[index]);
     }
-    node.children = children;
   }
 
   return node;

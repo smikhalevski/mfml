@@ -10,6 +10,14 @@ test('parses text', () => {
   } satisfies MessageNode);
 });
 
+test('concatenates text nodes', () => {
+  expect(parseMessage('en', 'aaa<!--hidden-->bbb')).toStrictEqual({
+    nodeType: 'message',
+    locale: 'en',
+    children: 'aaabbb',
+  } satisfies MessageNode);
+});
+
 test('parses an element', () => {
   expect(parseMessage('en', '<aaa>bbb</aaa>')).toStrictEqual({
     nodeType: 'message',
@@ -238,6 +246,36 @@ test('parses select multiple categories mixed with elements', () => {
         ],
       },
       'vvv',
+    ],
+  } satisfies MessageNode);
+});
+
+test('renames tags', () => {
+  expect(parseMessage('en', '<aaa>bbb</aaa>', { renameTag: () => 'zzz' })).toStrictEqual({
+    nodeType: 'message',
+    locale: 'en',
+    children: [
+      {
+        nodeType: 'element',
+        tagName: 'zzz',
+        attributes: null,
+        children: 'bbb',
+      },
+    ],
+  } satisfies MessageNode);
+});
+
+test('renames tags', () => {
+  expect(parseMessage('en', '<aaa>bbb</aaa>', { processText: () => 'zzz' })).toStrictEqual({
+    nodeType: 'message',
+    locale: 'en',
+    children: [
+      {
+        nodeType: 'element',
+        tagName: 'aaa',
+        attributes: null,
+        children: 'zzz',
+      },
     ],
   } satisfies MessageNode);
 });
