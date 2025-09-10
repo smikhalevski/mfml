@@ -5,3 +5,4 @@
  */
 
 export { Message, type MessageProps } from './Message.js';
+export { useLocale, LocaleProvider } from './useLocale.js';
