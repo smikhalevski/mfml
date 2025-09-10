@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { readTokens, tokenizeMessage } from '../../main/parser/tokenizeMessage.js';
-import { parseConfig } from '../../main/parser/parseConfig.js';
+import { resolveTokenizerOptions } from '../../main/parser/resolveTokenizerOptions.js';
 
 const callbackMock = vi.fn();
 
@@ -438,7 +438,7 @@ describe('readTokens', () => {
   });
 
   test('ignores tags in CDATA tags', () => {
-    readTokens('<script><aaa>bbb</aaa></script>', callbackMock, parseConfig({ cdataTags: ['script'] }));
+    readTokens('<script><aaa>bbb</aaa></script>', callbackMock, resolveTokenizerOptions({ cdataTags: ['script'] }));
 
     expect(callbackMock).toHaveBeenCalledTimes(4);
     expect(callbackMock).toHaveBeenNthCalledWith(1, 'XML_OPENING_TAG_START', 1, 7);
@@ -448,7 +448,11 @@ describe('readTokens', () => {
   });
 
   test('reads attributes of a CDATA tag', () => {
-    readTokens('<script aaa="xxx" ccc="yyy">zzz</script>', callbackMock, parseConfig({ cdataTags: ['script'] }));
+    readTokens(
+      '<script aaa="xxx" ccc="yyy">zzz</script>',
+      callbackMock,
+      resolveTokenizerOptions({ cdataTags: ['script'] })
+    );
 
     expect(callbackMock).toHaveBeenCalledTimes(10);
     expect(callbackMock).toHaveBeenNthCalledWith(1, 'XML_OPENING_TAG_START', 1, 7);
@@ -464,7 +468,7 @@ describe('readTokens', () => {
   });
 
   test('ignores comments in CDATA tags', () => {
-    readTokens('<script><!-->bbb</--></script>', callbackMock, parseConfig({ cdataTags: ['script'] }));
+    readTokens('<script><!-->bbb</--></script>', callbackMock, resolveTokenizerOptions({ cdataTags: ['script'] }));
 
     expect(callbackMock).toHaveBeenCalledTimes(4);
     expect(callbackMock).toHaveBeenNthCalledWith(1, 'XML_OPENING_TAG_START', 1, 7);
@@ -477,7 +481,7 @@ describe('readTokens', () => {
     readTokens(
       '<script><!-->bbb</--></SCRIPT>',
       callbackMock,
-      parseConfig({ cdataTags: ['script'], isCaseInsensitiveTags: true })
+      resolveTokenizerOptions({ cdataTags: ['script'], isCaseInsensitiveTags: true })
     );
 
     expect(callbackMock).toHaveBeenCalledTimes(4);
@@ -488,7 +492,7 @@ describe('readTokens', () => {
   });
 
   test('does not read ICU markup in CDATA tag content by default', () => {
-    readTokens('<script>{aaa}</script>', callbackMock, parseConfig({ cdataTags: ['script'] }));
+    readTokens('<script>{aaa}</script>', callbackMock, resolveTokenizerOptions({ cdataTags: ['script'] }));
 
     expect(callbackMock).toHaveBeenCalledTimes(4);
     expect(callbackMock).toHaveBeenNthCalledWith(1, 'XML_OPENING_TAG_START', 1, 7);
@@ -501,7 +505,7 @@ describe('readTokens', () => {
     readTokens(
       '<script>{aaa}</script>',
       callbackMock,
-      parseConfig({ cdataTags: ['script'], isCDATAInterpolated: true })
+      resolveTokenizerOptions({ cdataTags: ['script'], isCDATAInterpolated: true })
     );
 
     expect(callbackMock).toHaveBeenCalledTimes(5);
@@ -516,7 +520,7 @@ describe('readTokens', () => {
     readTokens(
       '<script aaa="{bbb}">{ccc}</script>',
       callbackMock,
-      parseConfig({ cdataTags: ['script'], isCDATAInterpolated: true })
+      resolveTokenizerOptions({ cdataTags: ['script'], isCDATAInterpolated: true })
     );
 
     expect(callbackMock).toHaveBeenCalledTimes(9);
@@ -756,7 +760,7 @@ describe('tokenizeMessage', () => {
     tokenizeMessage(
       '<aaa>bbb<ccc>ddd',
       callbackMock,
-      parseConfig({ isUnbalancedTagsImplicitlyClosed: true, implicitlyClosedTags: { ccc: ['aaa'] } })
+      resolveTokenizerOptions({ isUnbalancedTagsImplicitlyClosed: true, implicitlyClosedTags: { ccc: ['aaa'] } })
     );
 
     expect(callbackMock).toHaveBeenCalledTimes(8);
@@ -774,7 +778,7 @@ describe('tokenizeMessage', () => {
     tokenizeMessage(
       '<aaa>bbb<ccc>ddd<eee>',
       callbackMock,
-      parseConfig({ isUnbalancedTagsImplicitlyClosed: true, implicitlyClosedTags: { eee: ['aaa'] } })
+      resolveTokenizerOptions({ isUnbalancedTagsImplicitlyClosed: true, implicitlyClosedTags: { eee: ['aaa'] } })
     );
 
     expect(callbackMock).toHaveBeenCalledTimes(11);
@@ -795,7 +799,10 @@ describe('tokenizeMessage', () => {
     tokenizeMessage(
       '<aaa>bbb<ccc>ddd<eee>fff<ggg>',
       callbackMock,
-      parseConfig({ isUnbalancedTagsImplicitlyClosed: true, implicitlyClosedTags: { ggg: ['aaa', 'eee'] } })
+      resolveTokenizerOptions({
+        isUnbalancedTagsImplicitlyClosed: true,
+        implicitlyClosedTags: { ggg: ['aaa', 'eee'] },
+      })
     );
 
     expect(callbackMock).toHaveBeenCalledTimes(15);
@@ -817,7 +824,7 @@ describe('tokenizeMessage', () => {
   });
 
   test('reads the void tag', () => {
-    tokenizeMessage('<aaa>bbb', callbackMock, parseConfig({ voidTags: ['aaa'] }));
+    tokenizeMessage('<aaa>bbb', callbackMock, resolveTokenizerOptions({ voidTags: ['aaa'] }));
 
     expect(callbackMock).toHaveBeenCalledTimes(4);
     expect(callbackMock).toHaveBeenNthCalledWith(1, 'XML_OPENING_TAG_START', 1, 4);
@@ -827,7 +834,7 @@ describe('tokenizeMessage', () => {
   });
 
   test('reads consequent void tags', () => {
-    tokenizeMessage('<aaa><bbb>', callbackMock, parseConfig({ voidTags: ['aaa', 'bbb'] }));
+    tokenizeMessage('<aaa><bbb>', callbackMock, resolveTokenizerOptions({ voidTags: ['aaa', 'bbb'] }));
 
     expect(callbackMock).toHaveBeenCalledTimes(6);
     expect(callbackMock).toHaveBeenNthCalledWith(1, 'XML_OPENING_TAG_START', 1, 4);
@@ -839,7 +846,7 @@ describe('tokenizeMessage', () => {
   });
 
   test('reads the void tag in the container', () => {
-    tokenizeMessage('<aaa><bbb></aaa>', callbackMock, parseConfig({ voidTags: ['bbb'] }));
+    tokenizeMessage('<aaa><bbb></aaa>', callbackMock, resolveTokenizerOptions({ voidTags: ['bbb'] }));
 
     expect(callbackMock).toHaveBeenCalledTimes(6);
     expect(callbackMock).toHaveBeenNthCalledWith(1, 'XML_OPENING_TAG_START', 1, 4);
@@ -851,7 +858,11 @@ describe('tokenizeMessage', () => {
   });
 
   test('implicitly closes a tag', () => {
-    tokenizeMessage('<aaa><bbb></aaa>', callbackMock, parseConfig({ isUnbalancedTagsImplicitlyClosed: true }));
+    tokenizeMessage(
+      '<aaa><bbb></aaa>',
+      callbackMock,
+      resolveTokenizerOptions({ isUnbalancedTagsImplicitlyClosed: true })
+    );
 
     expect(callbackMock).toHaveBeenCalledTimes(6);
     expect(callbackMock).toHaveBeenNthCalledWith(1, 'XML_OPENING_TAG_START', 1, 4);
@@ -863,13 +874,13 @@ describe('tokenizeMessage', () => {
   });
 
   test('ignores an orphan closing tag', () => {
-    tokenizeMessage('</aaa>', callbackMock, parseConfig({ isOrphanClosingTagsIgnored: true }));
+    tokenizeMessage('</aaa>', callbackMock, resolveTokenizerOptions({ isOrphanClosingTagsIgnored: true }));
 
     expect(callbackMock).toHaveBeenCalledTimes(0);
   });
 
   test('ignores an orphan closing tag in a container', () => {
-    tokenizeMessage('<aaa></bbb></aaa>', callbackMock, parseConfig({ isOrphanClosingTagsIgnored: true }));
+    tokenizeMessage('<aaa></bbb></aaa>', callbackMock, resolveTokenizerOptions({ isOrphanClosingTagsIgnored: true }));
 
     expect(callbackMock).toHaveBeenCalledTimes(3);
     expect(callbackMock).toHaveBeenNthCalledWith(1, 'XML_OPENING_TAG_START', 1, 4);
@@ -878,7 +889,7 @@ describe('tokenizeMessage', () => {
   });
 
   test('inserts opening tags for orphan closing tags', () => {
-    tokenizeMessage('</aaa>', callbackMock, parseConfig({ implicitlyOpenedTags: ['aaa'] }));
+    tokenizeMessage('</aaa>', callbackMock, resolveTokenizerOptions({ implicitlyOpenedTags: ['aaa'] }));
 
     expect(callbackMock).toHaveBeenCalledTimes(3);
     expect(callbackMock).toHaveBeenNthCalledWith(1, 'XML_OPENING_TAG_START', 0, 0);
@@ -890,7 +901,7 @@ describe('tokenizeMessage', () => {
     tokenizeMessage(
       '<aaa></bbb>',
       callbackMock,
-      parseConfig({ implicitlyClosedTags: { bbb: ['aaa'] }, implicitlyOpenedTags: ['bbb'] })
+      resolveTokenizerOptions({ implicitlyClosedTags: { bbb: ['aaa'] }, implicitlyOpenedTags: ['bbb'] })
     );
 
     expect(callbackMock).toHaveBeenCalledTimes(6);
@@ -906,7 +917,7 @@ describe('tokenizeMessage', () => {
     tokenizeMessage(
       'aaa<xxx>bbb<xxx>ccc</xxx>ddd</xxx>eee',
       callbackMock,
-      parseConfig({ implicitlyClosedTags: { xxx: ['xxx'] }, implicitlyOpenedTags: ['xxx'] })
+      resolveTokenizerOptions({ implicitlyClosedTags: { xxx: ['xxx'] }, implicitlyOpenedTags: ['xxx'] })
     );
 
     expect(callbackMock).toHaveBeenCalledTimes(14);
@@ -939,7 +950,7 @@ describe('tokenizeMessage', () => {
   });
 
   test('reads case-insensitive closing tags', () => {
-    tokenizeMessage('<aaa></AAA>', callbackMock, parseConfig({ isCaseInsensitiveTags: true }));
+    tokenizeMessage('<aaa></AAA>', callbackMock, resolveTokenizerOptions({ isCaseInsensitiveTags: true }));
 
     expect(callbackMock).toHaveBeenCalledTimes(3);
     expect(callbackMock).toHaveBeenNthCalledWith(1, 'XML_OPENING_TAG_START', 1, 4);
@@ -951,7 +962,7 @@ describe('tokenizeMessage', () => {
     tokenizeMessage(
       '<aaaффф></AAAФФФ>',
       callbackMock,
-      parseConfig({
+      resolveTokenizerOptions({
         isCaseInsensitiveTags: true,
         isUnbalancedTagsImplicitlyClosed: true,
         isOrphanClosingTagsIgnored: true,
@@ -968,7 +979,7 @@ describe('tokenizeMessage', () => {
     tokenizeMessage(
       '<a><b></a></b>',
       callbackMock,
-      parseConfig({ isUnbalancedTagsImplicitlyClosed: true, isOrphanClosingTagsIgnored: true })
+      resolveTokenizerOptions({ isUnbalancedTagsImplicitlyClosed: true, isOrphanClosingTagsIgnored: true })
     );
 
     expect(callbackMock).toHaveBeenCalledTimes(6);

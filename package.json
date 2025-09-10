@@ -49,7 +49,7 @@
   "devDependencies": {
     "@testing-library/jest-dom": "^6.8.0",
     "@testing-library/react": "^16.3.0",
-    "@types/node": "^24.3.0",
+    "@types/node": "^24.3.1",
     "@types/react": "^19.1.12",
     "jsdom": "^26.1.0",
     "prettier": "^3.6.2",
@@ -68,8 +68,5 @@
     "react": {
       "optional": true
     }
-  },
-  "dependencies": {
-    "parallel-universe": "^6.1.2"
   }
 }

@@ -1,7 +1,6 @@
-import { getCaseInsensitiveHashCode, getCaseSensitiveHashCode } from './tokenizeMessage.js';
-import { ParseMessageOptions } from './parseMessage.js';
+import { getCaseInsensitiveHashCode, getCaseSensitiveHashCode, BinaryTokenizerOptions } from './tokenizeMessage.js';
 
-export interface ParserConfig {
+export interface TokenizerOptions {
   /**
    * List of tag that cannot have any content and are always closed after being opening tag.
    */
@@ -97,62 +96,12 @@ export interface ParserConfig {
    * @default false
    */
   isCDATAInterpolated?: boolean;
-
-  /**
-   * Renames an XML tag.
-   *
-   * @param tagName A tag to rename.
-   * @returns The new tag name.
-   */
-  renameTag?: (tagName: string) => string;
-
-  /**
-   * Renames an XML attribute.
-   *
-   * @param attributeName An attribute to rename.
-   * @param tagName An tag name that was processed with {@link renameTag}.
-   * @returns The new attribute name.
-   */
-  renameAttribute?: (attributeName: string, tagName: string) => string;
-
-  /**
-   * Renames an ICU arguments.
-   *
-   * @param argumentName An argument to rename.
-   * @returns The new argument name.
-   */
-  renameArgument?: (argumentName: string) => string;
-
-  /**
-   * Renames an ICU argument type.
-   *
-   * @param argumentType An argument type to rename.
-   * @param argumentName An argument name that was processed with {@link renameArgument}.
-   * @returns The new argument type name.
-   */
-  renameArgumentType?: (argumentType: string, argumentName: string) => string;
-
-  /**
-   * Renames an ICU argument style.
-   *
-   * @param argumentStyle An argument style to rename.
-   * @param argumentType An argument type that was processed with {@link renameArgumentType}.
-   * @returns The new argument style name.
-   */
-  renameArgumentStyle?: (argumentStyle: string, argumentType: string) => string;
-
-  /**
-   * Rewrite text content before it is pushed to a node. Use this method to decode HTML entities.
-   *
-   * @param text Text to rewrite.
-   */
-  processText?: (text: string) => string;
 }
 
 /**
  * Converts parser configuration into options consumed by {@link parseMessage} and {@link tokenizeMessage}.
  */
-export function parseConfig(config: ParserConfig): ParseMessageOptions {
+export function resolveTokenizerOptions(config: TokenizerOptions): BinaryTokenizerOptions {
   const {
     voidTags,
     cdataTags,
@@ -163,12 +112,6 @@ export function parseConfig(config: ParserConfig): ParseMessageOptions {
     isUnbalancedTagsImplicitlyClosed,
     isOrphanClosingTagsIgnored,
     isCDATAInterpolated,
-    renameArgument,
-    renameArgumentType,
-    renameArgumentStyle,
-    renameTag,
-    renameAttribute,
-    processText,
   } = config;
 
   const getHashCode = isCaseInsensitiveTags ? getCaseInsensitiveHashCode : getCaseSensitiveHashCode;
@@ -189,11 +132,5 @@ export function parseConfig(config: ParserConfig): ParseMessageOptions {
     isUnbalancedTagsImplicitlyClosed,
     isOrphanClosingTagsIgnored,
     isCDATAInterpolated,
-    renameTag,
-    renameAttribute,
-    renameArgument,
-    renameArgumentType,
-    renameArgumentStyle,
-    processText,
   };
 }

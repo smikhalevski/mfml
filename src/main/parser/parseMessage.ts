@@ -1,4 +1,4 @@
-import { TokenCallback, tokenizeMessage, TokenizeMessageOptions } from './tokenizeMessage.js';
+import { TokenCallback, tokenizeMessage, BinaryTokenizerOptions } from './tokenizeMessage.js';
 import {
   Child,
   createArgumentNode,
@@ -10,10 +10,7 @@ import {
   SelectNode,
 } from '../ast.js';
 
-/**
- * Options of {@link parseMessage}.
- */
-export interface ParseMessageOptions extends TokenizeMessageOptions {
+export interface DecodingOptions {
   /**
    * Renames an XML tag.
    *
@@ -58,29 +55,44 @@ export interface ParseMessageOptions extends TokenizeMessageOptions {
   renameArgumentStyle?: (argumentStyle: string, argumentType: string) => string;
 
   /**
-   * Rewrite text content before it is pushed to a node. Use this method to decode HTML entities.
+   * Decode text content before it is pushed to a node. Use this method to decode HTML entities.
    *
    * @param text Text to rewrite.
    */
-  processText?: (text: string) => string;
+  decodeText?: (text: string) => string;
+}
+
+export interface ParserOptions extends DecodingOptions {
+  /**
+   * Tokenizer options prepared by {@link resolveTokenizerOptions}.
+   *
+   * @see {@link htmlTokenizerOptions}
+   */
+  tokenizerOptions?: BinaryTokenizerOptions;
 }
 
 /**
  * Parses text message to an AST.
  *
+ * @example
+ * parseMessage('en-US', 'Hello, <b>{name}</b>!', {
+ *   tokenizerOptions: resolveTokenizerOptions(htmlTokenizerOptions),
+ * });
+ *
  * @param locale The message locale.
  * @param text The message text to parse.
- * @param options Parsing options.
+ * @param options Parser options.
  * @returns The message node that describes the message contents.
  */
-export function parseMessage(locale: string, text: string, options: ParseMessageOptions = {}): MessageNode {
+export function parseMessage(locale: string, text: string, options: ParserOptions = {}): MessageNode {
   const {
+    tokenizerOptions,
     renameTag = identity,
     renameAttribute = identity,
     renameArgument = identity,
     renameArgumentType = identity,
     renameArgumentStyle = identity,
-    processText = identity,
+    decodeText = identity,
   } = options;
 
   let tagName: string;
@@ -95,7 +107,7 @@ export function parseMessage(locale: string, text: string, options: ParseMessage
   const tokenCallback: TokenCallback = (token, startIndex, endIndex) => {
     switch (token) {
       case 'TEXT':
-        pushChild(stack, stackCursor, processText(text.substring(startIndex, endIndex)));
+        pushChild(stack, stackCursor, decodeText(text.substring(startIndex, endIndex)));
         break;
 
       case 'XML_OPENING_TAG_START':
@@ -176,7 +188,7 @@ export function parseMessage(locale: string, text: string, options: ParseMessage
     }
   };
 
-  tokenizeMessage(text, tokenCallback, options);
+  tokenizeMessage(text, tokenCallback, tokenizerOptions);
 
   return messageNode;
 }

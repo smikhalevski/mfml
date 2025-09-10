@@ -208,7 +208,7 @@ test('parses select case with an element', () => {
 test('parses select multiple categories mixed with elements', () => {
   expect(
     parseMessage('en', '<eee>{xxx,yyy,ppp{<fff/>bbb}qqq{<kkk>aaa</kkk>}}</eee>vvv', {
-      isSelfClosingTagsRecognized: true,
+      tokenizerOptions: { isSelfClosingTagsRecognized: true },
     })
   ).toStrictEqual({
     nodeType: 'message',
@@ -266,7 +266,7 @@ test('renames tags', () => {
 });
 
 test('renames tags', () => {
-  expect(parseMessage('en', '<aaa>bbb</aaa>', { processText: () => 'zzz' })).toStrictEqual({
+  expect(parseMessage('en', '<aaa>bbb</aaa>', { decodeText: () => 'zzz' })).toStrictEqual({
     nodeType: 'message',
     locale: 'en',
     children: [

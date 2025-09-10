@@ -1,75 +1,103 @@
 import { Child, MessageNode } from '../ast.js';
-import { parseConfig, parseMessage, ParserConfig } from '../parser/index.js';
+import {
+  htmlTokenizerOptions,
+  DecodingOptions,
+  parseMessage,
+  ParserOptions,
+  resolveTokenizerOptions,
+  TokenizerOptions,
+} from '../parser/index.js';
 import { collectArgumentNames, escapeIdentifier } from './utils.js';
 
 /**
  * Options of {@link compileModule}.
  */
-export interface ModuleOptions extends ParserConfig {
+export interface ModuleOptions extends DecodingOptions {
   /**
-   * Translations arranged by a locale.
+   * Explicit message tokenization options or "html" to use {@link htmlTokenizerOptions HTML tokenization options}.
    *
-   * ```json
-   * {
-   *   "en-US": {
-   *     "messageCount": "You have <b>{count, number}</b> unread messages",
-   *     "messageReceived": "{gender, select, male {He} female {She} other {They}} sent you a message",
-   *   },
-   *   "ru-RU": {
-   *     "messageCount": "У вас <b>{count, number}</b> непрочитанных сообщений",
-   *     "messageReceived": "{gender, select, male {Он отправил} female {Она отправила} other {Они отправили}} вам сообщение",
-   *   }
-   * }
-   * ```
+   * @default "html"
    */
-  translations: { [locale: string]: { [translationKey: string]: string } };
+  tokenizerOptions?: TokenizerOptions | 'html';
 
   /**
-   * Renames translation key so it can be used as a function name.
+   * The output language of a compiled module.
+   *
+   * @default "typescript"
    */
-  renameTranslationKey?: (translationKey: string) => string;
+  language?: 'typescript' | 'javascript';
+
+  /**
+   * Returns the name of a message function for the given message key.
+   */
+  renameMessageFunction?: (messageKey: string) => string;
 }
 
 /**
  * Compiles MFML AST as a TypeScript source.
  *
+ * @example
+ * compileModule({
+ *   "en-US": {
+ *     "messageCount": "You have <b>{count, number}</b> unread messages",
+ *     "messageReceived": "{gender, select, male {He} female {She} other {They}} sent you a message",
+ *   },
+ *   "ru-RU": {
+ *     "messageCount": "У вас <b>{count, number}</b> непрочитанных сообщений",
+ *     "messageReceived": "{gender, select, male {Он отправил} female {Она отправила} other {Они отправили}} вам сообщение",
+ *   }
+ * });
+ *
+ * @param messages Messages arranged by a locale.
  * @param options Compilation options.
- * @returns The source of a module that exports translation functions.
+ * @returns The source of a module that exports message functions.
  */
-export function compileModule(options: ModuleOptions): string {
-  const { translations, renameTranslationKey = escapeIdentifier } = options;
+export function compileModule(
+  messages: { [locale: string]: { [messageKey: string]: string } },
+  options: ModuleOptions = {}
+): string {
+  const { tokenizerOptions = 'html', language = 'typescript', renameMessageFunction = escapeIdentifier } = options;
 
-  const parseMessageOptions = parseConfig(options);
+  const parserOptions: ParserOptions = {
+    ...options,
+    tokenizerOptions:
+      tokenizerOptions === 'html' ? htmlBinaryTokenizerOptions : resolveTokenizerOptions(tokenizerOptions),
+  };
 
   let str =
     'import{createMessageNode as M,createElementNode as E,createArgumentNode as A,createSelectNode as S,type MessageNode}from"mfml/ast";\n';
 
-  const locales = Object.keys(translations);
+  const locales = Object.keys(messages);
 
-  const translationKeys = new Set(
-    locales.reduce<string[]>((keys, locale) => keys.concat(Object.keys(translations[locale])), [])
+  const messageKeys = new Set(
+    locales.reduce<string[]>((keys, locale) => keys.concat(Object.keys(messages[locale])), [])
   );
 
-  for (const translationKey of translationKeys) {
+  for (const messageKey of messageKeys) {
     const messageNodes: MessageNode[] = [];
     const argumentNames = new Set<string>();
 
     for (const locale of locales) {
-      const text = translations[locale][translationKey];
+      const text = messages[locale][messageKey];
 
       if (text !== undefined) {
-        const messageNode = parseMessage(locale, text, parseMessageOptions);
-        collectArgumentNames(messageNode, argumentNames);
+        const messageNode = parseMessage(locale, text, parserOptions);
+
+        if (language === 'typescript') {
+          collectArgumentNames(messageNode, argumentNames);
+        }
+
         messageNodes.push(messageNode);
       }
     }
 
     str +=
       '\nexport function ' +
-      renameTranslationKey(translationKey) +
-      '(locale:string):MessageNode<' +
-      compileArgumentsType(argumentNames) +
-      '>|null{\nreturn ';
+      renameMessageFunction(messageKey) +
+      (language === 'typescript'
+        ? '(locale:string):MessageNode<' + compileArgumentsType(argumentNames) + '>|null'
+        : '(locale)') +
+      '{\nreturn ';
 
     for (const messageNode of messageNodes) {
       str += 'locale===' + JSON.stringify(messageNode.locale) + '?' + compileMessageNode(messageNode) + ':';
@@ -80,6 +108,8 @@ export function compileModule(options: ModuleOptions): string {
 
   return str;
 }
+
+const htmlBinaryTokenizerOptions = resolveTokenizerOptions(htmlTokenizerOptions);
 
 function compileArgumentsType(argumentNames: Set<string>): string {
   let str = '{';
@@ -157,5 +187,5 @@ function compileChild(child: Child): string {
     return str + '})';
   }
 
-  throw new Error('Unknown type');
+  throw new Error('Unknown node type');
 }

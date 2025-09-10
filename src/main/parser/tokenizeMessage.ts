@@ -29,7 +29,7 @@ export type TokenCallback = (token: Token, startIndex: number, endIndex: number)
 /**
  * Options of {@link tokenizeMessage}.
  */
-export interface TokenizeMessageOptions {
+export interface BinaryTokenizerOptions {
   /**
    * Reads a tag name as a unique hash code.
    *
@@ -131,11 +131,20 @@ export interface TokenizeMessageOptions {
  * This method doesn't guarantee that contents of returned tokens is consistent. For example, ICU argument type may not
  * properly reflect the consequent ICU category tokens.
  *
+ * @example
+ * tokenizeMessage(
+ *   'Hello, <b>{name}</b>!',
+ *   (token, startIndex, endIndex) => {
+ *     // Handle token here
+ *   },
+ *   resolveTokenizerOptions(htmlTokenizerOptions)
+ * );
+ *
  * @param text The text string to read tokens from.
  * @param callback The callback that is invoked when a token is read.
- * @param options Tokenization options.
+ * @param options Tokenizer options prepared by {@link resolveTokenizerOptions}.
  */
-export function tokenizeMessage(text: string, callback: TokenCallback, options: TokenizeMessageOptions = {}): void {
+export function tokenizeMessage(text: string, callback: TokenCallback, options: BinaryTokenizerOptions = {}): void {
   const {
     readTag = getCaseSensitiveHashCode,
     voidTags,

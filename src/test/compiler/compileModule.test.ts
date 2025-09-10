@@ -1,7 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import { compileMessageNode, compileModule } from '../../main/compiler/compileModule.js';
 import { parseMessage } from '../../main/parser/parseMessage.js';
-import { parseConfig } from '../../main/parser/parseConfig.js';
 
 describe('compileMessageNode', () => {
   test('compiles text', () => {
@@ -14,9 +13,9 @@ describe('compileMessageNode', () => {
     expect(compileMessageNode(parseMessage('ru', '<aaa><bbb>ccc</bbb></aaa>'))).toBe(
       'M("ru",E("aaa",null,E("bbb",null,"ccc")))'
     );
-    expect(compileMessageNode(parseMessage('ru', '<aaa/>', parseConfig({ isSelfClosingTagsRecognized: true })))).toBe(
-      'M("ru",E("aaa"))'
-    );
+    expect(
+      compileMessageNode(parseMessage('ru', '<aaa/>', { tokenizerOptions: { isSelfClosingTagsRecognized: true } }))
+    ).toBe('M("ru",E("aaa"))');
     expect(compileMessageNode(parseMessage('ru', '<aaa xxx="zzz" yyy="{vvv}fff">bbb</aaa>'))).toBe(
       'M("ru",E("aaa",{"xxx":"zzz","yyy":[A("vvv"),"fff"]},"bbb"))'
     );
@@ -32,19 +31,17 @@ describe('compileMessageNode', () => {
 });
 
 describe('compileModule', () => {
-  test('compiles translations', () => {
+  test('compiles messages', () => {
     expect(
       compileModule({
-        translations: {
-          'en-US': {
-            messageCount: 'You have <b>{count, number}</b> unread messages',
-            messageReceived: '{gender, select, male {He} female {She} other {They}} sent you a message',
-          },
-          'ru-RU': {
-            messageCount: 'У вас <b>{count, number}</b> непрочитанных сообщений',
-            messageReceived:
-              '{gender, select, male {Он отправил} female {Она отправила} other {Они отправили}} вам сообщение',
-          },
+        'en-US': {
+          messageCount: 'You have <b>{count, number}</b> unread messages',
+          messageReceived: '{gender, select, male {He} female {She} other {They}} sent you a message',
+        },
+        'ru-RU': {
+          messageCount: 'У вас <b>{count, number}</b> непрочитанных сообщений',
+          messageReceived:
+            '{gender, select, male {Он отправил} female {Она отправила} other {Они отправили}} вам сообщение',
         },
       })
     ).toBe(
