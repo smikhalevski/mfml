@@ -5,3 +5,4 @@
  */
 
 export { renderPlainText } from './renderPlainText.js';
+export { type RenderingOptions } from './types.js';
