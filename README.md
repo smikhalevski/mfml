@@ -1,10 +1,39 @@
-# MFML
+<br/>
+
+<p align="center">
+  <a href="#readme"><picture>
+    <source media="(prefers-color-scheme: dark)" srcset="./images/logo-dark.png" />
+    <source media="(prefers-color-scheme: light)" srcset="./images/logo-light.png" />
+    <img alt="MFML" src="./images/logo-light.png" width="400" />
+  </picture></a>
+</p>
+
+<br/>
+
+<!--ARTICLE-->
+
+<!--OVERVIEW-->
 
 The ICU MessageFormat + XML/HTML compiler and runtime that makes your translations tree-shakeable.
+
+- TypeScript first.
+- Integrate with any translation management system.
+- Zero dependencies.
+
+<!--/OVERVIEW-->
+
+<br>
 
 ```sh
 npm install --save-prod mfml
 ```
+
+<br>
+
+<!--/ARTICLE-->
+
+<!--TOC-->
+<!--/TOC-->
 
 # Overview
 
