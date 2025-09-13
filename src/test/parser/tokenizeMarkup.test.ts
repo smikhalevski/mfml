@@ -516,7 +516,7 @@ describe('readTokens', () => {
     expect(callbackMock).toHaveBeenNthCalledWith(5, 'XML_CLOSING_TAG', 15, 21);
   });
 
-  test('reads ICU markup in CDATA tag attributes', () => {
+  test('reads an ICU argument in a CDATA tag attribute', () => {
     readTokens(
       '<script aaa="{bbb}">{ccc}</script>',
       callbackMock,
@@ -533,6 +533,29 @@ describe('readTokens', () => {
     expect(callbackMock).toHaveBeenNthCalledWith(7, 'ICU_ARGUMENT_START', 21, 24);
     expect(callbackMock).toHaveBeenNthCalledWith(8, 'ICU_ARGUMENT_END', 24, 25);
     expect(callbackMock).toHaveBeenNthCalledWith(9, 'XML_CLOSING_TAG', 27, 33);
+  });
+
+  test('reads an ICU select in a CDATA tag attribute', () => {
+    readTokens(
+      '<script aaa="{bbb,xxx,yyy{zzz}ppp{<vvv>qqq</vvv>}}"></script>',
+      callbackMock,
+      resolveTokenizerOptions({ cdataTags: ['script'] })
+    );
+
+    expect(callbackMock).toHaveBeenCalledTimes(14);
+    expect(callbackMock).toHaveBeenNthCalledWith(1, 'XML_OPENING_TAG_START', 1, 7);
+    expect(callbackMock).toHaveBeenNthCalledWith(2, 'XML_ATTRIBUTE_START', 8, 11);
+    expect(callbackMock).toHaveBeenNthCalledWith(3, 'ICU_ARGUMENT_START', 14, 17);
+    expect(callbackMock).toHaveBeenNthCalledWith(4, 'ICU_ARGUMENT_TYPE', 18, 21);
+    expect(callbackMock).toHaveBeenNthCalledWith(5, 'ICU_CATEGORY_START', 22, 25);
+    expect(callbackMock).toHaveBeenNthCalledWith(6, 'TEXT', 26, 29);
+    expect(callbackMock).toHaveBeenNthCalledWith(7, 'ICU_CATEGORY_END', 29, 30);
+    expect(callbackMock).toHaveBeenNthCalledWith(8, 'ICU_CATEGORY_START', 30, 33);
+    expect(callbackMock).toHaveBeenNthCalledWith(9, 'TEXT', 34, 48);
+    expect(callbackMock).toHaveBeenNthCalledWith(10, 'ICU_CATEGORY_END', 48, 49);
+    expect(callbackMock).toHaveBeenNthCalledWith(12, 'XML_ATTRIBUTE_END', 50, 51);
+    expect(callbackMock).toHaveBeenNthCalledWith(13, 'XML_OPENING_TAG_END', 51, 52);
+    expect(callbackMock).toHaveBeenNthCalledWith(14, 'XML_CLOSING_TAG', 54, 60);
   });
 
   test('reads an ICU argument', () => {
@@ -729,6 +752,19 @@ describe('readTokens', () => {
     expect(callbackMock).toHaveBeenNthCalledWith(9, 'XML_ATTRIBUTE_END', 39, 40);
     expect(callbackMock).toHaveBeenNthCalledWith(10, 'XML_OPENING_TAG_END', 40, 41);
     expect(callbackMock).toHaveBeenNthCalledWith(11, 'XML_CLOSING_TAG', 43, 46);
+  });
+
+  test('throws on non-escaped quote in an ICU select inside an attribute', () => {
+    expect(() => readTokens('<aaa xxx="{zzz,yyy,fff{"}}"></aaa>', callbackMock, {})).toThrow(
+      new SyntaxError('Unexpected ICU syntax at 23')
+    );
+
+    expect(callbackMock).toHaveBeenCalledTimes(5);
+    expect(callbackMock).toHaveBeenNthCalledWith(1, 'XML_OPENING_TAG_START', 1, 4);
+    expect(callbackMock).toHaveBeenNthCalledWith(2, 'XML_ATTRIBUTE_START', 5, 8);
+    expect(callbackMock).toHaveBeenNthCalledWith(3, 'ICU_ARGUMENT_START', 11, 14);
+    expect(callbackMock).toHaveBeenNthCalledWith(4, 'ICU_ARGUMENT_TYPE', 15, 18);
+    expect(callbackMock).toHaveBeenNthCalledWith(5, 'ICU_CATEGORY_START', 19, 22);
   });
 });
 

@@ -337,10 +337,6 @@ const SCOPE_XML_UNQUOTED_ATTRIBUTE_VALUE = 5;
 const SCOPE_ICU_ARGUMENT = 6;
 const SCOPE_ICU_CATEGORY = 7;
 
-const REGION_ROOT = 0;
-const REGION_ATTRIBUTE = 1;
-const REGION_CDATA_TAG_CONTENT = 2;
-
 const TOKEN_TEXT = 'TEXT';
 const TOKEN_XML_OPENING_TAG_START = 'XML_OPENING_TAG_START';
 const TOKEN_XML_OPENING_TAG_END = 'XML_OPENING_TAG_END';
@@ -378,9 +374,9 @@ export function readTokens(text: string, callback: TokenCallback, options: ReadT
     isCDATAInterpolated = false,
   } = options;
 
-  let region = REGION_ROOT;
   let scope = SCOPE_TEXT;
-  let cdataTag = 0;
+  let openedCDATATag = 0;
+  let latestCDATATag = 0;
   let textStartIndex = 0;
   let scopeStackCursor = 0;
 
@@ -391,9 +387,14 @@ export function readTokens(text: string, callback: TokenCallback, options: ReadT
 
     // End of a quoted XML attribute value
     if (
-      (charCode === /* " */ 34 && scope === SCOPE_XML_DOUBLE_QUOTED_ATTRIBUTE_VALUE) ||
-      (charCode === /* ' */ 39 && scope === SCOPE_XML_SINGLE_QUOTED_ATTRIBUTE_VALUE)
+      (charCode === /* " */ 34 && scopeStack.lastIndexOf(SCOPE_XML_DOUBLE_QUOTED_ATTRIBUTE_VALUE) !== -1) ||
+      (charCode === /* ' */ 39 && scopeStack.lastIndexOf(SCOPE_XML_SINGLE_QUOTED_ATTRIBUTE_VALUE) !== -1)
     ) {
+      if (scope === SCOPE_ICU_CATEGORY) {
+        // ICU category has ended prematurely
+        throw new SyntaxError(ICU_ERROR_MESSAGE + index);
+      }
+
       if (textStartIndex !== index) {
         callback(TOKEN_TEXT, textStartIndex, index);
       }
@@ -402,7 +403,6 @@ export function readTokens(text: string, callback: TokenCallback, options: ReadT
 
       callback(TOKEN_XML_ATTRIBUTE_END, index, nextIndex);
 
-      region = REGION_ROOT;
       scopeStack[scopeStackCursor] = 0;
       scope = scopeStack[--scopeStackCursor];
       nextIndex = skipSpaces(text, nextIndex);
@@ -420,7 +420,6 @@ export function readTokens(text: string, callback: TokenCallback, options: ReadT
 
       callback(TOKEN_XML_ATTRIBUTE_END, index, index);
 
-      region = REGION_ROOT;
       scopeStack[scopeStackCursor] = 0;
       scope = scopeStack[--scopeStackCursor];
 
@@ -430,8 +429,11 @@ export function readTokens(text: string, callback: TokenCallback, options: ReadT
     // XML markup
     if (
       charCode === /* < */ 60 &&
-      (((region === REGION_ROOT || region === REGION_CDATA_TAG_CONTENT) && scope === SCOPE_TEXT) ||
-        (region === REGION_ROOT && scope === SCOPE_ICU_CATEGORY))
+      (scope === SCOPE_TEXT ||
+        (scope === SCOPE_ICU_CATEGORY &&
+          // Tags are ignored inside attributes
+          scopeStack.lastIndexOf(SCOPE_XML_DOUBLE_QUOTED_ATTRIBUTE_VALUE) === -1 &&
+          scopeStack.lastIndexOf(SCOPE_XML_SINGLE_QUOTED_ATTRIBUTE_VALUE) === -1))
     ) {
       // Skip "<"
       let tagNameStartIndex = ++nextIndex;
@@ -439,7 +441,7 @@ export function readTokens(text: string, callback: TokenCallback, options: ReadT
       const nextCharCode = getCharCodeAt(text, nextIndex);
 
       // Skip XML comments, XML processing instructions, DTD and CDATA sections
-      if (region === REGION_ROOT && (nextCharCode === /* ! */ 33 || nextCharCode === /* ? */ 63)) {
+      if (latestCDATATag === 0 && (nextCharCode === /* ! */ 33 || nextCharCode === /* ? */ 63)) {
         if (textStartIndex !== index) {
           callback(TOKEN_TEXT, textStartIndex, index);
         }
@@ -476,14 +478,12 @@ export function readTokens(text: string, callback: TokenCallback, options: ReadT
           // Not a tag
           tagNameStartIndex === nextIndex ||
           // Doesn't match the current CDATA tag
-          (region === REGION_CDATA_TAG_CONTENT &&
-            (cdataTag === 0 || cdataTag !== readTag(text, tagNameStartIndex, nextIndex)))
+          (latestCDATATag !== 0 && latestCDATATag !== readTag(text, tagNameStartIndex, nextIndex))
         ) {
           continue;
         }
 
-        cdataTag = 0;
-        region = REGION_ROOT;
+        latestCDATATag = 0;
 
         if (textStartIndex !== index) {
           callback(TOKEN_TEXT, textStartIndex, index);
@@ -507,7 +507,8 @@ export function readTokens(text: string, callback: TokenCallback, options: ReadT
 
       // Start of an opening tag
 
-      if (region !== REGION_ROOT) {
+      if (latestCDATATag !== 0) {
+        // Opening tags are ignored inside CDATA tags
         ++nextIndex;
         continue;
       }
@@ -525,8 +526,8 @@ export function readTokens(text: string, callback: TokenCallback, options: ReadT
 
       callback(TOKEN_XML_OPENING_TAG_START, tagNameStartIndex, nextIndex);
 
-      if (cdataTags === undefined || !cdataTags.has((cdataTag = readTag(text, tagNameStartIndex, nextIndex)))) {
-        cdataTag = 0;
+      if (cdataTags === undefined || !cdataTags.has((openedCDATATag = readTag(text, tagNameStartIndex, nextIndex)))) {
+        openedCDATATag = 0;
       }
 
       scope = scopeStack[++scopeStackCursor] = SCOPE_XML_OPENING_TAG;
@@ -542,9 +543,7 @@ export function readTokens(text: string, callback: TokenCallback, options: ReadT
       callback(TOKEN_XML_OPENING_TAG_END, index, nextIndex);
 
       // Start of a CDATA tag content
-      if (cdataTag !== 0) {
-        region = REGION_CDATA_TAG_CONTENT;
-      }
+      latestCDATATag = openedCDATATag;
 
       scopeStack[scopeStackCursor] = 0;
       scope = scopeStack[--scopeStackCursor];
@@ -599,7 +598,6 @@ export function readTokens(text: string, callback: TokenCallback, options: ReadT
 
       if (quoteCharCode === /* " */ 34) {
         // Double-quoted value
-        region = REGION_ATTRIBUTE;
         scope = scopeStack[scopeStackCursor] = SCOPE_XML_DOUBLE_QUOTED_ATTRIBUTE_VALUE;
         textStartIndex = ++nextIndex;
         continue;
@@ -607,20 +605,18 @@ export function readTokens(text: string, callback: TokenCallback, options: ReadT
 
       if (quoteCharCode === /* ' */ 39) {
         // Single-quoted value
-        region = REGION_ATTRIBUTE;
         scope = scopeStack[scopeStackCursor] = SCOPE_XML_SINGLE_QUOTED_ATTRIBUTE_VALUE;
         textStartIndex = ++nextIndex;
         continue;
       }
 
       // Unquoted value
-      region = REGION_ATTRIBUTE;
       scope = scopeStack[scopeStackCursor] = SCOPE_XML_UNQUOTED_ATTRIBUTE_VALUE;
       textStartIndex = nextIndex;
       continue;
     }
 
-    if (region === REGION_CDATA_TAG_CONTENT && !isCDATAInterpolated) {
+    if (latestCDATATag !== 0 && !isCDATAInterpolated) {
       // Disable ICU parsing in CDATA tags
       ++nextIndex;
       continue;
@@ -750,7 +746,7 @@ export function readTokens(text: string, callback: TokenCallback, options: ReadT
     }
 
     // ICU octothorpe
-    if (charCode === /* # */ 35 && scopeStack.indexOf(SCOPE_ICU_CATEGORY) !== -1) {
+    if (charCode === /* # */ 35 && scopeStack.lastIndexOf(SCOPE_ICU_CATEGORY) !== -1) {
       if (textStartIndex !== index) {
         callback(TOKEN_TEXT, textStartIndex, index);
       }
