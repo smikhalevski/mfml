@@ -58,6 +58,8 @@ export function compileModule(
 ): string {
   const { tokenizerOptions = 'html', language = 'typescript', renameMessageFunction = escapeIdentifier } = options;
 
+  const isTypescript = language === 'typescript';
+
   const parserOptions: ParserOptions = {
     ...options,
     tokenizerOptions:
@@ -66,13 +68,21 @@ export function compileModule(
 
   let str = 'import{createMessageNode as M,createElementNode as E,createArgumentNode as A,createSelectNode as S';
 
-  if (language === 'typescript') {
+  if (isTypescript) {
     str += ',type MessageNode';
   }
 
-  str += '}from"mfml";\n';
+  str += '}from"mfml";\n\n';
 
   const locales = Object.keys(messages);
+  const localeVars: Record<string, string> = {};
+
+  for (const locale of locales) {
+    const localeVar = 'LOCALE_' + escapeIdentifier(locale).toUpperCase();
+    localeVars[locale] = localeVar;
+
+    str += 'const ' + localeVar + '=' + JSON.stringify(locale) + ';\n';
+  }
 
   const messageKeys = new Set(
     locales.reduce<string[]>((keys, locale) => keys.concat(Object.keys(messages[locale])), [])
@@ -85,27 +95,29 @@ export function compileModule(
     for (const locale of locales) {
       const text = messages[locale][messageKey];
 
-      if (text !== undefined) {
-        const messageNode = parseMessage(locale, text, parserOptions);
-
-        if (language === 'typescript') {
-          collectArgumentNames(messageNode, argumentNames);
-        }
-
-        messageNodes.push(messageNode);
+      if (text === undefined) {
+        continue;
       }
+
+      const messageNode = parseMessage(locale, text, parserOptions);
+
+      if (isTypescript) {
+        collectArgumentNames(messageNode, argumentNames);
+      }
+
+      messageNodes.push(messageNode);
     }
 
     str +=
       '\nexport function ' +
       renameMessageFunction(messageKey) +
-      (language === 'typescript'
-        ? '(locale:string):MessageNode<' + compileArgumentsType(argumentNames) + '>|null'
-        : '(locale)') +
+      (isTypescript ? '(locale:string):MessageNode<' + compileArgumentsType(argumentNames) + '>|null' : '(locale)') +
       '{\nreturn ';
 
     for (const messageNode of messageNodes) {
-      str += 'locale===' + JSON.stringify(messageNode.locale) + '?' + compileMessageNode(messageNode) + ':';
+      const localeVar = localeVars[messageNode.locale];
+
+      str += 'locale===' + localeVar + '?' + compileMessageNode(localeVar, messageNode) + ':';
     }
 
     str += 'null\n}\n';
@@ -131,8 +143,8 @@ function compileArgumentsType(argumentNames: Set<string>): string {
   return str + '}';
 }
 
-export function compileMessageNode(messageNode: MessageNode): string {
-  return 'M(' + JSON.stringify(messageNode.locale) + ',' + compileChildrenArguments(messageNode.children) + ')';
+export function compileMessageNode(localeVar: string, messageNode: MessageNode): string {
+  return 'M(' + localeVar + ',' + compileChildrenArguments(messageNode.children) + ')';
 }
 
 function compileChildrenArguments(children: Child[] | string): string {
