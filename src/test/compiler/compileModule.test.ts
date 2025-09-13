@@ -45,7 +45,7 @@ describe('compileModule', () => {
         },
       })
     ).toBe(
-      `import{createMessageNode as M,createElementNode as E,createArgumentNode as A,createSelectNode as S,type MessageNode}from"mfml/ast";
+      `import{createMessageNode as M,createElementNode as E,createArgumentNode as A,createSelectNode as S,type MessageNode}from"mfml";
 
 export function messageCount(locale:string):MessageNode<{"count":unknown}>|null{
 return locale==="en-US"?M("en-US","You have ",E("b",null,A("count","number"))," unread messages"):locale==="ru-RU"?M("ru-RU","У вас ",E("b",null,A("count","number"))," непрочитанных сообщений"):null

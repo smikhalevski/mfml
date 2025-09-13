@@ -1,12 +1,6 @@
-/**
- * MFML AST nodes and factories.
- *
- * @module mfml/ast
- */
-
 export type Child = ElementNode | ArgumentNode | SelectNode | string;
 
-export interface MessageNode<Values extends object = {}> {
+export interface MessageNode<Values extends object | void = void> {
   nodeType: 'message';
   locale: string;
   children: Child[] | string;

@@ -9,7 +9,6 @@
     ".": "./index.js",
     "./compiler": "./compiler/index.js",
     "./parser": "./parser/index.js",
-    "./ast": "./ast.js",
     "./react": "./react/index.js",
     "./package.json": "./package.json"
   },

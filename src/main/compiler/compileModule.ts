@@ -64,8 +64,13 @@ export function compileModule(
       tokenizerOptions === 'html' ? htmlBinaryTokenizerOptions : resolveTokenizerOptions(tokenizerOptions),
   };
 
-  let str =
-    'import{createMessageNode as M,createElementNode as E,createArgumentNode as A,createSelectNode as S,type MessageNode}from"mfml/ast";\n';
+  let str = 'import{createMessageNode as M,createElementNode as E,createArgumentNode as A,createSelectNode as S';
+
+  if (language === 'typescript') {
+    str += ',type MessageNode';
+  }
+
+  str += '}from"mfml";\n';
 
   const locales = Object.keys(messages);
 
@@ -112,6 +117,10 @@ export function compileModule(
 const htmlBinaryTokenizerOptions = resolveTokenizerOptions(htmlTokenizerOptions);
 
 function compileArgumentsType(argumentNames: Set<string>): string {
+  if (argumentNames.size === 0) {
+    return 'void';
+  }
+
   let str = '{';
   let argumentIndex = 0;
 

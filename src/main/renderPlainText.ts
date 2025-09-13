@@ -1,46 +1,80 @@
-import { MessageNode } from './ast.js';
-import { RenderingOptions } from './types.js';
+import { Child, MessageNode } from './ast.js';
+import { defaultRendererOptions, Renderer, StringRenderer } from './renderer.js';
+
+const defaultStringRenderer = new StringRenderer(defaultRendererOptions);
 
 /**
  * Renders message node as plain string.
  *
  * @example
- * renderPlainText(greeting('en-US'), { values: { name: 'Bob' } });
+ * renderPlainText(greeting('en-US'), { name: 'Bob' });
  *
- * @param _messageNode The message to render.
- * @param _options Rendering options.
+ * @param messageNode The message to render.
+ * @param values Message argument values.
+ * @param renderer The render delegate.
  */
-export function renderPlainText<Values extends object>(
-  _messageNode: MessageNode<Values> | null,
-  _options: RenderingOptions<string> & (keyof Values extends never ? unknown : { values: Values })
+export function renderPlainText<Values extends object | void>(
+  messageNode: MessageNode<Values> | null,
+  values: Values,
+  renderer: Renderer<string> = defaultStringRenderer
 ): string {
-  return '';
+  if (messageNode === null) {
+    return '';
+  }
+  return renderChildren(messageNode.locale, messageNode.children, values, renderer);
 }
 
-// function renderChildren(
-//   _children: Child[] | string | null,
-//   options: RenderingOptions<string> & { values?: Record<string, unknown> }
-// ): string {
-//   return '';
-// }
-//
-// function renderChild(
-//   locale: string,
-//   child: Child | string,
-//   options: RenderingOptions<string> & { values?: Record<string, unknown> }
-// ): string {
-//   if (typeof child === 'string') {
-//     return child;
-//   }
-//
-//   if (child.nodeType === 'element') {
-//     // options.renderTag(child.tagName, child.);
-//     return renderChildren(child.children, options);
-//   }
-//
-//   if (child.nodeType === 'argument') {
-//     return options.values[child.name];
-//   }
-//
-//   return '';
-// }
+function renderChildren(
+  locale: string,
+  children: Child[] | string | null,
+  values: any,
+  renderer: Renderer<string>
+): string {
+  if (children === null) {
+    return '';
+  }
+  if (typeof children === 'string') {
+    return renderChild(locale, children, values, renderer);
+  }
+  return children.map(child => renderChild(locale, child, values, renderer)).join('');
+}
+
+function renderChild(locale: string, child: Child | string, values: any, renderer: Renderer<string>): string {
+  if (typeof child === 'string') {
+    return renderer.renderText(locale, child);
+  }
+
+  if (child.nodeType === 'element') {
+    const renderedAttributes: Record<string, string> = {};
+
+    if (child.attributes !== null) {
+      for (const key in child.attributes) {
+        renderedAttributes[key] = renderChildren(locale, child.attributes[key], values, renderer);
+      }
+    }
+
+    return renderer.renderElement(
+      locale,
+      child.tagName,
+      renderedAttributes,
+      renderChildren(locale, child.children, values, renderer)
+    );
+  }
+
+  if (child.nodeType === 'argument') {
+    return renderer.renderValue(locale, values[child.name], child.type, child.style);
+  }
+
+  if (child.nodeType === 'select') {
+    const category = renderer.selectCategory(
+      locale,
+      values[child.argumentName],
+      child.type,
+      Object.keys(child.categories)
+    );
+
+    return category === undefined ? '' : renderChildren(locale, child.categories[category], values, renderer);
+  }
+
+  return '';
+}

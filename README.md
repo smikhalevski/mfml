@@ -59,7 +59,7 @@ npx mfml compile translations.json --typescript
 This command writes _translations.ts_ with following contents:
 
 ```ts
-import { createMessageNode as M, createElementNode as E, createArgumentNode as A, type MessageNode } from 'mfml/ast';
+import { createMessageNode as M, createElementNode as E, createArgumentNode as A, type MessageNode } from 'mfml';
 
 export function greeting(locale: string): MessageNode<{ name: any }> {
   if (locale === 'ru') {
