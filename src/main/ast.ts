@@ -118,7 +118,7 @@ export interface SelectNode {
  * @param locale The message locale.
  * @param children The child nodes.
  */
-export function createMessageNode(locale: string, ...children: Child[]): MessageNode;
+export function createMessageNode(locale: string, ...children: Child[]): MessageNode<any>;
 
 export function createMessageNode(locale: string): MessageNode {
   const node: MessageNode = { nodeType: 'message', locale, children: '' };

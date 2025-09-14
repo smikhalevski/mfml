@@ -100,8 +100,13 @@ export function compileModule(
         continue;
       }
 
-      const messageNode = parseMessage(locale, text, parserOptions);
+      let messageNode;
 
+      try {
+        messageNode = parseMessage(locale, text, parserOptions);
+      } catch (error) {
+        throw new Error('Cannot compile "' + messageKey + '" message for locale "' + locale + '"', { cause: error });
+      }
       if (isTypeScript) {
         collectArgumentNames(messageNode, argumentNames);
       }
@@ -121,7 +126,7 @@ export function compileModule(
       str += 'locale===' + localeVar + '?' + compileMessageNode(localeVar, messageNode) + ':';
     }
 
-    str += 'null\n}\n';
+    str += 'null;\n}\n';
   }
 
   return str;

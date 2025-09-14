@@ -54,11 +54,11 @@ const LOCALE_EN_US="en-US";
 const LOCALE_RU_RU="ru-RU";
 
 export function messageCount(locale:string):MessageNode<{"count":unknown}>|null{
-return locale===LOCALE_EN_US?M(LOCALE_EN_US,"You have ",E("b",null,A("count","number"))," unread messages"):locale===LOCALE_RU_RU?M(LOCALE_RU_RU,"У вас ",E("b",null,A("count","number"))," непрочитанных сообщений"):null
+return locale===LOCALE_EN_US?M(LOCALE_EN_US,"You have ",E("b",null,A("count","number"))," unread messages"):locale===LOCALE_RU_RU?M(LOCALE_RU_RU,"У вас ",E("b",null,A("count","number"))," непрочитанных сообщений"):null;
 }
 
 export function messageReceived(locale:string):MessageNode<{"gender":unknown}>|null{
-return locale===LOCALE_EN_US?M(LOCALE_EN_US,S("gender","select",{"male":"He","female":"She","other":"They"})," sent you a message"):locale===LOCALE_RU_RU?M(LOCALE_RU_RU,S("gender","select",{"male":"Он отправил","female":"Она отправила","other":"Они отправили"})," вам сообщение"):null
+return locale===LOCALE_EN_US?M(LOCALE_EN_US,S("gender","select",{"male":"He","female":"She","other":"They"})," sent you a message"):locale===LOCALE_RU_RU?M(LOCALE_RU_RU,S("gender","select",{"male":"Он отправил","female":"Она отправила","other":"Они отправили"})," вам сообщение"):null;
 }
 `
     );
@@ -87,11 +87,11 @@ const LOCALE_EN_US="en-US";
 const LOCALE_RU_RU="ru-RU";
 
 export function messageCount(locale){
-return locale===LOCALE_EN_US?M(LOCALE_EN_US,"You have ",E("b",null,A("count","number"))," unread messages"):locale===LOCALE_RU_RU?M(LOCALE_RU_RU,"У вас ",E("b",null,A("count","number"))," непрочитанных сообщений"):null
+return locale===LOCALE_EN_US?M(LOCALE_EN_US,"You have ",E("b",null,A("count","number"))," unread messages"):locale===LOCALE_RU_RU?M(LOCALE_RU_RU,"У вас ",E("b",null,A("count","number"))," непрочитанных сообщений"):null;
 }
 
 export function messageReceived(locale){
-return locale===LOCALE_EN_US?M(LOCALE_EN_US,S("gender","select",{"male":"He","female":"She","other":"They"})," sent you a message"):locale===LOCALE_RU_RU?M(LOCALE_RU_RU,S("gender","select",{"male":"Он отправил","female":"Она отправила","other":"Они отправили"})," вам сообщение"):null
+return locale===LOCALE_EN_US?M(LOCALE_EN_US,S("gender","select",{"male":"He","female":"She","other":"They"})," sent you a message"):locale===LOCALE_RU_RU?M(LOCALE_RU_RU,S("gender","select",{"male":"Он отправил","female":"Она отправила","other":"Они отправили"})," вам сообщение"):null;
 }
 `
     );
