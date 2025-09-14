@@ -1,5 +1,8 @@
 import { getCaseInsensitiveHashCode, getCaseSensitiveHashCode, ResolvedTokenizerOptions } from './tokenizeMessage.js';
 
+/**
+ * Human-readable tokenizer options that can be resolved by {@link resolveTokenizerOptions}.
+ */
 export interface TokenizerOptions {
   /**
    * The list of tags that can't have any contents (since there's no end tag, no content can be put between the start
@@ -108,7 +111,7 @@ export interface TokenizerOptions {
 }
 
 /**
- * Converts parser configuration into options consumed by {@link parseMessage} and {@link tokenizeMessage}.
+ * Converts human-readable tokenizer options into options consumed by {@link parseMessage} and {@link tokenizeMessage}.
  */
 export function resolveTokenizerOptions(config: TokenizerOptions): ResolvedTokenizerOptions {
   const {

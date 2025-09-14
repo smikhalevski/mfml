@@ -1,17 +1,11 @@
 import { createContext, useContext } from 'react';
 
-const LocaleContext = createContext<string | null>(null);
+const LocaleContext = createContext('en');
 
 LocaleContext.displayName = 'LocaleContext';
 
 export const LocaleProvider = LocaleContext.Provider;
 
 export function useLocale(): string {
-  const locale = useContext(LocaleContext);
-
-  if (locale === null) {
-    throw new Error('Cannot be used outside of LocaleProvider');
-  }
-
-  return locale;
+  return useContext(LocaleContext);
 }

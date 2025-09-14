@@ -7,14 +7,14 @@ import {
   resolveTokenizerOptions,
   TokenizerOptions,
 } from '../parser/index.js';
-import { collectArgumentNames, escapeIdentifier } from './utils.js';
+import { collectArgumentNames, escapeIdentifier } from '../utils.js';
 
 /**
  * Options of {@link compileModule}.
  */
-export interface ModuleOptions extends DecodingOptions {
+export interface CompilerOptions extends DecodingOptions {
   /**
-   * Explicit message tokenization options or "html" to use {@link htmlTokenizerOptions HTML tokenization options}.
+   * Explicit message tokenizer options or "html" to use {@link htmlTokenizerOptions HTML tokenization options}.
    *
    * @default "html"
    */
@@ -29,12 +29,14 @@ export interface ModuleOptions extends DecodingOptions {
 
   /**
    * Returns the name of a message function for the given message key.
+   *
+   * By default, an escaped message key is used as a function name.
    */
   renameMessageFunction?: (messageKey: string) => string;
 }
 
 /**
- * Compiles MFML AST as a TypeScript source.
+ * Compiles MFML AST as a source code.
  *
  * @example
  * compileModule({
@@ -54,21 +56,20 @@ export interface ModuleOptions extends DecodingOptions {
  */
 export function compileModule(
   messages: { [locale: string]: { [messageKey: string]: string } },
-  options: ModuleOptions = {}
+  options: CompilerOptions = {}
 ): string {
   const { tokenizerOptions = 'html', language = 'typescript', renameMessageFunction = escapeIdentifier } = options;
 
-  const isTypescript = language === 'typescript';
+  const isTypeScript = language === 'typescript';
 
   const parserOptions: ParserOptions = {
     ...options,
-    tokenizerOptions:
-      tokenizerOptions === 'html' ? htmlBinaryTokenizerOptions : resolveTokenizerOptions(tokenizerOptions),
+    tokenizerOptions: resolveTokenizerOptions(tokenizerOptions === 'html' ? htmlTokenizerOptions : tokenizerOptions),
   };
 
   let str = 'import{createMessageNode as M,createElementNode as E,createArgumentNode as A,createSelectNode as S';
 
-  if (isTypescript) {
+  if (isTypeScript) {
     str += ',type MessageNode';
   }
 
@@ -101,7 +102,7 @@ export function compileModule(
 
       const messageNode = parseMessage(locale, text, parserOptions);
 
-      if (isTypescript) {
+      if (isTypeScript) {
         collectArgumentNames(messageNode, argumentNames);
       }
 
@@ -111,7 +112,7 @@ export function compileModule(
     str +=
       '\nexport function ' +
       renameMessageFunction(messageKey) +
-      (isTypescript ? '(locale:string):MessageNode<' + compileArgumentsType(argumentNames) + '>|null' : '(locale)') +
+      (isTypeScript ? '(locale:string):' + compileMessageType(argumentNames) : '(locale)') +
       '{\nreturn ';
 
     for (const messageNode of messageNodes) {
@@ -126,28 +127,26 @@ export function compileModule(
   return str;
 }
 
-const htmlBinaryTokenizerOptions = resolveTokenizerOptions(htmlTokenizerOptions);
-
-function compileArgumentsType(argumentNames: Set<string>): string {
+function compileMessageType(argumentNames: Set<string>): string {
   if (argumentNames.size === 0) {
-    return 'void';
+    return 'MessageNode|null';
   }
 
-  let str = '{';
+  let str = '';
   let argumentIndex = 0;
 
   for (const argumentName of argumentNames) {
     str += (argumentIndex++ === 0 ? '' : ',') + JSON.stringify(argumentName) + ':unknown';
   }
 
-  return str + '}';
+  return 'MessageNode<{' + str + '}>|null';
 }
 
 export function compileMessageNode(localeVar: string, messageNode: MessageNode): string {
-  return 'M(' + localeVar + ',' + compileChildrenArguments(messageNode.children) + ')';
+  return 'M(' + localeVar + ',' + compileChildrenSpread(messageNode.children) + ')';
 }
 
-function compileChildrenArguments(children: Child[] | string): string {
+function compileChildrenSpread(children: Child[] | string): string {
   return typeof children === 'string' ? compileChild(children) : children.map(compileChild).join(',');
 }
 
@@ -176,7 +175,7 @@ function compileChild(child: Child): string {
     }
 
     if (child.children !== null) {
-      str += (child.attributes !== null ? ',' : ',null,') + compileChildrenArguments(child.children);
+      str += (child.attributes !== null ? ',' : ',null,') + compileChildrenSpread(child.children);
     }
 
     return str + ')';

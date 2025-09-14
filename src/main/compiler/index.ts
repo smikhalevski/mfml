@@ -4,4 +4,4 @@
  * @module mfml/compiler
  */
 
-export { compileModule, type ModuleOptions } from './compileModule.js';
+export { compileModule, type CompilerOptions } from './compileModule.js';

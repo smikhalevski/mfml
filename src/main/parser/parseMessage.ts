@@ -10,6 +10,9 @@ import {
   SelectNode,
 } from '../ast.js';
 
+/**
+ * Options that describe how names and HTML entities are decoded in a parsed MFML markup.
+ */
 export interface DecodingOptions {
   /**
    * Renames an XML tag.
@@ -39,7 +42,7 @@ export interface DecodingOptions {
   /**
    * Renames an ICU argument type.
    *
-   * @param argumentType An argument type to rename.
+   * @param argumentType An argument type to rename ("number", "date", "time").
    * @param argumentName An argument name that was processed with {@link renameArgument}.
    * @returns The new argument type name.
    */
@@ -55,6 +58,24 @@ export interface DecodingOptions {
   renameArgumentStyle?: (argumentStyle: string, argumentType: string) => string;
 
   /**
+   * Renames an ICU select category.
+   *
+   * @param selectType The type of the select ("plural", "selectordinal", "select").
+   * @param argumentName An argument name that was processed with {@link renameArgument}.
+   * @returns The new select type name.
+   */
+  renameSelectType?: (selectType: string, argumentName: string) => string;
+
+  /**
+   * Renames an ICU select category.
+   *
+   * @param selectType A type of the select ("plural", "selectordinal") processed with {@link renameSelectType}.
+   * @param selectCategory A category to rename ("one", "many", "other", "=5").
+   * @returns The new select category name.
+   */
+  renameSelectCategory?: (selectType: string, selectCategory: string) => string;
+
+  /**
    * Decode text content before it is pushed to a node. Use this method to decode HTML entities.
    *
    * @param text Text to rewrite.
@@ -62,6 +83,9 @@ export interface DecodingOptions {
   decodeText?: (text: string) => string;
 }
 
+/**
+ * Options of {@link parseMessage}.
+ */
 export interface ParserOptions extends DecodingOptions {
   /**
    * Tokenizer options prepared by {@link resolveTokenizerOptions}.
@@ -84,21 +108,23 @@ export interface ParserOptions extends DecodingOptions {
  * @param options Parser options.
  * @returns The message node that describes the message contents.
  */
-export function parseMessage(locale: string, text: string, options: ParserOptions = {}): MessageNode {
+export function parseMessage(locale: string, text: string, options: ParserOptions = {}): MessageNode<any> {
   const {
     tokenizerOptions,
-    renameTag = identity,
-    renameAttribute = identity,
-    renameArgument = identity,
-    renameArgumentType = identity,
-    renameArgumentStyle = identity,
-    decodeText = identity,
+    renameTag = noRename,
+    renameAttribute = noRename,
+    renameArgument = noRename,
+    renameArgumentType = noRename,
+    renameArgumentStyle = noRename,
+    renameSelectType = noRename,
+    renameSelectCategory = noRename,
+    decodeText = noRename,
   } = options;
 
   let tagName: string;
   let argumentName: string | undefined;
-  let argumentType: string | undefined;
-  let argumentStyle: string | undefined;
+  let rawArgumentType: string | undefined;
+  let rawArgumentStyle: string | undefined;
   let stackCursor = 0;
 
   const messageNode = createMessageNode(locale);
@@ -134,24 +160,27 @@ export function parseMessage(locale: string, text: string, options: ParserOption
 
       case 'ICU_ARGUMENT_START':
         argumentName = renameArgument(text.substring(startIndex, endIndex));
-        argumentType = undefined;
-        argumentStyle = undefined;
+        rawArgumentType = undefined;
+        rawArgumentStyle = undefined;
         break;
 
       case 'ICU_ARGUMENT_TYPE':
-        argumentType = renameArgumentType(text.substring(startIndex, endIndex), argumentName!);
+        rawArgumentType = text.substring(startIndex, endIndex);
         break;
 
       case 'ICU_ARGUMENT_STYLE':
-        argumentStyle = renameArgumentStyle(text.substring(startIndex, endIndex), argumentType!);
+        rawArgumentStyle = text.substring(startIndex, endIndex);
         break;
 
       case 'ICU_ARGUMENT_END':
         if (argumentName === undefined) {
-          // No argument name means that a select node was pun on the stack
+          // No argument name means that a select node was already put on the stack
           --stackCursor;
           break;
         }
+
+        const argumentType = rawArgumentType && renameArgumentType(rawArgumentType, argumentName);
+        const argumentStyle = rawArgumentStyle && renameArgumentStyle(rawArgumentStyle, argumentType!);
 
         pushChild(stack, stackCursor, createArgumentNode(argumentName, argumentType, argumentStyle));
         break;
@@ -160,11 +189,13 @@ export function parseMessage(locale: string, text: string, options: ParserOption
         const parent = stack[stackCursor];
 
         if (typeof parent === 'string' || parent.nodeType !== 'select') {
-          pushChild(stack, stackCursor, (stack[++stackCursor] = createSelectNode(argumentName!, argumentType!, {})));
+          const selectType = renameSelectType(rawArgumentType!, argumentName!);
+
+          pushChild(stack, stackCursor, (stack[++stackCursor] = createSelectNode(argumentName!, selectType, {})));
           argumentName = undefined;
         }
 
-        stack[++stackCursor] = text.substring(startIndex, endIndex);
+        stack[++stackCursor] = renameSelectCategory(text.substring(startIndex, endIndex), (parent as SelectNode).type);
         pushChild(stack, stackCursor, '');
         break;
 
@@ -239,6 +270,6 @@ function concatChildren(children: Child[] | string | null, child: Child): Child[
   return children;
 }
 
-export function identity<T>(value: T): T {
+function noRename(value: string): string {
   return value;
 }

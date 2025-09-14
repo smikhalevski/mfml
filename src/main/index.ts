@@ -15,5 +15,7 @@ export {
   type ArgumentNode,
   type SelectNode,
 } from './ast.js';
-export { AbstractRenderer, StringRenderer, type Renderer, type RendererOptions } from './renderer.js';
-export { renderPlainText } from './renderPlainText.js';
+export { StringMessageRenderer } from './StringMessageRenderer.js';
+export { renderText } from './renderText.js';
+export { type MessageRenderer, type MessageRendererOptions } from './types.js';
+export { AbstractMessageRenderer } from './AbstractMessageRenderer.js';

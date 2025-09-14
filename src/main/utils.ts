@@ -1,4 +1,4 @@
-import { Child, MessageNode } from '../ast.js';
+import { Child, MessageNode } from './ast.js';
 
 export function collectArgumentNames(node: MessageNode | Child | Child[], argumentNames: Set<string>): void {
   if (typeof node === 'string') {
@@ -99,4 +99,16 @@ export function escapeIdentifier(str: string): string {
   return str
     .replace(/[^$_\p{Lu}\p{Ll}\p{Lt}\p{Lm}\p{Lo}\p{Nl}\u200C\u200D\p{Mn}\p{Mc}\p{Nd}\p{Pc}]/gu, '_')
     .replace(/^[^$_\p{Lu}\p{Ll}\p{Lt}\p{Lm}\p{Lo}\p{Nl}]/u, '_$&');
+}
+
+export function isLowerCaseAlpha(str: string): boolean {
+  for (let i = 0; i < str.length; ++i) {
+    const charCode = str.charCodeAt(i);
+
+    if (charCode < /* a */ 97 || charCode > /* z */ 122) {
+      return false;
+    }
+  }
+
+  return true;
 }

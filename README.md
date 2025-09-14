@@ -72,10 +72,10 @@ export function greeting(locale: string): MessageNode<{ name: any }> {
 3. Use translations in code:
 
 ```ts
-import { renderPlainText } from 'mfml';
+import { renderText } from 'mfml';
 import { greeting } from './translations.js';
 
-renderPlainText(greeting('en'), { arguments: { name: 'Bob' } });
+renderText(greeting('en'), { arguments: { name: 'Bob' } });
 ```
 
 # Integrations
@@ -102,11 +102,11 @@ renderReactNode(greeting('en'), { arguments: { name: <MyComponent>Bob</MyCompone
 Parse a message string at runtime:
 
 ```ts
-import { renderPlainText } from 'mfml';
+import { renderText } from 'mfml';
 import { parseMessage } from 'mfml/parser';
 
 const messageNode = parseMessage('Hello, <b>{name}</b>!');
 // ⮕ { type: 'message', locale: null, children: ['Hello, ', { type: 'element', tagName: 'b', children: [{ type: 'argument', name: 'name' }] }, '!'] };
 
-renderPlainText(messageNode, { arguments: { name: 'Bob' } });
+renderText(messageNode, { arguments: { name: 'Bob' } });
 ```

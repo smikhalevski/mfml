@@ -1,78 +1,134 @@
-import React, { Component, createContext, ReactNode, useContext, useMemo } from 'react';
+import React, { Component, createContext, createElement, Fragment, ReactNode, useContext } from 'react';
 import { Child, MessageNode } from '../ast.js';
 import { useLocale } from './useLocale.js';
-import { defaultRendererOptions, Renderer } from '../renderer.js';
-import { ReactNodeRenderer } from './ReactNodeRenderer.js';
+import { ReactNodeMessageRenderer } from './ReactNodeMessageRenderer.js';
+import { MessageRenderer } from '../types.js';
 
-const MessageRendererContext = createContext<Renderer<ReactNode>>(new ReactNodeRenderer(defaultRendererOptions));
+const defaultReactNodeMessageRenderer = new ReactNodeMessageRenderer({
+  dateStyles: {
+    short: { dateStyle: 'short' },
+    full: { dateStyle: 'full' },
+    long: { dateStyle: 'long' },
+    medium: { dateStyle: 'medium' },
+  },
+  timeStyles: {
+    short: { timeStyle: 'short' },
+    full: { timeStyle: 'full' },
+    long: { timeStyle: 'long' },
+    medium: { timeStyle: 'medium' },
+  },
+  numberStyles: {
+    decimal: { style: 'decimal' },
+    percent: { style: 'percent' },
+  },
+});
 
-MessageRendererContext.displayName = 'MessageRendererContent';
+const MessageRendererContext = createContext<MessageRenderer<ReactNode>>(defaultReactNodeMessageRenderer);
 
+MessageRendererContext.displayName = 'MessageRendererContext';
+
+/**
+ * Provides a message renderer to underlying components.
+ */
 export const MessageRendererProvider = MessageRendererContext.Provider;
 
-const MessageValuesContext = createContext<Record<string, unknown> | undefined>(undefined);
+const MessageArgumentValuesContext = createContext<Record<string, unknown> | undefined>(undefined);
 
-MessageValuesContext.displayName = 'MessageValuesContext';
+MessageArgumentValuesContext.displayName = 'MessageArgumentValuesContext';
 
-// prettier-ignore
-export type MessageProps<F extends (locale: string) => MessageNode | null> =
-  F extends ((locale: string) => MessageNode<infer Values> | null) ? Values extends void ? { message: F, values?: never } : { message: F, values: Values } : never;
+/**
+ * Props of a {@link Message} component.
+ */
+export type MessageProps<F extends (locale: string) => MessageNode<object | void> | null> = F extends (
+  locale: string
+) => MessageNode<infer Values> | null
+  ? Values extends void
+    ? { message: F; renderer?: MessageRenderer<ReactNode>; values?: undefined }
+    : { message: F; renderer?: MessageRenderer<ReactNode>; values: Values }
+  : never;
 
-export function Message<F extends (locale: string) => MessageNode | null>(props: MessageProps<F>): ReactNode {
-  const { message, values } = props;
+/**
+ * Renders a message function.
+ */
+export function Message<F extends (locale: string) => MessageNode<object | void> | null>(
+  props: MessageProps<F>
+): ReactNode {
   const locale = useLocale();
-  const renderer = useContext(MessageRendererContext);
-
-  const messageNode = useMemo(() => message(locale), [message, locale]);
-
-  if (messageNode === null) {
-    return null;
-  }
-
-  if (typeof messageNode.children === 'string') {
-    return renderer.renderText(locale, messageNode.children);
-  }
+  const fallbackRenderer = useContext(MessageRendererContext);
 
   return (
-    <MessageValuesContext.Provider value={values}>
+    <MessageArgumentValuesContext.Provider value={props.values as Record<string, unknown> | undefined}>
       <MessageContent
-        messageNode={messageNode}
-        renderer={renderer}
+        locale={locale}
+        message={props.message}
+        renderer={props.renderer || fallbackRenderer}
       />
-    </MessageValuesContext.Provider>
+    </MessageArgumentValuesContext.Provider>
   );
 }
 
+/**
+ * @internal
+ */
+Message.displayName = 'Message';
+
 interface MessageContentProps {
-  messageNode: MessageNode;
-  renderer: Renderer<ReactNode>;
+  locale: string;
+  message: (locale: string) => MessageNode<object | void> | null;
+  renderer: MessageRenderer<ReactNode>;
 }
 
 class MessageContent extends Component<MessageContentProps> {
+  static displayName = 'MessageContent';
+
   shouldComponentUpdate(
     nextProps: Readonly<MessageContentProps>,
     _nextState: Readonly<{}>,
     _nextContext: any
   ): boolean {
-    return this.props.messageNode !== nextProps.messageNode || this.props.renderer !== nextProps.renderer;
+    return (
+      this.props.locale !== nextProps.locale ||
+      this.props.message !== nextProps.message ||
+      this.props.renderer !== nextProps.renderer
+    );
   }
 
   render() {
-    return renderChildren(this.props.messageNode.locale, this.props.messageNode.children, this.props.renderer);
+    const messageNode = this.props.message(this.props.locale);
+
+    if (messageNode === null) {
+      return null;
+    }
+
+    const children = renderChildren(messageNode.locale, messageNode.children, this.props.renderer);
+
+    return Array.isArray(children) ? createElement(Fragment, null, ...children) : children;
   }
 }
 
-function renderChildren(locale: string, children: Child[] | string | null, renderer: Renderer<ReactNode>): ReactNode {
+function renderChildren(
+  locale: string,
+  children: Child[] | string | null,
+  renderer: MessageRenderer<ReactNode>
+): ReactNode {
   if (children === null) {
     return null;
   }
+
   if (typeof children === 'string') {
     return renderChild(locale, children, renderer);
   }
-  return children.map(child => renderChild(locale, child, renderer)).join('');
+
+  const nodes = [];
+
+  for (let i = 0; i < children.length; ++i) {
+    nodes.push(renderChild(locale, children[i], renderer));
+  }
+
+  return nodes;
 }
 
-function renderChild(locale: string, child: Child | string, renderer: Renderer<ReactNode>): ReactNode {
+function renderChild(locale: string, child: Child | string, renderer: MessageRenderer<ReactNode>): ReactNode {
   if (typeof child === 'string') {
     return renderer.renderText(locale, child);
   }
@@ -96,34 +152,36 @@ function renderChild(locale: string, child: Child | string, renderer: Renderer<R
 
   if (child.nodeType === 'argument') {
     return (
-      <ArgumentContent name={child.name}>
-        {value => renderer.renderValue(locale, value, child.type, child.style)}
-      </ArgumentContent>
+      <MessageArgumentValue argumentName={child.name}>
+        {argumentValue => renderer.renderArgumentValue(locale, argumentValue, child.type, child.style)}
+      </MessageArgumentValue>
     );
   }
 
   if (child.nodeType === 'select') {
     return (
-      <ArgumentContent name={child.argumentName}>
-        {value => {
-          const category = renderer.selectCategory(locale, value, child.type, Object.keys(child.categories));
+      <MessageArgumentValue argumentName={child.argumentName}>
+        {argumentValue => {
+          const category = renderer.selectCategory(locale, argumentValue, child.type, Object.keys(child.categories));
 
-          return category === undefined ? '' : renderChildren(locale, child.categories[category], renderer);
+          return category === undefined ? null : renderChildren(locale, child.categories[category], renderer);
         }}
-      </ArgumentContent>
+      </MessageArgumentValue>
     );
   }
 
   return null;
 }
 
-interface ArgumentContentProps {
-  name: string;
-  children: (value: any) => ReactNode;
+interface MessageArgumentValueProps {
+  argumentName: string;
+  children: (argumentValue: any) => ReactNode;
 }
 
-function ArgumentContent(props: ArgumentContentProps): ReactNode {
-  const values = useContext(MessageValuesContext);
+function MessageArgumentValue(props: MessageArgumentValueProps): ReactNode {
+  const argumentValues = useContext(MessageArgumentValuesContext);
 
-  return props.children(values && values[props.name]);
+  return props.children(argumentValues && argumentValues[props.argumentName]);
 }
+
+MessageArgumentValue.displayName = 'MessageArgumentValue';
