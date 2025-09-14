@@ -437,8 +437,8 @@ describe('readTokens', () => {
     expect(callbackMock).toHaveBeenNthCalledWith(8, 'TEXT', 26, 27);
   });
 
-  test('ignores tags in CDATA tags', () => {
-    readTokens('<script><aaa>bbb</aaa></script>', callbackMock, resolveTokenizerOptions({ cdataTags: ['script'] }));
+  test('ignores tags in raw text tags', () => {
+    readTokens('<script><aaa>bbb</aaa></script>', callbackMock, resolveTokenizerOptions({ rawTextTags: ['script'] }));
 
     expect(callbackMock).toHaveBeenCalledTimes(4);
     expect(callbackMock).toHaveBeenNthCalledWith(1, 'XML_OPENING_TAG_START', 1, 7);
@@ -447,11 +447,11 @@ describe('readTokens', () => {
     expect(callbackMock).toHaveBeenNthCalledWith(4, 'XML_CLOSING_TAG', 24, 30);
   });
 
-  test('reads attributes of a CDATA tag', () => {
+  test('reads attributes of a raw text tag', () => {
     readTokens(
       '<script aaa="xxx" ccc="yyy">zzz</script>',
       callbackMock,
-      resolveTokenizerOptions({ cdataTags: ['script'] })
+      resolveTokenizerOptions({ rawTextTags: ['script'] })
     );
 
     expect(callbackMock).toHaveBeenCalledTimes(10);
@@ -467,8 +467,8 @@ describe('readTokens', () => {
     expect(callbackMock).toHaveBeenNthCalledWith(10, 'XML_CLOSING_TAG', 33, 39);
   });
 
-  test('ignores comments in CDATA tags', () => {
-    readTokens('<script><!-->bbb</--></script>', callbackMock, resolveTokenizerOptions({ cdataTags: ['script'] }));
+  test('ignores comments in raw text tags', () => {
+    readTokens('<script><!-->bbb</--></script>', callbackMock, resolveTokenizerOptions({ rawTextTags: ['script'] }));
 
     expect(callbackMock).toHaveBeenCalledTimes(4);
     expect(callbackMock).toHaveBeenNthCalledWith(1, 'XML_OPENING_TAG_START', 1, 7);
@@ -477,11 +477,11 @@ describe('readTokens', () => {
     expect(callbackMock).toHaveBeenNthCalledWith(4, 'XML_CLOSING_TAG', 23, 29);
   });
 
-  test('matches case-insensitive closing CDATA tags', () => {
+  test('matches case-insensitive closing raw text tags', () => {
     readTokens(
       '<script><!-->bbb</--></SCRIPT>',
       callbackMock,
-      resolveTokenizerOptions({ cdataTags: ['script'], isCaseInsensitiveTags: true })
+      resolveTokenizerOptions({ rawTextTags: ['script'], isCaseInsensitiveTags: true })
     );
 
     expect(callbackMock).toHaveBeenCalledTimes(4);
@@ -491,8 +491,8 @@ describe('readTokens', () => {
     expect(callbackMock).toHaveBeenNthCalledWith(4, 'XML_CLOSING_TAG', 23, 29);
   });
 
-  test('does not read ICU markup in CDATA tag content by default', () => {
-    readTokens('<script>{aaa}</script>', callbackMock, resolveTokenizerOptions({ cdataTags: ['script'] }));
+  test('does not read ICU markup in raw text tag content by default', () => {
+    readTokens('<script>{aaa}</script>', callbackMock, resolveTokenizerOptions({ rawTextTags: ['script'] }));
 
     expect(callbackMock).toHaveBeenCalledTimes(4);
     expect(callbackMock).toHaveBeenNthCalledWith(1, 'XML_OPENING_TAG_START', 1, 7);
@@ -501,11 +501,11 @@ describe('readTokens', () => {
     expect(callbackMock).toHaveBeenNthCalledWith(4, 'XML_CLOSING_TAG', 15, 21);
   });
 
-  test('reads ICU markup in CDATA tag content', () => {
+  test('reads ICU markup in raw text tag content', () => {
     readTokens(
       '<script>{aaa}</script>',
       callbackMock,
-      resolveTokenizerOptions({ cdataTags: ['script'], isCDATAInterpolated: true })
+      resolveTokenizerOptions({ rawTextTags: ['script'], isArgumentsInRawTextTagsRecognized: true })
     );
 
     expect(callbackMock).toHaveBeenCalledTimes(5);
@@ -516,11 +516,11 @@ describe('readTokens', () => {
     expect(callbackMock).toHaveBeenNthCalledWith(5, 'XML_CLOSING_TAG', 15, 21);
   });
 
-  test('reads an ICU argument in a CDATA tag attribute', () => {
+  test('reads an ICU argument in a raw text tag attribute', () => {
     readTokens(
       '<script aaa="{bbb}">{ccc}</script>',
       callbackMock,
-      resolveTokenizerOptions({ cdataTags: ['script'], isCDATAInterpolated: true })
+      resolveTokenizerOptions({ rawTextTags: ['script'], isArgumentsInRawTextTagsRecognized: true })
     );
 
     expect(callbackMock).toHaveBeenCalledTimes(9);
@@ -535,11 +535,11 @@ describe('readTokens', () => {
     expect(callbackMock).toHaveBeenNthCalledWith(9, 'XML_CLOSING_TAG', 27, 33);
   });
 
-  test('reads an ICU select in a CDATA tag attribute', () => {
+  test('reads an ICU select in a raw text tag attribute', () => {
     readTokens(
       '<script aaa="{bbb,xxx,yyy{zzz}ppp{<vvv>qqq</vvv>}}"></script>',
       callbackMock,
-      resolveTokenizerOptions({ cdataTags: ['script'] })
+      resolveTokenizerOptions({ rawTextTags: ['script'] })
     );
 
     expect(callbackMock).toHaveBeenCalledTimes(14);

@@ -7,4 +7,4 @@
 export { htmlTokenizerOptions } from './htmlTokenizerOptions.js';
 export { resolveTokenizerOptions, type TokenizerOptions } from './resolveTokenizerOptions.js';
 export { parseMessage, type ParserOptions, type DecodingOptions } from './parseMessage.js';
-export { tokenizeMessage, type Token, type TokenCallback, type BinaryTokenizerOptions } from './tokenizeMessage.js';
+export { tokenizeMessage, type Token, type TokenCallback, type ResolvedTokenizerOptions } from './tokenizeMessage.js';

@@ -29,7 +29,7 @@ export type TokenCallback = (token: Token, startIndex: number, endIndex: number)
 /**
  * Options of {@link tokenizeMessage}.
  */
-export interface BinaryTokenizerOptions {
+export interface ResolvedTokenizerOptions {
   /**
    * Reads a tag name as a unique hash code.
    *
@@ -40,14 +40,23 @@ export interface BinaryTokenizerOptions {
   readTag?: (text: string, startIndex: number, endIndex: number) => number;
 
   /**
-   * The list of tags that cannot have any content and are always closed after being opening tag.
+   * The list of tags that can't have any contents (since there's no end tag, no content can be put between the start
+   * tag and the end tag).
+   *
+   * @example
+   * ["link", "meta"]
+   * @see [HTML5 Void Elements](https://www.w3.org/TR/2010/WD-html5-20101019/syntax.html#void-elements)
    */
   voidTags?: Set<number>;
 
   /**
-   * The list CDATA tags. The content of these tags is interpreted as plain text. Ex. `script`, `style`, etc.
+   * The list of tags which content is interpreted as plain text.
+   *
+   * @example
+   * ["script", "style"]
+   * @see [HTML5 Raw Text Elements](https://www.w3.org/TR/2010/WD-html5-20101019/syntax.html#raw-text-elements)
    */
-  cdataTags?: Set<number>;
+  rawTextTags?: Set<number>;
 
   /**
    * The map from a tag (A) to a list of tags that must be closed if tag (A) is opened.
@@ -115,11 +124,11 @@ export interface BinaryTokenizerOptions {
   isOrphanClosingTagsIgnored?: boolean;
 
   /**
-   * If `true` then ICU arguments are parsed inside {@link cdataTags CDATA tags}.
+   * If `true` then ICU arguments are parsed inside {@link rawTextTags}.
    *
    * @default false
    */
-  isCDATAInterpolated?: boolean;
+  isArgumentsInRawTextTagsRecognized?: boolean;
 }
 
 /**
@@ -144,7 +153,7 @@ export interface BinaryTokenizerOptions {
  * @param callback The callback that is invoked when a token is read.
  * @param options Tokenizer options prepared by {@link resolveTokenizerOptions}.
  */
-export function tokenizeMessage(text: string, callback: TokenCallback, options: BinaryTokenizerOptions = {}): void {
+export function tokenizeMessage(text: string, callback: TokenCallback, options: ResolvedTokenizerOptions = {}): void {
   const {
     readTag = getCaseSensitiveHashCode,
     voidTags,
@@ -356,9 +365,9 @@ const ICU_ERROR_MESSAGE = 'Unexpected ICU syntax at ';
 
 export interface ReadTokensOptions {
   readTag?: (text: string, startIndex: number, endIndex: number) => number;
-  cdataTags?: Set<number>;
+  rawTextTags?: Set<number>;
   isSelfClosingTagsRecognized?: boolean;
-  isCDATAInterpolated?: boolean;
+  isArgumentsInRawTextTagsRecognized?: boolean;
 }
 
 /**
@@ -369,14 +378,14 @@ export interface ReadTokensOptions {
 export function readTokens(text: string, callback: TokenCallback, options: ReadTokensOptions): void {
   const {
     readTag = getCaseSensitiveHashCode,
-    cdataTags,
+    rawTextTags,
     isSelfClosingTagsRecognized = false,
-    isCDATAInterpolated = false,
+    isArgumentsInRawTextTagsRecognized = false,
   } = options;
 
   let scope = SCOPE_TEXT;
-  let openedCDATATag = 0;
-  let latestCDATATag = 0;
+  let openedRawTextTag = 0;
+  let latestRawTextTag = 0;
   let textStartIndex = 0;
   let scopeStackCursor = 0;
 
@@ -441,7 +450,7 @@ export function readTokens(text: string, callback: TokenCallback, options: ReadT
       const nextCharCode = getCharCodeAt(text, nextIndex);
 
       // Skip XML comments, XML processing instructions, DTD and CDATA sections
-      if (latestCDATATag === 0 && (nextCharCode === /* ! */ 33 || nextCharCode === /* ? */ 63)) {
+      if (latestRawTextTag === 0 && (nextCharCode === /* ! */ 33 || nextCharCode === /* ? */ 63)) {
         if (textStartIndex !== index) {
           callback(TOKEN_TEXT, textStartIndex, index);
         }
@@ -477,13 +486,13 @@ export function readTokens(text: string, callback: TokenCallback, options: ReadT
         if (
           // Not a tag
           tagNameStartIndex === nextIndex ||
-          // Doesn't match the current CDATA tag
-          (latestCDATATag !== 0 && latestCDATATag !== readTag(text, tagNameStartIndex, nextIndex))
+          // Doesn't match the current raw text tag
+          (latestRawTextTag !== 0 && latestRawTextTag !== readTag(text, tagNameStartIndex, nextIndex))
         ) {
           continue;
         }
 
-        latestCDATATag = 0;
+        latestRawTextTag = 0;
 
         if (textStartIndex !== index) {
           callback(TOKEN_TEXT, textStartIndex, index);
@@ -507,8 +516,8 @@ export function readTokens(text: string, callback: TokenCallback, options: ReadT
 
       // Start of an opening tag
 
-      if (latestCDATATag !== 0) {
-        // Opening tags are ignored inside CDATA tags
+      if (latestRawTextTag !== 0) {
+        // Opening tags are ignored inside raw text tags
         ++nextIndex;
         continue;
       }
@@ -526,8 +535,11 @@ export function readTokens(text: string, callback: TokenCallback, options: ReadT
 
       callback(TOKEN_XML_OPENING_TAG_START, tagNameStartIndex, nextIndex);
 
-      if (cdataTags === undefined || !cdataTags.has((openedCDATATag = readTag(text, tagNameStartIndex, nextIndex)))) {
-        openedCDATATag = 0;
+      if (
+        rawTextTags === undefined ||
+        !rawTextTags.has((openedRawTextTag = readTag(text, tagNameStartIndex, nextIndex)))
+      ) {
+        openedRawTextTag = 0;
       }
 
       scope = scopeStack[++scopeStackCursor] = SCOPE_XML_OPENING_TAG;
@@ -542,8 +554,8 @@ export function readTokens(text: string, callback: TokenCallback, options: ReadT
 
       callback(TOKEN_XML_OPENING_TAG_END, index, nextIndex);
 
-      // Start of a CDATA tag content
-      latestCDATATag = openedCDATATag;
+      // Start of a raw text tag content
+      latestRawTextTag = openedRawTextTag;
 
       scopeStack[scopeStackCursor] = 0;
       scope = scopeStack[--scopeStackCursor];
@@ -616,8 +628,8 @@ export function readTokens(text: string, callback: TokenCallback, options: ReadT
       continue;
     }
 
-    if (latestCDATATag !== 0 && !isCDATAInterpolated) {
-      // Disable ICU parsing in CDATA tags
+    if (latestRawTextTag !== 0 && !isArgumentsInRawTextTagsRecognized) {
+      // Disable ICU parsing in raw text tags
       ++nextIndex;
       continue;
     }

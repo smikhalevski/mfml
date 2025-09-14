@@ -1,15 +1,24 @@
-import { getCaseInsensitiveHashCode, getCaseSensitiveHashCode, BinaryTokenizerOptions } from './tokenizeMessage.js';
+import { getCaseInsensitiveHashCode, getCaseSensitiveHashCode, ResolvedTokenizerOptions } from './tokenizeMessage.js';
 
 export interface TokenizerOptions {
   /**
-   * List of tag that cannot have any content and are always closed after being opening tag.
+   * The list of tags that can't have any contents (since there's no end tag, no content can be put between the start
+   * tag and the end tag).
+   *
+   * @example
+   * ["link", "meta"]
+   * @see [HTML5 Void Elements](https://www.w3.org/TR/2010/WD-html5-20101019/syntax.html#void-elements)
    */
   voidTags?: readonly string[];
 
   /**
-   * The list CDATA tags. The content of these tags is interpreted as plain text. Ex. `script`, `style`, etc.
+   * The list of tags which content is interpreted as plain text.
+   *
+   * @example
+   * ["script", "style"]
+   * @see [HTML5 Raw Text Elements](https://www.w3.org/TR/2010/WD-html5-20101019/syntax.html#raw-text-elements)
    */
-  cdataTags?: readonly string[];
+  rawTextTags?: readonly string[];
 
   /**
    * The map from a tag (A) to a list of tags that must be closed if tag (A) is opened.
@@ -91,27 +100,27 @@ export interface TokenizerOptions {
   isOrphanClosingTagsIgnored?: boolean;
 
   /**
-   * If `true` then ICU arguments are parsed inside {@link cdataTags CDATA tags}.
+   * If `true` then ICU arguments are parsed inside {@link rawTextTags}.
    *
    * @default false
    */
-  isCDATAInterpolated?: boolean;
+  isArgumentsInRawTextTagsRecognized?: boolean;
 }
 
 /**
  * Converts parser configuration into options consumed by {@link parseMessage} and {@link tokenizeMessage}.
  */
-export function resolveTokenizerOptions(config: TokenizerOptions): BinaryTokenizerOptions {
+export function resolveTokenizerOptions(config: TokenizerOptions): ResolvedTokenizerOptions {
   const {
     voidTags,
-    cdataTags,
+    rawTextTags,
     implicitlyClosedTags,
     implicitlyOpenedTags,
     isCaseInsensitiveTags,
     isSelfClosingTagsRecognized,
     isUnbalancedTagsImplicitlyClosed,
     isOrphanClosingTagsIgnored,
-    isCDATAInterpolated,
+    isArgumentsInRawTextTagsRecognized,
   } = config;
 
   const getHashCode = isCaseInsensitiveTags ? getCaseInsensitiveHashCode : getCaseSensitiveHashCode;
@@ -121,7 +130,7 @@ export function resolveTokenizerOptions(config: TokenizerOptions): BinaryTokeniz
   return {
     readTag: getHashCode,
     voidTags: voidTags && new Set(voidTags.map(toHashCode)),
-    cdataTags: cdataTags && new Set(cdataTags.map(toHashCode)),
+    rawTextTags: rawTextTags && new Set(rawTextTags.map(toHashCode)),
     implicitlyClosedTags:
       implicitlyClosedTags &&
       new Map(
@@ -131,6 +140,6 @@ export function resolveTokenizerOptions(config: TokenizerOptions): BinaryTokeniz
     isSelfClosingTagsRecognized,
     isUnbalancedTagsImplicitlyClosed,
     isOrphanClosingTagsIgnored,
-    isCDATAInterpolated,
+    isArgumentsInRawTextTagsRecognized,
   };
 }

@@ -1,4 +1,4 @@
-import { TokenCallback, tokenizeMessage, BinaryTokenizerOptions } from './tokenizeMessage.js';
+import { TokenCallback, tokenizeMessage, ResolvedTokenizerOptions } from './tokenizeMessage.js';
 import {
   Child,
   createArgumentNode,
@@ -68,7 +68,7 @@ export interface ParserOptions extends DecodingOptions {
    *
    * @see {@link htmlTokenizerOptions}
    */
-  tokenizerOptions?: BinaryTokenizerOptions;
+  tokenizerOptions?: ResolvedTokenizerOptions;
 }
 
 /**

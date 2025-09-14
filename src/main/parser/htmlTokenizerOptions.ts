@@ -35,7 +35,7 @@ export const htmlTokenizerOptions: TokenizerOptions = {
     'track',
     'wbr',
   ],
-  cdataTags: ['script', 'style', 'textarea'],
+  rawTextTags: ['script', 'style', 'textarea'],
   implicitlyClosedTags: {
     tr: ['tr', 'th', 'td'],
     th: ['th'],
@@ -90,5 +90,5 @@ export const htmlTokenizerOptions: TokenizerOptions = {
   isSelfClosingTagsRecognized: false,
   isUnbalancedTagsImplicitlyClosed: true,
   isOrphanClosingTagsIgnored: true,
-  isCDATAInterpolated: true,
+  isArgumentsInRawTextTagsRecognized: true,
 };
