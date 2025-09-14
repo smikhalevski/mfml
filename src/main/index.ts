@@ -4,6 +4,7 @@
  * @module mfml
  */
 
+export { AbstractMessageRenderer } from './AbstractMessageRenderer.js';
 export {
   createMessageNode,
   createElementNode,
@@ -15,7 +16,10 @@ export {
   type ArgumentNode,
   type SelectNode,
 } from './ast.js';
-export { StringMessageRenderer } from './StringMessageRenderer.js';
 export { renderText } from './renderText.js';
+export {
+  StringMessageRenderer,
+  type StringComponentType,
+  type StringMessageRendererOptions,
+} from './StringMessageRenderer.js';
 export { type MessageRenderer, type MessageRendererOptions } from './types.js';
-export { AbstractMessageRenderer } from './AbstractMessageRenderer.js';

@@ -1,6 +1,25 @@
 import { Child, MessageNode } from './ast.js';
-import { StringComponentType, StringMessageRenderer } from './StringMessageRenderer.js';
+import { StringMessageRenderer } from './StringMessageRenderer.js';
 import { MessageRenderer } from './types.js';
+
+const defaultStringMessageRenderer = new StringMessageRenderer({
+  dateStyles: {
+    short: { dateStyle: 'short' },
+    full: { dateStyle: 'full' },
+    long: { dateStyle: 'long' },
+    medium: { dateStyle: 'medium' },
+  },
+  timeStyles: {
+    short: { timeStyle: 'short' },
+    full: { timeStyle: 'full' },
+    long: { timeStyle: 'long' },
+    medium: { timeStyle: 'medium' },
+  },
+  numberStyles: {
+    decimal: { style: 'decimal' },
+    percent: { style: 'percent' },
+  },
+});
 
 /**
  * Renders message node as plain text string.
@@ -21,56 +40,52 @@ export function renderText<Values extends object | void>(
     return '';
   }
 
-  return renderChildren(messageNode.locale, messageNode.children, values, renderer);
+  return renderChildrenAsString(messageNode.locale, messageNode.children, values, renderer).join('');
 }
 
-function renderChildren(
+export function renderChildrenAsString(
   locale: string,
   children: Child[] | string | null,
   values: any,
   renderer: MessageRenderer<string>
-): string {
+): string[] {
   if (children === null) {
-    return '';
+    return [];
   }
 
-  if (typeof children === 'string') {
-    return renderChild(locale, children, values, renderer);
-  }
-
-  let str = '';
+  const result = [];
 
   for (let i = 0; i < children.length; ++i) {
-    str += renderChild(locale, children[i], values, renderer);
+    result.push(renderChild(locale, children[i], values, renderer));
   }
 
-  return str;
+  return result;
 }
 
 function renderChild(locale: string, child: Child | string, values: any, renderer: MessageRenderer<string>): string {
   if (typeof child === 'string') {
-    return renderer.renderText(locale, child);
+    return child;
   }
 
   if (child.nodeType === 'element') {
-    const renderedAttributes: Record<string, string> = {};
+    const attributes: Record<string, string> = {};
 
     if (child.attributes !== null) {
       for (const key in child.attributes) {
-        renderedAttributes[key] = renderChildren(locale, child.attributes[key], values, renderer);
+        attributes[key] = renderChildrenAsString(locale, child.attributes[key], values, renderer).join('');
       }
     }
 
     return renderer.renderElement(
       locale,
       child.tagName,
-      renderedAttributes,
-      renderChildren(locale, child.children, values, renderer)
+      attributes,
+      renderChildrenAsString(locale, child.children, values, renderer)
     );
   }
 
   if (child.nodeType === 'argument') {
-    return renderer.renderArgumentValue(locale, values && values[child.name], child.type, child.style);
+    return renderer.formatArgument(locale, values && values[child.name], child.type, child.style);
   }
 
   if (child.nodeType === 'select') {
@@ -81,48 +96,10 @@ function renderChild(locale: string, child: Child | string, values: any, rendere
       Object.keys(child.categories)
     );
 
-    return category === undefined ? '' : renderChildren(locale, child.categories[category], values, renderer);
+    return category === undefined
+      ? ''
+      : renderChildrenAsString(locale, child.categories[category], values, renderer).join('');
   }
 
   return '';
 }
-
-const paragraph: StringComponentType = (_attributes, children) => {
-  return (typeof children === 'string' ? children : children.join('')) + '\n\n';
-};
-
-const lineBreak: StringComponentType = (_attributes, children) => {
-  return (typeof children === 'string' ? children : children.join('')) + '\n';
-};
-
-const defaultStringMessageRenderer = new StringMessageRenderer({
-  isSpacesCompressed: true,
-
-  dateStyles: {
-    short: { dateStyle: 'short' },
-    full: { dateStyle: 'full' },
-    long: { dateStyle: 'long' },
-    medium: { dateStyle: 'medium' },
-  },
-  timeStyles: {
-    short: { timeStyle: 'short' },
-    full: { timeStyle: 'full' },
-    long: { timeStyle: 'long' },
-    medium: { timeStyle: 'medium' },
-  },
-  numberStyles: {
-    decimal: { style: 'decimal' },
-    percent: { style: 'percent' },
-  },
-
-  components: {
-    h1: paragraph,
-    h2: paragraph,
-    h3: paragraph,
-    h4: paragraph,
-    h5: paragraph,
-    h6: paragraph,
-    p: paragraph,
-    br: lineBreak,
-  },
-});

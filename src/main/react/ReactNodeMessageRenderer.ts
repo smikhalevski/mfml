@@ -32,6 +32,10 @@ export class ReactNodeMessageRenderer extends AbstractMessageRenderer<ReactNode>
     this.components = components;
   }
 
+  renderText(_locale: string, text: string): ReactNode {
+    return text;
+  }
+
   renderElement(
     _locale: string,
     tagName: string,

@@ -5,61 +5,37 @@
  */
 export interface MessageRenderer<T> {
   /**
-   * Renders plain text.
-   *
-   * @param locale The message locale.
-   * @param text The text to render.
-   * @returns Rendering result,
-   */
-  renderText(locale: string, text: string): T;
-
-  /**
    * Renders an element.
    *
    * @param locale The message locale.
    * @param tagName The element tag name.
    * @param attributes Attributes of an element.
    * @param children Children of an element.
-   * @returns Rendering result,
+   * @returns Rendering result.
    */
-  renderElement(
-    locale: string,
-    tagName: string,
-    attributes: { readonly [name: string]: readonly T[] | T },
-    children: readonly T[] | T
-  ): T;
+  renderElement(locale: string, tagName: string, attributes: Record<string, string>, children: T[]): T;
 
   /**
-   * Renders an ICU argument value.
+   * Formats argument value as a string.
    *
    * @param locale The message locale.
-   * @param argumentValue The value of an argument.
-   * @param argumentType The type of an argument.
-   * @param argumentStyle The formatting style to apply.
-   * @returns Rendering result,
+   * @param value The value of an argument.
+   * @param type The type of an argument.
+   * @param style The formatting style to apply.
+   * @returns Formatted argument value.
    */
-  renderArgumentValue(
-    locale: string,
-    argumentValue: unknown,
-    argumentType: string | undefined,
-    argumentStyle: string | undefined
-  ): T;
+  formatArgument(locale: string, value: unknown, type: string | undefined, style: string | undefined): string;
 
   /**
    * Returns the select category name depending of an ICU argument value.
    *
    * @param locale The message locale.
-   * @param argumentValue The value of an argument.
-   * @param selectType The type of the select node ("plural", "selectordinal", "select")
-   * @param selectCategories The array of categories available in the select node.
+   * @param value The value of an argument.
+   * @param type The type of the select node ("plural", "selectordinal", "select")
+   * @param categories The array of categories available in the select node.
    * @returns The selected category, or `undefined` if there's no matching category.
    */
-  selectCategory(
-    locale: string,
-    argumentValue: unknown,
-    selectType: string,
-    selectCategories: readonly string[]
-  ): string | undefined;
+  selectCategory(locale: string, value: unknown, type: string, categories: string[]): string | undefined;
 }
 
 /**

@@ -1,12 +1,11 @@
 import { MessageRenderer, MessageRendererOptions } from './types.js';
 
 /**
- * The message renderer the provides the default implementation of text, argument and select rendering that matches the
- * default ICU behavior.
+ * The message renderer the provides the default implementation of argument formatting and select matching.
  *
  * @template T The rendering result (string, `ReactNode`).
  */
-export abstract class AbstractMessageRenderer<T> implements MessageRenderer<T | string> {
+export abstract class AbstractMessageRenderer<T> implements MessageRenderer<T> {
   /**
    * Number formatting styles.
    */
@@ -35,71 +34,44 @@ export abstract class AbstractMessageRenderer<T> implements MessageRenderer<T | 
     this.timeStyles = timeStyles;
   }
 
-  renderText(_locale: string, text: string): T | string {
-    return text;
-  }
+  abstract renderElement(locale: string, tagName: string, attributes: Record<string, string>, children: T[]): T;
 
-  abstract renderElement(
-    locale: string,
-    tagName: string,
-    attributes: { readonly [name: string]: ReadonlyArray<T | string> | T | string },
-    children: ReadonlyArray<T | string> | T | string
-  ): T;
-
-  renderArgumentValue(
-    locale: string,
-    argumentValue: unknown,
-    argumentType: string | undefined,
-    argumentStyle: string | undefined
-  ): T | string {
-    if (argumentType === 'number' && (typeof argumentValue === 'number' || typeof argumentValue === 'bigint')) {
-      const options = argumentStyle === undefined ? defaultOptions : this.numberStyles[argumentStyle] || defaultOptions;
-
-      return getCachedNumberFormat(locale, options).format(argumentValue);
+  formatArgument(locale: string, value: unknown, type: string | undefined, style: string | undefined): string {
+    if (type === 'number' && (typeof value === 'number' || typeof value === 'bigint')) {
+      return getCachedNumberFormat(locale, (style && this.numberStyles[style]) || defaultOptions).format(value);
     }
 
-    if (argumentType === 'date' && (typeof argumentValue === 'number' || argumentValue instanceof Date)) {
-      const options = argumentStyle === undefined ? defaultOptions : this.dateStyles[argumentStyle] || defaultOptions;
-
-      return getCachedDateTimeFormat(locale, options).format(argumentValue);
+    if (type === 'date' && (typeof value === 'number' || value instanceof Date)) {
+      return getCachedDateTimeFormat(locale, (style && this.dateStyles[style]) || defaultOptions).format(value);
     }
 
-    if (argumentType === 'time' && (typeof argumentValue === 'number' || argumentValue instanceof Date)) {
-      const options = argumentStyle === undefined ? defaultOptions : this.timeStyles[argumentStyle] || defaultOptions;
-
-      return getCachedDateTimeFormat(locale, options).format(argumentValue);
+    if (type === 'time' && (typeof value === 'number' || value instanceof Date)) {
+      return getCachedDateTimeFormat(locale, (style && this.timeStyles[style]) || defaultOptions).format(value);
     }
 
-    if (argumentValue === null || argumentValue === undefined || argumentValue !== argumentValue) {
+    if (value === null || value === undefined || value !== value) {
       return '';
     }
 
-    return '' + argumentValue;
+    return '' + value;
   }
 
-  selectCategory(
-    locale: string,
-    argumentValue: unknown,
-    selectType: string,
-    selectCategories: readonly string[]
-  ): string | undefined {
-    let category = '=' + argumentValue;
+  selectCategory(locale: string, value: unknown, type: string, categories: string[]): string | undefined {
+    let category = '=' + value;
 
-    if (selectCategories.includes(category)) {
+    if (categories.includes(category)) {
       return category;
     }
 
-    if ((selectType === 'plural' || selectType === 'selectordinal') && typeof argumentValue === 'number') {
-      const options = selectType === 'plural' ? cardinalOptions : ordinalOptions;
-
-      category = getCachedPluralRules(locale, options).select(argumentValue);
-    } else if (selectType === 'select') {
-      category = '' + argumentValue;
+    if ((type === 'plural' || type === 'selectordinal') && typeof value === 'number') {
+      category = getCachedPluralRules(locale, type === 'plural' ? cardinalOptions : ordinalOptions).select(value);
+    } else if (type === 'select') {
+      category = '' + value;
     } else {
       category = 'other';
     }
 
-    return selectCategories.includes(category) ? category : selectCategories.includes('other') ? 'other' : undefined;
+    return categories.includes(category) ? category : categories.includes('other') ? 'other' : undefined;
   }
 }
 
