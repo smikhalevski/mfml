@@ -48,18 +48,20 @@ export function truncateMessage(text: string, charCount = 300, ellipsis = '…')
   return text;
 }
 
-export function escapeJsIdentifier(str: string): string {
+export function escapeJSIdentifier(str: string): string {
   if (jsKeywords.has(str)) {
     return '_' + str;
   }
 
-  return str
-    .replace(/[^$_\p{Lu}\p{Ll}\p{Lt}\p{Lm}\p{Lo}\p{Nl}\u200C\u200D\p{Mn}\p{Mc}\p{Nd}\p{Pc}]/gu, '_')
-    .replace(/^[^$_\p{Lu}\p{Ll}\p{Lt}\p{Lm}\p{Lo}\p{Nl}]/u, '_$&');
+  str = str.replace(/[^$_\p{L}\p{Nl}\p{Mn}\p{Mc}\p{Nd}\p{Pc}]/gu, '_');
+
+  return /^[$_\p{L}\p{Nl}]/u.test(str) ? str : '_' + str;
 }
 
 const jsKeywords = new Set(
-  'break,case,catch,class,const,continue,debugger,default,delete,do,else,enum,export,extends,false,finally,for,function,if,import,in,instanceof,new,null,return,super,switch,this,throw,true,try,typeof,var,void,while,with,yield,let,static,implements,interface,package,private,protected,public'.split(
-    ','
-  )
+  (
+    'break case catch class const continue debugger default delete do else enum export extends false ' +
+    'finally for function if import in instanceof new null return super switch this throw true try ' +
+    'typeof var void while with yield let static implements interface package private protected public '
+  ).split(' ')
 );

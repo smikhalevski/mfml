@@ -369,9 +369,9 @@ export default defineConfig({
 });
 ```
 
-## `getArgumentTsType`
+## `getArgumentTSType`
 
-**Default:** [`getArgumentIntlTsType`](https://smikhalevski.github.io/mfml/functions/mfml_compiler.getArgumentIntlTsType.html)
+**Default:** [`getIntlArgumentTSType`](https://smikhalevski.github.io/mfml/functions/mfml_compiler.getArgumentIntlTSType.html)
 
 Returns the TypeScript type for a given argument.
 
@@ -382,7 +382,7 @@ export default defineConfig({
       greeting: '{name} is {age,number} years old',
     },
   },
-  getArgumentTsType(argumentNode) {
+  getArgumentTSType(argumentNode) {
     if (argumentNode.typeNode?.value === 'number') {
       return 'number|bigint';
     }
@@ -396,7 +396,7 @@ This would produce a message function with the following signature:
 export declare function greeting(locale: string): MessageNode<{ name: unknown; age: number | bigint }> | null;
 ```
 
-By default, [`getArgumentIntlTsType`](https://smikhalevski.github.io/mfml/functions/mfml_compiler.getArgumentIntlTsType.html)
+By default, [`getIntlArgumentTSType`](https://smikhalevski.github.io/mfml/functions/mfml_compiler.getArgumentIntlTSType.html)
 is used and returns the TypeScript type of an argument that matches the `Intl` format requirements:
 
 | Argument type   | TypeScript type                                                           |

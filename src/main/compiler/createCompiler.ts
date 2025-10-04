@@ -1,7 +1,7 @@
 import { AnyNode, ArgumentNode, MessageNode, Metadata } from '../types.js';
 import { Parser } from '../parser/index.js';
 import {
-  escapeJsIdentifier,
+  escapeJSIdentifier,
   formatJSDocComment,
   formatMarkdownBold,
   formatMarkdownFence,
@@ -172,9 +172,9 @@ export interface CompilerOptions {
    *   }
    * };
    *
-   * @see {@link getArgumentIntlTsType}
+   * @see {@link getIntlArgumentTSType}
    */
-  getArgumentTsType?: (argumentNode: ArgumentNode) => string | undefined;
+  getArgumentTSType?: (argumentNode: ArgumentNode) => string | undefined;
 }
 
 /**
@@ -246,8 +246,8 @@ export async function compileFiles(
     fallbackLocales,
     preprocessors,
     postprocessors,
-    renameMessageFunction = escapeJsIdentifier,
-    getArgumentTsType = getArgumentIntlTsType,
+    renameMessageFunction = escapeJSIdentifier,
+    getArgumentTSType = getIntlArgumentTSType,
   } = options;
 
   const errors: CompilerError[] = [];
@@ -260,19 +260,16 @@ export async function compileFiles(
 
   const localeVars: Record<string, string> = {};
 
-  let indexJs = '';
-  let indexTs = 'import{MessageNode}from"mfml";\n';
-  let localesJs = '';
+  let indexJSCode = '';
+  let indexTSCode = 'import{MessageNode}from"mfml";\n';
+  let localesJSCode = '';
 
   for (const locale of locales) {
-    const localeVar = 'LOCALE_' + escapeJsIdentifier(locale).toUpperCase();
+    const localeVar = 'LOCALE_' + escapeJSIdentifier(locale).toUpperCase();
 
     localeVars[locale] = localeVar;
-    localesJs += 'export const ' + localeVar + '=' + JSON.stringify(locale) + ';\n';
+    localesJSCode += 'export const ' + localeVar + '=' + JSON.stringify(locale) + ';\n';
   }
-
-  // Prevents infinite loop when resolving a fallback locale, reused between messages
-  const visitedFallbackLocales = new Set<string>();
 
   nextMessageKey: for (const messageKey of messageKeys) {
     // Locale group includes all locales for which the same message text is returned
@@ -290,10 +287,11 @@ export async function compileFiles(
 
       for (const locale of locales) {
         if (messages[locale][messageKey] !== undefined) {
+          // No fallback required
           continue;
         }
 
-        visitedFallbackLocales.clear();
+        const visitedLocales = new Set<string>().add(locale);
 
         let fallbackLocale = locale;
 
@@ -302,8 +300,8 @@ export async function compileFiles(
         } while (
           fallbackLocale !== undefined &&
           locales.indexOf(fallbackLocale) !== -1 &&
-          !visitedFallbackLocales.has(fallbackLocale) &&
-          (visitedFallbackLocales.add(fallbackLocale), messages[fallbackLocale][messageKey] === undefined)
+          !visitedLocales.has(fallbackLocale) &&
+          (visitedLocales.add(fallbackLocale), messages[fallbackLocale][messageKey] === undefined)
         );
 
         if (fallbackLocale === undefined || fallbackLocale === locale) {
@@ -320,10 +318,10 @@ export async function compileFiles(
     }
 
     const messageNodes: MessageNode[] = [];
-    const argumentTsTypes = new Map<string, Set<string>>();
+    const argumentTSTypes = new Map<string, Set<string>>();
 
-    let jsCode = '';
-    let jsDocComment = formatMarkdownBold('Message key') + '\n' + formatMarkdownFence(messageKey, 'text');
+    let messageJSCode = '';
+    let docComment = formatMarkdownBold('Message key') + '\n' + formatMarkdownFence(messageKey, 'text');
 
     // Parse message text for each locale
     for (const localeGroup of localeGroups) {
@@ -347,7 +345,7 @@ export async function compileFiles(
           }
         }
 
-        collectArgumentTsTypes(messageNode, getArgumentTsType, argumentTsTypes);
+        collectArgumentTSTypes(messageNode, getArgumentTSType, argumentTSTypes);
       } catch (error) {
         errors.push(new CompilerError(messageKey, baseLocale, error));
         continue nextMessageKey;
@@ -355,7 +353,7 @@ export async function compileFiles(
 
       messageNodes.push(messageNode);
 
-      jsDocComment +=
+      docComment +=
         '\n' +
         formatMarkdownBold(baseLocale) +
         (localeGroup.length === 1 ? '' : ' ← ' + localeGroup.slice(1).join(' ← ')) +
@@ -365,10 +363,10 @@ export async function compileFiles(
 
     // Build a ternary that selects a message node depending on a requested locale
     for (let i = 0; i < localeGroups.length; ++i) {
-      jsCode += localeGroups[i].map(locale => 'locale===' + localeVars[locale]).join('||');
+      messageJSCode += localeGroups[i].map(locale => 'locale===' + localeVars[locale]).join('||');
 
       try {
-        jsCode += '?' + compileNode(messageNodes[i]) + ':';
+        messageJSCode += '?' + compileNode(messageNodes[i]) + ':';
       } catch (error) {
         errors.push(new CompilerError(messageKey, localeGroups[i][0], error));
         continue nextMessageKey;
@@ -376,14 +374,14 @@ export async function compileFiles(
     }
 
     // Return null from a message function for an unknown or unsupported locale
-    jsCode += 'null;';
+    messageJSCode += 'null;';
 
     let fileName;
     let functionName;
 
     try {
       // Hash of a message function body
-      fileName = await toHashCode(jsCode, 16);
+      fileName = await toHashCode(messageJSCode, 16);
       functionName = renameMessageFunction(messageKey);
     } catch (error) {
       errors.push(new CompilerError(messageKey, localeGroups[0][0], error));
@@ -396,22 +394,22 @@ export async function compileFiles(
       Object.values(localeVars).join(',') +
       '}from"./locales.js";\n' +
       '\n' +
-      formatJSDocComment(jsDocComment) +
+      formatJSDocComment(docComment) +
       '\nexport default function ' +
       functionName +
       '(locale){\nreturn ' +
-      jsCode +
+      messageJSCode +
       '\n}\n';
 
-    indexJs += 'export{default as ' + functionName + '}from"./' + fileName + '.js";\n';
+    indexJSCode += 'export{default as ' + functionName + '}from"./' + fileName + '.js";\n';
 
-    indexTs +=
+    indexTSCode +=
       '\n' +
-      formatJSDocComment(jsDocComment) +
+      formatJSDocComment(docComment) +
       '\nexport declare function ' +
       functionName +
       '(locale:string):' +
-      compileMessageTsType(argumentTsTypes) +
+      compileMessageTSType(argumentTSTypes) +
       ';\n';
   }
 
@@ -421,11 +419,11 @@ export async function compileFiles(
 
   const metadata: Metadata = { supportedLocales: locales };
 
-  files['index.js'] = indexJs;
+  files['index.js'] = indexJSCode;
 
-  files['index.d.ts'] = indexTs;
+  files['index.d.ts'] = indexTSCode;
 
-  files['locales.js'] = localesJs;
+  files['locales.js'] = localesJSCode;
 
   files['metadata.js'] = 'export default ' + JSON.stringify(metadata, null, 2) + ';\n';
 
@@ -455,7 +453,7 @@ export async function compileFiles(
  *
  * @group Compiler
  */
-export function getArgumentIntlTsType(argumentNode: ArgumentNode): string | undefined {
+export function getIntlArgumentTSType(argumentNode: ArgumentNode): string | undefined {
   switch (argumentNode.typeNode?.value) {
     case 'number':
       return 'number|bigint';
@@ -480,32 +478,32 @@ export function getArgumentIntlTsType(argumentNode: ArgumentNode): string | unde
         .map(categoryNode =>
           categoryNode.name === 'other'
             ? '(string&{})'
-            : JSON.stringify(categoryNode.name.charAt(0) === '=' ? categoryNode.name.substring(1) : categoryNode.name)
+            : JSON.stringify(categoryNode.name.startsWith('=') ? categoryNode.name.substring(1) : categoryNode.name)
         )
         .join('|');
   }
 }
 
-export function collectArgumentTsTypes(
+export function collectArgumentTSTypes(
   messageNode: MessageNode,
-  getArgumentTsType: (argumentNode: ArgumentNode) => string | undefined,
-  argumentTsTypes: Map<string, Set<string>>
+  getArgumentTSType: (argumentNode: ArgumentNode) => string | undefined,
+  argumentTSTypes: Map<string, Set<string>>
 ): void {
   walkNode(messageNode, node => {
     if (node.nodeType !== 'argument') {
       return;
     }
 
-    let tsTypes = argumentTsTypes.get(node.name);
+    let tsTypes = argumentTSTypes.get(node.name);
 
     if (tsTypes === undefined) {
       tsTypes = new Set();
-      argumentTsTypes.set(node.name, tsTypes);
+      argumentTSTypes.set(node.name, tsTypes);
     }
 
-    const tsType = getArgumentTsType(node);
+    const tsType = getArgumentTSType(node);
 
-    if (tsType === undefined || tsType === null || tsType === '') {
+    if (tsType === undefined || tsType === null || tsType === '' || tsType === 'unknown') {
       return;
     }
 
@@ -513,17 +511,15 @@ export function collectArgumentTsTypes(
   });
 }
 
-export function compileMessageTsType(argumentTsTypes: Map<string, Set<string>>): string {
-  if (argumentTsTypes.size === 0) {
+export function compileMessageTSType(argumentTSTypes: Map<string, Set<string>>): string {
+  if (argumentTSTypes.size === 0) {
     return 'MessageNode<void>|null';
   }
 
   let tsCode = '';
 
-  for (const [argumentName, tsTypes] of argumentTsTypes) {
+  for (const [argumentName, tsTypes] of argumentTSTypes) {
     tsCode += JSON.stringify(argumentName) + ':';
-
-    tsTypes.delete('unknown');
 
     if (tsTypes.size === 0) {
       tsCode += 'unknown;';

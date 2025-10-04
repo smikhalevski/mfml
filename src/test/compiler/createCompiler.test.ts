@@ -2,9 +2,9 @@ import { describe, expect, test } from 'vitest';
 import {
   compileFiles,
   compileNode,
-  compileMessageTsType,
-  collectArgumentTsTypes,
-  getArgumentIntlTsType,
+  compileMessageTSType,
+  collectArgumentTSTypes,
+  getIntlArgumentTSType,
 } from '../../main/compiler/createCompiler.js';
 import { createParser, parseMessage } from '../../main/parser/createParser.js';
 import { createTokenizer, htmlTokenizer } from '../../main/parser/index.js';
@@ -41,34 +41,34 @@ describe('compileNode', () => {
   });
 });
 
-describe('compileMessageTsType', () => {
+describe('compileMessageTSType', () => {
   test('compiles message type', () => {
-    expect(compileMessageTsType(new Map())).toBe('MessageNode<void>|null');
-    expect(compileMessageTsType(new Map().set('xxx', new Set()))).toBe('MessageNode<{"xxx":unknown;}>|null');
-    expect(compileMessageTsType(new Map().set('xxx', new Set(['string'])))).toBe('MessageNode<{"xxx":string;}>|null');
-    expect(compileMessageTsType(new Map().set('xxx', new Set(['string', 'string|number'])))).toBe(
+    expect(compileMessageTSType(new Map())).toBe('MessageNode<void>|null');
+    expect(compileMessageTSType(new Map().set('xxx', new Set()))).toBe('MessageNode<{"xxx":unknown;}>|null');
+    expect(compileMessageTSType(new Map().set('xxx', new Set(['string'])))).toBe('MessageNode<{"xxx":string;}>|null');
+    expect(compileMessageTSType(new Map().set('xxx', new Set(['string', 'string|number'])))).toBe(
       'MessageNode<{"xxx":(string)&(string|number);}>|null'
     );
   });
 });
 
-describe('collectArgumentTsTypes', () => {
+describe('collectArgumentTSTypes', () => {
   test('empty is no arguments', () => {
     const messageNode = parseMessage('en', '', { tokenizer: htmlTokenizer });
-    const argumentTsTypes = new Map();
+    const argumentTSTypes = new Map();
 
-    collectArgumentTsTypes(messageNode, getArgumentIntlTsType, argumentTsTypes);
+    collectArgumentTSTypes(messageNode, getIntlArgumentTSType, argumentTSTypes);
 
-    expect(argumentTsTypes).toEqual(new Map());
+    expect(argumentTSTypes).toEqual(new Map());
   });
 
   test('collects untyped argument types', () => {
     const messageNode = parseMessage('en', '{xxx}{yyy}', { tokenizer: htmlTokenizer });
-    const argumentTsTypes = new Map();
+    const argumentTSTypes = new Map();
 
-    collectArgumentTsTypes(messageNode, getArgumentIntlTsType, argumentTsTypes);
+    collectArgumentTSTypes(messageNode, getIntlArgumentTSType, argumentTSTypes);
 
-    expect(argumentTsTypes).toEqual(
+    expect(argumentTSTypes).toEqual(
       new Map([
         ['xxx', new Set()],
         ['yyy', new Set()],
@@ -78,47 +78,47 @@ describe('collectArgumentTsTypes', () => {
 
   test('collects typed and untyped argument types', () => {
     const messageNode = parseMessage('en', '{xxx,time}{xxx}', { tokenizer: htmlTokenizer });
-    const argumentTsTypes = new Map();
+    const argumentTSTypes = new Map();
 
-    collectArgumentTsTypes(messageNode, getArgumentIntlTsType, argumentTsTypes);
+    collectArgumentTSTypes(messageNode, getIntlArgumentTSType, argumentTSTypes);
 
-    expect(argumentTsTypes).toEqual(new Map([['xxx', new Set(['number|Date'])]]));
+    expect(argumentTSTypes).toEqual(new Map([['xxx', new Set(['number|Date'])]]));
   });
 
   test('collects differently typed argument types', () => {
     const messageNode = parseMessage('en', '{xxx,time}{xxx,number}', { tokenizer: htmlTokenizer });
-    const argumentTsTypes = new Map();
+    const argumentTSTypes = new Map();
 
-    collectArgumentTsTypes(messageNode, getArgumentIntlTsType, argumentTsTypes);
+    collectArgumentTSTypes(messageNode, getIntlArgumentTSType, argumentTSTypes);
 
-    expect(argumentTsTypes).toEqual(new Map([['xxx', new Set(['number|Date', 'number|bigint'])]]));
+    expect(argumentTSTypes).toEqual(new Map([['xxx', new Set(['number|Date', 'number|bigint'])]]));
   });
 
   test('collects argument types from attributes', () => {
     const messageNode = parseMessage('en', '<a title="{xxx,time}">', { tokenizer: htmlTokenizer });
-    const argumentTsTypes = new Map();
+    const argumentTSTypes = new Map();
 
-    collectArgumentTsTypes(messageNode, getArgumentIntlTsType, argumentTsTypes);
+    collectArgumentTSTypes(messageNode, getIntlArgumentTSType, argumentTSTypes);
 
-    expect(argumentTsTypes).toEqual(new Map([['xxx', new Set(['number|Date'])]]));
+    expect(argumentTSTypes).toEqual(new Map([['xxx', new Set(['number|Date'])]]));
   });
 
   test('collects argument types from tag children', () => {
     const messageNode = parseMessage('en', '<a>{xxx,time}', { tokenizer: htmlTokenizer });
-    const argumentTsTypes = new Map();
+    const argumentTSTypes = new Map();
 
-    collectArgumentTsTypes(messageNode, getArgumentIntlTsType, argumentTsTypes);
+    collectArgumentTSTypes(messageNode, getIntlArgumentTSType, argumentTSTypes);
 
-    expect(argumentTsTypes).toEqual(new Map([['xxx', new Set(['number|Date'])]]));
+    expect(argumentTSTypes).toEqual(new Map([['xxx', new Set(['number|Date'])]]));
   });
 
   test('collects argument types from categories', () => {
     const messageNode = parseMessage('en', '{yyy,select,zzz{{xxx,time}} vvv{}}', { tokenizer: htmlTokenizer });
-    const argumentTsTypes = new Map();
+    const argumentTSTypes = new Map();
 
-    collectArgumentTsTypes(messageNode, getArgumentIntlTsType, argumentTsTypes);
+    collectArgumentTSTypes(messageNode, getIntlArgumentTSType, argumentTSTypes);
 
-    expect(argumentTsTypes).toEqual(
+    expect(argumentTSTypes).toEqual(
       new Map([
         ['yyy', new Set(['"zzz"|"vvv"'])],
         ['xxx', new Set(['number|Date'])],
@@ -128,11 +128,11 @@ describe('collectArgumentTsTypes', () => {
 
   test('collects argument types from categories and other', () => {
     const messageNode = parseMessage('en', '{yyy,select,zzz{{xxx,time}} vvv{} other{}}', { tokenizer: htmlTokenizer });
-    const argumentTsTypes = new Map();
+    const argumentTSTypes = new Map();
 
-    collectArgumentTsTypes(messageNode, getArgumentIntlTsType, argumentTsTypes);
+    collectArgumentTSTypes(messageNode, getIntlArgumentTSType, argumentTSTypes);
 
-    expect(argumentTsTypes).toEqual(
+    expect(argumentTSTypes).toEqual(
       new Map([
         ['yyy', new Set(['"zzz"|"vvv"|(string&{})'])],
         ['xxx', new Set(['number|Date'])],

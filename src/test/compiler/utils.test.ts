@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { escapeJsIdentifier, toHashCode, truncateMessage } from '../../main/compiler/utils.js';
+import { escapeJSIdentifier, toHashCode, truncateMessage } from '../../main/compiler/utils.js';
 
 describe('toHashCode', () => {
   test('generates hash code', async () => {
@@ -23,14 +23,16 @@ describe('truncateMessage', () => {
   });
 });
 
-describe('escapeJsIdentifier', () => {
+describe('escapeJSIdentifier', () => {
   test('replaces illegal characters with an underscore', () => {
-    expect(escapeJsIdentifier('111')).toBe('_111');
-    expect(escapeJsIdentifier('+=*')).toBe('___');
-    expect(escapeJsIdentifier('hello')).toBe('hello');
+    expect(escapeJSIdentifier('111')).toBe('_111');
+    expect(escapeJSIdentifier('+👯‍♀️=*')).toBe('____️__');
+    expect(escapeJSIdentifier('❌')).toBe('_');
+    expect(escapeJSIdentifier('+=*')).toBe('___');
+    expect(escapeJSIdentifier('hello')).toBe('hello');
   });
 
   test('prepends underscore to reserved characters', () => {
-    expect(escapeJsIdentifier('break')).toBe('_break');
+    expect(escapeJSIdentifier('break')).toBe('_break');
   });
 });

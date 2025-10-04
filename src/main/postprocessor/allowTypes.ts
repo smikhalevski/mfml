@@ -23,7 +23,7 @@ export interface TypeRequirements {
   /**
    * The array of styles that a type allows, or `true` if any style is allowed.
    *
-   * If  empty or `false` then no styles are allowed.
+   * If empty or `false` then no styles are allowed.
    *
    * @example
    * ['decimal', 'percent']
@@ -35,7 +35,7 @@ export interface TypeRequirements {
   /**
    * The array of option names that a type allows, or `true` if any option is allowed.
    *
-   * If  empty or `false` then options aren't allowed.
+   * If empty or `false` then options aren't allowed.
    *
    * @example
    * ['currencyDisplay', 'useGrouping', 'minimumIntegerDigits']
@@ -47,7 +47,7 @@ export interface TypeRequirements {
   /**
    * The array of category names that a type allows, or `true` if any category is allowed.
    *
-   * If  empty or `false` then categories aren't allowed.
+   * If empty or `false` then categories aren't allowed.
    *
    * @example
    * ['one', 'many', 'few', 'other']

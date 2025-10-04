@@ -8,7 +8,7 @@ print.isColorized = process.stdout.isTTY && process.env.FORCE_COLOR !== '0';
 
 const fallbackConfigPaths = ['mfml.config.ts', 'mfml.config.js', 'mfml.config.mts', 'mfml.config.mjs'];
 
-let userConfigPath;
+let argvConfigPath;
 
 for (let i = 2; i < process.argv.length; ++i) {
   switch (process.argv[i]) {
@@ -19,7 +19,7 @@ for (let i = 2; i < process.argv.length; ++i) {
       break;
 
     case '--config':
-      userConfigPath = process.argv[++i];
+      argvConfigPath = process.argv[++i];
       break;
 
     case '--silent':
@@ -33,7 +33,7 @@ for (let i = 2; i < process.argv.length; ++i) {
 }
 
 try {
-  const configPath = resolveConfigPath(process.cwd(), userConfigPath ? [userConfigPath] : fallbackConfigPaths);
+  const configPath = resolveConfigPath(process.cwd(), argvConfigPath ? [argvConfigPath] : fallbackConfigPaths);
 
   const { default: config } = await import(configPath);
 

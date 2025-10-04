@@ -50,7 +50,7 @@ export function formatError(error: unknown): string {
     let message = error.message;
 
     if (error.startIndex !== -1) {
-      message += '\n\n' + formatTextExcerpt(error.text, error.startIndex, Math.max(error.startIndex, error.endIndex));
+      message += '\n\n' + formatSyntaxError(error.text, error.startIndex, Math.max(error.startIndex, error.endIndex));
     }
 
     return message;
@@ -63,32 +63,32 @@ export function formatError(error: unknown): string {
   return '' + error;
 }
 
-function formatTextExcerpt(text: string, startIndex: number, endIndex: number, excerptLength = 80): string {
-  let excerptStartIndex = text.lastIndexOf('\n', startIndex) + 1;
-  let excerptEndIndex = text.indexOf('\n', startIndex);
+function formatSyntaxError(text: string, errorStartIndex: number, errorEndIndex: number, excerptLength = 80): string {
+  let startIndex = text.lastIndexOf('\n', errorStartIndex) + 1;
+  let endIndex = text.indexOf('\n', errorStartIndex);
 
   let lineIndex = 0;
 
-  if (excerptEndIndex === -1) {
-    excerptEndIndex = text.length;
+  if (endIndex === -1) {
+    endIndex = text.length;
   }
 
-  for (let i = -1; (i = text.indexOf('\n', i + 1)) !== -1 && i < excerptStartIndex; ) {
+  for (let i = -1; (i = text.indexOf('\n', i + 1)) !== -1 && i < startIndex; ) {
     lineIndex++;
   }
 
-  if (endIndex + excerptLength / 2 > excerptEndIndex) {
-    // Ends after line end
-    excerptEndIndex = Math.min(excerptEndIndex, endIndex + excerptLength);
-    excerptStartIndex = Math.max(excerptStartIndex, excerptEndIndex - excerptLength);
-  } else if (startIndex - excerptLength / 2 < excerptStartIndex) {
-    // Starts before line start
-    excerptStartIndex = Math.max(excerptStartIndex, startIndex - excerptLength);
-    excerptEndIndex = Math.min(excerptStartIndex + excerptLength, excerptEndIndex);
+  if (errorEndIndex + excerptLength / 2 > endIndex) {
+    // Overflows at end
+    endIndex = Math.min(endIndex, errorEndIndex + excerptLength);
+    startIndex = Math.max(startIndex, endIndex - excerptLength);
+  } else if (errorStartIndex - excerptLength / 2 < startIndex) {
+    // Overflows at start
+    startIndex = Math.max(startIndex, errorStartIndex - excerptLength);
+    endIndex = Math.min(startIndex + excerptLength, endIndex);
   } else {
-    // Fits inside the line
-    excerptStartIndex = startIndex - excerptLength / 2;
-    excerptEndIndex = endIndex + excerptLength / 2;
+    // No overflow
+    startIndex = errorStartIndex - excerptLength / 2;
+    endIndex = errorEndIndex + excerptLength / 2;
   }
 
   const prefix = lineIndex + 1 + '';
@@ -96,12 +96,12 @@ function formatTextExcerpt(text: string, startIndex: number, endIndex: number, e
   return (
     inverse(prefix) +
     ' ' +
-    text.substring(excerptStartIndex, excerptEndIndex) +
+    text.substring(startIndex, endIndex) +
     '\n' +
     inverse(' '.repeat(prefix.length)) +
     ' ' +
-    ' '.repeat(startIndex - excerptStartIndex) +
-    red('~'.repeat(Math.max(1, Math.min(endIndex, excerptEndIndex) - startIndex)))
+    ' '.repeat(errorStartIndex - startIndex) +
+    red('~'.repeat(Math.max(1, Math.min(errorEndIndex, endIndex) - errorStartIndex)))
   );
 }
 

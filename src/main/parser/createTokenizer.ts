@@ -61,8 +61,8 @@ export interface TokenizerOptions {
    * For example, in HTML `p` and `br` tags follow this semantics:
    *
    * ```html
-   * </p>  →  <p></p>
-   *          ^^^ p is implicitly opened
+   * </p>   →  <p></p>
+   *           ^^^ p is implicitly opened
    *
    * </br>  →  <br/>
    *              ^ br is implicitly opened
