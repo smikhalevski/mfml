@@ -154,7 +154,7 @@ test('formats date', () => {
       style: 'medium',
       value: 111,
     })
-  ).toBe('Jan 1, 1970, 3:00:00 AM GMT+3');
+  ).toBe('Jan 1, 1970, 12:00:00 AM UTC');
 });
 
 test('formats time', () => {
@@ -166,7 +166,7 @@ test('formats time', () => {
       style: null,
       value: 111,
     })
-  ).toBe('3:00 AM');
+  ).toBe('12:00 AM');
 
   expect(
     defaultArgumentFormatter({
@@ -176,7 +176,7 @@ test('formats time', () => {
       style: null,
       value: 111,
     })
-  ).toBe('03:00');
+  ).toBe('24:00');
 
   expect(
     defaultArgumentFormatter({
@@ -186,7 +186,7 @@ test('formats time', () => {
       style: 'short',
       value: 111,
     })
-  ).toBe('3:00 AM');
+  ).toBe('12:00 AM');
 
   expect(
     defaultArgumentFormatter({
@@ -196,7 +196,7 @@ test('formats time', () => {
       style: 'full',
       value: 111,
     })
-  ).toBe('3:00:00 AM Moscow Standard Time');
+  ).toBe('12:00:00 AM Coordinated Universal Time');
 
   expect(
     defaultArgumentFormatter({
@@ -206,7 +206,7 @@ test('formats time', () => {
       style: 'long',
       value: 111,
     })
-  ).toBe('3:00:00 AM GMT+3');
+  ).toBe('12:00:00 AM UTC');
 
   expect(
     defaultArgumentFormatter({
@@ -216,7 +216,7 @@ test('formats time', () => {
       style: 'medium',
       value: 111,
     })
-  ).toBe('3:00:00 AM');
+  ).toBe('12:00:00 AM');
 
   expect(
     defaultArgumentFormatter({
@@ -226,7 +226,7 @@ test('formats time', () => {
       style: 'medium',
       value: 111,
     })
-  ).toBe('January 1, 1970 at 3:00:00 AM');
+  ).toBe('January 1, 1970 at 12:00:00 AM');
 });
 
 test('formats conjunction list', () => {

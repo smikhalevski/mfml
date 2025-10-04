@@ -22,7 +22,7 @@
   "scripts": {
     "build": "tsc --project tsconfig.build.json && cp package.json README.md LICENSE.txt lib/ && cd lib && npm pkg delete scripts devDependencies && rimraf bin/mfml.d.ts && chmod +x bin/mfml.js",
     "clean": "rimraf lib docs coverage",
-    "test": "vitest run",
+    "test": "TZ=UTC vitest run",
     "test:definitions": "tsd --typings lib/index.d.ts --files src/main/global.d.ts --files 'src/test/**/*.test-d.ts'",
     "perf": "toofast",
     "docs": "typedoc"
