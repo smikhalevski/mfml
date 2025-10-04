@@ -571,11 +571,9 @@ export const defaultAllowedTypes: AllowedTypes = {
   },
   conjunction: {
     allowedStyles: ['long', 'narrow', 'short'],
-    isStyleRequired: true,
   },
   disjunction: {
     allowedStyles: ['long', 'narrow', 'short'],
-    isStyleRequired: true,
   },
   plural: {
     allowedOptions: [
