@@ -173,7 +173,7 @@ function renderChild(node: ChildNode, locale: string, renderer: Renderer<ReactNo
           const value = values?.[name];
 
           if (type === null || categories === null) {
-            return renderer.formatArgument({ locale, value, type, style, options });
+            return renderer.formatArgument({ locale, value, type, style, options }) as ReactNode;
           }
 
           const category = renderer.selectCategory({ locale, value, type, categories, options });
@@ -208,7 +208,7 @@ function renderChild(node: ChildNode, locale: string, renderer: Renderer<ReactNo
 
     return (
       <MessageValuesContext.Consumer>
-        {values => renderer.formatArgument({ locale, value: values?.[name], type, style, options })}
+        {values => renderer.formatArgument({ locale, value: values?.[name], type, style, options }) as ReactNode}
       </MessageValuesContext.Consumer>
     );
   }

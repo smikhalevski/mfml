@@ -9,7 +9,7 @@ export interface ArgumentFormatterParams {
   /**
    * The value of an argument.
    */
-  value: any;
+  value: unknown;
 
   /**
    * The message locale.
@@ -40,16 +40,16 @@ export interface ArgumentFormatterParams {
  * @returns The formatted argument value, or `undefined` if a value cannot be formatted.
  * @group Argument Formatter
  */
-export type ArgumentFormatter = (params: ArgumentFormatterParams) => string | undefined;
+export type ArgumentFormatter = (params: ArgumentFormatterParams) => unknown;
 
 /**
  * Creates an argument formatter that sequentially applies each formatter from the list of formatters until one returns
- * a formatted value. If none of the formatters returns a formatted value, a stringified value is returned instead.
+ * a formatted value. If none of the formatters returns a formatted value, then a value returned as-is.
  *
  * @param formatters The array of formatters to try.
  * @group Argument Formatter
  */
-export function createWaterfallArgumentFormatter(formatters: ArgumentFormatter[]): ArgumentFormatter {
+export function combineArgumentFormatters(formatters: ArgumentFormatter[]): ArgumentFormatter {
   return params => {
     for (const formatter of formatters) {
       const value = formatter(params);
@@ -59,7 +59,7 @@ export function createWaterfallArgumentFormatter(formatters: ArgumentFormatter[]
       }
     }
 
-    return params.value === null || params.value === undefined ? undefined : '' + params.value;
+    return params.value;
   };
 }
 
@@ -157,7 +157,7 @@ export function createDisplayNameArgumentFormatter(
  *
  * @group Argument Formatter
  */
-export const defaultArgumentFormatter = createWaterfallArgumentFormatter([
+export const defaultArgumentFormatter = combineArgumentFormatters([
   createNumberArgumentFormatter(null, null),
   createNumberArgumentFormatter('number', null),
   createNumberArgumentFormatter('number', 'decimal'),

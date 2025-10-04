@@ -5,6 +5,7 @@ import {
   compileMessageTSType,
   collectArgumentTSTypes,
   getIntlArgumentTSType,
+  CompilerError,
 } from '../../main/compiler/createCompiler.js';
 import { createParser, parseMessage } from '../../main/parser/createParser.js';
 import { createTokenizer, htmlTokenizer } from '../../main/parser/index.js';
@@ -142,6 +143,8 @@ describe('collectArgumentTSTypes', () => {
 });
 
 describe('compileFiles', () => {
+  const parser = createParser({ tokenizer: htmlTokenizer });
+
   test('compiles messages as a node_module', async () => {
     expect(
       await compileFiles(
@@ -156,7 +159,7 @@ describe('compileFiles', () => {
               '{gender, select, male {Он отправил} female {Она отправила} other {Они отправили}} вам сообщение',
           },
         },
-        { parser: createParser({ tokenizer: htmlTokenizer }) }
+        { parser }
       )
     ).toStrictEqual({
       '13a21ab9ce3494ec.js':
@@ -186,9 +189,7 @@ describe('compileFiles', () => {
             bbb: 'Пока',
           },
         },
-        {
-          parser: createParser({ tokenizer: htmlTokenizer }),
-        }
+        { parser }
       )
     ).toStrictEqual({
       'e46c76abca073d4c.js':
@@ -219,7 +220,7 @@ describe('compileFiles', () => {
           },
         },
         {
-          parser: createParser({ tokenizer: htmlTokenizer }),
+          parser,
           fallbackLocales: {
             en: 'ru',
           },
@@ -254,7 +255,7 @@ describe('compileFiles', () => {
           },
         },
         {
-          parser: createParser({ tokenizer: htmlTokenizer }),
+          parser,
           fallbackLocales: {
             en: 'en',
           },
@@ -292,7 +293,7 @@ describe('compileFiles', () => {
           },
         },
         {
-          parser: createParser({ tokenizer: htmlTokenizer }),
+          parser,
           fallbackLocales: {
             en: 'es',
             es: 'ru',
@@ -313,5 +314,23 @@ describe('compileFiles', () => {
       'metadata.d.ts':
         'import{Metadata}from "mfml";\n\nexport type SupportedLocale="en"|"ru"|"es";\n\ndeclare const metadata:Metadata;\n\nexport default metadata;\n',
     });
+  });
+
+  test('throws if duplicated function names', async () => {
+    await expect(
+      compileFiles(
+        {
+          en: { aaa: '', bbb: '' },
+        },
+        {
+          parser,
+          renameMessageFunction: () => 'ccc',
+        }
+      )
+    ).rejects.toStrictEqual(
+      new AggregateError([
+        new CompilerError('bbb', 'en', new Error('The function name "ccc" is already used for the "aaa" message.')),
+      ])
+    );
   });
 });

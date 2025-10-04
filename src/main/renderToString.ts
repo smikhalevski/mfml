@@ -146,7 +146,7 @@ function renderChild(node: ChildNode, locale: string, values: any, renderer: Ren
     const categories = getArgumentCategories(node);
 
     if (type === null || categories === null) {
-      return renderer.formatArgument({ locale, value, type, style, options }) || '';
+      return toSafeString(renderer.formatArgument({ locale, value, type, style, options }));
     }
 
     const category = renderer.selectCategory({ locale, value, type, categories, options });
@@ -171,16 +171,20 @@ function renderChild(node: ChildNode, locale: string, values: any, renderer: Ren
       return '';
     }
 
-    return (
+    return toSafeString(
       renderer.formatArgument({
         locale,
         value: values?.[argumentNode.name],
         type: getArgumentType(argumentNode),
         style: getArgumentStyle(argumentNode),
         options: getArgumentOptions(argumentNode),
-      }) || ''
+      })
     );
   }
 
   return '';
+}
+
+function toSafeString(value: unknown): string {
+  return value === null || value === undefined || value !== value ? '' : '' + value;
 }

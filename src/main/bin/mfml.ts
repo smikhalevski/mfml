@@ -37,13 +37,13 @@ try {
 
   const { default: config } = await import(configPath);
 
-  await build(config);
+  await build(path.dirname(configPath), config);
 } catch (error) {
   printError(error);
   process.exit(1);
 }
 
-async function build(config: ResolvedConfig): Promise<void> {
+async function build(baseDir: string, config: ResolvedConfig): Promise<void> {
   const { messages, compiler, packageName, outDir } = config;
 
   const startTimestamp = performance.now();
@@ -67,7 +67,7 @@ async function build(config: ResolvedConfig): Promise<void> {
 
   files['package.json'] = JSON.stringify(packageJSON, null, 2);
 
-  const packageDir = path.join(process.cwd(), outDir, 'node_modules', packageName);
+  const packageDir = path.resolve(baseDir, outDir, 'node_modules', packageName);
 
   fs.mkdirSync(packageDir, { recursive: true });
 
@@ -78,8 +78,8 @@ async function build(config: ResolvedConfig): Promise<void> {
   print('Generated ' + Object.keys(files).length + ' files in ' + packageDir + ' (' + duration + 'ms)');
 }
 
-function resolveConfigPath(basePath: string, configPaths: string[]): string {
-  configPaths = configPaths.map(configPath => path.resolve(basePath, configPath));
+function resolveConfigPath(baseDir: string, configPaths: string[]): string {
+  configPaths = configPaths.map(configPath => path.resolve(baseDir, configPath));
 
   const configPath = configPaths.find(configPath => fs.existsSync(configPath));
 

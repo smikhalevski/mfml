@@ -33,7 +33,7 @@ import { ElementRenderer } from '../types.js';
  * @group Message
  */
 export function createReactDOMElementRenderer(components?: {
-  [tagName: string]: ComponentType | string;
+  [tagName: string]: ComponentType<any> | string;
 }): ElementRenderer<ReactNode> {
   return (tagName, attributes, children) => {
     let component = components?.[tagName];

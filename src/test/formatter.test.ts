@@ -20,7 +20,7 @@ test('formats without type', () => {
       style: null,
       value: ['aaa', 'bbb', 'ccc'],
     })
-  ).toBe('aaa,bbb,ccc');
+  ).toStrictEqual(['aaa', 'bbb', 'ccc']);
 
   expect(
     defaultArgumentFormatter({

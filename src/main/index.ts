@@ -6,7 +6,7 @@
 
 export {
   defaultArgumentFormatter,
-  createWaterfallArgumentFormatter,
+  combineArgumentFormatters,
   createNumberArgumentFormatter,
   createDateTimeArgumentFormatter,
   createListArgumentFormatter,

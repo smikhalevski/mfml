@@ -154,8 +154,6 @@ export interface CompilerOptions {
 
   /**
    * Returns the name of a message function for the given message key.
-   *
-   * By default, an escaped message key is used as a function name.
    */
   renameMessageFunction?: (messageKey: string) => string;
 
@@ -246,7 +244,7 @@ export async function compileFiles(
     fallbackLocales,
     preprocessors,
     postprocessors,
-    renameMessageFunction = escapeJSIdentifier,
+    renameMessageFunction = messageKey => messageKey,
     getArgumentTSType = getIntlArgumentTSType,
   } = options;
 
@@ -259,6 +257,8 @@ export async function compileFiles(
   const files: Record<string, string> = {};
 
   const localeVars: Record<string, string> = {};
+
+  const functionNames = new Map<string, string>();
 
   let indexJSCode = '';
   let indexTSCode = 'import{MessageNode}from"mfml";\n';
@@ -376,17 +376,31 @@ export async function compileFiles(
     // Return null from a message function for an unknown or unsupported locale
     messageJSCode += 'null;';
 
-    let fileName;
     let functionName;
-
     try {
-      // Hash of a message function body
-      fileName = await toHashCode(messageJSCode, 16);
-      functionName = renameMessageFunction(messageKey);
+      functionName = escapeJSIdentifier(renameMessageFunction(messageKey));
     } catch (error) {
       errors.push(new CompilerError(messageKey, localeGroups[0][0], error));
       continue;
     }
+
+    if (functionNames.has(functionName)) {
+      const error = new Error(
+        'The function name "' +
+          functionName +
+          '" is already used for the "' +
+          functionNames.get(functionName) +
+          '" message.'
+      );
+
+      errors.push(new CompilerError(messageKey, localeGroups[0][0], error));
+      continue;
+    }
+
+    functionNames.set(functionName, messageKey);
+
+    // The hash includes only the message function body
+    const fileName = await toHashCode(messageJSCode, 16);
 
     files[fileName + '.js'] =
       'import{M,E,A,V,R,O,C}from"mfml/dsl";\n' +

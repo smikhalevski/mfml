@@ -9,7 +9,7 @@ export interface CategorySelectorParams {
   /**
    * The value of an argument.
    */
-  value: any;
+  value: unknown;
 
   /**
    * The message locale.
