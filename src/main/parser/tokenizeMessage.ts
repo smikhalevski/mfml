@@ -213,11 +213,6 @@ export function tokenizeMessage(text: string, callback: TokenCallback, options: 
         callback(token, startIndex, endIndex);
         break;
 
-      case TOKEN_TEXT:
-      case TOKEN_ARGUMENT_CLOSING:
-        callback(token, startIndex, endIndex);
-        break;
-
       default:
         callback(token, startIndex, endIndex);
         break;
@@ -331,7 +326,7 @@ export function readTokens(text: string, callback: TokenCallback, options: ReadT
   for (let index = 0, nextIndex = 0; nextIndex < text.length; index = nextIndex) {
     const charCode = text.charCodeAt(nextIndex);
 
-    // End of a quoted attribute value
+    // Closing of a quoted attribute value
     if (
       (charCode === /* " */ 34 && scopeStack.lastIndexOf(SCOPE_DOUBLE_QUOTED_ATTRIBUTE_VALUE) !== -1) ||
       (charCode === /* ' */ 39 && scopeStack.lastIndexOf(SCOPE_SINGLE_QUOTED_ATTRIBUTE_VALUE) !== -1)
@@ -354,7 +349,7 @@ export function readTokens(text: string, callback: TokenCallback, options: ReadT
       continue;
     }
 
-    // End of an unquoted attribute value
+    // Closing of an unquoted attribute value
     if (
       scope === SCOPE_UNQUOTED_ATTRIBUTE_VALUE &&
       (charCode === /* / */ 47 || charCode === /* > */ 62 || isSpaceChar(charCode))
@@ -484,13 +479,13 @@ export function readTokens(text: string, callback: TokenCallback, options: ReadT
       continue;
     }
 
-    // End of a start tag
+    // Closing of a start tag
     if (charCode === /* > */ 62 && scope === SCOPE_START_TAG) {
       ++nextIndex;
 
       callback(TOKEN_START_TAG_CLOSING, index, nextIndex);
 
-      // Start of a raw text tag content
+      // Opening of  a raw text tag content
       latestRawTextTag = openedRawTextTag;
 
       scopeStack[scopeStackCursor] = 0;
@@ -516,13 +511,7 @@ export function readTokens(text: string, callback: TokenCallback, options: ReadT
       continue;
     }
 
-    // Treat "/" as space in start tag
-    if (charCode === /* / */ 47 && scope === SCOPE_START_TAG) {
-      ++nextIndex;
-      continue;
-    }
-
-    // Start of an attribute
+    // Opening of  an attribute
     if (scope === SCOPE_START_TAG && isXMLAttributeNameChar(charCode)) {
       nextIndex = readChars(text, index + 1, isXMLAttributeNameChar);
 
@@ -570,7 +559,7 @@ export function readTokens(text: string, callback: TokenCallback, options: ReadT
       continue;
     }
 
-    // Start of an argument
+    // Opening of  an argument
     if (
       charCode === /* { */ 123 &&
       (scope === SCOPE_TEXT ||
@@ -596,7 +585,7 @@ export function readTokens(text: string, callback: TokenCallback, options: ReadT
 
       nextIndex = skipSpaces(text, nextIndex);
 
-      // End of an argument
+      // Closing of an argument
       if (getCharCodeAt(text, nextIndex) === /* } */ 125) {
         callback(TOKEN_ARGUMENT_CLOSING, nextIndex, ++nextIndex);
         textStartIndex = nextIndex;
@@ -611,7 +600,7 @@ export function readTokens(text: string, callback: TokenCallback, options: ReadT
         );
       }
 
-      // Start of an argument type
+      // Opening of  an argument type
 
       nextIndex = skipSpaces(text, nextIndex + 1);
 
@@ -626,7 +615,7 @@ export function readTokens(text: string, callback: TokenCallback, options: ReadT
           throw new ParserError('An argument type cannot be empty.', text, nextIndex);
         }
 
-        // End of an argument
+        // Closing of an argument
         callback(TOKEN_ARGUMENT_CLOSING, nextIndex, ++nextIndex);
         textStartIndex = nextIndex;
         continue;
@@ -636,7 +625,7 @@ export function readTokens(text: string, callback: TokenCallback, options: ReadT
 
       nextIndex = skipSpaces(text, nextIndex);
 
-      // End of an argument and type
+      // Closing of an argument and type
       if (getCharCodeAt(text, nextIndex) === /* } */ 125) {
         callback(TOKEN_ARGUMENT_CLOSING, nextIndex, ++nextIndex);
         textStartIndex = nextIndex;
@@ -651,7 +640,7 @@ export function readTokens(text: string, callback: TokenCallback, options: ReadT
         );
       }
 
-      // Start of an argument style
+      // Opening of  an argument style
 
       nextIndex = skipSpaces(text, nextIndex + 1);
 
@@ -666,7 +655,7 @@ export function readTokens(text: string, callback: TokenCallback, options: ReadT
           throw new ParserError('Expected an argument style, category name or option name.', text, nextIndex);
         }
 
-        // End of an argument and type
+        // Closing of an argument and type
         callback(TOKEN_ARGUMENT_CLOSING, nextIndex, ++nextIndex);
         textStartIndex = nextIndex;
         continue;
@@ -676,7 +665,7 @@ export function readTokens(text: string, callback: TokenCallback, options: ReadT
 
       nextIndex = skipSpaces(text, nextIndex);
 
-      // End of an argument, type, and style
+      // Closing of an argument, type, and style
       if (getCharCodeAt(text, nextIndex) === /* } */ 125) {
         callback(TOKEN_ARGUMENT_STYLE, argumentStyleStartIndex, argumentStyleEndIndex);
         callback(TOKEN_ARGUMENT_CLOSING, nextIndex, ++nextIndex);
@@ -692,7 +681,7 @@ export function readTokens(text: string, callback: TokenCallback, options: ReadT
       continue;
     }
 
-    // End of an argument
+    // Closing of an argument
     if (charCode === /* } */ 125 && scope === SCOPE_ARGUMENT) {
       callback(TOKEN_ARGUMENT_CLOSING, nextIndex, ++nextIndex);
       scopeStack[scopeStackCursor] = 0;
@@ -701,7 +690,7 @@ export function readTokens(text: string, callback: TokenCallback, options: ReadT
       continue;
     }
 
-    // End of a category
+    // Closing of a category
     if (charCode === /* } */ 125 && scope === SCOPE_CATEGORY) {
       if (textStartIndex !== index) {
         callback(TOKEN_TEXT, textStartIndex, index);
@@ -739,7 +728,7 @@ export function readTokens(text: string, callback: TokenCallback, options: ReadT
 
       nextIndex = skipSpaces(text, nextIndex);
 
-      // Start of a category
+      // Opening of  a category
       if (getCharCodeAt(text, nextIndex) === /* { */ 123) {
         callback(TOKEN_CATEGORY_NAME, index, optionNameEndIndex);
 
@@ -879,7 +868,7 @@ function isSpaceChar(charCode: number): boolean {
 }
 
 function isXMLAttributeNameChar(charCode: number): boolean {
-  return !(charCode === /* > */ 62 || charCode === /* = */ 61 || isSpaceChar(charCode));
+  return !(charCode === /* > */ 62 || charCode === /* = */ 61 || charCode === /* / */ 47 || isSpaceChar(charCode));
 }
 
 function isICUNameChar(charCode: number): boolean {

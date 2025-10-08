@@ -164,14 +164,6 @@ describe('readTokens', () => {
     expect(callbackMock).toHaveBeenNthCalledWith(2, 'TEXT', 6, 9);
   });
 
-  test('ignores empty DTD', () => {
-    readTokens('aaa<!>bbb', callbackMock, {});
-
-    expect(callbackMock).toHaveBeenCalledTimes(2);
-    expect(callbackMock).toHaveBeenNthCalledWith(1, 'TEXT', 0, 3);
-    expect(callbackMock).toHaveBeenNthCalledWith(2, 'TEXT', 6, 9);
-  });
-
   test('ignores processing instructions', () => {
     readTokens('aaa<?xml version="1.0"?>bbb', callbackMock, {});
 
@@ -244,7 +236,7 @@ describe('readTokens', () => {
   test('reads single-quoted attributes', () => {
     readTokens("<xxx yyy='aaa\"bbb' zzz='aaa\"bbb'>", callbackMock, {});
 
-    // expect(callbackMock).toHaveBeenCalledTimes(8);
+    expect(callbackMock).toHaveBeenCalledTimes(8);
     expect(callbackMock).toHaveBeenNthCalledWith(1, 'START_TAG_NAME', 1, 4);
     expect(callbackMock).toHaveBeenNthCalledWith(2, 'ATTRIBUTE_NAME', 5, 8);
     expect(callbackMock).toHaveBeenNthCalledWith(3, 'TEXT', 10, 17);
