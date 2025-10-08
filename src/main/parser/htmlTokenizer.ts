@@ -99,7 +99,7 @@ export const htmlTokenizerOptions: TokenizerOptions = {
 };
 
 /**
- * The forgiving HTML syntax {@link createTokenizer tokenizer} that uses {@link htmlTokenizerOptions}.
+ * The forgiving HTML {@link createTokenizer tokenizer} that uses {@link htmlTokenizerOptions}.
  *
  * @see {@link createTokenizer}
  * @group Tokenizer

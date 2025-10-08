@@ -88,7 +88,7 @@ export function createParser(options: ParserOptions): Parser {
  *
  * @example
  * parseMessage('en-US', 'Hello, <b>{name}</b>!', {
- *   tokenizerOptions: resolveTokenizerOptions(htmlTokenizerOptions),
+ *   tokenizer: createTokenizer(htmlTokenizerOptions),
  * });
  *
  * @param locale The message locale.

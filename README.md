@@ -24,7 +24,7 @@ XML/HTML compiler and runtime that makes your i18n messages tree-shakeable.
 - First-class React support.
 - Zero dependencies.
 - XSS-resilient rendering: no dangerous HTML rendering.
-- [Just 3 kB gzipped.&#8239;<sup>↗</sup>](https://bundlephobia.com/result?p=mfml)
+- [Just 2&#8239;kB gzipped.&#8239;<sup>↗</sup>](https://bundlephobia.com/result?p=mfml)
 
 <!--/OVERVIEW-->
 
@@ -398,7 +398,8 @@ are options of
 the [`Intl.NumberFormat`&#8239;<sup>↗</sup>](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/NumberFormat).
 
 You can find the full list of options for
-[`number` arguments&#8239;<sup>↗</sup>](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/NumberFormat/NumberFormat#style_options) and for
+[`number` arguments&#8239;<sup>↗</sup>](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/NumberFormat/NumberFormat#style_options)
+and for
 [`date` and `time` arguments&#8239;<sup>↗</sup>](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/DateTimeFormat/DateTimeFormat#locale_options)
 on MDN.
 
@@ -681,7 +682,9 @@ This would output:
 
 <!-- prettier-ignore -->
 ```html
-Hello, <b><UserAvatar>Bob</UserAvatar></b>!
+Hello, <b>
+    <UserAvatar>Bob</UserAvatar>
+</b>!
 ```
 
 ## Custom renderer
@@ -739,7 +742,8 @@ This would output:
 
 <!-- prettier-ignore -->
 ```html
-Final offer: <div title='20% discount!'>$1,000</div>
+Final offer:
+<div title='20% discount!'>$1,000</div>
 ```
 
 # Custom formatters
@@ -757,7 +761,7 @@ Let's assume we've compiled the message function `factAboutUSA`:
 
 ```
 USA border length is {borderLength, unitMeter}.
-                                   ^^^^^^^^^^^
+                                    ^^^^^^^^^
 ```
 
 Create a formatter that formats arguments with type `unitMeter`:
@@ -1149,9 +1153,10 @@ This would produce a message function with the following signature:
 function greeting(locale: string): MessageNode<{ name: string; age: number }> | null;
 ```
 
-By default, [`getIntlArgumentTSType`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/mfml/functions/mfml_compiler.getArgumentIntlTSType.html)
-is used. It returns the TypeScript type of an argument that matches
-the requirements of [`Intl`&#8239;<sup>↗</sup>](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl)
+By
+default, [`getIntlArgumentTSType`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/mfml/functions/mfml_compiler.getArgumentIntlTSType.html)
+is used. It returns the TypeScript type of an argument that matches the requirements
+of [`Intl`&#8239;<sup>↗</sup>](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl)
 formats.
 
 | Argument type   | TypeScript type                                                               |
@@ -1239,8 +1244,8 @@ The callback is called with the following arguments:
 | `'TEXT'`              |           20 |         21 | `'!'`       |
 
 Tokens are _guaranteed_ to be returned in correct order or
-a [`ParserError`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/mfml/classes/mfml_parser.ParserError.html) is thrown. Missing tokens
-can be inserted to restore the correct order if needed, depending on provided tokenizer option.
+a [`ParserError`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/mfml/classes/mfml_parser.ParserError.html) is
+thrown. Missing tokens can be inserted to restore the correct order if needed, depending on provided tokenizer option.
 
 Create a tokenizer with a custom set of options:
 
@@ -1323,7 +1328,8 @@ Use in conjunctions with [`isUnbalancedStartTags​ImplicitlyClosed`](#isunbalan
 **Default:** `[]`
 
 The list of tags for which a start tag is inserted if an unbalanced end tag is met. Otherwise,
-a [`ParserError`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/mfml/classes/mfml_parser.ParserError.html) is thrown.
+a [`ParserError`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/mfml/classes/mfml_parser.ParserError.html) is
+thrown.
 
 You can ignore unbalanced end tags with [`isUnbalancedEndTagsIgnored`](#isunbalancedendtagsignored).
 
@@ -1371,7 +1377,8 @@ If `true` then self-closing tags are recognized, otherwise they are treated as s
 **Default:** `false`
 
 If `true` then unbalanced start tags are forcefully closed. Otherwise,
-a [`ParserError`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/mfml/classes/mfml_parser.ParserError.html) is thrown.
+a [`ParserError`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/mfml/classes/mfml_parser.ParserError.html) is
+thrown.
 
 ```html
 <a><b></a> ⮕ <a><b></b></a>
@@ -1385,7 +1392,8 @@ Use in conjunctions with [`isUnbalancedEndTagsIgnored`](#isunbalancedendtagsigno
 **Default:** `false`
 
 If `true` then end tags that don't have a corresponding start tag are ignored. Otherwise,
-a [`ParserError`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/mfml/classes/mfml_parser.ParserError.html) is thrown.
+a [`ParserError`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/mfml/classes/mfml_parser.ParserError.html) is
+thrown.
 
 ```html
 <a></b></a> ⮕ <a></a>
@@ -1520,29 +1528,39 @@ walkNode(messageNode, node => {
 
 # Motivation
 
+The main idea is that i18n messages are part of the code, and the application's code should be split into dynamically
+loaded chunks that include the required translations. When translations change, a new version of the application should
+be released.
+
 Splitting the app code into chunks and loading those chunks at runtime is usually handled by a bundler. Modern i18n
-tools, such as `i18next`, rely on JSON files that are baked into an application bundle or loaded asynchronously. This
-approach has several downsides:
+tools, such as `i18next`, rely on JSON files that are either baked into the application bundle or loaded asynchronously.
+This approach has several downsides:
 
-- You have to somehow split your translations into separate JSON files before bundling. Otherwise, your clients would
-  have to download all translations at application start;
-- You have to load translations manually when they are needed;
-- Non-used translations are still bundled and loaded unless you manually delete them;
-- Errors, such as missed interpolation parameters and illegal parameter types, are thrown at runtime.
+- You must split your messages into separate JSON files before bundling. Otherwise, clients will have to download all
+  messages when the application starts.
 
-All the above is highly error-prone due to the human factor.
+- You need to load messages manually when they're required.
 
-MFML compiles translations into message functions that you can import as a module into your code. This approach provides
-multiple benefits:
+- Unused messages remain bundled and loaded unless you remove them manually.
 
-- Message functions are bundled and loaded along with your code. So you don't have to manage the translation loading
-  process manually;
-- Message functions are tree-shakeable, so chunks assembled by a bundler would contain only used translations;
-- Message functions can be type-checked at compile time. So you won't forget that translation required a parameter, or a
-  parameter must be of a particular type. Change in the translation key would require changes in modules that import a
-  corresponding message function. Otherwise, a type checker, or a bundler would signal you that the imported function is
-  missing;
-- Message functions use a runtime to render the translation. Runtimes can produce React elements, plain strings, or any
-  other output you need.
+- Errors, such as missing interpolation parameters or invalid parameter types, are only caught at runtime.
+
+All of the above is highly error-prone due to human factors.
+
+MFML compiles messages into functions that can be imported as modules in your code. This approach offers multiple
+benefits:
+
+- Message functions are bundled and loaded together with your code, so you don't need to manage translation loading
+  manually.
+
+- Message functions are tree-shakeable, ensuring that the chunks produced by the bundler contain only the translations
+  actually used.
+
+- Message functions can be type-checked at compile time. This ensures you won't forget required parameters or use
+  parameters of the wrong type. If a message key changes, the modules importing the corresponding message function
+  will need to be updated — otherwise, the type checker or bundler will alert you that the imported function is missing.
+
+- Message functions use a runtime to render the message. The runtime can produce React elements, plain strings, or
+  any other output format you need.
 
 <!--/ARTICLE-->
