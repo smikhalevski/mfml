@@ -93,7 +93,7 @@ export function Message<T extends MessageFunction>(props: InferMessageProps<T>):
 
   const { message, locale = defaultLocale, values, renderer = defaultRenderer } = props;
 
-  const children = useMemo(() => {
+  let children = useMemo(() => {
     const messageNode = message(locale);
 
     if (messageNode === null) {
@@ -103,7 +103,14 @@ export function Message<T extends MessageFunction>(props: InferMessageProps<T>):
     return normalizeChildren(renderChildren(messageNode.childNodes, messageNode.locale, renderer));
   }, [message, locale, renderer]);
 
-  return <MessageValuesContext.Provider value={values}>{children}</MessageValuesContext.Provider>;
+  return (
+    <MessageValuesContext.Provider
+      value={values}
+      key={message.k}
+    >
+      {children}
+    </MessageValuesContext.Provider>
+  );
 }
 
 /**

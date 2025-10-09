@@ -4,15 +4,30 @@ import { CategorySelector } from './selector.js';
 export interface MessageFunction<Values extends object | void = any> {
   (locale: string): MessageNode<Values> | null;
 
-  debugInfo?: DebugInfo;
+  /**
+   * Unique message function key.
+   */
+  k?: string;
 }
 
-export interface DebugInfo {
+export interface MessageDebugInfo {
   messageKey: string;
   messageFunctionName: string;
   argumentNames: string[];
-  localeGroups: string[][];
+  locales: string[];
   translations: string[];
+}
+
+/**
+ * The metadata exported from the compiled translations module.
+ *
+ * @group Other
+ */
+export interface Metadata {
+  /**
+   * The array of locales supported by compiled message functions.
+   */
+  supportedLocales: string[];
 }
 
 /**
@@ -59,18 +74,6 @@ export type ElementRenderer<Element> = (
   attributes: Record<string, string>,
   children: Array<Element | string>
 ) => Element | string | undefined;
-
-/**
- * The metadata exported from the compiled translations module.
- *
- * @group Other
- */
-export interface Metadata {
-  /**
-   * The array of locales supported by compiled message functions.
-   */
-  supportedLocales: string[];
-}
 
 /**
  * The node that can be a child node of a {@link ParentNode parent node}.

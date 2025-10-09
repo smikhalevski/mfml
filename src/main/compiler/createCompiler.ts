@@ -1,4 +1,4 @@
-import { AnyNode, ArgumentNode, DebugInfo, MessageNode, Metadata } from '../types.js';
+import { AnyNode, ArgumentNode, MessageDebugInfo, MessageNode, Metadata } from '../types.js';
 import { Parser } from '../parser/index.js';
 import {
   escapeJSIdentifier,
@@ -173,11 +173,6 @@ export interface CompilerOptions {
    * @see {@link getIntlArgumentTSType}
    */
   getArgumentTSType?: (argumentNode: ArgumentNode) => string | undefined;
-
-  /**
-   * If `true` then debug info is attached to compiled message functions.
-   */
-  isDebuggable?: boolean;
 }
 
 /**
@@ -251,7 +246,6 @@ export async function compileFiles(
     postprocessors,
     renameMessageFunction = messageKey => messageKey,
     getArgumentTSType = getIntlArgumentTSType,
-    isDebuggable,
   } = options;
 
   const errors: CompilerError[] = [];
@@ -269,6 +263,8 @@ export async function compileFiles(
   let indexJSCode = '';
   let indexTSCode = 'import{MessageNode}from"mfml";\n';
   let localesJSCode = '';
+
+  const debugInfos: Record<string, MessageDebugInfo> = {};
 
   for (const locale of locales) {
     const localeVar = 'LOCALE_' + escapeJSIdentifier(locale).toUpperCase();
@@ -408,17 +404,13 @@ export async function compileFiles(
     // The hash includes only the message function body
     const fileName = await toHashCode(messageJSCode, 16);
 
-    let debugInfo: DebugInfo | undefined;
-
-    if (isDebuggable) {
-      debugInfo = {
-        messageKey,
-        messageFunctionName: functionName,
-        argumentNames: Array.from(argumentTSTypes.keys()),
-        localeGroups,
-        translations: localeGroups.map(localeGroup => messages[localeGroup[0]][messageKey]),
-      };
-    }
+    debugInfos[fileName] = {
+      messageKey,
+      messageFunctionName: functionName,
+      argumentNames: Array.from(argumentTSTypes.keys()),
+      locales: localeGroups.map(localeGroup => localeGroup[0]),
+      translations: localeGroups.map(localeGroup => messages[localeGroup[0]][messageKey]),
+    };
 
     files[fileName + '.js'] =
       'import{M,E,A,V,R,O,C}from"mfml/dsl";\n' +
@@ -432,7 +424,10 @@ export async function compileFiles(
       '(locale){\nreturn ' +
       messageJSCode +
       '\n}\n' +
-      (debugInfo !== undefined ? functionName + '.debugInfo=' + JSON.stringify(debugInfo) + ';\n' : '');
+      functionName +
+      '.k=' +
+      JSON.stringify(fileName) +
+      ';\n';
 
     indexJSCode += 'export{default as ' + functionName + '}from"./' + fileName + '.js";\n';
 
@@ -461,12 +456,19 @@ export async function compileFiles(
   files['metadata.js'] = 'export default ' + JSON.stringify(metadata, null, 2) + ';\n';
 
   files['metadata.d.ts'] =
-    'import{Metadata}from "mfml";\n\n' +
+    'import{Metadata}from"mfml";\n\n' +
     'export type SupportedLocale=' +
     locales.map(locale => JSON.stringify(locale)).join('|') +
     ';\n\n' +
     'declare const metadata:Metadata;\n\n' +
     'export default metadata;\n';
+
+  files['debug.js'] = 'export default ' + JSON.stringify(debugInfos, null, 2) + ';\n';
+
+  files['debug.d.ts'] =
+    'import{MessageDebugInfo}from"mfml";\n\n' +
+    'declare const debugInfos:Record<string,MessageDebugInfo>;\n\n' +
+    'export default debugInfos;\n';
 
   return files;
 }
