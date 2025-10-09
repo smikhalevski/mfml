@@ -1,5 +1,5 @@
 import React, { createContext, createElement, Fragment, ReactNode, useContext, useMemo } from 'react';
-import { AttributeNode, ChildNode, MessageNode, Renderer } from '../types.js';
+import { AttributeNode, ChildNode, MessageFunction, Renderer } from '../types.js';
 import { renderAttributes } from '../renderToString.js';
 import {
   getArgumentByOctothorpe,
@@ -44,19 +44,15 @@ export const MessageRendererProvider = MessageRendererContext.Provider;
 /**
  * Props of a {@link Message} component.
  *
- * @template MessageFunction The function that returns a message node for a given locale, or `null` if locale isn't
- * supported.
+ * @template T The function that returns a message node for a given locale, or `null` if locale isn't supported.
  * @template Values Message argument values.
  * @group Message
  */
-export interface MessageProps<
-  MessageFunction extends (locale: string) => MessageNode<Values> | null,
-  Values extends object | void,
-> {
+export interface MessageProps<T extends MessageFunction<Values>, Values extends object | void> {
   /**
    * The function that returns a message node for a given locale, or `null` if locale isn't supported.
    */
-  message: MessageFunction;
+  message: T;
 
   /**
    * The locale to render.
@@ -78,23 +74,20 @@ export interface MessageProps<
   renderer?: Renderer<ReactNode>;
 }
 
-type InferMessageProps<MessageFunction extends (locale: string) => MessageNode | null> = MessageFunction extends (
-  locale: string
-) => MessageNode<infer Values> | null
-  ? Values extends void
-    ? MessageProps<MessageFunction, Values>
-    : MessageProps<MessageFunction, Values> & { values: Values }
-  : never;
+type InferMessageProps<T extends MessageFunction> =
+  T extends MessageFunction<infer Values>
+    ? Values extends void
+      ? MessageProps<T, Values>
+      : MessageProps<T, Values> & { values: Values }
+    : never;
 
 /**
  * Renders a message function.
  *
- * @template MessageFunction The function that returns a message node for a given locale.
+ * @template T The function that returns a message node for a given locale.
  * @group Message
  */
-export function Message<MessageFunction extends (locale: string) => MessageNode | null>(
-  props: InferMessageProps<MessageFunction>
-): ReactNode {
+export function Message<T extends MessageFunction>(props: InferMessageProps<T>): ReactNode {
   const defaultLocale = useContext(MessageLocaleContext);
   const defaultRenderer = useContext(MessageRendererContext);
 

@@ -1,6 +1,20 @@
 import { ArgumentFormatter } from './formatter.js';
 import { CategorySelector } from './selector.js';
 
+export interface MessageFunction<Values extends object | void = any> {
+  (locale: string): MessageNode<Values> | null;
+
+  debugInfo?: DebugInfo;
+}
+
+export interface DebugInfo {
+  messageKey: string;
+  messageFunctionName: string;
+  argumentNames: string[];
+  localeGroups: string[][];
+  translations: string[];
+}
+
 /**
  * Renders elements and arguments.
  *

@@ -1,4 +1,4 @@
-import { AnyNode, ArgumentNode, MessageNode, Metadata } from '../types.js';
+import { AnyNode, ArgumentNode, DebugInfo, MessageNode, Metadata } from '../types.js';
 import { Parser } from '../parser/index.js';
 import {
   escapeJSIdentifier,
@@ -173,6 +173,11 @@ export interface CompilerOptions {
    * @see {@link getIntlArgumentTSType}
    */
   getArgumentTSType?: (argumentNode: ArgumentNode) => string | undefined;
+
+  /**
+   * If `true` then debug info is attached to compiled message functions.
+   */
+  isDebuggable?: boolean;
 }
 
 /**
@@ -246,6 +251,7 @@ export async function compileFiles(
     postprocessors,
     renameMessageFunction = messageKey => messageKey,
     getArgumentTSType = getIntlArgumentTSType,
+    isDebuggable,
   } = options;
 
   const errors: CompilerError[] = [];
@@ -402,6 +408,18 @@ export async function compileFiles(
     // The hash includes only the message function body
     const fileName = await toHashCode(messageJSCode, 16);
 
+    let debugInfo: DebugInfo | undefined;
+
+    if (isDebuggable) {
+      debugInfo = {
+        messageKey,
+        messageFunctionName: functionName,
+        argumentNames: Array.from(argumentTSTypes.keys()),
+        localeGroups,
+        translations: localeGroups.map(localeGroup => messages[localeGroup[0]][messageKey]),
+      };
+    }
+
     files[fileName + '.js'] =
       'import{M,E,A,V,R,O,C}from"mfml/dsl";\n' +
       'import{' +
@@ -413,7 +431,8 @@ export async function compileFiles(
       functionName +
       '(locale){\nreturn ' +
       messageJSCode +
-      '\n}\n';
+      '\n}\n' +
+      (debugInfo !== undefined ? functionName + '.debugInfo=' + JSON.stringify(debugInfo) + ';\n' : '');
 
     indexJSCode += 'export{default as ' + functionName + '}from"./' + fileName + '.js";\n';
 
