@@ -2,6 +2,15 @@ import { ArgumentFormatter } from './formatter.js';
 import { CategorySelector } from './selector.js';
 
 /**
+ * Infers values of a given message function.
+ *
+ * @template MessageFunction The message function to infer values.
+ * @group Other
+ */
+export type InferMessageValues<MessageFunction extends (locale: string) => MessageNode | null> =
+  MessageFunction extends (locale: string) => MessageNode<infer Values> | null ? Values : never;
+
+/**
  * Renders elements and arguments.
  *
  * @template Element The rendered element.

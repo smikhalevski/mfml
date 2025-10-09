@@ -13,7 +13,7 @@ import { createReactDOMElementRenderer } from './createReactDOMElementRenderer.j
 import { defaultArgumentFormatter } from '../formatter.js';
 import { defaultCategorySelector } from '../selector.js';
 
-const MessageLocaleContext = createContext('en');
+export const MessageLocaleContext = createContext('en');
 MessageLocaleContext.displayName = 'MessageLocaleContext';
 
 const MessageRendererContext = createContext<Renderer<ReactNode>>({
@@ -21,7 +21,6 @@ const MessageRendererContext = createContext<Renderer<ReactNode>>({
   formatArgument: defaultArgumentFormatter,
   selectCategory: defaultCategorySelector,
 });
-
 MessageRendererContext.displayName = 'MessageRendererContext';
 
 const MessageValuesContext = createContext<any>(undefined);

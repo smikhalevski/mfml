@@ -11,7 +11,7 @@ import {
 import { defaultArgumentFormatter } from './formatter.js';
 import { defaultCategorySelector } from './selector.js';
 
-const defaultStringRenderer: Renderer<string> = {
+export const defaultStringRenderer: Renderer<string> = {
   renderElement(tagName, _attributes, children) {
     return isLowerCaseAlpha(tagName) ? children.join('') : '';
   },
