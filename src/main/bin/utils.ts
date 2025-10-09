@@ -1,14 +1,6 @@
 import { ParserError } from '../parser/index.js';
 import { CompilerError } from '../compiler/index.js';
-
-export function print(text: string): void {
-  if (!print.isSilent) {
-    console.log(text);
-  }
-}
-
-print.isColorized = false;
-print.isSilent = false;
+import { blue, dim, inverse, print, red, underline } from './print.js';
 
 export function printHelp(): void {
   print(`mfml: ICU MessageFormat + XML/HTML compiler tool. 
@@ -103,28 +95,4 @@ function formatSyntaxError(text: string, errorStartIndex: number, errorEndIndex:
     ' '.repeat(errorStartIndex - startIndex) +
     red('~'.repeat(Math.max(1, Math.min(errorEndIndex, endIndex) - errorStartIndex)))
   );
-}
-
-function colorize(text: string, startCode: number, endCode: number): string {
-  return print.isColorized ? `\x1b[${startCode}m${text}\x1b[${endCode}m` : text;
-}
-
-function inverse(text: string): string {
-  return colorize(text, 7, 27);
-}
-
-function red(text: string): string {
-  return colorize(text, 31, 39);
-}
-
-function blue(text: string): string {
-  return colorize(text, 34, 39);
-}
-
-function dim(text: string): string {
-  return colorize(text, 2, 22);
-}
-
-function underline(text: string): string {
-  return colorize(text, 4, 24);
 }

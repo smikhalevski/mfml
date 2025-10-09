@@ -2,7 +2,8 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { ResolvedConfig } from '../compiler/index.js';
-import { print, printError, printHelp } from './utils.js';
+import { printError, printHelp } from './utils.js';
+import { print } from './print.js';
 
 print.isColorized = process.stdout.isTTY && process.env.FORCE_COLOR !== '0';
 

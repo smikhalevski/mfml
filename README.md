@@ -18,7 +18,7 @@ The [ICU MessageFormat&#8239;<sup>↗</sup>](https://unicode-org.github.io/icu/u
 XML/HTML compiler and runtime that makes your i18n messages tree-shakeable.
 
 - TypeScript-first.
-- Tree-shakeable messages: colocates messages with related code.
+- Tree-shakeable: colocates messages with related code.
 - Integrates with any translation management system.
 - Highly customizable.
 - First-class React support.
