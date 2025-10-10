@@ -61,6 +61,7 @@ async function build(baseDir: string, config: ResolvedConfig): Promise<void> {
     exports: {
       '.': './index.js',
       './metadata': './metadata.js',
+      './debug': './debug.js',
       './package.json': './package.json',
     },
     sideEffects: false,

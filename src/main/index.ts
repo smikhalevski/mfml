@@ -17,9 +17,10 @@ export {
 export { defaultCategorySelector, type CategorySelector, type CategorySelectorParams } from './selector.js';
 export { renderToString, type RenderToStringOptions } from './renderToString.js';
 export type {
+  Metadata,
+  MessageDebugInfo,
   Renderer,
   ElementRenderer,
-  Metadata,
   ChildNode,
   ParentNode,
   AnyNode,

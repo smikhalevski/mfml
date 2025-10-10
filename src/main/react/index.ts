@@ -6,3 +6,4 @@
 
 export { createReactDOMElementRenderer } from './createReactDOMElementRenderer.js';
 export { Message, MessageLocaleProvider, MessageRendererProvider, type MessageProps } from './Message.js';
+export { enableVisualDebug } from './enableVisualDebug.js';
