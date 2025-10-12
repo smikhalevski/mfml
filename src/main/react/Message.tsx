@@ -24,7 +24,7 @@ const MessageRendererContext = createContext<Renderer<ReactNode>>({
 
 MessageRendererContext.displayName = 'MessageRendererContext';
 
-const MessageValuesContext = createContext<any>(undefined);
+export const MessageValuesContext = createContext<any>(undefined);
 MessageValuesContext.displayName = 'MessageValuesContext';
 
 /**

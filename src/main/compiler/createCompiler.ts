@@ -275,16 +275,17 @@ export async function compileFiles(
   const localeVars: Record<string, string> = {};
 
   const functionNames = new Map<string, string>();
+  const messageHashes = new Set<string>();
 
   let indexJSCode = '';
   let indexTSCode = 'import{MessageNode}from"mfml";\n';
   let localesJSCode = '';
 
   const packageMetadata: PackageMetadata = {
-    name: packageName,
+    packageName,
     supportedLocales,
     fallbackLocales,
-    messages: [],
+    messages: {},
   };
 
   for (const locale of supportedLocales) {
@@ -422,33 +423,43 @@ export async function compileFiles(
 
     functionNames.set(functionName, messageKey);
 
-    // The hash includes only the message function body
-    const messageHash = await toHashCode(packageName + messageJSCode, hashLength);
+    // Hash the message function body
+    let messageHash = await toHashCode(packageName + messageJSCode, hashLength);
 
-    packageMetadata.messages.push({
-      hash: messageHash,
-      key: messageKey,
-      functionName,
-      argumentNames: Array.from(argumentTSTypes.keys()),
-      locales: localeGroups.map(localeGroup => localeGroup[0]),
-    });
+    if (messageHashes.has(messageHash)) {
+      // Fallback to an existing message function
+      const existingMessageHash = messageHash;
 
-    files[messageHash + '.js'] =
-      'import{M,E,A,V,R,O,C}from"mfml/dsl";\n' +
-      'import{' +
-      Object.values(localeVars).join(',') +
-      '}from"./locales.js";\n' +
-      '\n' +
-      formatJSDocComment(docComment) +
-      '\nexport default function ' +
-      functionName +
-      '(locale){\nreturn ' +
-      messageJSCode +
-      '\n}\n' +
-      functionName +
-      '.h=' +
-      JSON.stringify(messageHash) +
-      ';\n';
+      messageHash = await toHashCode(packageName + messageJSCode + messageKey, hashLength);
+
+      messageJSCode =
+        'import fallback from"./' +
+        existingMessageHash +
+        '.js";\n\n' +
+        formatJSDocComment(docComment) +
+        '\nexport default function ' +
+        functionName +
+        '(locale){\nreturn fallback(locale);\n}';
+    } else {
+      // Add the new message function
+      messageHashes.add(messageHash);
+
+      messageJSCode =
+        'import{M,E,A,V,R,O,C}from"mfml/dsl";\n' +
+        'import{' +
+        Object.values(localeVars).join(',') +
+        '}from"./locales.js";\n\n' +
+        formatJSDocComment(docComment) +
+        '\nexport default function ' +
+        functionName +
+        '(locale){\nreturn ' +
+        messageJSCode +
+        '\n}';
+    }
+
+    messageJSCode += '\n' + functionName + '.h=' + JSON.stringify(messageHash) + ';\n';
+
+    files[messageHash + '.js'] = messageJSCode;
 
     indexJSCode += 'export{default as ' + functionName + '}from"./' + messageHash + '.js";\n';
 
@@ -460,6 +471,13 @@ export async function compileFiles(
       '(locale:string):' +
       compileMessageTSType(argumentTSTypes) +
       ';\n';
+
+    packageMetadata.messages[messageHash] = {
+      messageKey,
+      functionName,
+      argumentNames: Array.from(argumentTSTypes.keys()),
+      locales: localeGroups.map(localeGroup => localeGroup[0]),
+    };
   }
 
   if (errors.length !== 0) {

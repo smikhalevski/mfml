@@ -2,15 +2,18 @@ import { ArgumentFormatter } from './formatter.js';
 import { CategorySelector } from './selector.js';
 
 export interface PackageMetadata {
-  name: string;
+  packageName: string;
   supportedLocales: string[];
   fallbackLocales?: Record<string, string>;
-  messages: MessageMetadata[];
+
+  /**
+   * Map from a hash code to a message metadata.
+   */
+  messages: Record<string, MessageMetadata>;
 }
 
 export interface MessageMetadata {
-  hash: string;
-  key: string;
+  messageKey: string;
   functionName: string;
   argumentNames: string[];
   locales: string[];
