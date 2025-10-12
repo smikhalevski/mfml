@@ -53,22 +53,6 @@ async function build(baseDir: string, config: ResolvedConfig): Promise<void> {
 
   const duration = (performance.now() - startTimestamp).toFixed(1);
 
-  const packageJSON = {
-    name: packageName,
-    type: 'module',
-    main: './index.js',
-    types: './index.d.ts',
-    exports: {
-      '.': './index.js',
-      './metadata': './metadata.js',
-      './debug': './debug.js',
-      './package.json': './package.json',
-    },
-    sideEffects: false,
-  };
-
-  files['package.json'] = JSON.stringify(packageJSON, null, 2);
-
   const packageDir = path.resolve(baseDir, outDir, 'node_modules', packageName);
 
   fs.mkdirSync(packageDir, { recursive: true });

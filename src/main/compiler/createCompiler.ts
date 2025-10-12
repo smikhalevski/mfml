@@ -1,4 +1,4 @@
-import { AnyNode, ArgumentNode, MessageDebugInfo, MessageNode, Metadata } from '../types.js';
+import { AnyNode, ArgumentNode, MessageNode, PackageMetadata } from '../types.js';
 import { Parser } from '../parser/index.js';
 import {
   escapeJSIdentifier,
@@ -118,6 +118,13 @@ export interface CompilerOptions {
   parser: Parser;
 
   /**
+   * The name of the package from to which compiled messages are written.
+   *
+   * @default "@mfml/messages"
+   */
+  packageName?: string;
+
+  /**
    * Mapping from a locale to a corresponding fallback locale.
    *
    * For example, let's consider {@link fallbackLocales} set to:
@@ -173,6 +180,13 @@ export interface CompilerOptions {
    * @see {@link getIntlArgumentTSType}
    */
   getArgumentTSType?: (argumentNode: ArgumentNode) => string | undefined;
+
+  /**
+   * Number of characters in a message body hash.
+   *
+   * @default 8
+   */
+  hashLength?: number;
 }
 
 /**
@@ -241,18 +255,20 @@ export async function compileFiles(
 ): Promise<Record<string, string>> {
   const {
     parser,
+    packageName = '@mfml/messages',
     fallbackLocales,
     preprocessors,
     postprocessors,
     renameMessageFunction = messageKey => messageKey,
     getArgumentTSType = getIntlArgumentTSType,
+    hashLength = 8,
   } = options;
 
   const errors: CompilerError[] = [];
 
-  const locales = Object.keys(messages);
+  const supportedLocales = Object.keys(messages);
 
-  const messageKeys = new Set(locales.flatMap(locale => Object.keys(messages[locale])));
+  const messageKeys = new Set(supportedLocales.flatMap(locale => Object.keys(messages[locale])));
 
   const files: Record<string, string> = {};
 
@@ -264,9 +280,14 @@ export async function compileFiles(
   let indexTSCode = 'import{MessageNode}from"mfml";\n';
   let localesJSCode = '';
 
-  const debugInfos: Record<string, MessageDebugInfo> = {};
+  const packageMetadata: PackageMetadata = {
+    name: packageName,
+    supportedLocales,
+    fallbackLocales,
+    messages: [],
+  };
 
-  for (const locale of locales) {
+  for (const locale of supportedLocales) {
     const localeVar = 'LOCALE_' + escapeJSIdentifier(locale).toUpperCase();
 
     localeVars[locale] = localeVar;
@@ -278,16 +299,16 @@ export async function compileFiles(
     const localeGroups = [];
 
     // Pick locales supported by a message
-    for (const locale of locales) {
+    for (const locale of supportedLocales) {
       if (messages[locale][messageKey] !== undefined) {
         localeGroups.push([locale]);
       }
     }
 
-    if (fallbackLocales !== undefined && localeGroups.length !== locales.length) {
+    if (fallbackLocales !== undefined && localeGroups.length !== supportedLocales.length) {
       // Message doesn't support all locales, detect fallbacks and extend locale groups
 
-      for (const locale of locales) {
+      for (const locale of supportedLocales) {
         if (messages[locale][messageKey] !== undefined) {
           // No fallback required
           continue;
@@ -301,7 +322,7 @@ export async function compileFiles(
           fallbackLocale = fallbackLocales[fallbackLocale];
         } while (
           fallbackLocale !== undefined &&
-          locales.indexOf(fallbackLocale) !== -1 &&
+          supportedLocales.indexOf(fallbackLocale) !== -1 &&
           !visitedLocales.has(fallbackLocale) &&
           (visitedLocales.add(fallbackLocale), messages[fallbackLocale][messageKey] === undefined)
         );
@@ -402,17 +423,17 @@ export async function compileFiles(
     functionNames.set(functionName, messageKey);
 
     // The hash includes only the message function body
-    const fileName = await toHashCode(messageJSCode, 16);
+    const messageHash = await toHashCode(packageName + messageJSCode, hashLength);
 
-    debugInfos[fileName] = {
-      messageKey,
-      messageFunctionName: functionName,
+    packageMetadata.messages.push({
+      hash: messageHash,
+      key: messageKey,
+      functionName,
       argumentNames: Array.from(argumentTSTypes.keys()),
       locales: localeGroups.map(localeGroup => localeGroup[0]),
-      translations: localeGroups.map(localeGroup => messages[localeGroup[0]][messageKey]),
-    };
+    });
 
-    files[fileName + '.js'] =
+    files[messageHash + '.js'] =
       'import{M,E,A,V,R,O,C}from"mfml/dsl";\n' +
       'import{' +
       Object.values(localeVars).join(',') +
@@ -425,11 +446,11 @@ export async function compileFiles(
       messageJSCode +
       '\n}\n' +
       functionName +
-      '.k=' +
-      JSON.stringify(fileName) +
+      '.h=' +
+      JSON.stringify(messageHash) +
       ';\n';
 
-    indexJSCode += 'export{default as ' + functionName + '}from"./' + fileName + '.js";\n';
+    indexJSCode += 'export{default as ' + functionName + '}from"./' + messageHash + '.js";\n';
 
     indexTSCode +=
       '\n' +
@@ -445,7 +466,18 @@ export async function compileFiles(
     throw new AggregateError(errors);
   }
 
-  const metadata: Metadata = { supportedLocales: locales };
+  const packageJSON = {
+    name: packageName,
+    type: 'module',
+    main: './index.js',
+    types: './index.d.ts',
+    exports: {
+      '.': './index.js',
+      './metadata': './metadata.js',
+      './package.json': './package.json',
+    },
+    sideEffects: false,
+  };
 
   files['index.js'] = indexJSCode;
 
@@ -453,22 +485,14 @@ export async function compileFiles(
 
   files['locales.js'] = localesJSCode;
 
-  files['metadata.js'] = 'export default ' + JSON.stringify(metadata, null, 2) + ';\n';
+  files['metadata.js'] = 'export default ' + JSON.stringify(packageMetadata, null, 2) + ';\n';
 
   files['metadata.d.ts'] =
-    'import{Metadata}from"mfml";\n\n' +
-    'export type SupportedLocale=' +
-    locales.map(locale => JSON.stringify(locale)).join('|') +
-    ';\n\n' +
-    'declare const metadata:Metadata;\n\n' +
+    'import{PackageMetadata}from"mfml";\n\n' +
+    'declare const metadata:PackageMetadata;\n\n' +
     'export default metadata;\n';
 
-  files['debug.js'] = 'export default ' + JSON.stringify(debugInfos, null, 2) + ';\n';
-
-  files['debug.d.ts'] =
-    'import{MessageDebugInfo}from"mfml";\n\n' +
-    'declare const debugInfos:Record<string,MessageDebugInfo>;\n\n' +
-    'export default debugInfos;\n';
+  files['package.json'] = JSON.stringify(packageJSON, null, 2);
 
   return files;
 }

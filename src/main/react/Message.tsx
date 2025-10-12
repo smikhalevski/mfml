@@ -106,7 +106,7 @@ export function Message<T extends MessageFunction>(props: InferMessageProps<T>):
   return (
     <MessageValuesContext.Provider
       value={values}
-      key={message.k}
+      key={message.h}
     >
       {children}
     </MessageValuesContext.Provider>

@@ -1,33 +1,28 @@
 import { ArgumentFormatter } from './formatter.js';
 import { CategorySelector } from './selector.js';
 
+export interface PackageMetadata {
+  name: string;
+  supportedLocales: string[];
+  fallbackLocales?: Record<string, string>;
+  messages: MessageMetadata[];
+}
+
+export interface MessageMetadata {
+  hash: string;
+  key: string;
+  functionName: string;
+  argumentNames: string[];
+  locales: string[];
+}
+
 export interface MessageFunction<Values extends object | void = any> {
   (locale: string): MessageNode<Values> | null;
 
   /**
-   * Unique message function key.
+   * The unique message function hash.
    */
-  k?: string;
-}
-
-export interface MessageDebugInfo {
-  messageKey: string;
-  messageFunctionName: string;
-  argumentNames: string[];
-  locales: string[];
-  translations: string[];
-}
-
-/**
- * The metadata exported from the compiled translations module.
- *
- * @group Other
- */
-export interface Metadata {
-  /**
-   * The array of locales supported by compiled message functions.
-   */
-  supportedLocales: string[];
+  h?: string;
 }
 
 /**
