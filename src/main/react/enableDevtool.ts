@@ -161,7 +161,11 @@ function createPopoverElement(
     const nodeRects = getNodeRects(node);
 
     for (let i = 0; i < nodeRects.length; ++i) {
-      rects.push(nodeRects[i]);
+      const rect = nodeRects[i];
+
+      if (rect.width * rect.height !== 0) {
+        rects.push(rect);
+      }
     }
   }
 
@@ -325,7 +329,7 @@ function getNodeFromPoint(document: Document, x: number, y: number): Node | null
  */
 function getNodeRects(node: Node): ArrayLike<DOMRectReadOnly> {
   if (node.nodeType === Node.ELEMENT_NODE) {
-    return [(node as Element).getBoundingClientRect()];
+    return (node as Element).getClientRects();
   }
 
   if (node.nodeType === Node.TEXT_NODE) {
