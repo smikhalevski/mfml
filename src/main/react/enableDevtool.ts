@@ -3,6 +3,11 @@ import { ComponentType, Context } from 'react';
 import { MessageValuesContext } from './Message.js';
 import { getOutlinesOfRects } from './getOutlinesOfRects.js';
 
+/**
+ * Enables DOM devtool for MFML.
+ *
+ * @param packageMetadata The i18n package metadata exported from `@mfml/messages/metadata` or similar package.
+ */
 export function enableDevtool(packageMetadata: PackageMetadata): void {
   if (typeof window === 'undefined') {
     return;
@@ -38,24 +43,23 @@ export function enableDevtool(packageMetadata: PackageMetadata): void {
     }
 
     // No fiber node, or no message
-    if (
-      nextFiberNode === null ||
-      nextFiberNode.key === null ||
-      !packageMetadata.messages.hasOwnProperty(nextFiberNode.key)
-    ) {
+    if (fiberNode === null || fiberNode.key === null || !packageMetadata.messages.hasOwnProperty(fiberNode.key)) {
       hidePopover();
       return;
     }
 
     // Replace existing popover
     popoverElement?.remove();
+
     popoverElement = document.body.appendChild(
       createPopoverElement(
         document,
-        packageMetadata.messages[nextFiberNode.key],
-        collectStateNodesFromFiberNode(nextFiberNode, [])
+        packageMetadata.messages[fiberNode.key],
+        collectStateNodesFromFiberNode(fiberNode, []),
+        fiberNode.pendingProps?.value
       )
     );
+
     popoverElement.showPopover();
   };
 
@@ -151,6 +155,7 @@ function createPopoverElement(
   document: Document,
   messageMetadata: MessageMetadata,
   messageNodes: Node[],
+  _messageValues: any,
   strokeWidth = 5,
   outlineOffset = 5
 ): HTMLElement {
@@ -198,59 +203,48 @@ function createPopoverElement(
   }
 
   const popoverElement = document.createElement('div');
-  const svgElement = popoverElement.appendChild(document.createElementNS(SVG_NAMESPACE, 'svg'));
-  const pathElement = svgElement.appendChild(document.createElementNS(SVG_NAMESPACE, 'path'));
-  const detailsElement = popoverElement.appendChild(document.createElement('div'));
 
   popoverElement.setAttribute('popover', '');
   popoverElement.setAttribute(
     'style',
-    'all:unset;pointer-events:none;position:fixed;' +
-      'top:' +
-      (minY - strokeWidth / 2) +
-      'px;' +
-      'left:' +
-      (minX - strokeWidth / 2) +
-      'px;'
+    'all:unset;' +
+      'pointer-events:none;' +
+      'position:fixed;' +
+      `top:${minY - strokeWidth / 2}px;` +
+      `left:${minX - strokeWidth / 2}px;`
   );
+
+  const svgElement = popoverElement.appendChild(document.createElementNS(SVG_NAMESPACE, 'svg'));
 
   svgElement.setAttribute(
     'viewBox',
-    '' +
-      (minX - strokeWidth / 2) +
-      ' ' +
-      (minY - strokeWidth / 2) +
-      ' ' +
-      (maxX - minX + strokeWidth) +
-      ' ' +
-      (maxY - minY + strokeWidth)
+    `${minX - strokeWidth / 2} ${minY - strokeWidth / 2} ${maxX - minX + strokeWidth} ${maxY - minY + strokeWidth}`
   );
   svgElement.setAttribute(
     'style',
-    'display:block;width:' + (maxX - minX + strokeWidth) + 'px;' + 'height:' + (maxY - minY + strokeWidth) + 'px;'
+    `display:block;width:${maxX - minX + strokeWidth}px;height:${maxY - minY + strokeWidth}px;`
   );
+
+  const pathElement = svgElement.appendChild(document.createElementNS(SVG_NAMESPACE, 'path'));
 
   pathElement.setAttribute('d', outlinePath);
-  pathElement.setAttribute('style', 'fill:transparent;stroke:' + BG_COLOR + ';stroke-width:' + strokeWidth + 'px;');
+  pathElement.setAttribute('style', `fill:none;stroke:${BG_COLOR};stroke-width:${strokeWidth}px;`);
 
-  detailsElement.setAttribute(
+  const messageKeyElement = popoverElement.appendChild(document.createElement('div'));
+
+  messageKeyElement.setAttribute(
     'style',
-    'pointer-events:all;display:inline-block;background-color:' +
-      BG_COLOR +
-      ';font:' +
-      FONT +
-      ';color:' +
-      FG_COLOR +
-      ';margin:' +
-      -strokeWidth +
-      'px 0;padding:' +
-      (strokeWidth + outlineOffset) / 2 +
-      'px ' +
-      (strokeWidth + outlineOffset) +
-      'px;'
+    'pointer-events:all;' +
+      'display:inline-block;' +
+      `margin:${-strokeWidth}px 0;` +
+      `padding:${(strokeWidth + outlineOffset) * 0.75}px ${strokeWidth + outlineOffset}px;` +
+      'white-space:pre-wrap;' +
+      `background-color:${BG_COLOR};` +
+      `color:${FG_COLOR};` +
+      `font:${FONT};`
   );
 
-  detailsElement.innerHTML = messageMetadata.messageKey + '<br/>' + messageMetadata.locales.join(', ');
+  messageKeyElement.textContent = messageMetadata.messageKey;
 
   return popoverElement;
 }
@@ -265,6 +259,7 @@ interface FiberNode {
   child: FiberNode | null;
   sibling: FiberNode | null;
   stateNode: Node | null;
+  pendingProps: any;
 }
 
 /**

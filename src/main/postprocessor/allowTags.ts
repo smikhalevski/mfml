@@ -46,7 +46,7 @@ export default function allowTags(allowedTags: AllowedTags): Postprocessor {
 
       if (!allowedTags.hasOwnProperty(node.tagName) || allowedAttributes === false) {
         errors.push(
-          new ParserError('The tag "' + node.tagName + '" is not allowed.', params.text, node.startIndex, node.endIndex)
+          new ParserError(`The tag "${node.tagName}" is not allowed.`, params.text, node.startIndex, node.endIndex)
         );
         return;
       }
@@ -62,7 +62,7 @@ export default function allowTags(allowedTags: AllowedTags): Postprocessor {
 
         errors.push(
           new ParserError(
-            'The attribute "' + attributeNode.name + '" is not allowed for the tag "' + node.tagName + '".',
+            `The attribute "${attributeNode.name}" is not allowed for the tag "${node.tagName}".`,
             params.text,
             attributeNode.startIndex,
             attributeNode.endIndex

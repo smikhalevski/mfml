@@ -408,13 +408,11 @@ export async function compileFiles(
       continue;
     }
 
-    if (functionNames.has(functionName)) {
+    const shadowedMessageKey = functionNames.get(functionName);
+
+    if (shadowedMessageKey !== undefined) {
       const error = new Error(
-        'The function name "' +
-          functionName +
-          '" is already used for the "' +
-          functionNames.get(functionName) +
-          '" message.'
+        `The function name "${functionName}" is already used for the "${shadowedMessageKey}" message.`
       );
 
       errors.push(new CompilerError(messageKey, localeGroups[0][0], error));

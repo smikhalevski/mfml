@@ -111,7 +111,7 @@ export default function allowTypes(allowedTypes: { [type: string]: TypeRequireme
       if (!allowedTypes.hasOwnProperty(typeNode.value)) {
         errors.push(
           new ParserError(
-            'The argument type "' + typeNode.value + '" is not allowed.',
+            `The argument type "${typeNode.value}" is not allowed.`,
             params.text,
             typeNode.startIndex,
             typeNode.endIndex
@@ -140,11 +140,7 @@ export default function allowTypes(allowedTypes: { [type: string]: TypeRequireme
       if (!hasStyle && isStyleRequired) {
         errors.push(
           new ParserError(
-            'The argument type "' +
-              typeNode.value +
-              '" requires a style' +
-              (hasAllowedStyles ? ': ' + allowedStyles.join(', ') : '') +
-              '.',
+            `The argument type "${typeNode.value}" requires a style${hasAllowedStyles ? ': ' + allowedStyles.join(', ') : ''}.`,
             params.text,
             typeNode.startIndex,
             typeNode.endIndex
@@ -155,7 +151,7 @@ export default function allowTypes(allowedTypes: { [type: string]: TypeRequireme
       if (hasStyle && !areStylesAllowed) {
         errors.push(
           new ParserError(
-            'The argument type "' + typeNode.value + '" does not support styles.',
+            `The argument type "${typeNode.value}" does not support styles.`,
             params.text,
             typeNode.startIndex,
             typeNode.endIndex
@@ -166,13 +162,7 @@ export default function allowTypes(allowedTypes: { [type: string]: TypeRequireme
       if (hasStyle && hasAllowedStyles && !allowedStyles.includes(styleNode.value)) {
         errors.push(
           new ParserError(
-            'The argument type "' +
-              typeNode.value +
-              '" does not support style "' +
-              styleNode.value +
-              '", expected one of: ' +
-              allowedStyles.join(', ') +
-              '.',
+            `The argument type "${typeNode.value}" does not support style "${styleNode.value}", expected one of: ${allowedStyles.join(', ')}.`,
             params.text,
             styleNode.startIndex,
             styleNode.endIndex
@@ -188,7 +178,7 @@ export default function allowTypes(allowedTypes: { [type: string]: TypeRequireme
       if (hasOptions && !areOptionsAllowed) {
         errors.push(
           new ParserError(
-            'The argument type "' + typeNode.value + '" does not allow options.',
+            `The argument type "${typeNode.value}" does not allow options.`,
             params.text,
             typeNode.startIndex,
             typeNode.endIndex
@@ -204,13 +194,7 @@ export default function allowTypes(allowedTypes: { [type: string]: TypeRequireme
 
           errors.push(
             new ParserError(
-              'The option "' +
-                optionNode.name +
-                '" is not allowed for argument type "' +
-                typeNode.value +
-                '", expected one of: ' +
-                allowedOptions.join(', ') +
-                '.',
+              `The option "${optionNode.name}" is not allowed for argument type "${typeNode.value}", expected one of: ${allowedOptions.join(', ')}.`,
               params.text,
               optionNode.startIndex,
               optionNode.endIndex
@@ -222,11 +206,7 @@ export default function allowTypes(allowedTypes: { [type: string]: TypeRequireme
       if (!hasCategories && areCategoriesRequired) {
         errors.push(
           new ParserError(
-            'The argument type "' +
-              typeNode.value +
-              '" requires at least one category' +
-              (hasAllowedCategories ? ': ' + allowedCategories.join(', ') : '') +
-              '.',
+            `The argument type "${typeNode.value}" requires at least one category${hasAllowedCategories ? ': ' + allowedCategories.join(', ') : ''}.`,
             params.text,
             typeNode.startIndex,
             typeNode.endIndex
@@ -237,7 +217,7 @@ export default function allowTypes(allowedTypes: { [type: string]: TypeRequireme
       if (hasCategories && !areCategoriesAllowed) {
         errors.push(
           new ParserError(
-            'The argument type "' + typeNode.value + '" does not allow categories.',
+            `The argument type "${typeNode.value}" does not allow categories.`,
             params.text,
             typeNode.startIndex,
             typeNode.endIndex
@@ -253,13 +233,7 @@ export default function allowTypes(allowedTypes: { [type: string]: TypeRequireme
 
           errors.push(
             new ParserError(
-              'The category "' +
-                categoryNode.name +
-                '" is not allowed for argument type "' +
-                typeNode.value +
-                '", expected one of: ' +
-                allowedCategories.join(', ') +
-                '.',
+              `The category "${categoryNode.name}" is not allowed for argument type "${typeNode.value}", expected one of: ${allowedCategories.join(', ')}.`,
               params.text,
               categoryNode.startIndex,
               categoryNode.endIndex
@@ -289,7 +263,7 @@ export default function allowTypes(allowedTypes: { [type: string]: TypeRequireme
         if (missingCategories.length !== 0) {
           errors.push(
             new ParserError(
-              'The argument type "' + typeNode.value + '" requires categories: ' + missingCategories.join(', ') + '.',
+              `The argument type "${typeNode.value}" requires categories: ${missingCategories.join(', ')}.`,
               params.text,
               typeNode.startIndex,
               typeNode.endIndex

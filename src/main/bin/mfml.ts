@@ -61,7 +61,7 @@ async function build(baseDir: string, config: ResolvedConfig): Promise<void> {
     fs.writeFileSync(path.join(packageDir, file), files[file]);
   }
 
-  print('Generated ' + Object.keys(files).length + ' files in ' + packageDir + ' (' + duration + 'ms)');
+  print(`Generated ${Object.keys(files).length} files in ${packageDir} (${duration}ms)`);
 }
 
 function resolveConfigPath(baseDir: string, configPaths: string[]): string {
@@ -70,7 +70,7 @@ function resolveConfigPath(baseDir: string, configPaths: string[]): string {
   const configPath = configPaths.find(configPath => fs.existsSync(configPath));
 
   if (configPath === undefined) {
-    throw new Error('Config not found among paths:\n  ' + configPaths.join('\n  ') + '\n');
+    throw new Error('Config not found among paths:\n  ' + configPaths.join('\n  '));
   }
 
   return configPath;
