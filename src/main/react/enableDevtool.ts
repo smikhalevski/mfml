@@ -214,7 +214,6 @@ function createPopoverElement(
   }
 
   const popoverElement = document.createElement('div');
-
   popoverElement.setAttribute('popover', '');
   popoverElement.setAttribute(
     'style',
@@ -222,37 +221,37 @@ function createPopoverElement(
       'pointer-events:none;' +
       'position:fixed;' +
       `top:${minY - strokeWidth / 2}px;` +
-      `left:${minX - strokeWidth / 2}px;`
+      `left:${minX - strokeWidth / 2}px;` +
+      `width:${maxX - minX + strokeWidth}px;` +
+      `height:${maxY - minY + strokeWidth}px;` +
+      `fill:none;` +
+      `stroke:${BG_COLOR};` +
+      `stroke-width:${strokeWidth}px;` +
+      'white-space:pre-wrap;' +
+      `color:${FG_COLOR};` +
+      `font:${FONT};`
   );
 
   const svgElement = popoverElement.appendChild(document.createElementNS(SVG_NAMESPACE, 'svg'));
-
   svgElement.setAttribute(
     'viewBox',
     `${minX - strokeWidth / 2} ${minY - strokeWidth / 2} ${maxX - minX + strokeWidth} ${maxY - minY + strokeWidth}`
   );
-  svgElement.setAttribute(
-    'style',
-    `display:block;width:${maxX - minX + strokeWidth}px;height:${maxY - minY + strokeWidth}px;`
-  );
 
   const pathElement = svgElement.appendChild(document.createElementNS(SVG_NAMESPACE, 'path'));
-
   pathElement.setAttribute('d', outlinePath);
-  pathElement.setAttribute('style', `fill:none;stroke:${BG_COLOR};stroke-width:${strokeWidth}px;`);
 
   const messageKeyElement = popoverElement.appendChild(document.createElement('div'));
 
   messageKeyElement.setAttribute(
     'style',
     'pointer-events:all;' +
-      'display:inline-block;' +
+      'position:absolute;' +
+      (minY > window.innerHeight - maxY ? 'bottom:100%;' : 'top:100%;') +
+      (minX > window.innerWidth - maxX ? 'right:0;' : 'left:0;') +
       `margin:${-strokeWidth}px 0;` +
       `padding:${(strokeWidth + outlineOffset) * 0.75}px ${strokeWidth + outlineOffset}px;` +
-      'white-space:pre-wrap;' +
-      `background-color:${BG_COLOR};` +
-      `color:${FG_COLOR};` +
-      `font:${FONT};`
+      `background-color:${BG_COLOR};`
   );
 
   messageKeyElement.textContent = messageMetadata.messageKey;
