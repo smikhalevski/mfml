@@ -135,7 +135,7 @@ export function enableDevtool(packageMetadata: PackageMetadata): void {
   console.log(
     '%cPress and hold the [' +
       (isMac ? 'Option' : 'Alt') +
-      '] key, then hover over any text to reveal the related i18n message debug information.',
+      '] key, then hover over a rendered message text to reveal the related message information.',
     'color:#aaa'
   );
 }
