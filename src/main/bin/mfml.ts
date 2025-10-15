@@ -53,21 +53,6 @@ async function build(baseDir: string, config: ResolvedConfig): Promise<void> {
 
   const duration = (performance.now() - startTimestamp).toFixed(1);
 
-  const packageJSON = {
-    name: packageName,
-    type: 'module',
-    main: './index.js',
-    types: './index.d.ts',
-    exports: {
-      '.': './index.js',
-      './metadata': './metadata.js',
-      './package.json': './package.json',
-    },
-    sideEffects: false,
-  };
-
-  files['package.json'] = JSON.stringify(packageJSON, null, 2);
-
   const packageDir = path.resolve(baseDir, outDir, 'node_modules', packageName);
 
   fs.mkdirSync(packageDir, { recursive: true });
@@ -76,7 +61,7 @@ async function build(baseDir: string, config: ResolvedConfig): Promise<void> {
     fs.writeFileSync(path.join(packageDir, file), files[file]);
   }
 
-  print('Generated ' + Object.keys(files).length + ' files in ' + packageDir + ' (' + duration + 'ms)');
+  print(`Generated ${Object.keys(files).length} files in ${packageDir} (${duration}ms)`);
 }
 
 function resolveConfigPath(baseDir: string, configPaths: string[]): string {
@@ -85,7 +70,7 @@ function resolveConfigPath(baseDir: string, configPaths: string[]): string {
   const configPath = configPaths.find(configPath => fs.existsSync(configPath));
 
   if (configPath === undefined) {
-    throw new Error('Config not found among paths:\n  ' + configPaths.join('\n  ') + '\n');
+    throw new Error('Config not found among paths:\n  ' + configPaths.join('\n  '));
   }
 
   return configPath;

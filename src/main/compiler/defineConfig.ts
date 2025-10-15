@@ -20,13 +20,6 @@ export interface Config extends Omit<ParserOptions, 'tokenizer'>, Omit<CompilerO
   messages: { [locale: string]: { [messageKey: string]: string } };
 
   /**
-   * The name of the package from to which compiled messages are written.
-   *
-   * @default "@mfml/messages"
-   */
-  packageName?: string;
-
-  /**
    * The directory that contains node_modules.
    *
    * @default "."
@@ -89,7 +82,7 @@ export function defineConfig(config: Config): ResolvedConfig {
 
   const tokenizer = createTokenizer(tokenizerOptions);
   const parser = createParser({ tokenizer, decodeText });
-  const compiler = createCompiler({ ...config, parser });
+  const compiler = createCompiler({ ...config, parser, packageName });
 
   return {
     messages,

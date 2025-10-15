@@ -1,6 +1,33 @@
 import { ArgumentFormatter } from './formatter.js';
 import { CategorySelector } from './selector.js';
 
+export interface PackageMetadata {
+  packageName: string;
+  supportedLocales: string[];
+  fallbackLocales?: Record<string, string>;
+
+  /**
+   * Map from a hash code to a message metadata.
+   */
+  messages: Record<string, MessageMetadata>;
+}
+
+export interface MessageMetadata {
+  messageKey: string;
+  functionName: string;
+  argumentNames: string[];
+  locales: string[];
+}
+
+export interface MessageFunction<Values extends object | void = any> {
+  (locale: string): MessageNode<Values> | null;
+
+  /**
+   * The unique message function hash.
+   */
+  h?: string;
+}
+
 /**
  * Renders elements and arguments.
  *
@@ -45,18 +72,6 @@ export type ElementRenderer<Element> = (
   attributes: Record<string, string>,
   children: Array<Element | string>
 ) => Element | string | undefined;
-
-/**
- * The metadata exported from the compiled translations module.
- *
- * @group Other
- */
-export interface Metadata {
-  /**
-   * The array of locales supported by compiled message functions.
-   */
-  supportedLocales: string[];
-}
 
 /**
  * The node that can be a child node of a {@link ParentNode parent node}.

@@ -1,9 +1,9 @@
-export async function toHashCode(str: string, charCount: number): Promise<string> {
+export async function toHashCode(str: string, length: number): Promise<string> {
   let hashCode = '';
 
   const bytes = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str)));
 
-  for (let i = 0; i < bytes.length && hashCode.length < charCount; ++i) {
+  for (let i = 0; i < bytes.length && hashCode.length < length; ++i) {
     hashCode += bytes[i].toString(16).padStart(2, '0');
   }
 

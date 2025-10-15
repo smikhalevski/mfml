@@ -1,4 +1,4 @@
-import { AttributeNode, ChildNode, MessageNode, Renderer } from './types.js';
+import { AttributeNode, ChildNode, MessageFunction, Renderer } from './types.js';
 import {
   getArgumentByOctothorpe,
   getArgumentCategories,
@@ -23,19 +23,15 @@ const defaultStringRenderer: Renderer<string> = {
 /**
  * Options of {@link renderToString}.
  *
- * @template MessageFunction The function that returns a message node for a given locale, or `null` if locale isn't
- * supported.
+ * @template T The function that returns a message node for a given locale, or `null` if locale isn't supported.
  * @template Values Message argument values.
  * @group Renderer
  */
-export interface RenderToStringOptions<
-  MessageFunction extends (locale: string) => MessageNode<Values> | null,
-  Values extends object | void,
-> {
+export interface RenderToStringOptions<T extends MessageFunction<Values>, Values extends object | void> {
   /**
    * The function that returns a message node for a given locale, or `null` if locale isn't supported.
    */
-  message: MessageFunction;
+  message: T;
 
   /**
    * The locale to render.
@@ -53,11 +49,11 @@ export interface RenderToStringOptions<
   renderer?: Renderer<string>;
 }
 
-type InferRenderToStringOptions<MessageFunction extends (locale: string) => MessageNode | null> =
-  MessageFunction extends (locale: string) => MessageNode<infer Values> | null
+type InferRenderToStringOptions<T extends MessageFunction> =
+  T extends MessageFunction<infer Values>
     ? Values extends void
-      ? RenderToStringOptions<MessageFunction, Values>
-      : RenderToStringOptions<MessageFunction, Values> & { values: Values }
+      ? RenderToStringOptions<T, Values>
+      : RenderToStringOptions<T, Values> & { values: Values }
     : never;
 
 /**
@@ -73,9 +69,7 @@ type InferRenderToStringOptions<MessageFunction extends (locale: string) => Mess
  * @param options Rendering options.
  * @group Renderer
  */
-export function renderToString<MessageFunction extends (locale: string) => MessageNode | null>(
-  options: InferRenderToStringOptions<MessageFunction>
-): string {
+export function renderToString<T extends MessageFunction>(options: InferRenderToStringOptions<T>): string {
   const { message, locale, values, renderer = defaultStringRenderer } = options;
 
   const messageNode = message(locale);
