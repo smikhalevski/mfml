@@ -1,6 +1,6 @@
 {
   "name": "mfml",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "The ICU MessageFormat + XML/HTML compiler and runtime that makes your translations tree-shakeable.",
   "type": "module",
   "main": "./index.js",
