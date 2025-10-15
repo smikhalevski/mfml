@@ -33,7 +33,11 @@ export function enableDevtool(packageMetadata: PackageMetadata): void {
 
     let nextFiberNode = getFiberNodeByStateNode(pointNode);
 
-    while (nextFiberNode !== null && nextFiberNode.type !== MessageValuesContext) {
+    while (
+      nextFiberNode !== null &&
+      nextFiberNode.type !== MessageValuesContext &&
+      nextFiberNode.type !== MessageValuesContext.Provider
+    ) {
       nextFiberNode = nextFiberNode.return;
     }
 
