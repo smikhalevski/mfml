@@ -35,8 +35,8 @@ export function enableDevtool(packageMetadata: PackageMetadata): void {
 
     while (
       nextFiberNode !== null &&
-      nextFiberNode.type !== MessageValuesContext &&
-      nextFiberNode.type !== MessageValuesContext.Provider
+      ((nextFiberNode.type !== MessageValuesContext && nextFiberNode.type !== MessageValuesContext.Provider) ||
+        nextFiberNode.key === null)
     ) {
       nextFiberNode = nextFiberNode.return;
     }
