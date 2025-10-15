@@ -13,25 +13,25 @@ export function enableDevtool(packageMetadata: PackageMetadata): void {
     return;
   }
 
-  let popoverElement: HTMLElement | null = null;
   let fiberNode: FiberNode | null = null;
-  let pointNode: Node | null = null;
+  let messageNodes: Node[] = [];
   let mouseX = -1;
   let mouseY = -1;
   let canShowPopoverOnHover = false;
+  let popoverElement: HTMLElement | null = null;
 
   const pressedKeyCodes = new Set<string>();
 
   const showPopover = (x: number, y: number) => {
-    pointNode = getNodeFromPoint(document, x, y);
+    const candidateNodes = getNodesFromPoint(document, x, y);
 
-    // No state node
-    if (pointNode === null) {
-      hidePopover();
-      return;
-    }
+    let nextFiberNode: FiberNode | null = null;
 
-    let nextFiberNode = getFiberNodeByStateNode(pointNode);
+    for (
+      let i = candidateNodes.length, node;
+      i-- > 0 && ((node = candidateNodes[i]), (nextFiberNode = getFiberNodeByStateNode(node))) === null;
+
+    ) {}
 
     while (
       nextFiberNode !== null &&
@@ -52,18 +52,23 @@ export function enableDevtool(packageMetadata: PackageMetadata): void {
       return;
     }
 
+    messageNodes = collectStateNodesFromFiberNode(fiberNode, []);
+
     // Replace existing popover
     popoverElement?.remove();
+
+    if (messageNodes.length === 0) {
+      return;
+    }
 
     popoverElement = document.body.appendChild(
       createPopoverElement(
         document,
         packageMetadata.messages[fiberNode.key],
-        collectStateNodesFromFiberNode(fiberNode, []),
+        messageNodes,
         fiberNode.pendingProps?.value
       )
     );
-
     popoverElement.showPopover();
   };
 
@@ -71,12 +76,14 @@ export function enableDevtool(packageMetadata: PackageMetadata): void {
     popoverElement?.remove();
     popoverElement = null;
     fiberNode = null;
-    pointNode = null;
+    messageNodes = [];
   };
 
   const scrollListener = (event: Event) => {
-    if ((event.target as HTMLElement).contains(pointNode)) {
-      hidePopover();
+    for (const node of messageNodes) {
+      if ((event.target as HTMLElement).contains(node)) {
+        hidePopover();
+      }
     }
   };
 
@@ -161,7 +168,7 @@ function createPopoverElement(
   messageNodes: Node[],
   _messageValues: any,
   strokeWidth = 5,
-  outlineOffset = 5
+  outlineOffset = 10
 ): HTMLElement {
   const rects = [];
 
@@ -295,32 +302,36 @@ function collectStateNodesFromFiberNode(fiber: FiberNode, nodes: Node[]): Node[]
 }
 
 /**
- * Returns an element or a text node at given point.
+ * Returns the array of nodes (elements and text) at given point on screen. Nodes are returned in document order.
  */
-function getNodeFromPoint(document: Document, x: number, y: number): Node | null {
-  let node: Node | null = document.elementFromPoint(x, y);
-
-  if (node === null) {
-    return null;
-  }
-
+function getNodesFromPoint(document: Document, x: number, y: number): Node[] {
   const nodeFilter: NodeFilter = node => {
     const rects = getNodeRects(node);
 
     for (let i = 0; i < rects.length; ++i) {
       const rect = rects[i];
 
-      if (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom) {
-        continue;
+      if (x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom) {
+        return NodeFilter.FILTER_ACCEPT;
       }
-
-      return NodeFilter.FILTER_ACCEPT;
     }
 
     return NodeFilter.FILTER_REJECT;
   };
 
-  return document.createTreeWalker(node, NodeFilter.SHOW_TEXT, nodeFilter).nextNode() || node;
+  const nodes = [];
+
+  for (const element of document.elementsFromPoint(x, y)) {
+    const treeWalker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT, nodeFilter);
+
+    nodes.push(element);
+
+    for (let node; (node = treeWalker.nextNode()) !== null; ) {
+      nodes.push(node);
+    }
+  }
+
+  return nodes;
 }
 
 /**
