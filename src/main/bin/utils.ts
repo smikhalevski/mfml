@@ -1,9 +1,9 @@
 import { ParserError } from '../parser/index.js';
 import { CompilerError } from '../compiler/index.js';
-import { blue, dim, inverse, print, red, underline } from './print.js';
+import { blue, dim, inverse, echo, red, underline } from './echo.js';
 
-export function printHelp(): void {
-  print(`mfml: ICU MessageFormat + XML/HTML compiler tool. 
+export function echoHelp(): void {
+  echo(`mfml: ICU MessageFormat + XML/HTML compiler tool. 
 
 ${dim('mfml [...options]')}
 
@@ -19,8 +19,8 @@ Visit ${blue(underline('https://megastack.dev/mfml'))} for API docs and tutorial
 `);
 }
 
-export function printError(error: unknown): void {
-  print(formatError(error));
+export function echoError(error: unknown): void {
+  echo(formatError(error));
 }
 
 export function formatError(error: unknown): string {
