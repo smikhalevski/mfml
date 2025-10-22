@@ -265,10 +265,10 @@ Default configuration provides following argument types and styles:
 
 <table>
 <tr>
-<th align="left">Argument type</th>
-<th align="left">Argument style</th>
-<th align="left">Example, <code>en</code> locale</th>
-<th align="left">Required value type</th>
+<th align="left">Argument type</th>
+<th align="left">Argument style</th>
+<th align="left">Example, <code>en</code> locale</th>
+<th align="left">Required value type</th>
 </tr>
 
 <tr>
@@ -306,38 +306,38 @@ Default configuration provides following argument types and styles:
 </tr>
 <tr>
 <td><code>medium</code></td>
-<td>Jan 1, 1970</td>
+<td>Jan 1, 1970</td>
 </tr>
 <tr>
 <td><code>long</code></td>
-<td>January 1, 1970</td>
+<td>January 1, 1970</td>
 </tr>
 <tr>
 <td><code>full</code></td>
-<td>Thursday, January 1, 1970</td>
+<td>Thursday, January 1, 1970</td>
 </tr>
 
 <tr>
 <td valign="top" rowspan="5"><code>time</code></td>
 <td>—</td>
-<td>12:00 AM</td>
+<td>12:00 AM</td>
 <td valign="top" rowspan="5"><code>number</code> or <code>Date</code></td>
 </tr>
 <tr>
 <td><code>short</code></td>
-<td>12:00 AM</td>
+<td>12:00 AM</td>
 </tr>
 <tr>
 <td><code>medium</code></td>
-<td>12:00:00 AM</td>
+<td>12:00:00 AM</td>
 </tr>
 <tr>
 <td><code>long</code></td>
-<td>12:00:00 AM UTC</td>
+<td>12:00:00 AM UTC</td>
 </tr>
 <tr>
 <td><code>full</code></td>
-<td>12:00:00 AM Coordinated Universal Time</td>
+<td>12:00:00 AM Coordinated Universal Time</td>
 </tr>
 
 <tr>
