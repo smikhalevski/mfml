@@ -705,7 +705,13 @@ export function readTokens(text: string, callback: TokenCallback, options: ReadT
     }
 
     // An octothorpe
-    if (isOctothorpeRecognized && charCode === /* # */ 35 && scopeStack.lastIndexOf(SCOPE_CATEGORY) !== -1) {
+    if (
+      isOctothorpeRecognized &&
+      charCode === /* # */ 35 &&
+      scopeStack.lastIndexOf(SCOPE_CATEGORY) !== -1 &&
+      // Ignore in numeric character references (&#39;)
+      !(getCharCodeAt(text, index - 1) === /* & */ 38 && isNumberChar(getCharCodeAt(text, index + 1)))
+    ) {
       if (textStartIndex !== index) {
         callback(TOKEN_TEXT, textStartIndex, index);
       }
@@ -881,4 +887,8 @@ function isICUNameChar(charCode: number): boolean {
     charCode === /* ' */ 39 ||
     isSpaceChar(charCode)
   );
+}
+
+function isNumberChar(charCode: number): boolean {
+  return charCode >= /* 0 */ 48 && charCode <= /* 9 */ 57;
 }

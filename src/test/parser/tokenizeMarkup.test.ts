@@ -668,7 +668,7 @@ describe('readTokens', () => {
     expect(callbackMock).toHaveBeenNthCalledWith(1, 'TEXT', 0, 9);
   });
 
-  test('doe not read an octothorpe by default', () => {
+  test('does not read an octothorpe by default', () => {
     readTokens('{aaa,bbb,ccc{ddd#eee}}', callbackMock, {});
 
     expect(callbackMock).toHaveBeenCalledTimes(6);
@@ -739,6 +739,42 @@ describe('readTokens', () => {
     expect(callbackMock).toHaveBeenNthCalledWith(5, 'CATEGORY_CLOSING', 14, 15);
     expect(callbackMock).toHaveBeenNthCalledWith(6, 'ARGUMENT_CLOSING', 15, 16);
     expect(callbackMock).toHaveBeenNthCalledWith(7, 'TEXT', 16, 17);
+  });
+
+  test('does not read an octothorpe in a numeric character references', () => {
+    readTokens('{xxx,yyy,zzz{&#1}', callbackMock, { isOctothorpeRecognized: true });
+
+    expect(callbackMock).toHaveBeenCalledTimes(5);
+    expect(callbackMock).toHaveBeenNthCalledWith(1, 'ARGUMENT_NAME', 1, 4);
+    expect(callbackMock).toHaveBeenNthCalledWith(2, 'ARGUMENT_TYPE', 5, 8);
+    expect(callbackMock).toHaveBeenNthCalledWith(3, 'CATEGORY_NAME', 9, 12);
+    expect(callbackMock).toHaveBeenNthCalledWith(4, 'TEXT', 13, 16);
+    expect(callbackMock).toHaveBeenNthCalledWith(5, 'CATEGORY_CLOSING', 16, 17);
+
+    callbackMock.mockReset();
+
+    readTokens('{xxx,yyy,zzz{&#;}', callbackMock, { isOctothorpeRecognized: true });
+
+    expect(callbackMock).toHaveBeenCalledTimes(7);
+    expect(callbackMock).toHaveBeenNthCalledWith(1, 'ARGUMENT_NAME', 1, 4);
+    expect(callbackMock).toHaveBeenNthCalledWith(2, 'ARGUMENT_TYPE', 5, 8);
+    expect(callbackMock).toHaveBeenNthCalledWith(3, 'CATEGORY_NAME', 9, 12);
+    expect(callbackMock).toHaveBeenNthCalledWith(4, 'TEXT', 13, 14);
+    expect(callbackMock).toHaveBeenNthCalledWith(5, 'OCTOTHORPE', 14, 15);
+    expect(callbackMock).toHaveBeenNthCalledWith(6, 'TEXT', 15, 16);
+    expect(callbackMock).toHaveBeenNthCalledWith(7, 'CATEGORY_CLOSING', 16, 17);
+
+    callbackMock.mockReset();
+
+    readTokens('{xxx,yyy,zzz{&#}', callbackMock, { isOctothorpeRecognized: true });
+
+    expect(callbackMock).toHaveBeenCalledTimes(6);
+    expect(callbackMock).toHaveBeenNthCalledWith(1, 'ARGUMENT_NAME', 1, 4);
+    expect(callbackMock).toHaveBeenNthCalledWith(2, 'ARGUMENT_TYPE', 5, 8);
+    expect(callbackMock).toHaveBeenNthCalledWith(3, 'CATEGORY_NAME', 9, 12);
+    expect(callbackMock).toHaveBeenNthCalledWith(4, 'TEXT', 13, 14);
+    expect(callbackMock).toHaveBeenNthCalledWith(5, 'OCTOTHORPE', 14, 15);
+    expect(callbackMock).toHaveBeenNthCalledWith(6, 'CATEGORY_CLOSING', 15, 16);
   });
 
   test('does not read tags in an argument with categories in an attribute', () => {
