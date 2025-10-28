@@ -15,7 +15,7 @@ export function formatMarkdownBold(text: string): string {
 }
 
 export function formatMarkdownFence(text: string, language = ''): string {
-  return '```' + language + '\n' + text.replace(/`/g, '\\`') + '\n```';
+  return '```' + language + '\n' + text.replace(/```/g, '\\```') + '\n```';
 }
 
 export function formatJSDocComment(text: string): string {

@@ -163,20 +163,146 @@ describe('compileFiles', () => {
       )
     ).toStrictEqual({
       '43e39178.js':
-        'import{M,E,A,V,R,O,C}from"mfml/dsl";\nimport{LOCALE_EN_US,LOCALE_RU_RU}from"./locales.js";\n\n/**\n * **Message key**\n * ```text\n * messageCount\n * ```\n * **en-US**\n * ```html\n * You have <b>{count, number}</b> unread messages\n * ```\n * **ru-RU**\n * ```html\n * У вас <b>{count, number}</b> непрочитанных сообщений\n * ```\n */\nexport default function messageCount(locale){\nreturn locale===LOCALE_EN_US?M(locale,"You have ",E("b",V("count","number"))," unread messages"):locale===LOCALE_RU_RU?M(locale,"У вас ",E("b",V("count","number"))," непрочитанных сообщений"):null;\n}\nmessageCount.h="43e39178";\n',
+        'import{M,E,A,V,R,O,C}from"mfml/dsl";\n' +
+        'import{LOCALE_EN_US,LOCALE_RU_RU}from"./locales.js";\n' +
+        '\n' +
+        '/**\n' +
+        ' * **Message key**\n' +
+        ' * ```text\n' +
+        ' * messageCount\n' +
+        ' * ```\n' +
+        ' * **en-US**\n' +
+        ' * ```html\n' +
+        ' * You have <b>{count, number}</b> unread messages\n' +
+        ' * ```\n' +
+        ' * **ru-RU**\n' +
+        ' * ```html\n' +
+        ' * У вас <b>{count, number}</b> непрочитанных сообщений\n' +
+        ' * ```\n' +
+        ' */\n' +
+        'export default function messageCount(locale){\n' +
+        'return locale===LOCALE_EN_US?M(locale,"You have ",E("b",V("count","number"))," unread messages"):locale===LOCALE_RU_RU?M(locale,"У вас ",E("b",V("count","number"))," непрочитанных сообщений"):null;\n' +
+        '}\n' +
+        'messageCount.h="43e39178";\n' +
+        '',
       '87bd85dd.js':
-        'import{M,E,A,V,R,O,C}from"mfml/dsl";\nimport{LOCALE_EN_US,LOCALE_RU_RU}from"./locales.js";\n\n/**\n * **Message key**\n * ```text\n * messageReceived\n * ```\n * **en-US**\n * ```html\n * {gender, select, male {He} female {She} other {They}} sent you a message\n * ```\n * **ru-RU**\n * ```html\n * {gender, select, male {Он отправил} female {Она отправила} other {Они отправили}} вам сообщение\n * ```\n */\nexport default function messageReceived(locale){\nreturn locale===LOCALE_EN_US?M(locale,V("gender","select",C("male","He"),C("female","She"),C("other","They"))," sent you a message"):locale===LOCALE_RU_RU?M(locale,V("gender","select",C("male","Он отправил"),C("female","Она отправила"),C("other","Они отправили"))," вам сообщение"):null;\n}\nmessageReceived.h="87bd85dd";\n',
+        'import{M,E,A,V,R,O,C}from"mfml/dsl";\n' +
+        'import{LOCALE_EN_US,LOCALE_RU_RU}from"./locales.js";\n' +
+        '\n' +
+        '/**\n' +
+        ' * **Message key**\n' +
+        ' * ```text\n' +
+        ' * messageReceived\n' +
+        ' * ```\n' +
+        ' * **en-US**\n' +
+        ' * ```html\n' +
+        ' * {gender, select, male {He} female {She} other {They}} sent you a message\n' +
+        ' * ```\n' +
+        ' * **ru-RU**\n' +
+        ' * ```html\n' +
+        ' * {gender, select, male {Он отправил} female {Она отправила} other {Они отправили}} вам сообщение\n' +
+        ' * ```\n' +
+        ' */\n' +
+        'export default function messageReceived(locale){\n' +
+        'return locale===LOCALE_EN_US?M(locale,V("gender","select",C("male","He"),C("female","She"),C("other","They"))," sent you a message"):locale===LOCALE_RU_RU?M(locale,V("gender","select",C("male","Он отправил"),C("female","Она отправила"),C("other","Они отправили"))," вам сообщение"):null;\n' +
+        '}\n' +
+        'messageReceived.h="87bd85dd";\n' +
+        '',
       'index.js':
-        'export{default as messageCount}from"./43e39178.js";\nexport{default as messageReceived}from"./87bd85dd.js";\n',
+        'export{default as messageCount}from"./43e39178.js";\n' +
+        'export{default as messageReceived}from"./87bd85dd.js";\n' +
+        '',
       'index.d.ts':
-        'import{MessageNode}from"mfml";\n\n/**\n * **Message key**\n * ```text\n * messageCount\n * ```\n * **en-US**\n * ```html\n * You have <b>{count, number}</b> unread messages\n * ```\n * **ru-RU**\n * ```html\n * У вас <b>{count, number}</b> непрочитанных сообщений\n * ```\n */\nexport declare function messageCount(locale:string):MessageNode<{"count":number|bigint;}>|null;\n\n/**\n * **Message key**\n * ```text\n * messageReceived\n * ```\n * **en-US**\n * ```html\n * {gender, select, male {He} female {She} other {They}} sent you a message\n * ```\n * **ru-RU**\n * ```html\n * {gender, select, male {Он отправил} female {Она отправила} other {Они отправили}} вам сообщение\n * ```\n */\nexport declare function messageReceived(locale:string):MessageNode<{"gender":"male"|"female"|(string&{});}>|null;\n',
+        'import{MessageNode}from"mfml";\n' +
+        '\n' +
+        '/**\n' +
+        ' * **Message key**\n' +
+        ' * ```text\n' +
+        ' * messageCount\n' +
+        ' * ```\n' +
+        ' * **en-US**\n' +
+        ' * ```html\n' +
+        ' * You have <b>{count, number}</b> unread messages\n' +
+        ' * ```\n' +
+        ' * **ru-RU**\n' +
+        ' * ```html\n' +
+        ' * У вас <b>{count, number}</b> непрочитанных сообщений\n' +
+        ' * ```\n' +
+        ' */\n' +
+        'export declare function messageCount(locale:string):MessageNode<{"count":number|bigint;}>|null;\n' +
+        '\n' +
+        '/**\n' +
+        ' * **Message key**\n' +
+        ' * ```text\n' +
+        ' * messageReceived\n' +
+        ' * ```\n' +
+        ' * **en-US**\n' +
+        ' * ```html\n' +
+        ' * {gender, select, male {He} female {She} other {They}} sent you a message\n' +
+        ' * ```\n' +
+        ' * **ru-RU**\n' +
+        ' * ```html\n' +
+        ' * {gender, select, male {Он отправил} female {Она отправила} other {Они отправили}} вам сообщение\n' +
+        ' * ```\n' +
+        ' */\n' +
+        'export declare function messageReceived(locale:string):MessageNode<{"gender":"male"|"female"|(string&{});}>|null;\n' +
+        '',
       'locales.js': 'export const LOCALE_EN_US="en-US";\nexport const LOCALE_RU_RU="ru-RU";\n',
       'metadata.js':
-        'export default {\n  "packageName": "@mfml/messages",\n  "supportedLocales": [\n    "en-US",\n    "ru-RU"\n  ],\n  "messages": {\n    "43e39178": {\n      "messageKey": "messageCount",\n      "functionName": "messageCount",\n      "argumentNames": [\n        "count"\n      ],\n      "locales": [\n        "en-US",\n        "ru-RU"\n      ]\n    },\n    "87bd85dd": {\n      "messageKey": "messageReceived",\n      "functionName": "messageReceived",\n      "argumentNames": [\n        "gender"\n      ],\n      "locales": [\n        "en-US",\n        "ru-RU"\n      ]\n    }\n  }\n};\n',
+        'export const supportedLocales=["en-US","ru-RU"];\n' +
+        '\n' +
+        'export const debugInfo={\n' +
+        '  "packageName": "@mfml/messages",\n' +
+        '  "supportedLocales": [\n' +
+        '    "en-US",\n' +
+        '    "ru-RU"\n' +
+        '  ],\n' +
+        '  "messages": {\n' +
+        '    "43e39178": {\n' +
+        '      "messageKey": "messageCount",\n' +
+        '      "functionName": "messageCount",\n' +
+        '      "argumentNames": [\n' +
+        '        "count"\n' +
+        '      ],\n' +
+        '      "locales": [\n' +
+        '        "en-US",\n' +
+        '        "ru-RU"\n' +
+        '      ]\n' +
+        '    },\n' +
+        '    "87bd85dd": {\n' +
+        '      "messageKey": "messageReceived",\n' +
+        '      "functionName": "messageReceived",\n' +
+        '      "argumentNames": [\n' +
+        '        "gender"\n' +
+        '      ],\n' +
+        '      "locales": [\n' +
+        '        "en-US",\n' +
+        '        "ru-RU"\n' +
+        '      ]\n' +
+        '    }\n' +
+        '  }\n' +
+        '};\n' +
+        '',
       'metadata.d.ts':
-        'import{PackageMetadata}from"mfml";\n\ndeclare const metadata:PackageMetadata;\n\nexport default metadata;\n',
+        'import{DebugInfo}from"mfml";\n' +
+        '\n' +
+        'export const supportedLocales:readonly string[];\n' +
+        '\n' +
+        'export const debugInfo:DebugInfo;\n' +
+        '',
       'package.json':
-        '{\n  "name": "@mfml/messages",\n  "type": "module",\n  "main": "./index.js",\n  "types": "./index.d.ts",\n  "exports": {\n    ".": "./index.js",\n    "./metadata": "./metadata.js",\n    "./package.json": "./package.json"\n  },\n  "sideEffects": false\n}',
+        '{\n' +
+        '  "name": "@mfml/messages",\n' +
+        '  "type": "module",\n' +
+        '  "main": "./index.js",\n' +
+        '  "types": "./index.d.ts",\n' +
+        '  "exports": {\n' +
+        '    ".": "./index.js",\n' +
+        '    "./metadata": "./metadata.js",\n' +
+        '    "./package.json": "./package.json"\n' +
+        '  },\n' +
+        '  "sideEffects": false\n' +
+        '}\n',
     });
   });
 
@@ -196,19 +322,130 @@ describe('compileFiles', () => {
       )
     ).toStrictEqual({
       '7c551010.js':
-        'import{M,E,A,V,R,O,C}from"mfml/dsl";\nimport{LOCALE_EN,LOCALE_RU}from"./locales.js";\n\n/**\n * **Message key**\n * ```text\n * aaa\n * ```\n * **en**\n * ```html\n * Hello\n * ```\n * **ru**\n * ```html\n * Привет\n * ```\n */\nexport default function aaa(locale){\nreturn locale===LOCALE_EN?M(locale,"Hello"):locale===LOCALE_RU?M(locale,"Привет"):null;\n}\naaa.h="7c551010";\n',
+        'import{M,E,A,V,R,O,C}from"mfml/dsl";\n' +
+        'import{LOCALE_EN,LOCALE_RU}from"./locales.js";\n' +
+        '\n' +
+        '/**\n' +
+        ' * **Message key**\n' +
+        ' * ```text\n' +
+        ' * aaa\n' +
+        ' * ```\n' +
+        ' * **en**\n' +
+        ' * ```html\n' +
+        ' * Hello\n' +
+        ' * ```\n' +
+        ' * **ru**\n' +
+        ' * ```html\n' +
+        ' * Привет\n' +
+        ' * ```\n' +
+        ' */\n' +
+        'export default function aaa(locale){\n' +
+        'return locale===LOCALE_EN?M(locale,"Hello"):locale===LOCALE_RU?M(locale,"Привет"):null;\n' +
+        '}\n' +
+        'aaa.h="7c551010";\n' +
+        '',
       'bf6eb534.js':
-        'import{M,E,A,V,R,O,C}from"mfml/dsl";\nimport{LOCALE_EN,LOCALE_RU}from"./locales.js";\n\n/**\n * **Message key**\n * ```text\n * bbb\n * ```\n * **ru**\n * ```html\n * Пока\n * ```\n */\nexport default function bbb(locale){\nreturn locale===LOCALE_RU?M(locale,"Пока"):null;\n}\nbbb.h="bf6eb534";\n',
+        'import{M,E,A,V,R,O,C}from"mfml/dsl";\n' +
+        'import{LOCALE_EN,LOCALE_RU}from"./locales.js";\n' +
+        '\n' +
+        '/**\n' +
+        ' * **Message key**\n' +
+        ' * ```text\n' +
+        ' * bbb\n' +
+        ' * ```\n' +
+        ' * **ru**\n' +
+        ' * ```html\n' +
+        ' * Пока\n' +
+        ' * ```\n' +
+        ' */\n' +
+        'export default function bbb(locale){\n' +
+        'return locale===LOCALE_RU?M(locale,"Пока"):null;\n' +
+        '}\n' +
+        'bbb.h="bf6eb534";\n' +
+        '',
       'index.js': 'export{default as aaa}from"./7c551010.js";\nexport{default as bbb}from"./bf6eb534.js";\n',
       'index.d.ts':
-        'import{MessageNode}from"mfml";\n\n/**\n * **Message key**\n * ```text\n * aaa\n * ```\n * **en**\n * ```html\n * Hello\n * ```\n * **ru**\n * ```html\n * Привет\n * ```\n */\nexport declare function aaa(locale:string):MessageNode<void>|null;\n\n/**\n * **Message key**\n * ```text\n * bbb\n * ```\n * **ru**\n * ```html\n * Пока\n * ```\n */\nexport declare function bbb(locale:string):MessageNode<void>|null;\n',
+        'import{MessageNode}from"mfml";\n' +
+        '\n' +
+        '/**\n' +
+        ' * **Message key**\n' +
+        ' * ```text\n' +
+        ' * aaa\n' +
+        ' * ```\n' +
+        ' * **en**\n' +
+        ' * ```html\n' +
+        ' * Hello\n' +
+        ' * ```\n' +
+        ' * **ru**\n' +
+        ' * ```html\n' +
+        ' * Привет\n' +
+        ' * ```\n' +
+        ' */\n' +
+        'export declare function aaa(locale:string):MessageNode<void>|null;\n' +
+        '\n' +
+        '/**\n' +
+        ' * **Message key**\n' +
+        ' * ```text\n' +
+        ' * bbb\n' +
+        ' * ```\n' +
+        ' * **ru**\n' +
+        ' * ```html\n' +
+        ' * Пока\n' +
+        ' * ```\n' +
+        ' */\n' +
+        'export declare function bbb(locale:string):MessageNode<void>|null;\n' +
+        '',
       'locales.js': 'export const LOCALE_EN="en";\nexport const LOCALE_RU="ru";\n',
       'metadata.js':
-        'export default {\n  "packageName": "@mfml/messages",\n  "supportedLocales": [\n    "en",\n    "ru"\n  ],\n  "messages": {\n    "7c551010": {\n      "messageKey": "aaa",\n      "functionName": "aaa",\n      "argumentNames": [],\n      "locales": [\n        "en",\n        "ru"\n      ]\n    },\n    "bf6eb534": {\n      "messageKey": "bbb",\n      "functionName": "bbb",\n      "argumentNames": [],\n      "locales": [\n        "ru"\n      ]\n    }\n  }\n};\n',
+        'export const supportedLocales=["en","ru"];\n' +
+        '\n' +
+        'export const debugInfo={\n' +
+        '  "packageName": "@mfml/messages",\n' +
+        '  "supportedLocales": [\n' +
+        '    "en",\n' +
+        '    "ru"\n' +
+        '  ],\n' +
+        '  "messages": {\n' +
+        '    "7c551010": {\n' +
+        '      "messageKey": "aaa",\n' +
+        '      "functionName": "aaa",\n' +
+        '      "argumentNames": [],\n' +
+        '      "locales": [\n' +
+        '        "en",\n' +
+        '        "ru"\n' +
+        '      ]\n' +
+        '    },\n' +
+        '    "bf6eb534": {\n' +
+        '      "messageKey": "bbb",\n' +
+        '      "functionName": "bbb",\n' +
+        '      "argumentNames": [],\n' +
+        '      "locales": [\n' +
+        '        "ru"\n' +
+        '      ]\n' +
+        '    }\n' +
+        '  }\n' +
+        '};\n' +
+        '',
       'metadata.d.ts':
-        'import{PackageMetadata}from"mfml";\n\ndeclare const metadata:PackageMetadata;\n\nexport default metadata;\n',
+        'import{DebugInfo}from"mfml";\n' +
+        '\n' +
+        'export const supportedLocales:readonly string[];\n' +
+        '\n' +
+        'export const debugInfo:DebugInfo;\n' +
+        '',
       'package.json':
-        '{\n  "name": "@mfml/messages",\n  "type": "module",\n  "main": "./index.js",\n  "types": "./index.d.ts",\n  "exports": {\n    ".": "./index.js",\n    "./metadata": "./metadata.js",\n    "./package.json": "./package.json"\n  },\n  "sideEffects": false\n}',
+        '{\n' +
+        '  "name": "@mfml/messages",\n' +
+        '  "type": "module",\n' +
+        '  "main": "./index.js",\n' +
+        '  "types": "./index.d.ts",\n' +
+        '  "exports": {\n' +
+        '    ".": "./index.js",\n' +
+        '    "./metadata": "./metadata.js",\n' +
+        '    "./package.json": "./package.json"\n' +
+        '  },\n' +
+        '  "sideEffects": false\n' +
+        '}\n',
     });
   });
 
@@ -233,19 +470,133 @@ describe('compileFiles', () => {
       )
     ).toStrictEqual({
       '7c551010.js':
-        'import{M,E,A,V,R,O,C}from"mfml/dsl";\nimport{LOCALE_EN,LOCALE_RU}from"./locales.js";\n\n/**\n * **Message key**\n * ```text\n * aaa\n * ```\n * **en**\n * ```html\n * Hello\n * ```\n * **ru**\n * ```html\n * Привет\n * ```\n */\nexport default function aaa(locale){\nreturn locale===LOCALE_EN?M(locale,"Hello"):locale===LOCALE_RU?M(locale,"Привет"):null;\n}\naaa.h="7c551010";\n',
+        'import{M,E,A,V,R,O,C}from"mfml/dsl";\n' +
+        'import{LOCALE_EN,LOCALE_RU}from"./locales.js";\n' +
+        '\n' +
+        '/**\n' +
+        ' * **Message key**\n' +
+        ' * ```text\n' +
+        ' * aaa\n' +
+        ' * ```\n' +
+        ' * **en**\n' +
+        ' * ```html\n' +
+        ' * Hello\n' +
+        ' * ```\n' +
+        ' * **ru**\n' +
+        ' * ```html\n' +
+        ' * Привет\n' +
+        ' * ```\n' +
+        ' */\n' +
+        'export default function aaa(locale){\n' +
+        'return locale===LOCALE_EN?M(locale,"Hello"):locale===LOCALE_RU?M(locale,"Привет"):null;\n' +
+        '}\n' +
+        'aaa.h="7c551010";\n' +
+        '',
       '15def7bf.js':
-        'import{M,E,A,V,R,O,C}from"mfml/dsl";\nimport{LOCALE_EN,LOCALE_RU}from"./locales.js";\n\n/**\n * **Message key**\n * ```text\n * bbb\n * ```\n * **ru** ← en\n * ```html\n * Пока\n * ```\n */\nexport default function bbb(locale){\nreturn locale===LOCALE_RU||locale===LOCALE_EN?M(locale,"Пока"):null;\n}\nbbb.h="15def7bf";\n',
+        'import{M,E,A,V,R,O,C}from"mfml/dsl";\n' +
+        'import{LOCALE_EN,LOCALE_RU}from"./locales.js";\n' +
+        '\n' +
+        '/**\n' +
+        ' * **Message key**\n' +
+        ' * ```text\n' +
+        ' * bbb\n' +
+        ' * ```\n' +
+        ' * **ru** ← en\n' +
+        ' * ```html\n' +
+        ' * Пока\n' +
+        ' * ```\n' +
+        ' */\n' +
+        'export default function bbb(locale){\n' +
+        'return locale===LOCALE_RU||locale===LOCALE_EN?M(locale,"Пока"):null;\n' +
+        '}\n' +
+        'bbb.h="15def7bf";\n' +
+        '',
       'index.js': 'export{default as aaa}from"./7c551010.js";\nexport{default as bbb}from"./15def7bf.js";\n',
       'index.d.ts':
-        'import{MessageNode}from"mfml";\n\n/**\n * **Message key**\n * ```text\n * aaa\n * ```\n * **en**\n * ```html\n * Hello\n * ```\n * **ru**\n * ```html\n * Привет\n * ```\n */\nexport declare function aaa(locale:string):MessageNode<void>|null;\n\n/**\n * **Message key**\n * ```text\n * bbb\n * ```\n * **ru** ← en\n * ```html\n * Пока\n * ```\n */\nexport declare function bbb(locale:string):MessageNode<void>|null;\n',
+        'import{MessageNode}from"mfml";\n' +
+        '\n' +
+        '/**\n' +
+        ' * **Message key**\n' +
+        ' * ```text\n' +
+        ' * aaa\n' +
+        ' * ```\n' +
+        ' * **en**\n' +
+        ' * ```html\n' +
+        ' * Hello\n' +
+        ' * ```\n' +
+        ' * **ru**\n' +
+        ' * ```html\n' +
+        ' * Привет\n' +
+        ' * ```\n' +
+        ' */\n' +
+        'export declare function aaa(locale:string):MessageNode<void>|null;\n' +
+        '\n' +
+        '/**\n' +
+        ' * **Message key**\n' +
+        ' * ```text\n' +
+        ' * bbb\n' +
+        ' * ```\n' +
+        ' * **ru** ← en\n' +
+        ' * ```html\n' +
+        ' * Пока\n' +
+        ' * ```\n' +
+        ' */\n' +
+        'export declare function bbb(locale:string):MessageNode<void>|null;\n' +
+        '',
       'locales.js': 'export const LOCALE_EN="en";\nexport const LOCALE_RU="ru";\n',
       'metadata.js':
-        'export default {\n  "packageName": "@mfml/messages",\n  "supportedLocales": [\n    "en",\n    "ru"\n  ],\n  "fallbackLocales": {\n    "en": "ru"\n  },\n  "messages": {\n    "7c551010": {\n      "messageKey": "aaa",\n      "functionName": "aaa",\n      "argumentNames": [],\n      "locales": [\n        "en",\n        "ru"\n      ]\n    },\n    "15def7bf": {\n      "messageKey": "bbb",\n      "functionName": "bbb",\n      "argumentNames": [],\n      "locales": [\n        "ru"\n      ]\n    }\n  }\n};\n',
+        'export const supportedLocales=["en","ru"];\n' +
+        '\n' +
+        'export const debugInfo={\n' +
+        '  "packageName": "@mfml/messages",\n' +
+        '  "supportedLocales": [\n' +
+        '    "en",\n' +
+        '    "ru"\n' +
+        '  ],\n' +
+        '  "fallbackLocales": {\n' +
+        '    "en": "ru"\n' +
+        '  },\n' +
+        '  "messages": {\n' +
+        '    "7c551010": {\n' +
+        '      "messageKey": "aaa",\n' +
+        '      "functionName": "aaa",\n' +
+        '      "argumentNames": [],\n' +
+        '      "locales": [\n' +
+        '        "en",\n' +
+        '        "ru"\n' +
+        '      ]\n' +
+        '    },\n' +
+        '    "15def7bf": {\n' +
+        '      "messageKey": "bbb",\n' +
+        '      "functionName": "bbb",\n' +
+        '      "argumentNames": [],\n' +
+        '      "locales": [\n' +
+        '        "ru"\n' +
+        '      ]\n' +
+        '    }\n' +
+        '  }\n' +
+        '};\n' +
+        '',
       'metadata.d.ts':
-        'import{PackageMetadata}from"mfml";\n\ndeclare const metadata:PackageMetadata;\n\nexport default metadata;\n',
+        'import{DebugInfo}from"mfml";\n' +
+        '\n' +
+        'export const supportedLocales:readonly string[];\n' +
+        '\n' +
+        'export const debugInfo:DebugInfo;\n' +
+        '',
       'package.json':
-        '{\n  "name": "@mfml/messages",\n  "type": "module",\n  "main": "./index.js",\n  "types": "./index.d.ts",\n  "exports": {\n    ".": "./index.js",\n    "./metadata": "./metadata.js",\n    "./package.json": "./package.json"\n  },\n  "sideEffects": false\n}',
+        '{\n' +
+        '  "name": "@mfml/messages",\n' +
+        '  "type": "module",\n' +
+        '  "main": "./index.js",\n' +
+        '  "types": "./index.d.ts",\n' +
+        '  "exports": {\n' +
+        '    ".": "./index.js",\n' +
+        '    "./metadata": "./metadata.js",\n' +
+        '    "./package.json": "./package.json"\n' +
+        '  },\n' +
+        '  "sideEffects": false\n' +
+        '}\n',
     });
   });
 
@@ -270,19 +621,133 @@ describe('compileFiles', () => {
       )
     ).toStrictEqual({
       '7c551010.js':
-        'import{M,E,A,V,R,O,C}from"mfml/dsl";\nimport{LOCALE_EN,LOCALE_RU}from"./locales.js";\n\n/**\n * **Message key**\n * ```text\n * aaa\n * ```\n * **en**\n * ```html\n * Hello\n * ```\n * **ru**\n * ```html\n * Привет\n * ```\n */\nexport default function aaa(locale){\nreturn locale===LOCALE_EN?M(locale,"Hello"):locale===LOCALE_RU?M(locale,"Привет"):null;\n}\naaa.h="7c551010";\n',
+        'import{M,E,A,V,R,O,C}from"mfml/dsl";\n' +
+        'import{LOCALE_EN,LOCALE_RU}from"./locales.js";\n' +
+        '\n' +
+        '/**\n' +
+        ' * **Message key**\n' +
+        ' * ```text\n' +
+        ' * aaa\n' +
+        ' * ```\n' +
+        ' * **en**\n' +
+        ' * ```html\n' +
+        ' * Hello\n' +
+        ' * ```\n' +
+        ' * **ru**\n' +
+        ' * ```html\n' +
+        ' * Привет\n' +
+        ' * ```\n' +
+        ' */\n' +
+        'export default function aaa(locale){\n' +
+        'return locale===LOCALE_EN?M(locale,"Hello"):locale===LOCALE_RU?M(locale,"Привет"):null;\n' +
+        '}\n' +
+        'aaa.h="7c551010";\n' +
+        '',
       'bf6eb534.js':
-        'import{M,E,A,V,R,O,C}from"mfml/dsl";\nimport{LOCALE_EN,LOCALE_RU}from"./locales.js";\n\n/**\n * **Message key**\n * ```text\n * bbb\n * ```\n * **ru**\n * ```html\n * Пока\n * ```\n */\nexport default function bbb(locale){\nreturn locale===LOCALE_RU?M(locale,"Пока"):null;\n}\nbbb.h="bf6eb534";\n',
+        'import{M,E,A,V,R,O,C}from"mfml/dsl";\n' +
+        'import{LOCALE_EN,LOCALE_RU}from"./locales.js";\n' +
+        '\n' +
+        '/**\n' +
+        ' * **Message key**\n' +
+        ' * ```text\n' +
+        ' * bbb\n' +
+        ' * ```\n' +
+        ' * **ru**\n' +
+        ' * ```html\n' +
+        ' * Пока\n' +
+        ' * ```\n' +
+        ' */\n' +
+        'export default function bbb(locale){\n' +
+        'return locale===LOCALE_RU?M(locale,"Пока"):null;\n' +
+        '}\n' +
+        'bbb.h="bf6eb534";\n' +
+        '',
       'index.js': 'export{default as aaa}from"./7c551010.js";\nexport{default as bbb}from"./bf6eb534.js";\n',
       'index.d.ts':
-        'import{MessageNode}from"mfml";\n\n/**\n * **Message key**\n * ```text\n * aaa\n * ```\n * **en**\n * ```html\n * Hello\n * ```\n * **ru**\n * ```html\n * Привет\n * ```\n */\nexport declare function aaa(locale:string):MessageNode<void>|null;\n\n/**\n * **Message key**\n * ```text\n * bbb\n * ```\n * **ru**\n * ```html\n * Пока\n * ```\n */\nexport declare function bbb(locale:string):MessageNode<void>|null;\n',
+        'import{MessageNode}from"mfml";\n' +
+        '\n' +
+        '/**\n' +
+        ' * **Message key**\n' +
+        ' * ```text\n' +
+        ' * aaa\n' +
+        ' * ```\n' +
+        ' * **en**\n' +
+        ' * ```html\n' +
+        ' * Hello\n' +
+        ' * ```\n' +
+        ' * **ru**\n' +
+        ' * ```html\n' +
+        ' * Привет\n' +
+        ' * ```\n' +
+        ' */\n' +
+        'export declare function aaa(locale:string):MessageNode<void>|null;\n' +
+        '\n' +
+        '/**\n' +
+        ' * **Message key**\n' +
+        ' * ```text\n' +
+        ' * bbb\n' +
+        ' * ```\n' +
+        ' * **ru**\n' +
+        ' * ```html\n' +
+        ' * Пока\n' +
+        ' * ```\n' +
+        ' */\n' +
+        'export declare function bbb(locale:string):MessageNode<void>|null;\n' +
+        '',
       'locales.js': 'export const LOCALE_EN="en";\nexport const LOCALE_RU="ru";\n',
       'metadata.js':
-        'export default {\n  "packageName": "@mfml/messages",\n  "supportedLocales": [\n    "en",\n    "ru"\n  ],\n  "fallbackLocales": {\n    "en": "en"\n  },\n  "messages": {\n    "7c551010": {\n      "messageKey": "aaa",\n      "functionName": "aaa",\n      "argumentNames": [],\n      "locales": [\n        "en",\n        "ru"\n      ]\n    },\n    "bf6eb534": {\n      "messageKey": "bbb",\n      "functionName": "bbb",\n      "argumentNames": [],\n      "locales": [\n        "ru"\n      ]\n    }\n  }\n};\n',
+        'export const supportedLocales=["en","ru"];\n' +
+        '\n' +
+        'export const debugInfo={\n' +
+        '  "packageName": "@mfml/messages",\n' +
+        '  "supportedLocales": [\n' +
+        '    "en",\n' +
+        '    "ru"\n' +
+        '  ],\n' +
+        '  "fallbackLocales": {\n' +
+        '    "en": "en"\n' +
+        '  },\n' +
+        '  "messages": {\n' +
+        '    "7c551010": {\n' +
+        '      "messageKey": "aaa",\n' +
+        '      "functionName": "aaa",\n' +
+        '      "argumentNames": [],\n' +
+        '      "locales": [\n' +
+        '        "en",\n' +
+        '        "ru"\n' +
+        '      ]\n' +
+        '    },\n' +
+        '    "bf6eb534": {\n' +
+        '      "messageKey": "bbb",\n' +
+        '      "functionName": "bbb",\n' +
+        '      "argumentNames": [],\n' +
+        '      "locales": [\n' +
+        '        "ru"\n' +
+        '      ]\n' +
+        '    }\n' +
+        '  }\n' +
+        '};\n' +
+        '',
       'metadata.d.ts':
-        'import{PackageMetadata}from"mfml";\n\ndeclare const metadata:PackageMetadata;\n\nexport default metadata;\n',
+        'import{DebugInfo}from"mfml";\n' +
+        '\n' +
+        'export const supportedLocales:readonly string[];\n' +
+        '\n' +
+        'export const debugInfo:DebugInfo;\n' +
+        '',
       'package.json':
-        '{\n  "name": "@mfml/messages",\n  "type": "module",\n  "main": "./index.js",\n  "types": "./index.d.ts",\n  "exports": {\n    ".": "./index.js",\n    "./metadata": "./metadata.js",\n    "./package.json": "./package.json"\n  },\n  "sideEffects": false\n}',
+        '{\n' +
+        '  "name": "@mfml/messages",\n' +
+        '  "type": "module",\n' +
+        '  "main": "./index.js",\n' +
+        '  "types": "./index.d.ts",\n' +
+        '  "exports": {\n' +
+        '    ".": "./index.js",\n' +
+        '    "./metadata": "./metadata.js",\n' +
+        '    "./package.json": "./package.json"\n' +
+        '  },\n' +
+        '  "sideEffects": false\n' +
+        '}\n',
     });
   });
 
@@ -311,19 +776,144 @@ describe('compileFiles', () => {
       )
     ).toStrictEqual({
       '63ff3c3b.js':
-        'import{M,E,A,V,R,O,C}from"mfml/dsl";\nimport{LOCALE_EN,LOCALE_RU,LOCALE_ES}from"./locales.js";\n\n/**\n * **Message key**\n * ```text\n * aaa\n * ```\n * **en**\n * ```html\n * Hello\n * ```\n * **ru**\n * ```html\n * Привет\n * ```\n * **es**\n * ```html\n * Hola\n * ```\n */\nexport default function aaa(locale){\nreturn locale===LOCALE_EN?M(locale,"Hello"):locale===LOCALE_RU?M(locale,"Привет"):locale===LOCALE_ES?M(locale,"Hola"):null;\n}\naaa.h="63ff3c3b";\n',
+        'import{M,E,A,V,R,O,C}from"mfml/dsl";\n' +
+        'import{LOCALE_EN,LOCALE_RU,LOCALE_ES}from"./locales.js";\n' +
+        '\n' +
+        '/**\n' +
+        ' * **Message key**\n' +
+        ' * ```text\n' +
+        ' * aaa\n' +
+        ' * ```\n' +
+        ' * **en**\n' +
+        ' * ```html\n' +
+        ' * Hello\n' +
+        ' * ```\n' +
+        ' * **ru**\n' +
+        ' * ```html\n' +
+        ' * Привет\n' +
+        ' * ```\n' +
+        ' * **es**\n' +
+        ' * ```html\n' +
+        ' * Hola\n' +
+        ' * ```\n' +
+        ' */\n' +
+        'export default function aaa(locale){\n' +
+        'return locale===LOCALE_EN?M(locale,"Hello"):locale===LOCALE_RU?M(locale,"Привет"):locale===LOCALE_ES?M(locale,"Hola"):null;\n' +
+        '}\n' +
+        'aaa.h="63ff3c3b";\n' +
+        '',
       'c702b4c9.js':
-        'import{M,E,A,V,R,O,C}from"mfml/dsl";\nimport{LOCALE_EN,LOCALE_RU,LOCALE_ES}from"./locales.js";\n\n/**\n * **Message key**\n * ```text\n * bbb\n * ```\n * **ru** ← en ← es\n * ```html\n * Пока\n * ```\n */\nexport default function bbb(locale){\nreturn locale===LOCALE_RU||locale===LOCALE_EN||locale===LOCALE_ES?M(locale,"Пока"):null;\n}\nbbb.h="c702b4c9";\n',
+        'import{M,E,A,V,R,O,C}from"mfml/dsl";\n' +
+        'import{LOCALE_EN,LOCALE_RU,LOCALE_ES}from"./locales.js";\n' +
+        '\n' +
+        '/**\n' +
+        ' * **Message key**\n' +
+        ' * ```text\n' +
+        ' * bbb\n' +
+        ' * ```\n' +
+        ' * **ru** ← en ← es\n' +
+        ' * ```html\n' +
+        ' * Пока\n' +
+        ' * ```\n' +
+        ' */\n' +
+        'export default function bbb(locale){\n' +
+        'return locale===LOCALE_RU||locale===LOCALE_EN||locale===LOCALE_ES?M(locale,"Пока"):null;\n' +
+        '}\n' +
+        'bbb.h="c702b4c9";\n' +
+        '',
       'index.js': 'export{default as aaa}from"./63ff3c3b.js";\nexport{default as bbb}from"./c702b4c9.js";\n',
       'index.d.ts':
-        'import{MessageNode}from"mfml";\n\n/**\n * **Message key**\n * ```text\n * aaa\n * ```\n * **en**\n * ```html\n * Hello\n * ```\n * **ru**\n * ```html\n * Привет\n * ```\n * **es**\n * ```html\n * Hola\n * ```\n */\nexport declare function aaa(locale:string):MessageNode<void>|null;\n\n/**\n * **Message key**\n * ```text\n * bbb\n * ```\n * **ru** ← en ← es\n * ```html\n * Пока\n * ```\n */\nexport declare function bbb(locale:string):MessageNode<void>|null;\n',
+        'import{MessageNode}from"mfml";\n' +
+        '\n' +
+        '/**\n' +
+        ' * **Message key**\n' +
+        ' * ```text\n' +
+        ' * aaa\n' +
+        ' * ```\n' +
+        ' * **en**\n' +
+        ' * ```html\n' +
+        ' * Hello\n' +
+        ' * ```\n' +
+        ' * **ru**\n' +
+        ' * ```html\n' +
+        ' * Привет\n' +
+        ' * ```\n' +
+        ' * **es**\n' +
+        ' * ```html\n' +
+        ' * Hola\n' +
+        ' * ```\n' +
+        ' */\n' +
+        'export declare function aaa(locale:string):MessageNode<void>|null;\n' +
+        '\n' +
+        '/**\n' +
+        ' * **Message key**\n' +
+        ' * ```text\n' +
+        ' * bbb\n' +
+        ' * ```\n' +
+        ' * **ru** ← en ← es\n' +
+        ' * ```html\n' +
+        ' * Пока\n' +
+        ' * ```\n' +
+        ' */\n' +
+        'export declare function bbb(locale:string):MessageNode<void>|null;\n' +
+        '',
       'locales.js': 'export const LOCALE_EN="en";\nexport const LOCALE_RU="ru";\nexport const LOCALE_ES="es";\n',
       'metadata.js':
-        'export default {\n  "packageName": "@mfml/messages",\n  "supportedLocales": [\n    "en",\n    "ru",\n    "es"\n  ],\n  "fallbackLocales": {\n    "en": "es",\n    "es": "ru"\n  },\n  "messages": {\n    "63ff3c3b": {\n      "messageKey": "aaa",\n      "functionName": "aaa",\n      "argumentNames": [],\n      "locales": [\n        "en",\n        "ru",\n        "es"\n      ]\n    },\n    "c702b4c9": {\n      "messageKey": "bbb",\n      "functionName": "bbb",\n      "argumentNames": [],\n      "locales": [\n        "ru"\n      ]\n    }\n  }\n};\n',
+        'export const supportedLocales=["en","ru","es"];\n' +
+        '\n' +
+        'export const debugInfo={\n' +
+        '  "packageName": "@mfml/messages",\n' +
+        '  "supportedLocales": [\n' +
+        '    "en",\n' +
+        '    "ru",\n' +
+        '    "es"\n' +
+        '  ],\n' +
+        '  "fallbackLocales": {\n' +
+        '    "en": "es",\n' +
+        '    "es": "ru"\n' +
+        '  },\n' +
+        '  "messages": {\n' +
+        '    "63ff3c3b": {\n' +
+        '      "messageKey": "aaa",\n' +
+        '      "functionName": "aaa",\n' +
+        '      "argumentNames": [],\n' +
+        '      "locales": [\n' +
+        '        "en",\n' +
+        '        "ru",\n' +
+        '        "es"\n' +
+        '      ]\n' +
+        '    },\n' +
+        '    "c702b4c9": {\n' +
+        '      "messageKey": "bbb",\n' +
+        '      "functionName": "bbb",\n' +
+        '      "argumentNames": [],\n' +
+        '      "locales": [\n' +
+        '        "ru"\n' +
+        '      ]\n' +
+        '    }\n' +
+        '  }\n' +
+        '};\n' +
+        '',
       'metadata.d.ts':
-        'import{PackageMetadata}from"mfml";\n\ndeclare const metadata:PackageMetadata;\n\nexport default metadata;\n',
+        'import{DebugInfo}from"mfml";\n' +
+        '\n' +
+        'export const supportedLocales:readonly string[];\n' +
+        '\n' +
+        'export const debugInfo:DebugInfo;\n' +
+        '',
       'package.json':
-        '{\n  "name": "@mfml/messages",\n  "type": "module",\n  "main": "./index.js",\n  "types": "./index.d.ts",\n  "exports": {\n    ".": "./index.js",\n    "./metadata": "./metadata.js",\n    "./package.json": "./package.json"\n  },\n  "sideEffects": false\n}',
+        '{\n' +
+        '  "name": "@mfml/messages",\n' +
+        '  "type": "module",\n' +
+        '  "main": "./index.js",\n' +
+        '  "types": "./index.d.ts",\n' +
+        '  "exports": {\n' +
+        '    ".": "./index.js",\n' +
+        '    "./metadata": "./metadata.js",\n' +
+        '    "./package.json": "./package.json"\n' +
+        '  },\n' +
+        '  "sideEffects": false\n' +
+        '}\n',
     });
   });
 

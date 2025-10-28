@@ -1,4 +1,4 @@
-import { AnyNode, ArgumentNode, MessageNode, PackageMetadata } from '../types.js';
+import { AnyNode, ArgumentNode, MessageNode, DebugInfo } from '../types.js';
 import { Parser } from '../parser/index.js';
 import {
   escapeJSIdentifier,
@@ -281,7 +281,7 @@ export async function compileFiles(
   let indexTSCode = 'import{MessageNode}from"mfml";\n';
   let localesJSCode = '';
 
-  const packageMetadata: PackageMetadata = {
+  const debugInfo: DebugInfo = {
     packageName,
     supportedLocales,
     fallbackLocales,
@@ -470,7 +470,7 @@ export async function compileFiles(
       compileMessageTSType(argumentTSTypes) +
       ';\n';
 
-    packageMetadata.messages[messageHash] = {
+    debugInfo.messages[messageHash] = {
       messageKey,
       functionName,
       argumentNames: Array.from(argumentTSTypes.keys()),
@@ -501,14 +501,20 @@ export async function compileFiles(
 
   files['locales.js'] = localesJSCode;
 
-  files['metadata.js'] = 'export default ' + JSON.stringify(packageMetadata, null, 2) + ';\n';
+  files['metadata.js'] =
+    'export const supportedLocales=' +
+    JSON.stringify(supportedLocales) +
+    ';\n\n' +
+    'export const debugInfo=' +
+    JSON.stringify(debugInfo, null, 2) +
+    ';\n';
 
   files['metadata.d.ts'] =
-    'import{PackageMetadata}from"mfml";\n\n' +
-    'declare const metadata:PackageMetadata;\n\n' +
-    'export default metadata;\n';
+    'import{DebugInfo}from"mfml";\n\n' +
+    'export const supportedLocales:readonly string[];\n\n' +
+    'export const debugInfo:DebugInfo;\n';
 
-  files['package.json'] = JSON.stringify(packageJSON, null, 2);
+  files['package.json'] = JSON.stringify(packageJSON, null, 2) + '\n';
 
   return files;
 }

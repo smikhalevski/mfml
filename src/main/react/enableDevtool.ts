@@ -1,4 +1,4 @@
-import { MessageMetadata, PackageMetadata } from '../types.js';
+import { MessageDebugInfo, DebugInfo } from '../types.js';
 import { ComponentType, Context } from 'react';
 import { MessageValuesContext } from './Message.js';
 import { getOutlinesOfRects } from './getOutlinesOfRects.js';
@@ -6,9 +6,15 @@ import { getOutlinesOfRects } from './getOutlinesOfRects.js';
 /**
  * Enables DOM devtool for MFML.
  *
- * @param packageMetadata The i18n package metadata exported from `@mfml/messages/metadata` or similar package.
+ * @example
+ * import { enableDevtool } from 'mfml/react';
+ * import { debugInfo } from '@mfml/messages/metadata';
+ *
+ * enableDevtool(debugInfo);
+ *
+ * @param debugInfo The debug info exported from `@mfml/messages/metadata`.
  */
-export function enableDevtool(packageMetadata: PackageMetadata): void {
+export function enableDevtool(debugInfo: DebugInfo): void {
   if (typeof window === 'undefined') {
     return;
   }
@@ -47,7 +53,7 @@ export function enableDevtool(packageMetadata: PackageMetadata): void {
     }
 
     // No fiber node, or no message
-    if (fiberNode === null || fiberNode.key === null || !packageMetadata.messages.hasOwnProperty(fiberNode.key)) {
+    if (fiberNode === null || fiberNode.key === null || !debugInfo.messages.hasOwnProperty(fiberNode.key)) {
       hidePopover();
       return;
     }
@@ -62,12 +68,7 @@ export function enableDevtool(packageMetadata: PackageMetadata): void {
     }
 
     popoverElement = document.body.appendChild(
-      createPopoverElement(
-        document,
-        packageMetadata.messages[fiberNode.key],
-        messageNodes,
-        fiberNode.pendingProps?.value
-      )
+      createPopoverElement(document, debugInfo.messages[fiberNode.key], messageNodes, fiberNode.pendingProps?.value)
     );
     popoverElement.showPopover();
   };
@@ -164,7 +165,7 @@ const FONT =
 
 function createPopoverElement(
   document: Document,
-  messageMetadata: MessageMetadata,
+  messageDebugInfo: MessageDebugInfo,
   messageNodes: Node[],
   _messageValues: any,
   strokeWidth = 5,
@@ -254,7 +255,7 @@ function createPopoverElement(
       `background-color:${BG_COLOR};`
   );
 
-  messageKeyElement.textContent = messageMetadata.messageKey;
+  messageKeyElement.textContent = messageDebugInfo.messageKey;
 
   return popoverElement;
 }

@@ -1,29 +1,75 @@
 import { ArgumentFormatter } from './formatter.js';
 import { CategorySelector } from './selector.js';
 
-export interface PackageMetadata {
+/**
+ * Debug info exported from `@mfml/messages/metadata` or similar package.
+ *
+ * @group Debug
+ */
+export interface DebugInfo {
+  /**
+   * The name of the compiled package.
+   *
+   * @see {link CompilerOptions.packageName}
+   */
   packageName: string;
+
+  /**
+   * The array of supported locales.
+   */
   supportedLocales: string[];
-  fallbackLocales?: Record<string, string>;
+
+  /**
+   * Mapping from a locale to a corresponding fallback locale, or `undefined` if no fallback locales were provided.
+   *
+   * @see {link CompilerOptions.fallbackLocales}
+   */
+  fallbackLocales: Record<string, string> | undefined;
 
   /**
    * Map from a hash code to a message metadata.
    */
-  messages: Record<string, MessageMetadata>;
+  messages: Record<string, MessageDebugInfo>;
 }
 
-export interface MessageMetadata {
+/**
+ * @group Debug
+ */
+export interface MessageDebugInfo {
+  /**
+   * The message key.
+   */
   messageKey: string;
+
+  /**
+   * The compiled function name.
+   */
   functionName: string;
+
+  /**
+   * The array of argument names.
+   */
   argumentNames: string[];
+
+  /**
+   * The array of locales supported by the message.
+   */
   locales: string[];
 }
 
+/**
+ * A message function produced by a compiler.
+ *
+ * @template Values Message argument values.
+ * @group Renderer
+ */
 export interface MessageFunction<Values extends object | void = any> {
   (locale: string): MessageNode<Values> | null;
 
   /**
    * The unique message function hash.
+   *
+   * @see {@link DebugInfo.messages}
    */
   h?: string;
 }

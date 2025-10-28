@@ -18,8 +18,8 @@ export { defaultCategorySelector, type CategorySelector, type CategorySelectorPa
 export { renderToString, type RenderToStringOptions } from './renderToString.js';
 export type {
   MessageFunction,
-  PackageMetadata,
-  MessageMetadata,
+  DebugInfo,
+  MessageDebugInfo,
   Renderer,
   ElementRenderer,
   ChildNode,
