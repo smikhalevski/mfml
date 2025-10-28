@@ -354,6 +354,13 @@ export async function compileFiles(
       let text = messages[baseLocale][messageKey];
       let messageNode;
 
+      docComment +=
+        '\n' +
+        formatMarkdownBold(baseLocale) +
+        (localeGroup.length === 1 ? '' : ' ← ' + localeGroup.slice(1).join(' ← ')) +
+        '\n' +
+        formatMarkdownFence(truncateMessage(text), 'html');
+
       try {
         if (preprocessors !== undefined) {
           for (const preprocessor of preprocessors) {
@@ -376,13 +383,6 @@ export async function compileFiles(
       }
 
       messageNodes.push(messageNode);
-
-      docComment +=
-        '\n' +
-        formatMarkdownBold(baseLocale) +
-        (localeGroup.length === 1 ? '' : ' ← ' + localeGroup.slice(1).join(' ← ')) +
-        '\n' +
-        formatMarkdownFence(truncateMessage(text), 'html');
     }
 
     // Build a ternary that selects a message node depending on a requested locale
