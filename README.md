@@ -14,17 +14,17 @@
 
 <!--OVERVIEW-->
 
-The [ICU MessageFormat&#8239;<sup>↗</sup>](https://unicode-org.github.io/icu/userguide/format_parse/messages/) +
+The [ICU MessageFormat](https://unicode-org.github.io/icu/userguide/format_parse/messages/) +
 XML/HTML compiler and runtime that makes your i18n messages tree-shakeable.
 
 - TypeScript-first.
-- Tree-shakeable: colocates messages with related code.
+- Tree-shakeable: colocates messages with the code that uses them.
 - Integrates with any translation management system.
 - Highly customizable.
 - First-class React support.
 - Zero dependencies.
-- XSS-resilient rendering: no dangerous HTML rendering.
-- [Just 2&#8239;kB gzipped.&#8239;<sup>↗</sup>](https://bundlephobia.com/result?p=mfml)
+- XSS-resilient: no dangerous HTML rendering.
+- [Just 2 kB gzipped.](https://bundlephobia.com/result?p=mfml)
 
 <!--/OVERVIEW-->
 
@@ -40,12 +40,11 @@ npm install --save-prod mfml
 
 <!--TOC-->
 
-- [API docs&#8239;<sup>↗</sup>](https://smikhalevski.github.io/mfml/)
+- [API docs](https://smikhalevski.github.io/mfml/)
 
 <span class="toc-icon">🔰&ensp;</span>[**Quick start**](#quick-start)
 
-<span class="toc-icon">#️⃣&ensp;</span>[**Syntax**](#syntax)
-
+- [Syntax overview](#syntax-overview)
 - [Arguments](#arguments)
 - [Types and styles](#types-and-styles)
 - [Options](#options)
@@ -109,7 +108,7 @@ Put your i18n messages in _messages.json_, grouped by locale:
 }
 ```
 
-Put your config in _mfml.config.js_:
+Put your [config](#configuration) in _mfml.config.js_:
 
 ```ts
 import { defineConfig } from 'mfml/compiler';
@@ -168,29 +167,29 @@ Hello, <b>Bob</b>!
 Now, your bundler would do all the heavy lifting and colocate message functions with components that import them in
 the same chunk.
 
-# Syntax
+## Syntax overview
 
 The MFML syntax is a hybrid of
-the [ICU MessageFormat&#8239;<sup>↗</sup>](https://unicode-org.github.io/icu/userguide/format_parse/messages/) syntax
+the [ICU MessageFormat](https://unicode-org.github.io/icu/userguide/format_parse/messages/) syntax
 and XML/HTML.
 
 ICU MessageFormat is a templating syntax designed for internationalized messages. It allows developers to insert
-variables, handle pluralization, gender, and select logic in a locale-aware way. MFML supports all ICU MessageFormat
-features and allows to customize and extend them.
+variables and handle pluralization, gender, and selection logic in a locale-aware way. MFML supports all
+ICU MessageFormat features and allows you to customize and extend them.
 
-MFML borrows basic arguments syntax from the MessageFormat:
+Here's the basic [argument syntax](#arguments):
 
 ```
 {name}
 ```
 
-And formatted arguments syntax:
+Enable formatting by specifying data [type and style](#types-and-styles):
 
 ```
 {age, number, integer}
 ```
 
-And select over argument categories syntax:
+Select over [argument categories](#categories):
 
 ```
 {gender, select,
@@ -199,7 +198,7 @@ And select over argument categories syntax:
 }
 ```
 
-Pluralization is handled through argument categories as well:
+[Pluralization](#pluralization) is handled through argument categories as well:
 
 ```
 You have {messageCount, plural,
@@ -208,7 +207,7 @@ You have {messageCount, plural,
 }
 ```
 
-Form XML/HTML, MFML borrows tags and attributes:
+MFML supports XML/HTML tags and attributes:
 
 ```html
 Hello, <strong>{name}</strong>!
@@ -220,7 +219,7 @@ Arguments can be used where XML/HTML allows text:
 <abbr title="Greetings to {name}">Hello, {name}!</abbr>
 ```
 
-You can use your custom tags and [setup a custom renderer to properly display them](#custom-renderer):
+You can use your custom tags and setup a [custom renderer](#custom-renderer) to properly display them:
 
 ```html
 <Hint title="Final offer at {discount, percent} discount!">{price}</Hint>
@@ -234,27 +233,29 @@ The most basic use case is argument placeholder replacement:
 Hello, {name}!
 ```
 
-Here, `{name}` is an argument that doesn't impose any formatting on its value. By default, during interpolation,
-the actual value is cast to a string. Spaces around the argument name are ignored, so this yield the same result as:
+Here, `{name}` is an argument that doesn't impose any formatting on its value. Spaces around the argument name are
+ignored, so this yields the same result:
 
 ```
 Hello, {   name   }!
 ```
 
+[By default](#custom-formatters), during interpolation, the argument values are cast to string.
+
 ## Types and styles
 
-Argument values can be formatted during interpolation. Provide an argument type to pick a formatter that should be used:
+Argument values can be formatted during interpolation. Provide an argument type to select the formatter to use:
 
 ```
 You have {count, number} messages.
                  ^^^^^^
 ```
 
-Here, `number` is an argument type. By default, `number` uses
-a [`Intl.NumberFormat`&#8239;<sup>↗</sup>](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/NumberFormat)
+Here, `number` is an argument type. [By default](#custom-formatters), `number` type uses
+[`Intl.NumberFormat`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/NumberFormat)
 for formatting.
 
-You can provide a style for a formatter:
+You can also provide a style for a formatter:
 
 ```
 Download {progress, number, percent} complete.
@@ -392,17 +393,13 @@ Instead of using a predefined style, you can provide a set of options for a form
 }
 ```
 
-Here
-[`style`&#8239;<sup>↗</sup>](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Intl/NumberFormat/NumberFormat#style),
-[`unit`&#8239;<sup>↗</sup>](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Intl/NumberFormat/NumberFormat#unit)
-and [`unitDisplay`&#8239;<sup>↗</sup>](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Intl/NumberFormat/NumberFormat#unitDisplay)
-are options of
-the [`Intl.NumberFormat`&#8239;<sup>↗</sup>](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/NumberFormat).
+Here `style`, `unit` and `unitDisplay` are options of
+the [`Intl.NumberFormat`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/NumberFormat).
 
 You can find the full list of options for
-[`number` arguments&#8239;<sup>↗</sup>](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/NumberFormat/NumberFormat#style_options)
+[`number` arguments](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/NumberFormat/NumberFormat#style_options)
 and for
-[`date` and `time` arguments&#8239;<sup>↗</sup>](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/DateTimeFormat/DateTimeFormat#locale_options)
+[`date` and `time` arguments](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/DateTimeFormat/DateTimeFormat#locale_options)
 on MDN.
 
 ## Categories
@@ -419,13 +416,13 @@ a user's gender:
 sent you a message.
 ```
 
-Value of the `gender` argument is used for selecting a specific category. If value is `"male"` then argument placeholder
-is replaced with "He", if value is `"female"` then with "She", and for any other value "They" is rendered.
+Value of the `gender` argument is used for selecting a specific category. If the value is `"male"` then argument
+placeholder is replaced with "He", if value is `"female"` then with "She", and for any other value "They" is rendered.
 
-`other` is a special category: it's value is used if no literal did match. If there's no matching category in `select`
-and no `other` category then argument placeholder is replaced with an empty string.
+`other` is a special category: its value is used if no other category matches. If there's no matching category in
+`select` and no `other` category, the argument placeholder is replaced with an empty string.
 
-Be sure to always provide the `other` category as a fallback.
+It is recommended to always provide the `other` category as a fallback.
 
 ## Pluralization
 
@@ -557,9 +554,8 @@ for languages (such as English) that have a simple "singular" versus "plural" di
 </dd>
 </dl>
 
-You can use the special token (`#`, aka octothorpe) as a placeholder for the numeric value and it'll be output as if
-argument value was used. By default, both `plural` and `selectOrdinal` argument types format `#` using
-[`number` argument type without style](#types-and-styles).
+You can use the special token (`#`, aka octothorpe) as a placeholder inside a category. By default, both `plural`
+and `selectOrdinal` argument types format `#` using [`number` argument type without style](#types-and-styles).
 
 If you want apply a specific formatting, use an explicit argument instead of an octothorpe:
 
@@ -570,7 +566,7 @@ You have {messageCount, plural,
 }.
 ```
 
-Both `plural` and `selectOrdinal` support literal value matching. Prefix a value with an equals character:
+Both `plural` and `selectOrdinal` support literal value matching. Prefix a value with an equals character `=`:
 
 ```
 You have {messageCount, plural,
@@ -583,7 +579,7 @@ You have {messageCount, plural,
 # Render to string
 
 Render messages as plain text using
-[`renderToString`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/mfml/functions/mfml.renderToString.html):
+[`renderToString`](https://smikhalevski.github.io/mfml/functions/mfml.renderToString.html):
 
 For example if you compiled a message:
 
@@ -609,8 +605,8 @@ renderToString({
 // ⮕ 'Hello, Bob!'
 ```
 
-By default, `renderToString` doesn't render tags and outputs only their contents. It also totally ignores tags that
-aren't lowercase alpha: these are considered custom tags. You can change this behavior by providing a custom renderer:
+By default, `renderToString` doesn't render tags and outputs only their contents. It also ignores tags that aren't
+lowercase alpha: these are considered custom tags. You can change this behavior by providing a custom renderer:
 
 ```ts
 import { defaultArgumentFormatter, defaultCategorySelector, type Renderer } from 'mfml';
@@ -648,7 +644,7 @@ For example if you compiled a message:
 ```
 
 Then you can render it with React using
-[`<Message>`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/mfml/functions/mfml_react.Message.html) component:
+[`<Message>`](https://smikhalevski.github.io/mfml/functions/mfml_react.Message.html) component:
 
 ```tsx
 import { Message, MessageLocaleProvider } from 'mfml/react';
@@ -676,7 +672,7 @@ value:
 ```tsx
 <Message
   message={greeting}
-  values={{ name: <UserAvatar>Bob</UserAvatar> }}
+  values={{ name: <Cool>Bob</Cool> }}
 />
 ```
 
@@ -684,9 +680,7 @@ This would output:
 
 <!-- prettier-ignore -->
 ```html
-Hello, <b>
-    <UserAvatar>Bob</UserAvatar>
-</b>!
+Hello, <b><Cool>Bob</Cool></b>!
 ```
 
 ## Custom renderer
@@ -751,60 +745,69 @@ Final offer:
 # Custom formatters
 
 MFML provides
-the [`defaultArgumentFormatter`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/mfml/variables/mfml.defaultArgumentFormatter.html)
+the [`defaultArgumentFormatter`](https://smikhalevski.github.io/mfml/variables/mfml.defaultArgumentFormatter.html)
 that supports `number`, `date`, `time`, `conjunction` and `disjunction` argument types
 and [corresponding styles](#types-and-styles).
 
 To change how formatters are applied, you should create a custom renderer and provide it to
 [`renderToString`](#render-to-string) or to [`<Message>`](#react-integration) component (as a prop or through
-a [`<MessageRendererProvider>`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/mfml/variables/mfml_react.MessageRendererProvider.html)).
+a [`<MessageRendererProvider>`](https://smikhalevski.github.io/mfml/variables/mfml_react.MessageRendererProvider.html)).
 
-Let's assume we've compiled the message function `factAboutUSA`:
+Let's assume we've compiled the function which is called `randomFact` for the following message:
 
 ```
 USA border length is {borderLength, unitMeter}.
                                     ^^^^^^^^^
 ```
 
-Create a formatter that formats arguments with type `unitMeter`:
+Here, `unitMeter` is a custom type. Now, let's create a formatter that formats arguments with this type:
 
 ```ts
 import { type ArgumentFormatter } from 'mfml';
 
 const unitMeterArgumentFormatter: ArgumentFormatter = params => {
   if (params.type === 'unitMeter' && typeof params.value === 'number') {
-    return new Intl.NumberFormat(params.locale, { style: 'unit', unit: 'meter' }).format(params.value);
+    const numberFormat = new Intl.NumberFormat(params.locale, {
+      style: 'unit',
+      unit: 'meter',
+    });
+
+    return numberFormat.format(params.value);
   }
 
   return params.value;
 };
 ```
 
-Now, lets crete a renderer that would use this formatter:
+Now, lets crete a string renderer that uses this formatter:
 
 ```ts
 import { defaultArgumentFormatter, defaultCategorySelector, type Renderer } from 'mfml';
 
 const myRenderer: Renderer<string> = {
   renderElement: (tagName, attributes, children) => children.join(''),
+
+  // 🟡 Pass a custom formatter
   formatArgument: unitMeterArgumentFormatter,
   selectCategory: defaultCategorySelector,
 };
 ```
 
-Render a message to string using new custom renderer:
+Render a message to string using this custom renderer:
 
 ```ts
 renderToString({
-  message: factAboutUSA,
+  message: randomFact,
   values: { borderLength: 8_891_000 },
   locale: 'en',
+
+  // 🟡 Pass a custom renderer
   renderer: myRenderer,
 });
 // ⮕ 'USA border length is 8,891,000 m.'
 ```
 
-Usually you want multiple formatters to be available, so MFML provides factories that simplify formatter declaration:
+Usually, you want multiple formatters to be available, so MFML provides factories that simplify formatter declarations:
 
 ```ts
 import { combineArgumentFormatters, createNumberArgumentFormatter, createDateTimeArgumentFormatter } from 'mfml';
@@ -819,7 +822,7 @@ const myArgumentFormatter = combineArgumentFormatters([
 ]);
 ```
 
-[`combineArgumentFormatters`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/mfml/functions/mfml_react.combineArgumentFormatters.html))
+[`combineArgumentFormatters`](https://smikhalevski.github.io/mfml/functions/mfml.combineArgumentFormatters.html)
 creates an argument formatter that sequentially applies each formatter from the list of formatters until one returns
 a formatted value. If none of the formatters returns a formatted value, then a value returned as-is.
 
@@ -838,7 +841,7 @@ const myArgumentFormatter = combineArgumentFormatters([
 # Devtool
 
 MFML provides the devtool for React DOM applications. To enable it, call
-[`enableDevtool`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/mfml/functions/mfml_react.enableDevtool.html)
+[`enableDevtool`](https://smikhalevski.github.io/mfml/functions/mfml_react.enableDevtool.html)
 anywhere in your client-side code (on the server-side it is a no-op):
 
 ```ts
@@ -863,7 +866,7 @@ message text to reveal the related message information.
 # Configuration
 
 When running `mfml` from the command line, MFML will automatically try to resolve a config file named
-`mfml.config.js` inside the `cwd` (other JS and TS extensions are also supported).
+_mfml.config.js_ inside the `cwd` (other JS and TS extensions are also supported).
 
 The most basic config file looks like this:
 
@@ -1068,7 +1071,7 @@ export default defineConfig({
   messages: {
     en: {
       greeting: '{NAME} is {AGE, number} years old',
-      //          ^^^^ Upper case argument names
+      //          ^^^^ 🟡 Upper case argument names
     },
   },
   postprocessors: [renameArguments],
@@ -1079,7 +1082,7 @@ The compiled `greeting` message function would have the following signature:
 
 ```ts
 function greeting(locale: string): MessageNode<{ name: unknown; age: number }> | null;
-//                                               ^^^^ Lower case argument names
+//                                               ^^^^ 🟡 Lower case argument names
 ```
 
 ## `renameMessage​Function`
@@ -1114,11 +1117,11 @@ renderToString({
 
 Message function names are always escaped; illegal characters are replaced with underscores.
 
-Compilation fails if the same function name is returned for different message keys.
+Compilation fails if the same function name is generated for different message keys.
 
 ## `decodeText`
 
-**Default:** [`decodeXML`&#8239;<sup>↗</sup>](https://github.com/smikhalevski/speedy-entities#decode)
+**Default:** [`decodeXML`](https://github.com/smikhalevski/speedy-entities#decode)
 
 Decode the text content before it is pushed to an MFML AST node. Use this method to decode HTML entities.
 
@@ -1148,12 +1151,12 @@ export default defineConfig({
 ```
 
 > [!TIP]\
-> Read more about [speedy-entities&#8239;<sup>↗</sup>](https://github.com/smikhalevski/speedy-entities#readme),
+> Read more about [speedy-entities](https://github.com/smikhalevski/speedy-entities#readme),
 > the fastest XML/HTML entity encoder/decoder in just 13 kB gzipped.
 
 ## `getArgumentTSType`
 
-**Default:** [`getIntlArgumentTSType`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/mfml/functions/mfml_compiler.getArgumentIntlTSType.html)
+**Default:** [`getIntlArgumentTSType`](https://smikhalevski.github.io/mfml/functions/mfml_compiler.getIntlArgumentTSType.html)
 
 Returns the TypeScript type for a given argument.
 
@@ -1181,24 +1184,24 @@ function greeting(locale: string): MessageNode<{ name: string; age: number }> | 
 ```
 
 By
-default, [`getIntlArgumentTSType`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/mfml/functions/mfml_compiler.getArgumentIntlTSType.html)
+default, [`getIntlArgumentTSType`](https://smikhalevski.github.io/mfml/functions/mfml_compiler.getIntlArgumentTSType.html)
 is used. It returns the TypeScript type of an argument that matches the requirements
-of [`Intl`&#8239;<sup>↗</sup>](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl)
+of [`Intl`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl)
 formats.
 
-| Argument type   | TypeScript type                                                               |
-| :-------------- | :---------------------------------------------------------------------------- |
-| `number`        | `number \| bigint`                                                            |
-| `date`          | `number \| Date`                                                              |
-| `time`          | `number \| Date`                                                              |
-| `list`          | `string[]`                                                                    |
-| `plural`        | `number`                                                                      |
-| `selectOrdinal` | `number`                                                                      |
-| `select`        | A union of category name literals and `string & {}` for the "other" category. |
+| Argument type   | TypeScript type                                                                    |
+| :-------------- | :--------------------------------------------------------------------------------- |
+| `number`        | `number \| bigint`                                                                 |
+| `date`          | `number \| Date`                                                                   |
+| `time`          | `number \| Date`                                                                   |
+| `list`          | `string[]`                                                                         |
+| `plural`        | `number`                                                                           |
+| `selectOrdinal` | `number`                                                                           |
+| `select`        | A union of category name literals. `string & {}` is used for the `other` category. |
 
 ## `tokenizerOptions`
 
-**Default:** [`htmlTokenizerOptions`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/mfml/variables/mfml_parser.htmlTokenizerOptions.html)
+**Default:** [`htmlTokenizerOptions`](https://smikhalevski.github.io/mfml/variables/mfml_parser.htmlTokenizerOptions.html)
 
 Options that define how MFML messages are tokenized. By default, forgiving HTML tokenizer options are used.
 
@@ -1245,7 +1248,7 @@ Read more about tokenization in [Tokenizing messages](#tokenizing-messages) sect
 # Tokenizing messages
 
 Create a tokenizer using
-[`createTokenizer`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/mfml/functions/mfml_parser.createTokenizer.html)
+[`createTokenizer`](https://smikhalevski.github.io/mfml/functions/mfml_parser.createTokenizer.html)
 to read message as a sequence of tokens:
 
 ```ts
@@ -1260,18 +1263,18 @@ tokenizer.tokenize('Hello, <b>{name}</b>!', (token, startIndex, endIndex) => {
 
 The callback is called with the following arguments:
 
-| `token`               | `startIndex` | `endIndex` | Substring   |
-| :-------------------- | -----------: | ---------: | :---------- |
-| `'TEXT'`              |            0 |          7 | `'Hello, '` |
-| `'START_TAG_NAME'`    |            8 |          9 | `'b'`       |
-| `'START_TAG_CLOSING'` |            9 |         10 | `'>'`       |
-| `'ARGUMENT_NAME'`     |           11 |         15 | `'name'`    |
-| `'ARGUMENT_CLOSING'`  |           15 |         16 | `'}'`       |
-| `'END_TAG_NAME'`      |           18 |         19 | `'b'`       |
-| `'TEXT'`              |           20 |         21 | `'!'`       |
+| `token`               | `startIndex` | `endIndex` | Corresponding substring |
+| :-------------------- | -----------: | ---------: | :---------------------- |
+| `'TEXT'`              |            0 |          7 | `'Hello, '`             |
+| `'START_TAG_NAME'`    |            8 |          9 | `'b'`                   |
+| `'START_TAG_CLOSING'` |            9 |         10 | `'>'`                   |
+| `'ARGUMENT_NAME'`     |           11 |         15 | `'name'`                |
+| `'ARGUMENT_CLOSING'`  |           15 |         16 | `'}'`                   |
+| `'END_TAG_NAME'`      |           18 |         19 | `'b'`                   |
+| `'TEXT'`              |           20 |         21 | `'!'`                   |
 
 Tokens are _guaranteed_ to be returned in correct order or
-a [`ParserError`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/mfml/classes/mfml_parser.ParserError.html) is
+a [`ParserError`](https://smikhalevski.github.io/mfml/classes/mfml_parser.ParserError.html) is
 thrown. Missing tokens can be inserted to restore the correct order if needed, depending on provided tokenizer option.
 
 Create a tokenizer with a custom set of options:
@@ -1283,9 +1286,9 @@ const tokenizer = createTokenizer({
 ```
 
 MFML provides a preconfigured forgiving HTML tokenizer
-[`htmlTokenizer`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/mfml/variables/mfml_parser.htmlTokenizer.html)
+[`htmlTokenizer`](https://smikhalevski.github.io/mfml/variables/mfml_parser.htmlTokenizer.html)
 and corresponding set of options
-[`htmlTokenizerOptions`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/mfml/variables/mfml_parser.htmlTokenizerOptions.html):
+[`htmlTokenizerOptions`](https://smikhalevski.github.io/mfml/variables/mfml_parser.htmlTokenizerOptions.html):
 
 ```ts
 import { createTokenizer, htmlTokenizerOptions } from 'mfml/parser';
@@ -1355,7 +1358,7 @@ Use in conjunctions with [`isUnbalancedStartTags​ImplicitlyClosed`](#isunbalan
 **Default:** `[]`
 
 The list of tags for which a start tag is inserted if an unbalanced end tag is met. Otherwise,
-a [`ParserError`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/mfml/classes/mfml_parser.ParserError.html) is
+a [`ParserError`](https://smikhalevski.github.io/mfml/classes/mfml_parser.ParserError.html) is
 thrown.
 
 You can ignore unbalanced end tags with [`isUnbalancedEndTagsIgnored`](#isunbalancedendtagsignored).
@@ -1404,7 +1407,7 @@ If `true` then self-closing tags are recognized, otherwise they are treated as s
 **Default:** `false`
 
 If `true` then unbalanced start tags are forcefully closed. Otherwise,
-a [`ParserError`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/mfml/classes/mfml_parser.ParserError.html) is
+a [`ParserError`](https://smikhalevski.github.io/mfml/classes/mfml_parser.ParserError.html) is
 thrown.
 
 ```html
@@ -1419,7 +1422,7 @@ Use in conjunctions with [`isUnbalancedEndTagsIgnored`](#isunbalancedendtagsigno
 **Default:** `false`
 
 If `true` then end tags that don't have a corresponding start tag are ignored. Otherwise,
-a [`ParserError`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/mfml/classes/mfml_parser.ParserError.html) is
+a [`ParserError`](https://smikhalevski.github.io/mfml/classes/mfml_parser.ParserError.html) is
 thrown.
 
 ```html
@@ -1456,7 +1459,7 @@ An argument inside the `<plaintext>` tag is interpolated:
 
 **Default:** `false`
 
-If `true` then an octothorpe character ("#") inside an argument category is replaced with the argument value.
+If `true` then an octothorpe character `#` inside an argument category is replaced with the argument value.
 
 ```
 {gender, select, male { He is a # } female { She is a # }}
@@ -1466,7 +1469,7 @@ If `true` then an octothorpe character ("#") inside an argument category is repl
 # Parsing messages
 
 Create a parser using
-[`createParser`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/mfml/functions/mfml_parser.createParser.html):
+[`createParser`](https://smikhalevski.github.io/mfml/functions/mfml_parser.createParser.html):
 
 ```ts
 import { createParser, htmlTokenizer } from 'mfml/parser';
@@ -1483,7 +1486,7 @@ Parse a message as an AST:
 const messageNode = parser.parse('en', 'Hello, <b>{name}</b>!');
 ```
 
-This returns a [`MessageNode`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/mfml/interfaces/mfml.MessageNode.html)
+This returns a [`MessageNode`](https://smikhalevski.github.io/mfml/interfaces/mfml.MessageNode.html)
 instance that looks like this:
 
 <!-- prettier-ignore -->
@@ -1541,7 +1544,7 @@ import { greeting } from '@mfml/messages';
 const messageNode = greeting('en-US');
 ```
 
-Use [`walkNode`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/mfml/functions/mfml.walkNode.html) to traverse AST:
+Use [`walkNode`](https://smikhalevski.github.io/mfml/functions/mfml.walkNode.html) to traverse AST:
 
 ```ts
 import { walkNode } from 'mfml';
@@ -1591,3 +1594,7 @@ benefits:
   any other output format you need.
 
 <!--/ARTICLE-->
+
+<hr/>
+
+<p align="center">:octocat: :heart:</p>
