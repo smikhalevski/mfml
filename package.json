@@ -25,7 +25,7 @@
   "scripts": {
     "build": "tsc --project tsconfig.build.json && rimraf --glob 'lib/bin/**/*.d.ts' && cp package.json README.md LICENSE.txt lib/ && cd lib && npm pkg delete scripts devDependencies && rimraf bin/mfml.d.ts && chmod +x bin/mfml.js",
     "clean": "rimraf lib docs coverage",
-    "test": "TZ=UTC vitest run",
+    "test": "NODE_OPTIONS=--no-webstorage TZ=UTC vitest run",
     "perf": "toofast",
     "docs": "typedoc"
   },
@@ -54,20 +54,20 @@
   },
   "homepage": "https://megastack.dev/mfml",
   "devDependencies": {
-    "@testing-library/jest-dom": "^6.8.0",
-    "@testing-library/react": "^16.3.0",
-    "@types/node": "^24.4.0",
-    "@types/react": "^19.1.13",
-    "@types/react-dom": "^19.1.9",
-    "jsdom": "^27.0.0",
-    "prettier": "^3.6.2",
-    "react-dom": "^19.1.1",
-    "rimraf": "^6.0.1",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@types/node": "^25.6.2",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "jsdom": "^29.1.1",
+    "prettier": "^3.8.3",
+    "react-dom": "^19.2.6",
+    "rimraf": "^6.1.3",
     "tslib": "^2.8.1",
-    "typedoc": "^0.28.12",
-    "typedoc-plugin-mdn-links": "^5.0.9",
-    "typescript": "^5.9.2",
-    "vitest": "^3.2.4"
+    "typedoc": "^0.28.19",
+    "typedoc-plugin-mdn-links": "^5.1.1",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.5"
   },
   "peerDependencies": {
     "react": ">=18.0.0"

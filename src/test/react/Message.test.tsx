@@ -1,11 +1,7 @@
-/**
- * @vitest-environment jsdom
- */
-
+// @vitest-environment jsdom
 import { expect, test } from 'vitest';
 import { render } from '@testing-library/react';
 import { Message, MessageRendererProvider } from '../../main/react/Message.js';
-import React from 'react';
 import { parseMessage } from '../../main/parser/createParser.js';
 import { createTokenizer } from '../../main/parser/createTokenizer.js';
 import { defaultArgumentFormatter, defaultCategorySelector } from '../../main/index.js';

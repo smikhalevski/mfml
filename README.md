@@ -40,8 +40,6 @@ npm install --save-prod mfml
 
 <!--TOC-->
 
-- [API docs](https://smikhalevski.github.io/mfml/)
-
 <span class="toc-icon">🔰&ensp;</span>[**Quick start**](#quick-start)
 
 - [Syntax overview](#syntax-overview)
@@ -88,6 +86,10 @@ npm install --save-prod mfml
 <span class="toc-icon">🌲&ensp;</span>[**Parsing messages**](#parsing-messages)
 
 <span class="toc-icon">🎯&ensp;</span>[**Motivation**](#motivation)
+
+<span class="toc-icon">🔎&ensp;</span>**Resources**
+
+- [API docs](https://smikhalevski.github.io/mfml/)
 
 <!--/TOC-->
 

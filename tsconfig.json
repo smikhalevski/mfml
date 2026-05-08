@@ -1,16 +1,18 @@
 {
   "compilerOptions": {
+    "rootDir": "./src",
     "declaration": true,
     "isolatedModules": true,
+    "types": ["node"],
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "skipLibCheck": true,
+    "jsx": "react-jsx",
     "target": "ES2020",
     "module": "NodeNext",
-    "lib": ["ES2022", "DOM"],
-    "outDir": "./lib",
-    "jsx": "react"
+    "lib": ["DOM", "ES2022"],
+    "outDir": "./lib"
   },
   "include": ["./src/**/*"]
 }

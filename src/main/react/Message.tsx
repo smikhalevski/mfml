@@ -1,4 +1,4 @@
-import React, { createContext, createElement, Fragment, ReactNode, useContext, useMemo } from 'react';
+import { createContext, createElement, Fragment, ReactNode, useContext, useMemo } from 'react';
 import { AttributeNode, ChildNode, MessageFunction, Renderer } from '../types.js';
 import { renderAttributes } from '../renderToString.js';
 import {
